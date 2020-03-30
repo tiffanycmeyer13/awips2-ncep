@@ -1,28 +1,26 @@
+/**
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
+ *
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
+ *
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
+ *
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
 package gov.noaa.nws.ncep.ui.nsharp.display;
 
-/**
- * 
- * 
- * This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
- * 
- * <pre>
- * SOFTWARE HISTORY
- * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 04/23/2012	229			Chin Chen	Initial coding
- * 01/15/2018   6746        bsteffen    Implement IContainerAwareInputHandler and add setCurrentPane()
- * 03/15/2018   6792        bsteffen    Stop stealing focus from other windows.
- *
- * </pre>
- * 
- * @author Chin Chen
- * @version 1.0
- */
-
-import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResource;
+import gov.noaa.nws.ncep.ui.nsharp.display.map.AbstractNsharpMapResource;
 import gov.noaa.nws.ncep.ui.pgen.tools.InputHandlerDefaultImpl;
-
 import java.io.IOException;
 
 import org.eclipse.swt.SWT;
@@ -40,12 +38,39 @@ import com.raytheon.uf.viz.core.rsc.IContainerAwareInputHandler;
 import com.raytheon.viz.ui.UiPlugin;
 import com.raytheon.viz.ui.input.preferences.MousePreferenceManager;
 import com.raytheon.viz.ui.panes.VizDisplayPane;
-
+/**
+ * 
+ * 
+ * This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
+ * 
+ * <pre>
+ * SOFTWARE HISTORY
+ * 
+ * Date         Ticket#     Engineer    Description
+ * -------      -------     --------    -----------
+ * 04/23/2012   229         Chin Chen   Initial coding
+ * 01/15/2018   6746        bsteffen    Implement IContainerAwareInputHandler
+ *                                      and add setCurrentPane()
+ * 03/15/2018   6792        bsteffen    Stop stealing focus from other windows.
+ * 04/06/2020   73571       smanoj      NSHARP D2D port refactor
+ *
+ * </pre>
+ * 
+ * @author Chin Chen
+ */
 public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
         implements IContainerAwareInputHandler {
 
     protected enum Mode {
-        CREATE, SKEWT_DOWN, HODO_DOWN, HODO_DOWN_MOVE, TIMELINE_DOWN, STATIONID_DOWN,SNDTYPE_DOWN, PARCELLINE_DOWN, HODO_WIND_MOTION_DOWN
+        CREATE,
+        SKEWT_DOWN,
+        HODO_DOWN,
+        HODO_DOWN_MOVE,
+        TIMELINE_DOWN,
+        STATIONID_DOWN,
+        SNDTYPE_DOWN,
+        PARCELLINE_DOWN,
+        HODO_WIND_MOTION_DOWN
     };
 
     protected static Display display;
@@ -63,7 +88,10 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
     protected double[] anchorPointxy;
 
     protected VizDisplayPane currentPane;
-    protected MousePreferenceManager prefManager = MousePreferenceManager.getInstance();
+
+    protected MousePreferenceManager prefManager = MousePreferenceManager
+            .getInstance();
+
     protected static final String PAN_PREF = "com.raytheon.viz.ui.input.pan";
 
     protected static final String PAN_PERCENTAGE = "panningPercentage";
@@ -101,7 +129,8 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
                 try {
                     store.save();
                 } catch (IOException e) {
-                    UFStatus.getHandler().handle(Priority.PROBLEM, "Error saving panning percentage preference", e);
+                    UFStatus.getHandler().handle(Priority.PROBLEM,
+                            "Error saving panning percentage preference", e);
                 }
             }
         }
@@ -114,34 +143,30 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
         currentPane = (VizDisplayPane) pane;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseWheel(int, int)
-     */
     public boolean handleMouseWheel(Event event, int x, int y) {
         if (editor == null || cursorInPane == false) {
             return false;
         }
-    	//if set to false, preempt other handler, so zooming is disabled in SkewT editor.
+        // if set to false, preempt other handler, so zooming is disabled in
+        // SkewT editor.
         com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_FORWARD = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_FORWARD;
         com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_BACK = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_BACK;
         if ((event.stateMask & SWT.SHIFT) == 0
                 && editor.translateClick(x, y) != null && currentPane != null) {
-            if ((event.count < 0 && prefManager.handleEvent(ZOOMIN_PREF,
-                    SCROLL_FORWARD))
-                    || (event.count > 0 && prefManager.handleEvent(
-                            ZOOMOUT_PREF, SCROLL_BACK))) {
+            if ((event.count < 0
+                    && prefManager.handleEvent(ZOOMIN_PREF, SCROLL_FORWARD))
+                    || (event.count > 0 && prefManager.handleEvent(ZOOMOUT_PREF,
+                            SCROLL_BACK))) {
                 currentPane.zoom(event.count, event.x, event.y);
                 return true;
-            } else if ((event.count > 0 && prefManager.handleEvent(
-                    ZOOMOUT_PREF, SCROLL_FORWARD))
+            } else if ((event.count > 0
+                    && prefManager.handleEvent(ZOOMOUT_PREF, SCROLL_FORWARD))
                     || (event.count < 0 && prefManager.handleEvent(ZOOMIN_PREF,
                             SCROLL_BACK))) {
                 currentPane.zoom(-event.count, event.x, event.y);
                 return true;
-            } else if ((event.count > 0 && prefManager.handleEvent(CLEAR_PREF,
-                    SCROLL_FORWARD))
+            } else if ((event.count > 0
+                    && prefManager.handleEvent(CLEAR_PREF, SCROLL_FORWARD))
                     || (event.count < 0 && prefManager.handleEvent(CLEAR_PREF,
                             SCROLL_BACK))) {
                 currentPane.clear();
@@ -156,38 +181,9 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
         return false;
     }
 
-    /*
-    @Override
-    public boolean handleKeyUp(int keyCode) {
-    	//String s = "key up="+(char)keyCode;
-    	//System.out.println(s+ " code ="+keyCode);
-    	if (getPaneDisplay() == null) {
-    		return false;
-    	}
-    	NsharpAbstractPaneResource paneRsc = getDescriptor().getPaneResource();
-    	if (keyCode == SWT.ARROW_DOWN)  {
-            paneRsc.getRscHandler().setSteppingStnIdList(FrameChangeOperation.NEXT) ;
-            return true;
-        }else if (keyCode == SWT.ARROW_UP)  {
-            //System.out.println("Arrow up");
-        	paneRsc.getRscHandler().setSteppingStnIdList(FrameChangeOperation.PREVIOUS) ;
-            return true;
-        }else if (keyCode == SWT.ARROW_LEFT)  {
-            //System.out.println("Arrow left");
-        	paneRsc.getRscHandler().setSteppingTimeLine(FrameChangeOperation.PREVIOUS, FrameChangeMode.TIME_ONLY) ;
-            return true;
-        }else if (keyCode == SWT.ARROW_RIGHT)  {
-            //System.out.println("Arrow right");
-            paneRsc.getRscHandler().setSteppingTimeLine(FrameChangeOperation.NEXT, FrameChangeMode.TIME_ONLY) ;
-            return true;
-        } 
-        return false;
-    }*/
-
     @Override
     public boolean handleMouseDown(int x, int y, int mouseButton) {
         if (editor != null && mouseButton == 1) {
-            // editor.setFocus();
             editor.setSelectedPane(currentPane);
         }
         cursorInPane = true;
@@ -206,19 +202,21 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
     public boolean handleMouseDownMove(int aX, int aY, int button) {
         if (getPaneDisplay() == null || editor == null) {
             return false;
-    	}
-    	else if (button == 1) {
+        } else if (button == 1) {
             if (prefManager.handleLongClick(ZOOMIN_PREF, button)
                     || prefManager.handleLongClick(ZOOMOUT_PREF, button)) {
                 theLastMouseX = aX;
                 theLastMouseY = aY;
             }
-    		//VizDisplayPane currentPane=((NsharpEditor)editor).getSelectedPane();
-    		if ((!prefManager.handleDrag(PAN_PREF, button)) ||  currentPane == null)
+
+            if ((!prefManager.handleDrag(PAN_PREF, button))
+                    || currentPane == null)
                 return false;
-    		IView tmpView = (IView)currentPane.getRenderableDisplay().getView().clone();
-    		tmpView.shiftExtent(new double[] { aX, aY }, new double[] {
-    				theLastMouseX, theLastMouseY },currentPane.getTarget());
+            IView tmpView = (IView) currentPane.getRenderableDisplay().getView()
+                    .clone();
+            tmpView.shiftExtent(new double[] { aX, aY },
+                    new double[] { theLastMouseX, theLastMouseY },
+                    currentPane.getTarget());
             IExtent tmpExtent = tmpView.getExtent();
             double percentage = getPanningPercentage();
             double xMinThreshold = tmpExtent.getMinX()
@@ -238,20 +236,24 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
             int aX2 = aX, aY2 = aY;
 
             if ((0 <= xMinThreshold && width >= xMaxThreshold) == false) {
-    			if (((width < xMaxThreshold && theLastMouseX < aX) || (0 > xMinThreshold && theLastMouseX > aX)) == false) {
+                if (((width < xMaxThreshold && theLastMouseX < aX)
+                        || (0 > xMinThreshold
+                                && theLastMouseX > aX)) == false) {
                     aX2 = (int) theLastMouseX;
                 }
             }
 
             if ((0 <= yMinThreshold && height >= yMaxThreshold) == false) {
-    			if (((height < yMaxThreshold && theLastMouseY < aY) || (0 > yMinThreshold && theLastMouseY > aY)) == false) {
+                if (((height < yMaxThreshold && theLastMouseY < aY)
+                        || (0 > yMinThreshold
+                                && theLastMouseY > aY)) == false) {
                     aY2 = (int) theLastMouseY;
                 }
             }
 
             if (aX2 != theLastMouseX || aY2 != theLastMouseY) {
-    			currentPane.shiftExtent(new double[] { aX2, aY2 }, new double[] {
-    					theLastMouseX, theLastMouseY });
+                currentPane.shiftExtent(new double[] { aX2, aY2 },
+                        new double[] { theLastMouseX, theLastMouseY });
             }
             theLastMouseX = aX;
             theLastMouseY = aY;
@@ -275,8 +277,10 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
             // button 1 is left mouse button
             if (mouseButton == 3) {
                 // right mouse button
-                // System.out.println("skewtRsc handleMouseUp right button");
-                NsharpMapResource.bringMapEditorToTop();
+                if (AbstractNsharpMapResource.getMapResource(editor) != null) {
+                    AbstractNsharpMapResource.getMapResource(editor)
+                            .bringMapEditorToTop();
+                }
             }
             editor.refresh();
         }
@@ -290,7 +294,6 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
 
     @Override
     public boolean handleMouseExit(Event event) {
- 		//System.out.println("handleMouseExit pane="+ getPaneDisplay().getPaneName());
         cursorInPane = false;
         return false;
     }
@@ -304,9 +307,6 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
         return false;
     }
 
-    // private void notifyResourceMiddleClicked(int x, int y) {
-    // }
-
     /**
      * Gets the display you are using
      * 
@@ -319,7 +319,7 @@ public class NsharpAbstractMouseHandler extends InputHandlerDefaultImpl
     public NsharpAbstractPaneDescriptor getDescriptor() {
         return ((NsharpAbstractPaneDescriptor) currentPane.getDescriptor());
     }
-    
+
     public void setCurrentPane(VizDisplayPane currentPane) {
         this.currentPane = currentPane;
     }

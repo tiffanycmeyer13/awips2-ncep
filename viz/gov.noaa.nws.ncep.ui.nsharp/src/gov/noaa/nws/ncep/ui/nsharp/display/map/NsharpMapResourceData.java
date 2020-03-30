@@ -1,4 +1,29 @@
 /**
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
+ *
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
+ *
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
+ *
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
+package gov.noaa.nws.ncep.ui.nsharp.display.map;
+
+import com.raytheon.uf.viz.core.drawables.IDescriptor;
+import com.raytheon.uf.viz.core.exception.VizException;
+import com.raytheon.uf.viz.core.rsc.LoadProperties;
+
+/**
  * 
  * gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResourceData
  * 
@@ -8,139 +33,42 @@
  * <pre>
  * SOFTWARE HISTORY
  * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 03/23/2010	229			Chin Chen	Initial coding
+ * Date         Ticket#     Engineer    Description
+ * -------      -------     --------    -----------
+ * 03/23/2010   229         Chin Chen   Initial coding
+ * 03/31/2020   73571       smanoj      NSHARP D2D port refactor
  *
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
  */
-package gov.noaa.nws.ncep.ui.nsharp.display.map;
-
-import gov.noaa.nws.ncep.viz.common.ui.Markers.MarkerState;
-import gov.noaa.nws.ncep.viz.common.ui.Markers.MarkerTextSize;
-import gov.noaa.nws.ncep.viz.common.ui.Markers.MarkerType;
-
-import com.raytheon.uf.viz.core.drawables.IDescriptor;
-import com.raytheon.uf.viz.core.exception.VizException;
-import com.raytheon.uf.viz.core.rsc.AbstractResourceData;
-import com.raytheon.uf.viz.core.rsc.LoadProperties;
-
-public class NsharpMapResourceData extends AbstractResourceData {
-
-    private MarkerState markerState = MarkerState.MARKER_ONLY;
-
-    private MarkerType markerType = MarkerType.DIAMOND;
-
-    private Float markerSize = 1f;
-
-    private Integer markerWidth = 2;
-
-    private MarkerTextSize markerTextSize = MarkerTextSize.MEDIUM;
-
-    private String mapName = "NSHARP";
-
-    private MarkerType stnMarkerType = MarkerType.LARGE_X;
-
-    public MarkerType getStnMarkerType() {
-        return stnMarkerType;
-    }
+public class NsharpMapResourceData extends AbstractNsharpMapResourceData {
 
     public NsharpMapResourceData() {
         super();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.raytheon.uf.viz.core.rsc.AbstractResourceData#construct(com.raytheon
-     * .uf.viz.core.comm.LoadProperties,
-     * com.raytheon.uf.viz.core.drawables.IDescriptor)
-     */
     @Override
-    public NsharpMapResource construct(LoadProperties loadProperties,
+    public AbstractNsharpMapResource construct(LoadProperties loadProperties,
             IDescriptor descriptor) throws VizException {
-        // TODO Auto-generated method stub
         return new NsharpMapResource(this, loadProperties);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.raytheon.uf.viz.core.rsc.AbstractResourceData#update(java.lang.Object
-     * )
-     */
-    @Override
-    public void update(Object updateData) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof NsharpMapResourceData))
+        if (obj == null || !(obj instanceof NsharpMapResourceData)) {
             return false;
+        }
         NsharpMapResourceData rdata = (NsharpMapResourceData) obj;
         if (this.markerState.equals(rdata.getMarkerState())
                 && this.markerType.equals(rdata.getMarkerType())
                 && this.markerSize.equals(rdata.getMarkerSize())
                 && this.markerWidth.equals(rdata.getMarkerWidth())
                 && this.markerTextSize.equals(rdata.getMarkerTextSize())
-                && this.stnMarkerType.equals(rdata.getStnMarkerType()))
+                && this.stnMarkerType.equals(rdata.getStnMarkerType())) {
             return true;
-
-        return false;
-    }
-
-    public MarkerState getMarkerState() {
-        return markerState;
-    }
-
-    public void setMarkerState(MarkerState markerState) {
-        this.markerState = markerState;
-    }
-
-    public MarkerType getMarkerType() {
-        return markerType;
-    }
-
-    public void setMarkerType(MarkerType markerType) {
-        this.markerType = markerType;
-    }
-
-    public Float getMarkerSize() {
-        return markerSize;
-    }
-
-    public void setMarkerSize(Float markerSize) {
-        this.markerSize = markerSize;
-    }
-
-    public Integer getMarkerWidth() {
-        return markerWidth;
-    }
-
-    public void setMarkerWidth(Integer markerWidth) {
-        this.markerWidth = markerWidth;
-    }
-
-    public MarkerTextSize getMarkerTextSize() {
-        return markerTextSize;
-    }
-
-    public void setMarkerTextSize(MarkerTextSize markerTextSize) {
-        this.markerTextSize = markerTextSize;
-    }
-
-    public String getMapName() {
-        return mapName;
-    }
-
-    public void setMapName(String mapName) {
-        this.mapName = mapName;
+        } else {
+            return false;
+        }
     }
 }
