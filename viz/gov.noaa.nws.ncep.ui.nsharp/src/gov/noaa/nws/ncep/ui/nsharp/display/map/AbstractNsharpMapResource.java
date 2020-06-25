@@ -73,7 +73,8 @@ import com.vividsolutions.jts.geom.Coordinate;
  * Date          Ticket#  Engineer  Description
  * ------------- -------- --------- -----------------
  * Mar 23, 2020  73571    smanoj   Initial creation
- *
+ * Jun 22, 2020  79556    smanoj   Fixing some errors.
+ * 
  * </pre>
  *
  * @author smanoj
@@ -162,10 +163,14 @@ public abstract class AbstractNsharpMapResource extends
 
     public void setPoints(List<NsharpStationInfo> points) {
         if (points == null) {
-            this.pickedPoint.clear();
+            if ((this.pickedPoint != null) && (!this.pickedPoint.isEmpty())) {
+                this.pickedPoint.clear();
+            }
+            if ((this.points != null) && (!this.points.isEmpty())) {
+                this.points.clear();
+            }
             symbolToMark = null;
             symbolSet = null;
-            this.points.clear();
         } else {
             this.points = points;
         }

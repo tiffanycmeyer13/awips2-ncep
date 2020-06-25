@@ -92,6 +92,7 @@ import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
 * 10/16/2018   6835        bsteffen    Refactor printing.
 * 12/20/2018   7575        bsteffen    Do not reuse parcel dialog
 * 04/06/2020   73571       smanoj      NSHARP D2D port refactor
+* 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
 * 
 * </pre>
 *
@@ -734,7 +735,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
             @Override
             public void handleEvent(Event event) {
                 NsharpEditor editor = NsharpEditor.getActiveNsharpEditor();
-                editor.resetGraph();
+                if (editor != null) {
+                    editor.resetGraph();
+                }
             }
         });
 
