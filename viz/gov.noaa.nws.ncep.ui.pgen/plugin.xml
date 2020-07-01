@@ -3449,7 +3449,7 @@
              </command>
        </menuContribution>
    </extension>
-
+   
    <extension
          point="com.raytheon.uf.viz.core.classContext">
          <classContext

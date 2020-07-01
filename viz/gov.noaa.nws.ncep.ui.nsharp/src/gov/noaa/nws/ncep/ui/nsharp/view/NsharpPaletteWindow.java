@@ -1,34 +1,22 @@
 /**
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
  *
- * gov.noaa.nws.ncep.ui.nsharp.palette.NsharpPaletteWindow
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
  *
- * This java class performs the NSHARP GUI construction.
- * This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
  *
- * <pre>
- * SOFTWARE HISTORY
- *
- * Date         Ticket#     Engineer    Description
- * -----------  ----------  ----------  -----------
- * 03/16/2010   229         Chin Chen   Initial coding
- * 03/11/2013   972         Greg Hull   NatlCntrsEditor
- * 09/03/2013   1031        Greg Hull   try 5 times to initialize the inventory.
- * 01/08/2014               Chin Chen   Only initializing inventory when in NCP
- * 01/13/2014   TTR829      Chin Chen   when interpolation, edit graph is allowed
- * 01/22/2014   DR17003     Chin Chen   NSHARP sounding display throws errors when swapping into main pane when show text is turned on.
- * 10/20/2014   DR16864     Chin Chen   D2D does not use unload button. Check to make sure not D2D instance before access unload button.
- * 02/04/2015   DR16888     Chin Chen   do not allow swap between Skewt and hodo when comparison is on, check in with DR17079
- * 08/10/2015   RM#9396     Chin Chen   implement new OPC pane configuration
- * 04/05/2016   RM#10435    rjpeter     Removed Inventory usage.
- * 07/05/2016   RM#15923    Chin Chen   NSHARP - Native Code replacement
- * 08/21/2018   #7081       dgilling    Support refactored NsharpEditDataDialog.
- * 10/16/2018   6835        bsteffen    Refactor printing.
- * 12/20/2018   7575        bsteffen    Do not reuse parcel dialog
- *
- * </pre>
- *
- * @author Chin Chen
- */
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
 package gov.noaa.nws.ncep.ui.nsharp.view;
 
 import org.eclipse.swt.SWT;
@@ -64,6 +52,7 @@ import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
 import com.raytheon.uf.viz.core.drawables.ResourcePair;
 import com.raytheon.uf.viz.d2d.ui.perspectives.D2D5Pane;
 import com.raytheon.viz.ui.UiUtil;
+import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.raytheon.viz.ui.perspectives.VizPerspectiveListener;
 
 import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigManager;
@@ -75,8 +64,40 @@ import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResource;
 import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpResourceHandler;
 import gov.noaa.nws.ncep.ui.nsharp.print.NsharpPrintHandle;
 import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
-import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
 
+/**
+*
+* gov.noaa.nws.ncep.ui.nsharp.palette.NsharpPaletteWindow
+*
+* This java class performs the NSHARP GUI construction.
+* This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
+*
+* <pre>
+* SOFTWARE HISTORY
+*
+* Date         Ticket#     Engineer    Description
+* -----------  ----------  ----------  -----------
+* 03/16/2010   229         Chin Chen   Initial coding
+* 03/11/2013   972         Greg Hull   NatlCntrsEditor
+* 09/03/2013   1031        Greg Hull   try 5 times to initialize the inventory.
+* 01/08/2014               Chin Chen   Only initializing inventory when in NCP
+* 01/13/2014   TTR829      Chin Chen   when interpolation, edit graph is allowed
+* 01/22/2014   DR17003     Chin Chen   NSHARP sounding display throws errors when swapping into main pane when show text is turned on.
+* 10/20/2014   DR16864     Chin Chen   D2D does not use unload button. Check to make sure not D2D instance before access unload button.
+* 02/04/2015   DR16888     Chin Chen   do not allow swap between Skewt and hodo when comparison is on, check in with DR17079
+* 08/10/2015   RM#9396     Chin Chen   implement new OPC pane configuration
+* 04/05/2016   RM#10435    rjpeter     Removed Inventory usage.
+* 07/05/2016   RM#15923    Chin Chen   NSHARP - Native Code replacement
+* 08/21/2018   #7081       dgilling    Support refactored NsharpEditDataDialog.
+* 10/16/2018   6835        bsteffen    Refactor printing.
+* 12/20/2018   7575        bsteffen    Do not reuse parcel dialog
+* 04/06/2020   73571       smanoj      NSHARP D2D port refactor
+* 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
+* 
+* </pre>
+*
+* @author Chin Chen
+*/
 public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
         DisposeListener, IPartListener {
     private final MessageBox mb;
@@ -140,7 +161,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
     private static NsharpPaletteWindow ncpInstance = null;
 
     private static NsharpPaletteWindow d2dInstance = null;
-
+    
+    private  NsharpMapResource mapRsc = null;
+    
     private int currentGraphMode = NsharpConstants.GRAPH_SKEWT;
 
     private String paneConfigurationName;
@@ -464,7 +487,6 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
         page = site.getPage();
         page.addPartListener(this);
 
-        NsharpMapResource.registerMouseHandler();
         /*
          * get several control information back from SkewT resource, in the case
          * that NsharpPaletteWindow view was disposed and re-constructed while
@@ -489,7 +511,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
     @Override
     public void dispose() {
         if (!isEditorVisible) {
-            NsharpMapResource.unregisterMouseHandler();
+            if(mapRsc != null){
+            mapRsc.unregisterMouseHandler();
+            }
             instance = null;
             d2dInstance = null;
             ncpInstance = null;
@@ -498,7 +522,10 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
             super.dispose();
             currentGraphMode = NsharpConstants.GRAPH_SKEWT;
             isEditorVisible = false;
-            NatlCntrsEditor editor = NsharpMapResource.getMapEditor();
+            AbstractEditor editor = null;
+            if(mapRsc != null){
+                editor = mapRsc.getMapEditor();
+            }
             if (editor != null) {
                 for (IRenderableDisplay display : UiUtil
                         .getDisplaysFromContainer(editor)) {
@@ -588,6 +615,8 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
 
                 if (loadDia != null) {
                     loadDia.open();
+                    mapRsc = (NsharpMapResource) loadDia.getMapRsc();
+                    mapRsc.registerMouseHandler();
                 }
             }
         });
@@ -706,7 +735,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
             @Override
             public void handleEvent(Event event) {
                 NsharpEditor editor = NsharpEditor.getActiveNsharpEditor();
-                editor.resetGraph();
+                if (editor != null) {
+                    editor.resetGraph();
+                }
             }
         });
 
@@ -1853,9 +1884,8 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
                     .activateContext("gov.noaa.nws.ncep.ui.nsharp.nsharpContext");
         }
         if (part instanceof NsharpPaletteWindow) {
-            NsharpMapResource rsc = NsharpMapResource.getMapRsc();
-            if (rsc != null) {
-                rsc.setEditable(true);
+            if (mapRsc != null) {
+                mapRsc.setEditable(true);
             }
         }
     }

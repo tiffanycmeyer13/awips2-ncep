@@ -35,6 +35,7 @@
  * 12/20/2018  7575      bsteffen   Do not reuse parcel dialog
  * 01/20/2019  17377     wkwock     Auto-update new arrival NSHARP display.
  * 04/15/2019  7480      bhurley    Improved auto-update and added check to prevent potential NPE.
+ * 03/17/2020  73571     smanoj     Prevent potential NPE.
  *
  * </pre>
  * 
@@ -68,6 +69,8 @@ import com.raytheon.uf.viz.core.datastructure.LoopProperties;
 import com.raytheon.uf.viz.core.drawables.IDescriptor.FramesInfo;
 import com.raytheon.uf.viz.core.drawables.IFrameCoordinator;
 import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
+import com.raytheon.viz.ui.EditorUtil;
+import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.edex.common.nsharpLib.NsharpLibBasics;
@@ -87,7 +90,7 @@ import gov.noaa.nws.ncep.ui.nsharp.NsharpTimeOperationElement;
 import gov.noaa.nws.ncep.ui.nsharp.NsharpWGraphics;
 import gov.noaa.nws.ncep.ui.nsharp.NsharpWxMath;
 import gov.noaa.nws.ncep.ui.nsharp.display.NsharpEditor;
-import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResource;
+import gov.noaa.nws.ncep.ui.nsharp.display.map.AbstractNsharpMapResource;
 import gov.noaa.nws.ncep.ui.nsharp.natives.NsharpDataHandling;
 import gov.noaa.nws.ncep.ui.nsharp.view.NsharpPaletteWindow;
 import gov.noaa.nws.ncep.ui.nsharp.view.NsharpShowTextDialog;
@@ -1227,9 +1230,14 @@ public class NsharpResourceHandler {
     }
 
     public void deleteRscAll() {
-        NsharpMapResource nsharpMapResource = NsharpMapResource
-                .getOrCreateNsharpMapResource();
-        nsharpMapResource.setPoints(null);
+        if (EditorUtil.getActiveEditor() != null) {
+            AbstractEditor mapEditor = ((AbstractEditor) EditorUtil
+                    .getActiveEditor());
+            if (AbstractNsharpMapResource.getMapResource(mapEditor) != null) {
+                AbstractNsharpMapResource.getMapResource(mapEditor)
+                        .setPoints(null);
+            }
+        }
         if (soundingLys != null) {
             soundingLys.clear();
             soundingLys = null;
@@ -1468,7 +1476,7 @@ public class NsharpResourceHandler {
 
     public void handleUserClickOnStationId(Coordinate c, boolean shiftDown) {
         int index = timeStnPaneRsc.getUserClickedStationIdIndex(c);
-        if (index < this.stnElementList.size()) {
+        if (index >= 0 && index < this.stnElementList.size()) {
             NsharpConstants.ActState actState = stnElementList.get(index)
                     .getActionState();
             if (!shiftDown) {

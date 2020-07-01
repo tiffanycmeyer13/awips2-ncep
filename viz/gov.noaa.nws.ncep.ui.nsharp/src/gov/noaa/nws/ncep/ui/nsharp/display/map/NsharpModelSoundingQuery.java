@@ -51,7 +51,8 @@ import com.vividsolutions.jts.geom.Coordinate;
  * 10/06/2015   RM#10295    Chin Chen   initial coding - moving query and loading code form NsharpModelSoundingDialogContents.java
  *                                      Let sounding data query run in its own thread to avoid gui locked out during load
  * 04/10/2017   DR#30518    nabowle     Run sounding queries in parallel.
- *
+ * 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
+ * 
  * </pre>
  * 
  * @author Chin Chen
@@ -246,46 +247,44 @@ public class NsharpModelSoundingQuery extends Job {
                     }
                     // code to this point means query result is not good
                     if (!stnQuery) {
-                        NsharpSoundingQueryCommon
-                                .postToMsgBox("Sounding query with lat/lon ("
-                                        + lat + "/" + lon + ") at " + timeLine
+                        statusHandler.handle(Priority.WARN,
+                                "Sounding query with lat/lon (" + lat + "/"
+                                        + lon + ") at " + timeLine
                                         + ": Returned\n But without valid data");
                     } else {
-                        NsharpSoundingQueryCommon
-                                .postToMsgBox("Sounding query with stn "
-                                        + stnStr + "at lat/lon (" + lat + "/"
-                                        + lon + ") at " + timeLine
+                        statusHandler.handle(Priority.WARN,
+                                "Sounding query with stn " + stnStr
+                                        + "at lat/lon (" + lat + "/" + lon
+                                        + ") at " + timeLine
                                         + ": Returned\n But without valid data");
                     }
                 } else {
                     if (!stnQuery) {
                         if (cube != null)
-                            NsharpSoundingQueryCommon
-                                    .postToMsgBox("Sounding query at lat/lon("
-                                            + lat + "/" + lon + ") at "
-                                            + timeLine
+                            statusHandler.handle(Priority.WARN,
+                                    "Sounding query at lat/lon(" + lat + "/"
+                                            + lon + ") at " + timeLine
                                             + ": failed\nError status:"
                                             + cube.getRtnStatus().toString());
                         else
-                            NsharpSoundingQueryCommon
-                                    .postToMsgBox("Sounding query at lat/lon("
-                                            + lat + "/" + lon + ") at "
-                                            + timeLine
+                            statusHandler.handle(Priority.WARN,
+                                    "Sounding query at lat/lon(" + lat + "/"
+                                            + lon + ") at " + timeLine
                                             + ": failed\nError status:"
                                             + "NULL rtned");
                     } else {
                         if (cube != null)
-                            NsharpSoundingQueryCommon
-                                    .postToMsgBox("Sounding query with stn "
-                                            + stnStr + "at lat/lon (" + lat
-                                            + "/" + lon + ") at " + timeLine
+                            statusHandler.handle(Priority.WARN,
+                                    "Sounding query with stn " + stnStr
+                                            + "at lat/lon (" + lat + "/" + lon
+                                            + ") at " + timeLine
                                             + ": failed\nError status:"
                                             + cube.getRtnStatus().toString());
                         else
-                            NsharpSoundingQueryCommon
-                                    .postToMsgBox("Sounding query with stn "
-                                            + stnStr + "at lat/lon (" + lat
-                                            + "/" + lon + ") at " + timeLine
+                            statusHandler.handle(Priority.WARN,
+                                    "Sounding query with stn " + stnStr
+                                            + "at lat/lon (" + lat + "/" + lon
+                                            + ") at " + timeLine
                                             + ": failed\nError status:"
                                             + "NULL rtned");
                     }
