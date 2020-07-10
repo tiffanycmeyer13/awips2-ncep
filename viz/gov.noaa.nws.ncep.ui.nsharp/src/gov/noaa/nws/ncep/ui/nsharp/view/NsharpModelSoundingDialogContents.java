@@ -79,6 +79,7 @@ import com.vividsolutions.jts.geom.Coordinate;
  *                                       to avoid gui locked out during load
  * 04/05/2016    RM#10435    rjpeter     Removed Inventory usage.
  * 04/02/2020    73571       smanoj      NSHARP D2D port refactor
+ * 07/16/2020    80425       smanoj      Added queryLimit for NSHARP time queries.
  * 
  * </pre>
  * 
@@ -104,6 +105,11 @@ public class NsharpModelSoundingDialogContents
     private List<String> selectedFileList = new ArrayList<>();
 
     private List<String> selectedTimeList = new ArrayList<>();
+
+    // For NSHARP in D2D queryLimit is set to the number of Frames in the
+    // D2D Display, but for NCP, pass in 0 and then ignore the checks in
+    // NsharpModelSoundingQuery.
+    private int queryLimit = 0;
 
     public NsharpModelSoundingDialogContents(Composite parent) {
         super(parent);
@@ -402,7 +408,7 @@ public class NsharpModelSoundingDialogContents
                                     return;
                                 }
                                 NsharpModelSoundingQuery qryAndLd = new NsharpModelSoundingQuery(
-                                        "Querying Sounding Data...");
+                                        "Querying Sounding Data...", queryLimit);
                                 NsharpEditor skewtEdt = NsharpEditor
                                         .createOrOpenEditor();
                                 qryAndLd.queryAndLoadData(false, skewtEdt,
@@ -441,7 +447,7 @@ public class NsharpModelSoundingDialogContents
                                 return;
                             }
                             NsharpModelSoundingQuery qryAndLd = new NsharpModelSoundingQuery(
-                                    "Querying Sounding Data...");
+                                    "Querying Sounding Data...", queryLimit);
                             NsharpEditor skewtEdt = NsharpEditor
                                     .createOrOpenEditor();
                             qryAndLd.queryAndLoadData(true, skewtEdt,

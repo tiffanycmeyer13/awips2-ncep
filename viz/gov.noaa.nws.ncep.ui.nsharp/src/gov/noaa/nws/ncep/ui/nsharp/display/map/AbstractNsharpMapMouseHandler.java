@@ -55,7 +55,9 @@ import gov.noaa.nws.ncep.ui.pgen.tools.InputHandlerDefaultImpl;
  * Date          Ticket#  Engineer  Description
  * ------------- -------- --------- -----------------
  * Mar 25, 2020  73571    smanoj   Initial creation
- *
+ * Jul 14, 2020  80425    smanoj   Fixing a Null Pointer Exception.
+ * Jul 16, 2020  80425    smanoj   Added method to get queryLimit, for D2D use
+ *                                 the number of frames D2D is set to display.
  * </pre>
  *
  * @author smanoj
@@ -111,8 +113,10 @@ public abstract class AbstractNsharpMapMouseHandler extends InputHandlerDefaultI
                 if (loadDia != null) {
                     if (loadDia
                             .getActiveLoadSoundingType() == AbstractNsharpLoadDialog.MODEL_SND
-                            && loadDia.getMdlDialog() != null && loadDia
-                                    .getMdlDialog().getLocationText() != null) {
+                            && loadDia.getMdlDialog() != null
+                            && loadDia.getMdlDialog().getLocationText() != null
+                            && (!(loadDia.getMdlDialog().getLocationText())
+                                    .isDisposed())) {
                         if (loadDia.getMdlDialog()
                                 .getCurrentLocType() == AbstractMdlSoundingDlgContents.LocationType.STATION) {
                             String stnName = SurfaceStationPointData
@@ -134,7 +138,7 @@ public abstract class AbstractNsharpMapMouseHandler extends InputHandlerDefaultI
                                 .getActiveLoadSoundingType();
                         List<NsharpStationInfo> points = mapRsc
                                 .getOrCreateNsharpMapResource().getPoints();
-                        if (points.isEmpty() == false) {
+                        if (points != null && !points.isEmpty()) {
                             // get the stn close to loc "enough" and retrieve
                             // report for it
                             // Note::One stn may have more than one dataLine, if
@@ -147,16 +151,16 @@ public abstract class AbstractNsharpMapMouseHandler extends InputHandlerDefaultI
                                 Map<String, List<NcSoundingLayer>> soundingLysLstMap = 
                                         new HashMap<String, List<NcSoundingLayer>>();
                                 if (activeLoadType == AbstractNsharpLoadDialog.OBSER_SND) {
-                                    NsharpObservedSoundingQuery obsQry = 
-                                            new NsharpObservedSoundingQuery(
-                                            "Querying Sounding Data...");
+                                    NsharpObservedSoundingQuery obsQry = new NsharpObservedSoundingQuery(
+                                            "Querying Sounding Data...",
+                                            getQueryLimit());
                                     obsQry.getObservedSndData(stnPtDataLineLst,
                                             loadDia.getObsDialog().isRawData(),
                                             soundingLysLstMap);
                                 } else if (activeLoadType == AbstractNsharpLoadDialog.PFC_SND) {
-                                    NsharpPfcSoundingQuery pfcQry = 
-                                            new NsharpPfcSoundingQuery(
-                                            "Querying Sounding Data...");
+                                    NsharpPfcSoundingQuery pfcQry = new NsharpPfcSoundingQuery(
+                                            "Querying Sounding Data...",
+                                            getQueryLimit());
                                     pfcQry.getPfcSndDataBySndTmRange(
                                             stnPtDataLineLst,
                                             soundingLysLstMap);
@@ -262,4 +266,6 @@ public abstract class AbstractNsharpMapMouseHandler extends InputHandlerDefaultI
     }
 
     public abstract AbstractNsharpLoadDialog getLoadDialog();
+
+    public abstract int getQueryLimit();
 }
