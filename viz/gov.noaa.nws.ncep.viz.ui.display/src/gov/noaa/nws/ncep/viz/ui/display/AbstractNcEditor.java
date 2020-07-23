@@ -1,6 +1,5 @@
 package gov.noaa.nws.ncep.viz.ui.display;
 
-import gov.noaa.nws.ncep.viz.common.display.NcDisplayType;
 import gov.noaa.nws.ncep.viz.common.preferences.NcepGeneralPreferencesPage;
 import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
 
@@ -11,7 +10,6 @@ import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.ParameterizedCommand;
 import org.eclipse.core.commands.common.CommandException;
 import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -19,11 +17,11 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
 
-import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
+import com.raytheon.uf.common.status.IUFStatusHandler;
+import com.raytheon.uf.common.status.UFStatus;
+import com.raytheon.uf.common.status.UFStatus.Priority;
 import com.raytheon.viz.ui.editor.EditorInput;
 import com.raytheon.viz.ui.editor.VizMultiPaneEditor;
-
-//import gov.noaa.nws.ncep.viz.resources.time_match;
 
 /**
  * Defines the GL-based map editor
@@ -47,7 +45,7 @@ import com.raytheon.viz.ui.editor.VizMultiPaneEditor;
  *                                         Added methods addFrameChangedListener(IFrameChangedListener)
  *                                         and removeFrameChangedListener(IFrameChangedListener)
  * 05/27/10                    ghull       get/setEditorInput()
- * 10/21/10		  #314		   Q. Zhou     added get/set for Hide/Show status
+ * 10/21/10       #314         Q. Zhou     added get/set for Hide/Show status
  * 10/29/10       #307         ghull       added get/setAutoUpdate()
  * 11/04/10       migration    ghull       override isDirty() and return false.
  * 14/01/11      #289         archana     moved the logic to activate contexts from NCMapEditor
@@ -69,185 +67,71 @@ import com.raytheon.viz.ui.editor.VizMultiPaneEditor;
  *                                         call them through NcEditorUtils.
  * 05/12/2016     5645         bsteffen    Eclipse 4: Use HandlerService for command execution.
  * 06/03/2016     5678         bsteffen    Eclipse 4: Do not open new editor when closing NCP.
- * 
- * 
+ * 07/24/2020     80427        smanoj      Fixing NullPointerException and some clean up.
+ *
  * </pre>
- * 
+ *
  * @author chammack
- * 
+ *
  */
 public abstract class AbstractNcEditor extends VizMultiPaneEditor {
+    private static final transient IUFStatusHandler statusHandler = UFStatus
+            .getHandler(AbstractNcEditor.class);
 
-	
-//	public abstract void refreshGUIElements();	
-//	public abstract NcDisplayType getNcDisplayType(); 
-	
-//	@Override
-//	public void init(IEditorSite site, IEditorInput input)
-//	throws PartInitException {
-//		super.init(site, input);
-//
-//		EditorInput edInput = (EditorInput)input;
-//		
-//		AbstractNcPaneManager pm = (AbstractNcPaneManager)edInput.getPaneManager();
-//
-//		// 
-//		synchronized( this ) {
-//			pm.createDisplayName( edInput.getName() );			
-//		}
-//		
-//		edInput.setName( pm.getDisplayName().toString() );
-//	}
-	
-	// Nc Editors have to have an AbstractNcPaneManager
-	//
     @Override
-    protected void validateEditorInput( EditorInput input )
+    protected void validateEditorInput(EditorInput input)
             throws PartInitException {
         super.validateEditorInput(input);
-        
-        // TODO : implement this to validate the 
-        if( input.getPaneManager() == null || 
-        	!(input.getPaneManager() instanceof AbstractNcPaneManager) ) {
-        	
-            throw new PartInitException("Pane manager for Editor is null or doesn't extend AbstractNcPaneManager");
+
+        if (editorInput != null) {
+            setTabTitle(editorInput.getName());
         }
-        AbstractNcPaneManager ncpm = (AbstractNcPaneManager)input.getPaneManager();
-        
-        NcDisplayType ncDispType = ncpm.getDisplayType();
-//// validate the renderable display is of the correct type.        
-//        String rendDispType = ncDispType.getRederableDisplay( );   
-//        
-//        for( IRenderableDisplay display : input.getRenderableDisplays()) {            
-//        	if( !display.getClass().getName().equals( rendDispType ) ) {
-//                throw new PartInitException("Expected renderable display of type: "
-//                        + rendDispType + ", instead of: "
-//                        + display.getClass() );
-//            } 
-//        }
-        
-        setTabTitle( editorInput.getName() );
     }
 
-
-	// move these to AbstractNcEditor
-    // override to not include # panels in title
     @Override
-    public void setTabTitle( String title ) {
-        editorInput.setName( title );
-        setPartName( title );
+    public void setTabTitle(String title) {
+        editorInput.setName(title);
+        setPartName(title);
     }
 
-	// don't do anything but need to override VizMultiPane's method 
-	// which adds the panel # to the title.
     @Override
     protected void updateTitle() {
     }
 
-    //
-    // // Note: this will not get called unless the editor is dirty and
-    // // Also Note that this will bypass raytheon's disableClose so that if we
-    // // implement
-    // // isDirty and still want to allow some of our Editors to not be closed
-    // // (nsharp?), then
-    // // we will need to override disableClose.
     @Override
     public int promptToSaveOnClose() {
-    	return super.promptToSaveOnClose();
+        return super.promptToSaveOnClose();
     }
-    
-    // @Override
-    // public int promptToSaveOnClose() {
-    // if (PlatformUI.getWorkbench().isClosing()) {
-    // return ISaveablePart2.NO;
-    // }
-    // Shell shell = getSite().getShell();
-    //
-    // boolean close = MessageDialog.openQuestion(shell, "Close Editor?",
-    // "Are you sure you want to close this Display?");
-    // return close ? ISaveablePart2.NO : ISaveablePart2.CANCEL;
-    // }
-    //
-    // // We could implement an isDirty method in AbstractNatlCntrsResource
-    // // except currently there can't be a dependency from the display project
-    // to
-    // // the
-    // // resources project. If we did this then the pgen resource (others?)
-    // could
-    // // implement isDirty to allow the user to cancel an editor close (above).
-    // //
-     @Override
-     public boolean isDirty() {
-    	 
-//    	 for( IDisplayPane pane : getDisplayPanes() ) {
-//    		 IRenderableDisplay display = pane.getRenderableDisplay();
-//    		 if (display != null) {
-//    			 for (ResourcePair rp : display.getDescriptor()
-//    					 .getResourceList()) {
-//    				 if( rp.getResource() instanceof AbstractNatlCntrsResource ) {
-//    					 if( ((AbstractNatlCntrsResource)rp.getResource()).isDirty() ) {
-//    						 return true;
-//    					 }
-//    				 }
-//    				 // raytheons test...
-//    				 ResourceProperties props = rp.getProperties();
-//    				 if (!props.isSystemResource() && !props.isMapLayer()) {
-//    					 return true;
-//    				 }
-//    			 }
-//    		 }
-//    	 }
- 		return NmapCommon.getNcepPreferenceStore().getBoolean( NcepGeneralPreferencesPage.PromptOnDisplayClose );
-     }
-     
-     // Override AbstractEditor implementation which will loop thru the
-     // renderable displays and call addPane.
-     // Since we already know the paneLayout, we can create the gridLayout
-     // here.
-//     @Override
-//     public void createPartControl(Composite parent) {
-//
-//         editorInput.getPaneManager().initializeComponents(this, parent);
-//
-//         for (IRenderableDisplay display : displaysToLoad) {
-//             addPane(display);
-//
-//             if( getNumberofPanes() == 1) {
-//            	 EditorInput edin = (EditorInput)getEditorInput();
-//            	
-//            	if( edin.getPaneManager() instanceof NCPaneManager ) {
-//            		((NCPaneManager)edin.getPaneManager()).selectPane( getDisplayPanes()[0] );
-//            	}
-//             }
-//         }
-//
-//         contributePerspectiveActions();
-//     }
 
+    @Override
+    public boolean isDirty() {
+        return NmapCommon.getNcepPreferenceStore()
+                .getBoolean(NcepGeneralPreferencesPage.PromptOnDisplayClose);
+    }
 
-     //
- 	@Override
- 	public void dispose() { 		
- 		super.dispose();
+    @Override
+    public void dispose() {
+        super.dispose();
 
         final IWorkbenchPage page = this.getSite().getPage();
 
         IWorkbenchWindow window = page.getWorkbenchWindow();
-        
+
         if (window.getWorkbench().isClosing()) {
             return;
         }
 
- 		if( page.getEditorReferences().length == 0 ) {
-            
+        if (page.getEditorReferences().length == 0) {
+
             ICommandService commandService = window
                     .getService(ICommandService.class);
             Command cmd = commandService
                     .getCommand("gov.noaa.nws.ncep.viz.ui.newMapEditor");
- 			if( cmd == null ) {
- 				System.out.println("Can't find Command to create a new Display");
- 				return;
- 			}
+            if (cmd == null) {
+                statusHandler.handle(Priority.WARN,
+                        "Can't find Command to create a new Display");
+                return;
+            }
 
             Map<String, Object> parameters = Collections
                     .<String, Object> singletonMap("promptForName", "false");
@@ -286,24 +170,24 @@ public abstract class AbstractNcEditor extends VizMultiPaneEditor {
                 }
             });
 
- 		}
- 	}
-    
+        }
+    }
+
     public String getDefaultTool() {
-    	AbstractNcPaneManager pm = getNcPaneManager();
-        return (pm == null ? null : pm.getDefaultTool() );
+        AbstractNcPaneManager pm = getNcPaneManager();
+        return (pm == null ? null : pm.getDefaultTool());
     }
 
     public AbstractNcPaneManager getNcPaneManager() {
-    	IEditorInput edin = getEditorInput();
-    	
-    	if( edin instanceof EditorInput &&
-    		((EditorInput)edin).getPaneManager() instanceof AbstractNcPaneManager ) {
-    		
-            return (AbstractNcPaneManager)((EditorInput)edin).getPaneManager();    		
-    	}
-    	else {
-    		return null;
-    	}
+        IEditorInput edin = getEditorInput();
+
+        if (edin instanceof EditorInput && ((EditorInput) edin)
+                .getPaneManager() instanceof AbstractNcPaneManager) {
+
+            return (AbstractNcPaneManager) ((EditorInput) edin)
+                    .getPaneManager();
+        } else {
+            return null;
+        }
     }
 }
