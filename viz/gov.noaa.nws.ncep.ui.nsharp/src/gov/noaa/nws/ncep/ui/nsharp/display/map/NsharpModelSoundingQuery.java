@@ -48,11 +48,15 @@ import com.vividsolutions.jts.geom.Coordinate;
  * 
  * Date         Ticket#     Engineer    Description
  * -------      -------     --------    -----------
- * 10/06/2015   RM#10295    Chin Chen   initial coding - moving query and loading code form NsharpModelSoundingDialogContents.java
- *                                      Let sounding data query run in its own thread to avoid gui locked out during load
+ * 10/06/2015   RM#10295    Chin Chen   initial coding - moving query and loading code
+ *                                      form NsharpModelSoundingDialogContents.java
+ *                                      Let sounding data query run in its own thread 
+ *                                      to avoid gui locked out during load
  * 04/10/2017   DR#30518    nabowle     Run sounding queries in parallel.
  * 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
- * 
+ * 07/14/2020   80425       smanoj      Limit the amount of NSHARP D2D time queries by the
+ *                                      number of frames D2D is set to display.
+ *
  * </pre>
  * 
  * @author Chin Chen
@@ -60,7 +64,9 @@ import com.vividsolutions.jts.geom.Coordinate;
 public class NsharpModelSoundingQuery extends Job {
     private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(NsharpModelSoundingQuery.class);
-    
+
+    private int queryLimit;
+
     /**
      * Used to run sounding queries in parallel. CAVE restricts the number of
      * concurrent connections to EDEX, so we can't achieve parallelism
@@ -71,8 +77,9 @@ public class NsharpModelSoundingQuery extends Job {
             .newFixedThreadPool(
                     Integer.getInteger("nsharp.concurrent.model.queries", 8));
 
-    public NsharpModelSoundingQuery(String name) {
+    public NsharpModelSoundingQuery(String name, int queryLimit) {
         super(name);
+        this.queryLimit = queryLimit;
     }
 
     private boolean stnQuery;
@@ -150,6 +157,11 @@ public class NsharpModelSoundingQuery extends Job {
             // Therefore, PFC query is much faster.
             List<Future<NcSoundingCube>> runningQueries = new ArrayList<>(selectedTimeList.size());
             for (String timeLine : selectedTimeList) {
+
+                if (queryLimit != 0 && runningQueries.size() >= queryLimit) {
+                    break;
+                }
+
                 // avail file, ie. its refTime
                 String selectedFileStr = timeLineToFileMap.get(timeLine);
 
