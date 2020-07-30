@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -55,6 +56,10 @@ import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
  * 12/12/2016   R25982      J Beck      Modify support for Aviation > TAFs
  *                                      and Observed Data > TAFs Decoded
  * 04/14/2020   76579       k sunil     Added code to implement LATEST as the default range
+ * 07/23/2020   80427       smanoj      Added Scrollbar to NCTEXT window. Also removed the
+ *                                      leading “-- Surface Hourlies: Station:” and trailing “$ --”
+ *                                      from station reports, and removed the repeats of station
+ *                                      reports when viewing station text readouts in Text Report.
  * </pre>
  *
  * @author Chin Chen
@@ -143,6 +148,10 @@ public class NctextuiPaletteWindow extends ViewPart
 
     private Button latestBtn, oneHrBtn, threeHrBtn, sixHrBtn, twelveHrBtn,
             twentyfourHrBtn, fourtyeightHrBtn, allHrBtn;
+
+    private static final int MIN_WIDTH = 1000;
+
+    private static final int MIN_HEIGHT = 400;
 
     /**
      * No-arg Constructor
@@ -234,10 +243,19 @@ public class NctextuiPaletteWindow extends ViewPart
      */
     @Override
     public void createPartControl(Composite parent) {
+        ScrolledComposite sc = new ScrolledComposite(parent,
+                SWT.H_SCROLL | SWT.V_SCROLL);
+        sc.setAlwaysShowScrollBars(true);
+        sc.setExpandHorizontal(true);
+        sc.setExpandVertical(true);
+        sc.setMinSize(MIN_WIDTH, MIN_HEIGHT);
+        Composite comp = new Composite(sc, SWT.NONE);
+        sc.setContent(comp);
+        GridLayout layout = new GridLayout(1, true);
+        comp.setLayout(layout);
 
-        parent.setLayout(new GridLayout(1, false));
         // create textGp group. It contains text and textMode group
-        textGp = new Group(parent, SWT.SHADOW_OUT);
+        textGp = new Group(comp, SWT.SHADOW_OUT);
         textGp.setLayout(new GridLayout());
         textGp.setText("Text Report");
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -248,7 +266,7 @@ public class NctextuiPaletteWindow extends ViewPart
 
         // Create ConfigGp group. It contains dataTypegp, dataProductGp, time
         // cover group and state/stn group
-        Group configGp = new Group(parent, SWT.SHADOW_ETCHED_OUT);
+        Group configGp = new Group(comp, SWT.SHADOW_ETCHED_OUT);
         configGp.setLayout(new GridLayout(3, false));
 
         createGpList(configGp);
@@ -934,29 +952,27 @@ public class NctextuiPaletteWindow extends ViewPart
                         // Add to the station header text if not TAF
                         if (!isTafProduct(currentProductName)) {
 
-                            textStr.append("-- "
-                                    + nctextuiPaletteWindow
-                                            .getCurrentProductName()
-                                    + ": " + "Station: " + stationId + "  "
-                                    + "--" + NEW_LINE);
-                        }
-
-                        /*
-                         * For "TAFs decoded" (NOT Aviation TAFs) we have a
-                         * special case and we must extract only the text for
-                         * the station of interest from the raw bulletin. We
-                         * don't display WMO headers, or other stations in the
-                         * bulletin.
-                         * 
-                         */
-                        if (currentProductName.equals("TAFs Decoded")) {
-                            textToDisp = getStationText(rawBulletin, stationId);
+                            textStr.append(stationId + NEW_LINE);
                         } else {
-                            textToDisp = rawBulletin;
-                        }
 
-                        textToDisp = removeCR(textToDisp);
-                        textStr.append(textToDisp + NEW_LINE);
+                            /*
+                             * For "TAFs decoded" (NOT Aviation TAFs) we have a
+                             * special case and we must extract only the text
+                             * for the station of interest from the raw
+                             * bulletin. We don't display WMO headers, or other
+                             * stations in the bulletin.
+                             * 
+                             */
+                            if (currentProductName.equals("TAFs Decoded")) {
+                                textToDisp = getStationText(rawBulletin,
+                                        stationId);
+                            } else {
+                                textToDisp = rawBulletin;
+                            }
+
+                            textToDisp = removeCR(textToDisp);
+                            textStr.append(textToDisp + NEW_LINE);
+                        }
                     }
 
                     // When put text string to Text display, use "setText" but

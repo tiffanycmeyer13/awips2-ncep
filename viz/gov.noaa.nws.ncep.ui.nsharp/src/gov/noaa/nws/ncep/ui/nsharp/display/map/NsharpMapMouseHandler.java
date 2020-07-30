@@ -39,6 +39,7 @@ import gov.noaa.nws.ncep.ui.nsharp.view.NsharpLoadDialog;
  * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own
  *                                      thread to avoid gui locked out during load
  * 03/31/2020   73571       smanoj      NSHARP D2D port refactor
+ * 07/16/2020   80425       smanoj      Added queryLimit for NSHARP time queries.
  *
  * </pre>
  * 
@@ -49,5 +50,11 @@ public class NsharpMapMouseHandler extends AbstractNsharpMapMouseHandler {
     @Override
     public AbstractNsharpLoadDialog getLoadDialog() {
         return NsharpLoadDialog.getAccess();
+    }
+
+    @Override
+    public int getQueryLimit() {
+        //default to 0 for NCP perspective 
+        return 0;
     }
 }
