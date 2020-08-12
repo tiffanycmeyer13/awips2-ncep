@@ -60,6 +60,8 @@ import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
  *                                      leading “-- Surface Hourlies: Station:” and trailing “$ --”
  *                                      from station reports, and removed the repeats of station
  *                                      reports when viewing station text readouts in Text Report.
+ * 08/03/2020   80399       smanoj      Removing "TAFs Decoded" from NCTEXT "Observed Data" menu.
+ *
  * </pre>
  *
  * @author Chin Chen
@@ -152,6 +154,10 @@ public class NctextuiPaletteWindow extends ViewPart
     private static final int MIN_WIDTH = 1000;
 
     private static final int MIN_HEIGHT = 400;
+
+    private final static String TAFS_LABEL = "TAFs";
+
+    private final static String TAFS_DECODED_LABEL = "TAFs Decoded";
 
     /**
      * No-arg Constructor
@@ -325,8 +331,13 @@ public class NctextuiPaletteWindow extends ViewPart
                          * Widget list was created earlier. This part of code is
                          * listener event handler and is invoked when user picks
                          * gp
+                         * 
+                         * Skipping "TAFs Decoded" (#80399 - Remove "TAFs Decoded"
+                         * from NCTEXT "Observed Data" menu)
                          */
-                        typeWdgList.add(str);
+                        if (!str.contains(TAFS_DECODED_LABEL)) {
+                            typeWdgList.add(str);
+                        }
                     }
 
                     /*
@@ -379,7 +390,11 @@ public class NctextuiPaletteWindow extends ViewPart
         for (String str : tempprodTypeList) {
             // add default product type list to widget list, note that widget
             // list was created earlier.
-            typeWdgList.add(str);
+            // Skipping "TAFs Decoded" (#80399 - Remove "TAFs Decoded" from
+            // NCTEXT "Observed Data" menu)
+            if (!str.contains(TAFS_DECODED_LABEL)) {
+                typeWdgList.add(str);
+            }
         }
 
         typeWdgList.setSelection(dataTypePdItem);
@@ -954,22 +969,7 @@ public class NctextuiPaletteWindow extends ViewPart
 
                             textStr.append(stationId + NEW_LINE);
                         } else {
-
-                            /*
-                             * For "TAFs decoded" (NOT Aviation TAFs) we have a
-                             * special case and we must extract only the text
-                             * for the station of interest from the raw
-                             * bulletin. We don't display WMO headers, or other
-                             * stations in the bulletin.
-                             * 
-                             */
-                            if (currentProductName.equals("TAFs Decoded")) {
-                                textToDisp = getStationText(rawBulletin,
-                                        stationId);
-                            } else {
-                                textToDisp = rawBulletin;
-                            }
-
+                            textToDisp = rawBulletin;
                             textToDisp = removeCR(textToDisp);
                             textStr.append(textToDisp + NEW_LINE);
                         }
@@ -1008,21 +1008,7 @@ public class NctextuiPaletteWindow extends ViewPart
                     rawBulletin = (String) (rptLstList.get(0)
                             .get(currentTextIndex))[0];
 
-                    /*
-                     * For "TAFs decoded" we have a special case and must
-                     * extract the text for the station of interest from the raw
-                     * bulletin.
-                     */
-                    if (currentProductName.equals("TAFs Decoded")) {
-
-                        textToDisp = getStationText(rawBulletin,
-                                StnPt.getStnid());
-
-                    } else {
-                        /* All other NCTEXT products use the entire bulletin */
-                        textToDisp = rawBulletin;
-                    }
-
+                    textToDisp = rawBulletin;
                     textToDisp = removeCR(textToDisp);
                     textToDisp += NEW_LINE;
 
@@ -1106,7 +1092,7 @@ public class NctextuiPaletteWindow extends ViewPart
      */
     private void enableOrDisableHoursButtons(String productType) {
 
-        if (productType.equals("TAFs Decoded") || productType.equals("TAFs")) {
+        if (productType.equals(TAFS_LABEL)) {
 
             // disable hour buttons
 
@@ -1141,11 +1127,10 @@ public class NctextuiPaletteWindow extends ViewPart
                     (nctextuiPaletteWindow.getTimeCovered()));
 
             /*
-             * Set the time range covered to NONE. This affects the database
-             * query, so it doesn't try to query a time range. It's important we
-             * set this back to what is previously was.
+             * Set the time range covered to TWENTYFOUR_HOURS (instead of NONE)
+             * to improve database query performance. 
              */
-            nctextuiPaletteWindow.setTimeCovered((EReportTimeRange.NONE));
+            nctextuiPaletteWindow.setTimeCovered((EReportTimeRange.TWENTYFOUR_HOURS));
 
         } else {
 
@@ -1316,7 +1301,7 @@ public class NctextuiPaletteWindow extends ViewPart
 
     public boolean isTafProduct(String product) {
 
-        if (product.equals("TAFs Decoded") || product.equals("TAFs")) {
+        if (product.equals(TAFS_LABEL)) {
             return true;
 
         } else {
