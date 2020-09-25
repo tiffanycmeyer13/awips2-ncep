@@ -46,6 +46,8 @@ import com.vividsolutions.jts.geom.Coordinate;
  *                                   resource handler.
  * Dec 14, 2018  6872     bsteffen   Display more precision when needed
  * Jan 23  2019  21039    smoorthy   make fonts the same as on 18.1.2
+ * Sep 24, 2020  82255    smanoj     Nsharp Point Forecast Sounding retrieval should
+ *                                   load first Forecast Hour(V000) as default.
  * 
  * </pre>
  * 
@@ -139,6 +141,12 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
     private boolean compareTmIsOn;
 
     private boolean compareSndIsOn;
+
+    private boolean initialLoad = true;
+
+    private final static String NAM_SOUNDING_TYPE = "NAMS";
+
+    private final static String GFS_SOUNDING_TYPE = "GFSS";
 
     public NsharpTimeStnPaneResource(AbstractResourceData resourceData,
             LoadProperties loadProperties, NsharpAbstractPaneDescriptor desc) {
@@ -614,6 +622,11 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
             x = sndXOrig + 5;
             NsharpOperationElement elm = sndElemList.get(j);
             NsharpConstants.ActState sta = elm.getActionState();
+
+            sndTypeStr = elm.getDescription().substring(
+                    elm.getDescription().length() - 4,
+                    elm.getDescription().length());
+
             if (sta == NsharpConstants.ActState.ACTIVE && j == curSndIndex)
                 sta = NsharpConstants.ActState.CURRENT;
 
@@ -735,8 +748,19 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
         // plot color notations
         drawNsharpColorNotation(target, colorNoteRectangle);
 
+        // Nsharp Point Forecast Sounding(NAM or GFS) retrieval should
+        // load first Forecast Hour(V000) as default.
+        if (initialLoad) {
+            if ((NAM_SOUNDING_TYPE.equalsIgnoreCase(sndTypeStr))
+                    || (GFS_SOUNDING_TYPE.equalsIgnoreCase(sndTypeStr))) {
+                curTimeLineIndex = rscHandler.getFrameCount() - 1;
+                rscHandler.setSoundingType(sndTypeStr);
+                rscHandler.setCurrentIndex(curTimeLineIndex);
+                initialLoad = false;
+            }
+        }
     }
-    
+
     private void calculateTimeStnBoxData() {
         totalTimeLinePage = timeElemList.size() / numLineToShowPerPage;
         if (timeElemList.size() % numLineToShowPerPage != 0)
