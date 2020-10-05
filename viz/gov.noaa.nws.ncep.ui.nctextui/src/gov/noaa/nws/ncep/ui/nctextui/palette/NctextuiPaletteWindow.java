@@ -62,7 +62,8 @@ import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
  *                                      reports when viewing station text readouts in Text Report.
  * 08/03/2020   80399       smanoj      Removing "TAFs Decoded" from NCTEXT "Observed Data" menu.
  * 09/30/2020   83351       smanoj      Fix Aviation TAFs State retrieval bug.
- * 
+ * 10/05/2020   83352       smanoj      Fix Offshore forecast retrieval bug.
+ *
  * </pre>
  *
  * @author Chin Chen
@@ -963,14 +964,13 @@ public class NctextuiPaletteWindow extends ViewPart
 
                         // Add to the station header text if not TAF
                         if (!isTafProduct(currentProductName)) {
-
                             textStr.append(stationId + NEW_LINE);
+                            textToDisp = rawBulletin;
                         } else {
-                            textToDisp=getStationText(rawBulletin,
-                                    stationId);
-                            textToDisp = removeCR(textToDisp);
-                            textStr.append(textToDisp + NEW_LINE);
+                            textToDisp = getStationText(rawBulletin, stationId);
                         }
+                        textToDisp = removeCR(textToDisp);
+                        textStr.append(textToDisp + NEW_LINE);
                     }
 
                     // When put text string to Text display, use "setText" but
