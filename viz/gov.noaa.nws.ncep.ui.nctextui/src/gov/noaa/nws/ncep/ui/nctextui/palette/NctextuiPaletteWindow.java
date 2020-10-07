@@ -61,6 +61,8 @@ import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
  *                                      from station reports, and removed the repeats of station
  *                                      reports when viewing station text readouts in Text Report.
  * 08/03/2020   80399       smanoj      Removing "TAFs Decoded" from NCTEXT "Observed Data" menu.
+ * 09/30/2020   83351       smanoj      Fix Aviation TAFs State retrieval bug.
+ * 10/05/2020   83352       smanoj      Fix Offshore forecast retrieval bug.
  *
  * </pre>
  *
@@ -945,15 +947,11 @@ public class NctextuiPaletteWindow extends ViewPart
                  */
                 if (nctextuiPaletteWindow.isState()) {
 
-                    if (isTafProduct(currentProductName)) {
-                        textStr = new StringBuilder("");
-                    } else {
-                        textStr = new StringBuilder(
-                                "--State of " + StnPt.getState() + " -- "
-                                        + nctextuiPaletteWindow
-                                                .getCurrentProductName()
-                                        + " Report" + NEW_LINE);
-                    }
+                    textStr = new StringBuilder(
+                            "--State of " + StnPt.getState() + " -- "
+                                    + nctextuiPaletteWindow
+                                            .getCurrentProductName()
+                                    + " Report" + NEW_LINE);
 
                     for (List<Object[]> lstObj : rptLstList) {
 
@@ -966,13 +964,13 @@ public class NctextuiPaletteWindow extends ViewPart
 
                         // Add to the station header text if not TAF
                         if (!isTafProduct(currentProductName)) {
-
                             textStr.append(stationId + NEW_LINE);
-                        } else {
                             textToDisp = rawBulletin;
-                            textToDisp = removeCR(textToDisp);
-                            textStr.append(textToDisp + NEW_LINE);
+                        } else {
+                            textToDisp = getStationText(rawBulletin, stationId);
                         }
+                        textToDisp = removeCR(textToDisp);
+                        textStr.append(textToDisp + NEW_LINE);
                     }
 
                     // When put text string to Text display, use "setText" but
@@ -1007,8 +1005,12 @@ public class NctextuiPaletteWindow extends ViewPart
                     // get the raw bulletin
                     rawBulletin = (String) (rptLstList.get(0)
                             .get(currentTextIndex))[0];
-
-                    textToDisp = rawBulletin;
+                    if (isTafProduct(currentProductName)) {
+                        textToDisp = getStationText(rawBulletin,
+                                StnPt.getStnid());
+                    } else {
+                        textToDisp = rawBulletin;
+                    }
                     textToDisp = removeCR(textToDisp);
                     textToDisp += NEW_LINE;
 
