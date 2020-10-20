@@ -63,6 +63,8 @@ import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
  * 08/03/2020   80399       smanoj      Removing "TAFs Decoded" from NCTEXT "Observed Data" menu.
  * 09/30/2020   83351       smanoj      Fix Aviation TAFs State retrieval bug.
  * 10/05/2020   83352       smanoj      Fix Offshore forecast retrieval bug.
+ * 10/16/2020   83597       smanoj      Aviation TAFs Hour Covered selection disabled,
+ *                                      but always set to "Latest".
  *
  * </pre>
  *
@@ -1119,10 +1121,9 @@ public class NctextuiPaletteWindow extends ViewPart
             timeGp.setEnabled(false);
 
             /*
-             * Set the selected button even though it is disabled, as good
-             * visual feedback (and like legacy)
+             * Aviation TAFs Hour Covered selection always set to "Latest"
              */
-            selectHourCoveredButton(getTimeCovered());
+            selectHourCoveredButton(EReportTimeRange.LATEST);
 
             // Save the current time range covered
             nctextuiPaletteWindow.setTempTimeCovered(
