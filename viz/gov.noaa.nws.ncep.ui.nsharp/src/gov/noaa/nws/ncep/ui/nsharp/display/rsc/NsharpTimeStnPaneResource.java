@@ -48,6 +48,8 @@ import com.vividsolutions.jts.geom.Coordinate;
  * Jan 23  2019  21039    smoorthy   make fonts the same as on 18.1.2
  * Sep 24, 2020  82255    smanoj     Nsharp Point Forecast Sounding retrieval should
  *                                   load first Forecast Hour(V000) as default.
+ * Oct 15, 2020  82255    smanoj     Additional fix for Nsharp PFC Sounding retrieval
+ *                                   to load Forecast Hour(V000) as default.
  * 
  * </pre>
  * 
@@ -135,6 +137,8 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
     private String timelineStr = "NA";
 
     private String stationStr = "NA";
+
+    private String previousStnSelected = "NA";
 
     private boolean compareStnIsOn;
 
@@ -751,13 +755,27 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
         // Nsharp Point Forecast Sounding(NAM or GFS) retrieval should
         // load first Forecast Hour(V000) as default.
         if (initialLoad) {
-            if ((NAM_SOUNDING_TYPE.equalsIgnoreCase(sndTypeStr))
-                    || (GFS_SOUNDING_TYPE.equalsIgnoreCase(sndTypeStr))) {
-                curTimeLineIndex = rscHandler.getFrameCount() - 1;
-                rscHandler.setSoundingType(sndTypeStr);
-                rscHandler.setCurrentIndex(curTimeLineIndex);
-                initialLoad = false;
+            previousStnSelected = stnElemList.get(curStnIndex).getDescription();
+            initialPFCLoadToHour0();
+            initialLoad = false;
+        } else {
+            if (!(previousStnSelected.equalsIgnoreCase(
+                    stnElemList.get(curStnIndex).getDescription()))) {
+                // New station selected; load Forecast Hour(V000) as default
+                initialPFCLoadToHour0();
             }
+        }
+    }
+
+    private void initialPFCLoadToHour0() {
+        // Nsharp Point Forecast Sounding(NAM or GFS) retrieval should
+        // load first Forecast Hour(V000) as default.
+        if ((NAM_SOUNDING_TYPE.equalsIgnoreCase(sndTypeStr))
+                || (GFS_SOUNDING_TYPE.equalsIgnoreCase(sndTypeStr))) {
+            curTimeLineIndex = rscHandler.getFrameCount() - 1;
+            rscHandler.setSoundingType(sndTypeStr);
+            rscHandler.setCurrentIndex(curTimeLineIndex);
+            previousStnSelected = stnElemList.get(curStnIndex).getDescription();
         }
     }
 
