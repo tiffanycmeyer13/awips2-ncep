@@ -65,6 +65,7 @@ import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
  * 10/05/2020   83352       smanoj      Fix Offshore forecast retrieval bug.
  * 10/16/2020   83597       smanoj      Aviation TAFs Hour Covered selection disabled,
  *                                      but always set to "Latest".
+ * 10/21/2020   84059       smanoj      Fix NCTEXT Hour Covered Duplicate Selections issue.
  *
  * </pre>
  *
@@ -87,8 +88,6 @@ public class NctextuiPaletteWindow extends ViewPart
     private NctextDbQuery query;
 
     private EReportTimeRange timeCovered = EReportTimeRange.LATEST;
-
-    private EReportTimeRange tempTimeCovered;
 
     private boolean isState = false;
 
@@ -1125,9 +1124,6 @@ public class NctextuiPaletteWindow extends ViewPart
              */
             selectHourCoveredButton(EReportTimeRange.LATEST);
 
-            // Save the current time range covered
-            nctextuiPaletteWindow.setTempTimeCovered(
-                    (nctextuiPaletteWindow.getTimeCovered()));
 
             /*
              * Set the time range covered to TWENTYFOUR_HOURS (instead of NONE)
@@ -1153,19 +1149,6 @@ public class NctextuiPaletteWindow extends ViewPart
 
             // Enable the button group
             timeGp.setEnabled(true);
-
-            // If disabled previously, then restore the previous time range
-            // covered
-            if (nctextuiPaletteWindow
-                    .getTimeCovered() == EReportTimeRange.NONE) {
-
-                nctextuiPaletteWindow.setTimeCovered(
-                        (nctextuiPaletteWindow.getTempTimeCovered()));
-
-                // Now select the correct radio button
-                selectHourCoveredButton(timeCovered);
-            }
-
         }
 
     }
@@ -1292,14 +1275,6 @@ public class NctextuiPaletteWindow extends ViewPart
 
     public int getDataTypeProductItem() {
         return this.dataTypePdItem;
-    }
-
-    public EReportTimeRange getTempTimeCovered() {
-        return tempTimeCovered;
-    }
-
-    public void setTempTimeCovered(EReportTimeRange tempTimeCovered) {
-        this.tempTimeCovered = tempTimeCovered;
     }
 
     public boolean isTafProduct(String product) {
