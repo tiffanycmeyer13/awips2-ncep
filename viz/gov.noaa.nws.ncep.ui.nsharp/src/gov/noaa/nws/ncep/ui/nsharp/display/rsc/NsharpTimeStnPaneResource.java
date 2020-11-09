@@ -50,6 +50,7 @@ import com.vividsolutions.jts.geom.Coordinate;
  *                                   load first Forecast Hour(V000) as default.
  * Oct 15, 2020  82255    smanoj     Additional fix for Nsharp PFC Sounding retrieval
  *                                   to load Forecast Hour(V000) as default.
+ * Nov 09, 2020  84810    smanoj     Fix a Null Pointer Exception.
  * 
  * </pre>
  * 
@@ -754,15 +755,18 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
 
         // Nsharp Point Forecast Sounding(NAM or GFS) retrieval should
         // load first Forecast Hour(V000) as default.
-        if (initialLoad) {
-            previousStnSelected = stnElemList.get(curStnIndex).getDescription();
-            initialPFCLoadToHour0();
-            initialLoad = false;
-        } else {
-            if (!(previousStnSelected.equalsIgnoreCase(
-                    stnElemList.get(curStnIndex).getDescription()))) {
-                // New station selected; load Forecast Hour(V000) as default
+        if (stnElemList.size() > 0) {
+            if (initialLoad) {
+                previousStnSelected = stnElemList.get(curStnIndex)
+                        .getDescription();
                 initialPFCLoadToHour0();
+                initialLoad = false;
+            } else {
+                if (!(previousStnSelected.equalsIgnoreCase(
+                        stnElemList.get(curStnIndex).getDescription()))) {
+                    // New station selected; load Forecast Hour(V000) as default
+                    initialPFCLoadToHour0();
+                }
             }
         }
     }
