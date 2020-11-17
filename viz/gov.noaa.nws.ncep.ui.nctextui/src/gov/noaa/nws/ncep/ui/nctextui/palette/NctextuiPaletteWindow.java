@@ -66,6 +66,7 @@ import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
  * 10/16/2020   83597       smanoj      Aviation TAFs Hour Covered selection disabled,
  *                                      but always set to "Latest".
  * 10/21/2020   84059       smanoj      Fix NCTEXT Hour Covered Duplicate Selections issue.
+ * 11/12/2020   84877       smanoj      Fix Surface Hourlies Text Report bug.
  *
  * </pre>
  *
@@ -142,6 +143,8 @@ public class NctextuiPaletteWindow extends ViewPart
     private HandlePrinting printingHandle;
 
     private boolean isEditorVisible = true;
+
+    private boolean tafSelected = false;
 
     private int dataTypeGpItem = 0;
 
@@ -354,17 +357,17 @@ public class NctextuiPaletteWindow extends ViewPart
                      * Check to make sure there is a type for this group, then
                      * enable or disable the "Hour Covered" buttons.
                      */
-
-                    String productType = null;
                     int productTypeListSize = typeWdgList.getSelectionCount();
 
                     if (productTypeListSize > 0) {
-
-                        productType = typeWdgList.getSelection()[0];
+                        selectedType = typeWdgList.getSelection()[0];
+                        currentProductName = selectedType;
+                        handleProductTypeStnMarking();
+                        setDataTypeProductItem(typeWdgList.getSelectionIndex());
 
                         // Disable the "Hour Covered" radio buttons for TAF text
                         // products
-                        enableOrDisableHoursButtons(productType);
+                        enableOrDisableHoursButtons(selectedType);
 
                     }
                 }
@@ -965,7 +968,6 @@ public class NctextuiPaletteWindow extends ViewPart
 
                         // Add to the station header text if not TAF
                         if (!isTafProduct(currentProductName)) {
-                            textStr.append(stationId + NEW_LINE);
                             textToDisp = rawBulletin;
                         } else {
                             textToDisp = getStationText(rawBulletin, stationId);
@@ -1097,6 +1099,8 @@ public class NctextuiPaletteWindow extends ViewPart
 
         if (productType.equals(TAFS_LABEL)) {
 
+            tafSelected = true;
+
             // disable hour buttons
 
             oneHrBtn.setEnabled(false);
@@ -1149,6 +1153,14 @@ public class NctextuiPaletteWindow extends ViewPart
 
             // Enable the button group
             timeGp.setEnabled(true);
+
+            // Aviation "TAFs" was selected and buttons were disabled.
+            // Make sure timeCovered is set to LATEST when we are (re)enable
+            // the hour buttons for "Non-TAF" product.
+            if (tafSelected) {
+                nctextuiPaletteWindow.setTimeCovered((EReportTimeRange.LATEST));
+                tafSelected = false;
+            }
         }
 
     }
