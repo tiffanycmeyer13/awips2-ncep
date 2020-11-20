@@ -74,6 +74,8 @@ import com.vividsolutions.jts.geom.Coordinate;
  * ------------- -------- --------- -----------------
  * Mar 23, 2020  73571    smanoj   Initial creation
  * Jun 22, 2020  79556    smanoj   Fixing some errors.
+ * Nov 20, 2020  84061    smanoj   NSHARP artifacts(green diamonds) to plot
+ *                                 in the D2D "Map" Editor.
  * 
  * </pre>
  *
@@ -82,6 +84,8 @@ import com.vividsolutions.jts.geom.Coordinate;
 public abstract class AbstractNsharpMapResource extends
         AbstractVizResource<AbstractNsharpMapResourceData, MapDescriptor>
         implements RemoveListener {
+
+    private static final String MAP_EDITOR_ID = "com.raytheon.viz.ui.glmap.GLMapEditor";
 
     private static final transient IUFStatusHandler statusHandler = UFStatus
             .getHandler(AbstractNsharpMapResource.class);
@@ -121,10 +125,12 @@ public abstract class AbstractNsharpMapResource extends
     }
 
     public void createMapEditor() {
-        if (EditorUtil.getActiveEditor() != null) {
-            mapEditor = ((AbstractEditor) EditorUtil.getActiveEditor());
+        // Find the correct Map Editor to load NSHARP artifacts(green diamonds)
+        if (EditorUtil.findEditor(MAP_EDITOR_ID) != null) {
+            mapEditor = ((AbstractEditor) EditorUtil.findEditor(MAP_EDITOR_ID));
             mapRrcs.put(mapEditor, this);
         }
+
     }
 
     public AbstractEditor getMapEditor() {
