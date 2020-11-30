@@ -30,18 +30,20 @@ import javax.xml.bind.JAXBException;
 import com.raytheon.uf.common.status.IUFStatusHandler;
 import com.raytheon.uf.common.status.UFStatus;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
 
 /**
  * Object for unmarshalling the outlooktimes.xml to objects.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
  *
  * Date          Ticket#     Engineer  Description
  * ------------- ----------- --------- -----------------------------------------
  * Aug 20,2020   80844       pbutler   Update for changing default Days/Prods activity and days from outlooktimes.xml config file.
- * 
+ * Nov 30, 2020  85416       tjensen   Improve OutlookTimeProduct lookup
+ *
  * </pre>
  *
  * @author pbutler
@@ -60,7 +62,7 @@ public class OutlookTimeProductLookup {
         return instance;
     }
 
-    private Map<String, OutlookTimeProduct> productMap = new HashMap<String, OutlookTimeProduct>();
+    private final Map<String, OutlookTimeProduct> productMap = new HashMap<>();
 
     OutlookTimeProductLookup() {
         init();
@@ -90,7 +92,7 @@ public class OutlookTimeProductLookup {
                     .getProducts();
 
             for (OutlookTimeProduct product : products) {
-                productMap.put(product.getType(), product);
+                productMap.put(getKey(product), product);
             }
 
         } catch (JAXBException e) {
@@ -101,13 +103,43 @@ public class OutlookTimeProductLookup {
 
     }
 
-    // - Getters/Setters
-    public Map<String, OutlookTimeProduct> getProductMap() {
-        return productMap;
+    /**
+     * @param product
+     * @return
+     */
+    private String getKey(OutlookTimeProduct product) {
+
+        String fullType = PgenConstant.DEFAULT_ACTIVITY_TYPE;
+        String type = product.getType();
+        String subtype = product.getSubType();
+
+        if (type != null && type.trim().length() > 0) {
+            fullType = type;
+
+            if (subtype != null && subtype.trim().length() > 0 && !subtype
+                    .trim().equalsIgnoreCase(PgenConstant.DEFAULT_SUBTYPE)) {
+                fullType += ("(" + subtype + ")");
+            }
+        }
+
+        return fullType;
     }
 
-    public void setProductMap(Map<String, OutlookTimeProduct> productMap) {
-        this.productMap = productMap;
-    }
+    /**
+     * @param pd
+     * @return
+     */
+    public OutlookTimeProduct getProduct(String pdType) {
+        OutlookTimeProduct otpValue = null;
+        // - check for product default vs activity
+        if (productMap.containsKey(pdType)) {
+            otpValue = productMap.get(pdType);
+            otpValue.setDefault(false);
+        } else {
+            otpValue = productMap.get("Default");
+            otpValue.setDefault(true);
+        }
 
+        return otpValue;
+    }
 }

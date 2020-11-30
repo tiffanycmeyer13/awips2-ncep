@@ -95,6 +95,7 @@ import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
  * Aug 07, 2019  66169       mapeters  Fix product text ordering for EXCE_RAIN
  * Mar 23, 2020  76034       tjensen   Change day calculation to add to DATE
  * Aug 20, 2020  80844       pbutler   Update for changing default Days/Prods activity and days from outlooktimes.xml config file.
+ * Nov 30, 2020  85416       tjensen   Improve OutlookTimeProduct lookup
  *
  * </pre>
  *
@@ -202,11 +203,11 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
         Group dayGrp = new Group(top, SWT.RADIO);
         dayGrp.setLayout(new GridLayout(3, false));
 
-        List<String> dayList = new ArrayList<String>();
+        List<String> dayList = new ArrayList<>();
 
         OutlookTimeProduct otp = getProductType();
         int dayIndex = otp.getDaysIndex(otp.getDays());
-        dayList = (ArrayList<String>) otp.getDayNames(otp.getDays());
+        dayList = otp.getDayNames(otp.getDays());
 
         dayBtn = new Button[dayList.size()];
 
@@ -306,44 +307,20 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
 
     }
 
-    public String fixStringForKeyCheck(String fixMe) {
-        String updatedFixMeVal = fixMe.trim();
-        int tempLocVal = updatedFixMeVal.indexOf("(");
-
-        if (tempLocVal >= 0) {
-            updatedFixMeVal = fixMe.substring(0, tempLocVal);
-        }
-
-        return updatedFixMeVal;
-    }
-
     /**
      * Get Activity/Product Type object. Incoming Product Type map is created
      * from outlooktimes.xml.
-     * 
+     *
      * @return OutlookTimeProduct
      */
     private OutlookTimeProduct getProductType() {
         Product pd = otlkDlg.drawingLayer.getActiveProduct();
-        String pdType = fixStringForKeyCheck(pd.getName());
-        OutlookTimeProduct otpValue = null;
 
         // - get products and populate products map
         OutlookTimeProductLookup otpl = new OutlookTimeProductLookup()
                 .getInstance();
 
-        Map<String, OutlookTimeProduct> productMap = otpl.getProductMap();
-
-        // - check for product default vs activity
-        if (productMap.containsKey(pdType)) {
-            otpValue = productMap.get(pdType);
-            otpValue.setDefault(false);
-        } else {
-            otpValue = productMap.get("Default");
-            otpValue.setDefault(true);
-        }
-
-        return otpValue;
+        return otpl.getProduct(pd.getType());
     }
 
     /**
@@ -699,13 +676,13 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
 
     /**
      * Get the default initial date/time for the input day period
-     * 
+     *
      * @param days
      * @return
      */
     private Calendar getDefaultInitDT(String days, OutlookTimeProduct otp) {
         List<OutlookTimeDays> dayList = otp.getDays();
-        List<OutlookTimeRange> rangeList = new ArrayList<OutlookTimeRange>();
+        List<OutlookTimeRange> rangeList = new ArrayList<>();
 
         for (OutlookTimeDays day : dayList) {
             if (day.getName().equals(days)) {
@@ -752,7 +729,7 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
      */
     private Calendar getDefaultExpDT(String days, OutlookTimeProduct otp) {
         List<OutlookTimeDays> dayList = otp.getDays();
-        List<OutlookTimeRange> rangeList = new ArrayList<OutlookTimeRange>();
+        List<OutlookTimeRange> rangeList = new ArrayList<>();
 
         for (OutlookTimeDays day : dayList) {
             if (day.getName().equals(days)) {
