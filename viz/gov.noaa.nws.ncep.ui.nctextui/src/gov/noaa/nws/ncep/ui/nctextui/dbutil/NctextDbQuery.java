@@ -82,6 +82,7 @@ import gov.noaa.nws.ncep.viz.common.dbQuery.NcDirectDbQuery;
  * 04/14/2020   76579       k sunil     code tweaks to support the "Latest" time range
  * 07/23/2020   80427       smanoj      Added DEFAULT_TIME_RANGE to improve query
  *                                      performance for "Latest" time range.
+ * 11/20/2020   84061       smanoj      Fix a Null Pointer Issue, when data not available.
  *
  * </pre>
  *
@@ -743,8 +744,9 @@ public class NctextDbQuery {
                 // If looking only for the latest, grab only the first. It is
                 // already sorted.
                 if (rptTimeRange == EReportTimeRange.LATEST) {
-                    report = (String) timeDataMap.values().stream().findFirst()
-                            .get();
+                    if (!timeDataMap.isEmpty()) {
+                        report = (String) timeDataMap.values().stream().findFirst().get();
+                    }
                 } else {
                     for (Map.Entry<Object, Object> entry : timeDataMap
                             .entrySet()) {
@@ -830,8 +832,9 @@ public class NctextDbQuery {
                 // If we are looking only for the latest, grab only the first
                 // one. It is already sorted.
                 if (rptTimeRange == EReportTimeRange.LATEST) {
-                    report = (String) timeDataMap.values().stream().findFirst()
-                            .get();
+                    if (!timeDataMap.isEmpty()) {
+                        report = (String) timeDataMap.values().stream().findFirst().get();
+                    }
                 } else {
                     for (Map.Entry<Object, Object> entry : timeDataMap
                             .entrySet()) {

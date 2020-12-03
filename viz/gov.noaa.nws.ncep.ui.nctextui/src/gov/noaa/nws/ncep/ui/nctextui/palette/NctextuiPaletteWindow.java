@@ -29,12 +29,14 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
 import com.raytheon.uf.viz.core.drawables.ResourcePair;
+import com.raytheon.viz.ui.EditorUtil;
 import com.raytheon.viz.ui.UiUtil;
 
 import gov.noaa.nws.ncep.ui.nctextui.dbutil.EReportTimeRange;
 import gov.noaa.nws.ncep.ui.nctextui.dbutil.NctextDbQuery;
 import gov.noaa.nws.ncep.ui.nctextui.dbutil.NctextStationInfo;
 import gov.noaa.nws.ncep.ui.nctextui.rsc.NctextuiResource;
+import gov.noaa.nws.ncep.viz.ui.display.AbstractNcEditor;
 import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
 
 /**
@@ -67,7 +69,8 @@ import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
  *                                      but always set to "Latest".
  * 10/21/2020   84059       smanoj      Fix NCTEXT Hour Covered Duplicate Selections issue.
  * 11/12/2020   84877       smanoj      Fix Surface Hourlies Text Report bug.
- *
+ * 11/20/2020   84061       smanoj      Fix some issues when loading NSharp alongside the NCText.
+ * 
  * </pre>
  *
  * @author Chin Chen
@@ -75,6 +78,8 @@ import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
 
 public class NctextuiPaletteWindow extends ViewPart
         implements SelectionListener, DisposeListener, IPartListener {
+
+    private static final String NCMAP_EDITOR_ID = "gov.noaa.nws.ncep.viz.ui.display.NcMapEditor";
 
     private String selectedGp = null;
 
@@ -245,8 +250,19 @@ public class NctextuiPaletteWindow extends ViewPart
 
             // remove the workbench part listener
             page.removePartListener(this);
+
+            // close any open NCText Map Editors
+            closeNCTextEditors();
         }
 
+    }
+
+    private void closeNCTextEditors() {
+        if (EditorUtil.findEditor(NCMAP_EDITOR_ID) != null) {
+            AbstractNcEditor ncTextMapEditor = (AbstractNcEditor) EditorUtil
+                    .findEditor(NCMAP_EDITOR_ID);
+            ncTextMapEditor.getSite().getPage().closeEditor(ncTextMapEditor, false);
+        }
     }
 
     /**
