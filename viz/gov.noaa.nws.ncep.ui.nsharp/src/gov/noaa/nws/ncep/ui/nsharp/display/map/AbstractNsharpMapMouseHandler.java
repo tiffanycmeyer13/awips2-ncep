@@ -29,6 +29,7 @@ import com.raytheon.uf.common.status.IUFStatusHandler;
 import com.raytheon.uf.common.status.UFStatus;
 import com.raytheon.uf.common.status.UFStatus.Priority;
 import com.raytheon.uf.viz.core.map.IMapDescriptor;
+import com.raytheon.uf.viz.core.rsc.capabilities.EditableCapability;
 import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.vividsolutions.jts.geom.Coordinate;
 
@@ -58,6 +59,9 @@ import gov.noaa.nws.ncep.ui.pgen.tools.InputHandlerDefaultImpl;
  * Jul 14, 2020  80425    smanoj   Fixing a Null Pointer Exception.
  * Jul 16, 2020  80425    smanoj   Added method to get queryLimit, for D2D use
  *                                 the number of frames D2D is set to display.
+ * Dec 07, 2020  85537    smanoj   Fix issue with disable NSHARP resource
+ *                                 by unchecking the "Editable" check box
+ *                                 in the resource menu.
  * </pre>
  *
  * @author smanoj
@@ -98,7 +102,7 @@ public abstract class AbstractNsharpMapMouseHandler extends InputHandlerDefaultI
         }
 
         mapRsc = loadDia.getMapRsc();
-        if (!mapRsc.isEditable()) {
+        if( !(mapRsc.getOrCreateNsharpMapResource().getCapability(EditableCapability.class).isEditable())){
             return false;
         }
 
