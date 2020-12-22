@@ -112,6 +112,8 @@ import gov.noaa.nws.ncep.viz.ui.display.NcDisplayMngr;
  *                                       FfaZoneQueryResult class.  Also
  *                                       cleanup.
  * Jul 15, 2020  8191     randerso       Updated for changes to LatLonPoint
+ * 
+ * Dec 21, 2020 21179    J. Rohwein      update method signatures  AsBinary -> ST_AsBinary
  *
  * </pre>
  *
@@ -125,7 +127,7 @@ public class FFAResource
     private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(FFAResource.class);
 
-    private static final String QUERY_PREFIX = "select AsBinary(the_geom) G, AsBinary(the_geom_0_001) G1, state,name,state_zone from mapdata.zonelowres where ";
+    private static final String QUERY_PREFIX = "select ST_AsBinary(the_geom) G, ST_AsBinary(the_geom_0_001) G1, state,name,state_zone from mapdata.zonelowres where ";
 
     private static final String QUERY_COLUMN_NAME = "state_zone";
 
