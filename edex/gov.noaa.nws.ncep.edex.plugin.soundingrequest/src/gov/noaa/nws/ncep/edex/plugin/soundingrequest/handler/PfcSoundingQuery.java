@@ -26,11 +26,12 @@ package gov.noaa.nws.ncep.edex.plugin.soundingrequest.handler;
  * 07/21/2015   RM#9173    Chin Chen   Clean up NcSoundingQuery and Obsolete NcSoundingQuery2 and MergeSounging2
  * 04/19/2016   #17875     Chin Chen   change TimeStamp to Date while querying sounding station info + clean up
  * 03/05/2017   18784       wkwock      Handle not integer stationID.
+ * 01/27/2021   86815       smanoj      Added ARW and RAP to PFC Model Sounding for Nsharp.
  *  *
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
+ * 
  */
 
 import gov.noaa.nws.ncep.common.dataplugin.soundingrequest.SoundingServiceRequest;
@@ -95,18 +96,20 @@ public class PfcSoundingQuery {
         } else if (pfcType == SoundingType.PFC_GFS_SND) {
             currentDBTblName = PFC_TBL_NAME;
             reportType = "GFS";
+        } else if (pfcType == SoundingType.PFC_ARW_SND) {
+            currentDBTblName = PFC_TBL_NAME;
+            reportType = "ARW";
+        } else if (pfcType == SoundingType.PFC_RAP_SND) {
+            currentDBTblName = PFC_TBL_NAME;
+            reportType = "RAP";
         } else {
             return stnInfoCol;
         }
         queryStr = new String(
                 "Select Distinct latitude, longitude, stationid, elevation, reftime, rangestart FROM "
-                        + currentDBTblName
-                        + " where rangestart='"
-                        + selectedSndTime
-                        + "' AND reftime ='"
-                        + refTimeStr
-                        + "' AND reporttype ='"
-                        + reportType
+                        + currentDBTblName + " where rangestart='"
+                        + selectedSndTime + "' AND reftime ='" + refTimeStr
+                        + "' AND reporttype ='" + reportType
                         + "' AND latitude BETWEEN -89.9 AND 89.9 AND longitude BETWEEN -179.9 AND 179.9");
 
         CoreDao dao = new CoreDao(DaoConfig.forClass(SoundingSite.class));
@@ -151,6 +154,12 @@ public class PfcSoundingQuery {
         } else if (pfcType == SoundingType.PFC_GFS_SND) {
             currentDBTblName = PFC_TBL_NAME;
             reportType = "GFS";
+        } else if (pfcType == SoundingType.PFC_ARW_SND) {
+            currentDBTblName = PFC_TBL_NAME;
+            reportType = "ARW";
+        } else if (pfcType == SoundingType.PFC_RAP_SND) {
+            currentDBTblName = PFC_TBL_NAME;
+            reportType = "RAP";
         } else {
             System.out.println("pfc type is not supported: " + pfcType);
             return tl;
@@ -179,6 +188,12 @@ public class PfcSoundingQuery {
         } else if (pfcType == SoundingType.PFC_GFS_SND) {
             currentDBTblName = PFC_TBL_NAME;
             reportType = "GFS";
+        } else if (pfcType == SoundingType.PFC_ARW_SND) {
+            currentDBTblName = PFC_TBL_NAME;
+            reportType = "ARW";
+        } else if (pfcType == SoundingType.PFC_RAP_SND) {
+            currentDBTblName = PFC_TBL_NAME;
+            reportType = "RAP";
         } else {
             System.out.println("pfc type is not supported: " + pfcType);
             return tl;
@@ -207,7 +222,8 @@ public class PfcSoundingQuery {
      */
     private static List<NcSoundingProfile> getPfcSndDataGeneric(
             Coordinate[] coordinateArray, String[] stnIdArr, String refTimeStr,
-            String[] soundingRangeTimeAry, SoundingType sndTypeStr, String level) {
+            String[] soundingRangeTimeAry, SoundingType sndTypeStr,
+            String level) {
         List<NcSoundingProfile> pfs = new ArrayList<>();
 
         if (refTimeStr == null || soundingRangeTimeAry == null) {
@@ -215,7 +231,9 @@ public class PfcSoundingQuery {
             return null;
         }
         if (sndTypeStr == SoundingType.PFC_GFS_SND
-                || sndTypeStr == SoundingType.PFC_NAM_SND) {
+                || sndTypeStr == SoundingType.PFC_NAM_SND
+                || sndTypeStr == SoundingType.PFC_ARW_SND
+                || sndTypeStr == SoundingType.PFC_RAP_SND) {
             Map<String, RequestConstraint> constraints = new HashMap<>();
             List<SoundingSite> lSndSiteRecords = null;
             MergeSounding ms = new MergeSounding();
@@ -231,10 +249,10 @@ public class PfcSoundingQuery {
                 // get rid of last ","
                 latStr = latStr.substring(0, latStr.length() - 1);
                 lonStr = lonStr.substring(0, lonStr.length() - 1);
-                constraints.put("location.latitude", new RequestConstraint(
-                        latStr, ConstraintType.IN));
-                constraints.put("location.longitude", new RequestConstraint(
-                        lonStr, ConstraintType.IN));
+                constraints.put("location.latitude",
+                        new RequestConstraint(latStr, ConstraintType.IN));
+                constraints.put("location.longitude",
+                        new RequestConstraint(lonStr, ConstraintType.IN));
             } else if (stnIdArr != null) {
                 String stnIdStr = "";
                 for (String stnStr : stnIdArr) {
@@ -246,8 +264,8 @@ public class PfcSoundingQuery {
                 // the rangeStart field name defined in SoundingSite and decoded
                 // modelsounding table
                 // rangestart data type defined in SoundingSite is "Date"
-                constraints.put("location.stationId", new RequestConstraint(
-                        stnIdStr, ConstraintType.IN));
+                constraints.put("location.stationId",
+                        new RequestConstraint(stnIdStr, ConstraintType.IN));
             } else {
                 return pfs;
             }
@@ -255,8 +273,8 @@ public class PfcSoundingQuery {
             // the refTime time field name defined in SoundingSite and decoded
             // modelsounding table
             // refTime data type defined in SoundingSite is "Date"
-            constraints.put("dataTime.refTime", new RequestConstraint(
-                    refTimeStr));
+            constraints.put("dataTime.refTime",
+                    new RequestConstraint(refTimeStr));
 
             String d = "";
             for (String timeStr : soundingRangeTimeAry) {
@@ -304,15 +322,13 @@ public class PfcSoundingQuery {
                         soundingLy.setTemperature((float) kelvinToCelsius
                                 .convert(sndLevel.getTemperature()));
                         soundingLy.setPressure(sndLevel.getPressure() / 100);
+                        // HDF5 data in unit of m/s, convert to Knots
                         soundingLy.setWindU((float) metersPerSecondToKnots
-                                .convert(sndLevel.getUcWind())); // HDF5 data in
-                                                                 // unit of m/s,
-                                                                 // convert to
-                                                                 // Knots
+                                .convert(sndLevel.getUcWind()));
                         soundingLy.setWindV((float) metersPerSecondToKnots
                                 .convert(sndLevel.getVcWind()));
-                        soundingLy.setSpecHumidity(sndLevel
-                                .getSpecificHumidity());
+                        soundingLy.setSpecHumidity(
+                                sndLevel.getSpecificHumidity());
                         soundLyList.add(soundingLy);
                     }
                     Collections.sort(soundLyList, reversePressureComparator());
@@ -325,24 +341,24 @@ public class PfcSoundingQuery {
                         // single level
                         float rlev = new Integer(Integer.parseInt(level.trim()))
                                 .floatValue();
-                        pf.setSoundingLyLst(ms.getSingLevel(rlev,
-                                pf.getSoundingLyLst()));
+                        pf.setSoundingLyLst(
+                                ms.getSingLevel(rlev, pf.getSoundingLyLst()));
                     } else if (ms.isNumber(level) == 1) {
                         // level is an float >=0. It also means user request a
                         // single level
                         float rlev = new Float(Float.parseFloat(level.trim()));
-                        pf.setSoundingLyLst(ms.getSingLevel(rlev,
-                                pf.getSoundingLyLst()));
+                        pf.setSoundingLyLst(
+                                ms.getSingLevel(rlev, pf.getSoundingLyLst()));
                     }
 
                     pfs.add(pf);
                 }
 
             } catch (Exception e) {
-                statusHandler.handle(
-                        Priority.PROBLEM,
+                statusHandler.handle(Priority.PROBLEM,
                         "-----DB exception at getPfcSndDataGeneric: "
-                                + e.getLocalizedMessage(), e);
+                                + e.getLocalizedMessage(),
+                        e);
                 return pfs;
             }
 
@@ -371,8 +387,8 @@ public class PfcSoundingQuery {
     public static NcSoundingCube handlePfcDataRequest(
             SoundingServiceRequest request) {
         NcSoundingCube cube = new NcSoundingCube();
-        cube.setRtnStatus(NcSoundingCube.QueryStatus.FAILED); // assume query
-                                                              // failure
+        // assume query failure
+        cube.setRtnStatus(NcSoundingCube.QueryStatus.FAILED);
         List<NcSoundingProfile> finalSoundingProfileList = new ArrayList<>(0);
         // NOTE:::since getPfcSndDataGeneric only handle one reftime once, we
         // will have to call it x times, depends on
@@ -384,9 +400,8 @@ public class PfcSoundingQuery {
         }
         String[] rangeTimeStrAry = request.getRangeStartTimeStrAry();
         if (rangeTimeStrAry == null) {
-            rangeTimeStrAry = QueryMiscTools
-                    .convertTimeLongArrayToStrArray(request
-                            .getRangeStartTimeAry());
+            rangeTimeStrAry = QueryMiscTools.convertTimeLongArrayToStrArray(
+                    request.getRangeStartTimeAry());
         }
         for (String refTimeStr : refTimeStrAry) {
             List<NcSoundingProfile> listReturned = PfcSoundingQuery
@@ -394,13 +409,11 @@ public class PfcSoundingQuery {
                             request.getStnIdAry(), refTimeStr, rangeTimeStrAry,
                             request.getSndType(), request.getLevel());
             if (listReturned != null && listReturned.size() > 0) {
-                List<NcSoundingProfile> soundingProfileList = new ArrayList<>(0);
+                List<NcSoundingProfile> soundingProfileList = new ArrayList<>(
+                        0);
                 soundingProfileList.addAll(listReturned);
-                cube.setRtnStatus(NcSoundingCube.QueryStatus.OK); // as long as
-                                                                  // one query
-                                                                  // successful,
-                                                                  // set it to
-                                                                  // OK
+                //as long as one query successful, set it to OK
+                cube.setRtnStatus(NcSoundingCube.QueryStatus.OK);
                 finalSoundingProfileList.addAll(soundingProfileList);
             }
         }

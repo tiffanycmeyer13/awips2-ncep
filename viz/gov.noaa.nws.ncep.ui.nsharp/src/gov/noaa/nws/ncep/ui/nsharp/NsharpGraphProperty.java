@@ -10,15 +10,16 @@ package gov.noaa.nws.ncep.ui.nsharp;
  * <pre>
  * SOFTWARE HISTORY
  * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 03/21/2012	229			Chin Chen	Initial coding
- * 03/09/2015   RM#6674     Chin Chen   support model sounding query data interpolation and nearest point option                       
- *
+ * Date         Ticket#     Engineer    Description
+ * -------      -------     --------    -----------
+ * 03/21/2012   229         Chin Chen   Initial coding
+ * 03/09/2015   RM#6674     Chin Chen   support model sounding query data interpolation and nearest point option
+ * 01/27/2021   86815       smanoj      Added configuration capability for PFC Model Sounding Types.
+ * 
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
+ * 
  */
 import gov.noaa.nws.ncep.viz.common.RGBColorAdapter;
 
@@ -110,6 +111,9 @@ public class NsharpGraphProperty implements ISerializableObject {
 
     @XmlAttribute
     private String paneConfigurationName = NsharpConstants.PANE_DEF_CFG_1_STR;
+
+    @XmlAttribute
+    private List<String> pfcTypeList = new ArrayList<String>();
 
     @XmlAttribute
     private List<String> gribModelTypeList = new ArrayList<String>();
@@ -336,6 +340,14 @@ public class NsharpGraphProperty implements ISerializableObject {
         this.paneConfigurationName = paneConfigurationName;
     }
 
+    public List<String> getPfcTypeList() {
+        return pfcTypeList;
+    }
+
+    public void setPfcTypeList(List<String> pfcTypeList) {
+        this.pfcTypeList =pfcTypeList;
+    }
+
     public List<String> getGribModelTypeList() {
         return gribModelTypeList;
     }
@@ -376,13 +388,12 @@ public class NsharpGraphProperty implements ISerializableObject {
         this.showFilteredWindInCircle = showFilteredWindInCircle;
     }
 
-	public boolean isGridInterpolation() {
-		return gridInterpolation;
-	}
+    public boolean isGridInterpolation() {
+        return gridInterpolation;
+    }
 
-	public void setGridInterpolation(boolean gridInterpolation) {
-		this.gridInterpolation = gridInterpolation;
-	}
+    public void setGridInterpolation(boolean gridInterpolation) {
+        this.gridInterpolation = gridInterpolation;
+    }
 
-    
 }
