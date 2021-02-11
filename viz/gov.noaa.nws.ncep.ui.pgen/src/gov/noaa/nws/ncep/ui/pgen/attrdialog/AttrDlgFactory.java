@@ -9,8 +9,6 @@
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.cwadialog.CWAFormatterDlg;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.cwadialog.CWAProductDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.vaadialog.VaaCloudDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.vaadialog.VolcanoVaaAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.elements.Track;
@@ -48,6 +46,7 @@ import org.eclipse.swt.widgets.Shell;
  * 12/16        17469       W. Kwock    Added CWA Product Dialog
  * 02/20        75024       smanoj      Fix to have correct default Text Attributes for 
  *                                      tropical TROF front label.
+ * 02/01/2021   87515       wkwock      Remove CWA
  * </pre>
  * 
  * @author B. Yin
@@ -226,19 +225,6 @@ public class AttrDlgFactory {
                 sigAttrDlg.setPgenCategory(pgenCategory);
                 sigAttrDlg.setPgenType(pgenType);
                 return sigAttrDlg;
-            } else if (pgenType != null
-                    && pgenType.equalsIgnoreCase(PgenConstant.CWA_SIGMET)) {
-                CWAProductDlg cwaDlg = CWAProductDlg.getInstance(parShell);
-                cwaDlg.setPgenCategory(pgenCategory);
-                cwaDlg.setPgenType(pgenType);
-                return cwaDlg;
-            } else if (pgenType != null
-                    && pgenType.equalsIgnoreCase(PgenConstant.CWA_FORMATTER)) {
-                CWAFormatterDlg cwaFormatterDlg = CWAFormatterDlg
-                        .getInstance(parShell);
-                cwaFormatterDlg.setPgenCategory(pgenCategory);
-                cwaFormatterDlg.setPgenType(pgenType);
-                return cwaFormatterDlg;
             } else {// (pgenType != null &&
                     // pgenType.equalsIgnoreCase("CONV_SIGMET")) {
                 SigmetCommAttrDlg sigAttrDlg = SigmetCommAttrDlg

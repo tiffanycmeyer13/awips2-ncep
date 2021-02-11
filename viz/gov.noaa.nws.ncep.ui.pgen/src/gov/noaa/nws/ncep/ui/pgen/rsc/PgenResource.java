@@ -181,15 +181,16 @@ import org.locationtech.jts.geom.Point;
  * 07/21/2016   R16077      J. Wu       Add context menu for contour lines to remove labels.
  * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
  * 01/09/2020   71072       smanoj      Fix some NullPointerException issues
+ * 02/01/2021   87515       wkwock      Move CWA out of PGEN
  * 
  * </pre>
  * 
  * @author B. Yin
  */
 
-public class PgenResource extends
-        AbstractVizResource<PgenResourceData, MapDescriptor> implements
-        RemoveListener, IResourceDataChanged, IContextMenuProvider {
+public class PgenResource
+        extends AbstractVizResource<PgenResourceData, MapDescriptor>
+        implements RemoveListener, IResourceDataChanged, IContextMenuProvider {
 
     /**
      * Ghost line for multi-point element.
@@ -385,8 +386,8 @@ public class PgenResource extends
     }
 
     @Override
-    public void paintInternal(IGraphicsTarget target, PaintProperties paintProps)
-            throws VizException {
+    public void paintInternal(IGraphicsTarget target,
+            PaintProperties paintProps) throws VizException {
         IDisplayPaneContainer editor = getResourceContainer();
 
         // Draw in main editor and side view (IMultiPaneEditor)
@@ -635,7 +636,8 @@ public class PgenResource extends
 
     }
 
-    private void drawSelected(IGraphicsTarget target, PaintProperties paintProps) {
+    protected void drawSelected(IGraphicsTarget target,
+            PaintProperties paintProps) {
 
         if (!elSelected.isEmpty()
                 && PgenSession.getInstance().getPgenPalette() != null) {
@@ -651,8 +653,8 @@ public class PgenResource extends
                         2.5f, 0.7, false, null, "Symbol", "CIRCLE");
             } else {
                 defaultSymbol = new Symbol(null,
-                        new Color[] { Color.lightGray }, 2.5f, 7.5, false,
-                        null, "Marker", "DOT");
+                        new Color[] { Color.lightGray }, 2.5f, 7.5, false, null,
+                        "Marker", "DOT");
             }
 
             Symbol selectSymbol = new Symbol(null,
@@ -663,13 +665,13 @@ public class PgenResource extends
             CoordinateList selectPts = new CoordinateList();
 
             for (AbstractDrawableComponent el : elSelected) {
-                if(el == null){
+                if (el == null) {
                     return;
                 } else {
                     if (selectedSymbol.containsKey(el)) {
                         Symbol currSym = selectedSymbol.get(el);
-                        Coordinate[] pts = CoordinateArrays.toCoordinateArray(el
-                                .getPoints());
+                        Coordinate[] pts = CoordinateArrays
+                                .toCoordinateArray(el.getPoints());
                         if (map.containsKey(currSym)) {
                             map.get(currSym).add(pts, true);
                         } else {
@@ -702,8 +704,8 @@ public class PgenResource extends
             }
             if (!map.isEmpty()) {
                 for (Symbol sym : map.keySet()) {
-                    SymbolLocationSet symset = new SymbolLocationSet(sym, map
-                            .get(sym).toCoordinateArray());
+                    SymbolLocationSet symset = new SymbolLocationSet(sym,
+                            map.get(sym).toCoordinateArray());
                     displayEls.addAll(df.createDisplayElements(
                             (ISymbolSet) symset, paintProps));
                 }
@@ -1118,8 +1120,8 @@ public class PgenResource extends
         }
 
         if (fname == null && resourceData.getProductManageDlg() != null) {
-            fname = resourceData.getProductManageDlg().getPrdOutputFile(
-                    activeProduct);
+            fname = resourceData.getProductManageDlg()
+                    .getPrdOutputFile(activeProduct);
         }
 
         if (fname != null) {
@@ -1184,7 +1186,8 @@ public class PgenResource extends
      * @param sym
      *            marker to display
      */
-    public void registerSelectedSymbol(AbstractDrawableComponent adc, Symbol sym) {
+    public void registerSelectedSymbol(AbstractDrawableComponent adc,
+            Symbol sym) {
         selectedSymbol.put(adc, sym);
     }
 
@@ -1305,7 +1308,8 @@ public class PgenResource extends
      * @param point
      * @return the nearest element in the collection
      */
-    public DrawableElement getNearestElement(Coordinate point, DECollection dec) {
+    public DrawableElement getNearestElement(Coordinate point,
+            DECollection dec) {
 
         DrawableElement nearestElement = null;
         double minDistance = Double.MAX_VALUE;
@@ -1339,8 +1343,8 @@ public class PgenResource extends
      * @param nearestDe
      * @return the nearest element in the collection
      */
-    public DrawableElement getNearestElement(Coordinate point,
-            DECollection dec, DrawableElement nearestDe) {
+    public DrawableElement getNearestElement(Coordinate point, DECollection dec,
+            DrawableElement nearestDe) {
 
         DrawableElement nearestElement = null;
         double minDistance = Double.MAX_VALUE;
@@ -1364,7 +1368,8 @@ public class PgenResource extends
          * If the closest Text element is not "close" enough to the specified
          * de, return the specified DE.
          */
-        if (Math.abs(minDistance - distToLine) > (this.getMaxDistToSelect() / 5)) {
+        if (Math.abs(
+                minDistance - distToLine) > (this.getMaxDistToSelect() / 5)) {
             nearestElement = nearestDe;
         }
 
@@ -1417,12 +1422,11 @@ public class PgenResource extends
 
         if (adc instanceof SinglePointElement) {
 
-            double[] pt = mapEditor
-                    .translateInverseClick(((SinglePointElement) adc)
-                            .getLocation());
+            double[] pt = mapEditor.translateInverseClick(
+                    ((SinglePointElement) adc).getLocation());
 
-            Point ptScreen = new GeometryFactory().createPoint(new Coordinate(
-                    pt[0], pt[1]));
+            Point ptScreen = new GeometryFactory()
+                    .createPoint(new Coordinate(pt[0], pt[1]));
             minDist = ptScreen.distance(new GeometryFactory()
                     .createPoint(new Coordinate(locScreen[0], locScreen[1])));
         } else if (adc instanceof TCAElement) {
@@ -1450,10 +1454,10 @@ public class PgenResource extends
             Gfa gfa = (Gfa) adc;
 
             // calculate distance from the text box
-            double[] pt = mapEditor.translateInverseClick(gfa
-                    .getGfaTextCoordinate());
-            Point ptScreen = new GeometryFactory().createPoint(new Coordinate(
-                    pt[0], pt[1]));
+            double[] pt = mapEditor
+                    .translateInverseClick(gfa.getGfaTextCoordinate());
+            Point ptScreen = new GeometryFactory()
+                    .createPoint(new Coordinate(pt[0], pt[1]));
             minDist = ptScreen.distance(new GeometryFactory()
                     .createPoint(new Coordinate(locScreen[0], locScreen[1])));
 
@@ -1484,13 +1488,13 @@ public class PgenResource extends
         } else if (adc instanceof Arc) {
             Arc arc = (Arc) adc;
 
-            double[] center = mapEditor.translateInverseClick(arc
-                    .getCenterPoint());
-            double[] circum = mapEditor.translateInverseClick(arc
-                    .getCircumferencePoint());
+            double[] center = mapEditor
+                    .translateInverseClick(arc.getCenterPoint());
+            double[] circum = mapEditor
+                    .translateInverseClick(arc.getCircumferencePoint());
 
-            Point ctrScreen = new GeometryFactory().createPoint(new Coordinate(
-                    center[0], center[1]));
+            Point ctrScreen = new GeometryFactory()
+                    .createPoint(new Coordinate(center[0], center[1]));
 
             minDist = ctrScreen.distance(new GeometryFactory()
                     .createPoint(new Coordinate(locScreen[0], locScreen[1])));
@@ -1498,8 +1502,8 @@ public class PgenResource extends
             /*
              * calculate angle of major axis
              */
-            double axisAngle = Math.toDegrees(Math.atan2(
-                    (circum[1] - center[1]), (circum[0] - center[0])));
+            double axisAngle = Math.toDegrees(Math
+                    .atan2((circum[1] - center[1]), (circum[0] - center[0])));
             double cosineAxis = Math.cos(Math.toRadians(axisAngle));
             double sineAxis = Math.sin(Math.toRadians(axisAngle));
 
@@ -1511,8 +1515,8 @@ public class PgenResource extends
             double minor = major * arc.getAxisRatio();
 
             double angle = arc.getStartAngle();
-            int numpts = (int) Math.round(arc.getEndAngle()
-                    - arc.getStartAngle() + 1.0);
+            int numpts = (int) Math
+                    .round(arc.getEndAngle() - arc.getStartAngle() + 1.0);
 
             for (int j = 0; j < numpts; j++) {
                 double thisSine = Math.sin(Math.toRadians(angle));
@@ -1526,9 +1530,8 @@ public class PgenResource extends
                 Point ptScreen = new GeometryFactory()
                         .createPoint(new Coordinate(xx, yy));
                 double dist = ptScreen
-                        .distance(new GeometryFactory()
-                                .createPoint(new Coordinate(locScreen[0],
-                                        locScreen[1])));
+                        .distance(new GeometryFactory().createPoint(
+                                new Coordinate(locScreen[0], locScreen[1])));
                 if (dist < minDist)
                     minDist = dist;
 
@@ -1537,20 +1540,19 @@ public class PgenResource extends
         } else if (adc instanceof MultiPointElement) {
 
             if (adc instanceof gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet
-                    && ("Isolated"
-                            .equalsIgnoreCase(((gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet) adc)
-                                    .getType()) || ((gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet) adc)
-                            .getType().contains("Text"))) {
+                    && ("Isolated".equalsIgnoreCase(
+                            ((gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet) adc)
+                                    .getType())
+                            || ((gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet) adc)
+                                    .getType().contains("Text"))) {
 
-                double[] pt = mapEditor
-                        .translateInverseClick(((gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet) adc)
+                double[] pt = mapEditor.translateInverseClick(
+                        ((gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet) adc)
                                 .getLinePoints()[0]);
                 Point ptScreen = new GeometryFactory()
                         .createPoint(new Coordinate(pt[0], pt[1]));
-                minDist = ptScreen
-                        .distance(new GeometryFactory()
-                                .createPoint(new Coordinate(locScreen[0],
-                                        locScreen[1])));
+                minDist = ptScreen.distance(new GeometryFactory().createPoint(
+                        new Coordinate(locScreen[0], locScreen[1])));
 
             }
 
@@ -1563,22 +1565,23 @@ public class PgenResource extends
             for (int ii = 0; ii < pts.length; ii++) {
 
                 if (mpe instanceof Tcm && pts.length == 1) {
-                    double[] pt = mapEditor.translateInverseClick(mpe
-                            .getLinePoints()[0]);
+                    double[] pt = mapEditor
+                            .translateInverseClick(mpe.getLinePoints()[0]);
                     Point ptScreen = new GeometryFactory()
                             .createPoint(new Coordinate(pt[0], pt[1]));
-                    minDist = ptScreen.distance(new GeometryFactory()
-                            .createPoint(new Coordinate(locScreen[0],
-                                    locScreen[1])));
+                    minDist = ptScreen.distance(
+                            new GeometryFactory().createPoint(new Coordinate(
+                                    locScreen[0], locScreen[1])));
                     break;
                 }
 
                 if (ii == pts.length - 1) {
                     if ((mpe instanceof Line && ((Line) mpe).isClosedLine())
                             || mpe instanceof WatchBox
-                            || (mpe instanceof gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet && Sigmet.AREA
-                                    .equalsIgnoreCase(((gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet) mpe)
-                                            .getType()))) {
+                            || (mpe instanceof gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet
+                                    && Sigmet.AREA.equalsIgnoreCase(
+                                            ((gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet) mpe)
+                                                    .getType()))) {
 
                         dist = distanceFromLineSegment(loc,
                                 (Coordinate) pts[ii], (Coordinate) pts[0]);
@@ -1756,7 +1759,8 @@ public class PgenResource extends
      * @param paintProps
      *            Paint properties from the paint() method.
      */
-    private void drawProduct(IGraphicsTarget target, PaintProperties paintProps) {
+    public void drawProduct(IGraphicsTarget target,
+            PaintProperties paintProps) {
         drawFilledElements(target, paintProps);
 
         drawNonFilledElements(target, paintProps);
@@ -1816,9 +1820,8 @@ public class PgenResource extends
          * The layer will be displayed if the displayProduct flag is on or the
          * layer display flag is on or this layer is the active layer.
          */
-        if (layer != null
-                && (displayProduct || layer.isOnOff() || layer == resourceData
-                        .getActiveLayer())) {
+        if (layer != null && (displayProduct || layer.isOnOff()
+                || layer == resourceData.getActiveLayer())) {
 
             DisplayProperties dprops = new DisplayProperties();
 
@@ -1875,8 +1878,8 @@ public class PgenResource extends
         }
 
         // Draw non-filled elements in the active layer
-        drawNonFilledElements(resourceData.getActiveLayer(), target,
-                paintProps, true);
+        drawNonFilledElements(resourceData.getActiveLayer(), target, paintProps,
+                true);
 
     }
 
@@ -1901,9 +1904,8 @@ public class PgenResource extends
          * The layer will be displayed if the displayProduct flag is on or the
          * layer display flag is on or this layer is the active layer.
          */
-        if (layer != null
-                && (displayProduct || layer.isOnOff() || layer == resourceData
-                        .getActiveLayer())) {
+        if (layer != null && (displayProduct || layer.isOnOff()
+                || layer == resourceData.getActiveLayer())) {
 
             DisplayProperties dprops = new DisplayProperties();
             if (layer != resourceData.getActiveLayer()) {
@@ -2017,8 +2019,8 @@ public class PgenResource extends
 
         AbstractEditor mapEditor = PgenUtil.getActiveEditor();
         double[] locScreen = mapEditor.translateInverseClick(point);
-        Point clickPt = new GeometryFactory().createPoint(new Coordinate(
-                locScreen[0], locScreen[1]));
+        Point clickPt = new GeometryFactory()
+                .createPoint(new Coordinate(locScreen[0], locScreen[1]));
 
         Iterator<DrawableElement> iterator = resourceData.getActiveLayer()
                 .createDEIterator();
@@ -2035,10 +2037,10 @@ public class PgenResource extends
             Gfa gfa = (Gfa) element;
 
             // calculate distance from the text box
-            double[] pt = mapEditor.translateInverseClick(gfa
-                    .getGfaTextCoordinate());
-            Point ptScreen = new GeometryFactory().createPoint(new Coordinate(
-                    pt[0], pt[1]));
+            double[] pt = mapEditor
+                    .translateInverseClick(gfa.getGfaTextCoordinate());
+            Point ptScreen = new GeometryFactory()
+                    .createPoint(new Coordinate(pt[0], pt[1]));
             double distToBox = ptScreen.distance(clickPt);
 
             if (distToBox < minDistance) {
@@ -2071,7 +2073,8 @@ public class PgenResource extends
      * Finds the PGEN resource and fill the context menu.
      */
     @Override
-    public void provideContextMenuItems(IMenuManager menuManager, int x, int y) {
+    public void provideContextMenuItems(IMenuManager menuManager, int x,
+            int y) {
 
         ResourcePair pgenPair = null;
         for (ResourcePair rp : descriptor.getResourceList()) {
@@ -2100,8 +2103,8 @@ public class PgenResource extends
 
             String actionsxtra = PgenActionXtra.getActionsXtra(adc);
 
-            List<String> actList = getActionList(this.getSelectedDE()
-                    .getPgenType(), actionsxtra);
+            List<String> actList = getActionList(
+                    this.getSelectedDE().getPgenType(), actionsxtra);
 
             if (actList != null) {
                 for (String act : actList) {
@@ -2157,19 +2160,20 @@ public class PgenResource extends
                     @Override
                     public void run() {
                         // Prompt user to type in label value
-                        InputDialog inputDialog = new InputDialog(
-                                new Shell(),
+                        InputDialog inputDialog = new InputDialog(new Shell(),
                                 "Please type in contour label",
                                 "Please type in the label of the contour line:",
                                 "", null) {
                             @Override
                             protected void configureShell(Shell shell) {
                                 super.configureShell(shell);
-                                shell.setBounds(shell.getBounds().x
-                                        + LABEL_DIALOG_OFFSET_X,
+                                shell.setBounds(
+                                        shell.getBounds().x
+                                                + LABEL_DIALOG_OFFSET_X,
                                         shell.getBounds().y
                                                 + LABEL_DIALOG_OFFSET_Y,
-                                        LABEL_DIALOG_WIDTH, LABEL_DIALOG_HEIGHT);
+                                        LABEL_DIALOG_WIDTH,
+                                        LABEL_DIALOG_HEIGHT);
                             }
                         };
 
@@ -2180,8 +2184,8 @@ public class PgenResource extends
                             // clean up
                             layer.remove(line);
                             PgenUtil.setSelectingMode();
-                            PgenResource.this
-                                    .setSelected((AbstractDrawableComponent) null);
+                            PgenResource.this.setSelected(
+                                    (AbstractDrawableComponent) null);
                         }
                     }
                 });
@@ -2212,10 +2216,10 @@ public class PgenResource extends
         // set line and label attributes
         if (!contours.getContourLines().isEmpty()) {
             line.setAttr(contours.getContourLines().get(0).getLine().getAttr());
-            line.setColors(contours.getContourLines().get(0).getLine()
-                    .getColors());
-            line.setPgenType(contours.getContourLines().get(0).getLine()
-                    .getPgenType());
+            line.setColors(
+                    contours.getContourLines().get(0).getLine().getColors());
+            line.setPgenType(
+                    contours.getContourLines().get(0).getLine().getPgenType());
 
             if (!contours.getContourLines().get(0).getLabels().isEmpty()) {
                 lbl = (Text) contours.getContourLines().get(0).getLabels()
@@ -2406,9 +2410,8 @@ public class PgenResource extends
                     pgenDlg.setLabel(newLine.getLabelString()[0]);
                     pgenDlg.setNumOfLabels(newLine.getNumOfLabels());
 
-                    PgenResource.this
-                        .setSelected((AbstractDrawableComponent) newLine
-                            .getLine());
+                    PgenResource.this.setSelected(
+                            (AbstractDrawableComponent) newLine.getLine());
                 }
             }
         }
