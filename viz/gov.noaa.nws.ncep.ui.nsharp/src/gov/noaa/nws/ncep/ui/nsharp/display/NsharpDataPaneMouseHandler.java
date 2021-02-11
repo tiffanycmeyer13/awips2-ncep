@@ -1,4 +1,32 @@
 /**
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
+ *
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
+ *
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
+ *
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
+package gov.noaa.nws.ncep.ui.nsharp.display;
+
+import org.locationtech.jts.geom.Coordinate;
+
+import com.raytheon.uf.viz.core.IDisplayPane;
+
+import gov.noaa.nws.ncep.ui.nsharp.display.map.AbstractNsharpMapResource;
+import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpDataPaneResource;
+
+/**
  * 
  * gov.noaa.nws.ncep.ui.nsharp.skewt.rsc.NsharpDataPaneMouseHandler
  * 
@@ -8,82 +36,71 @@
  * <pre>
  * SOFTWARE HISTORY
  * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 03/23/2010	229			Chin Chen	Initial coding
+ * Date         Ticket#     Engineer    Description
+ * -------      -------     --------    -----------
+ * 03/23/2010    229        Chin Chen   Initial coding
  * 03/09/2011               Chin Chen   Updated for R1G2-9
  * 06/14/2011   11-5        Chin Chen   migration
+ * 04/16/2020   73571       smanoj      NSHARP D2D port refactor
  *
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
  */
-package gov.noaa.nws.ncep.ui.nsharp.display;
+public class NsharpDataPaneMouseHandler extends NsharpAbstractMouseHandler {
 
-
-import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResource;
-import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpDataPaneResource;
-
-import com.raytheon.uf.viz.core.IDisplayPane;
-import org.locationtech.jts.geom.Coordinate;
-
-public class NsharpDataPaneMouseHandler extends NsharpAbstractMouseHandler{
-
-    
     public NsharpDataPaneMouseHandler(NsharpEditor editor, IDisplayPane pane) {
-    	super(editor,pane);
-   }
- 
-
+        super(editor, pane);
+    }
 
     @Override
     public boolean handleMouseDown(int x, int y, int mouseButton) {
-    	theLastMouseX = x;
-    	theLastMouseY = y;
-    	if (getPaneDisplay() == null) {
-    		return false;
-    	}
-    	else if (mouseButton == 1) {
-    		//System.out.println("handleMouseDown");
-    		this.mode = Mode.CREATE;
-    		Coordinate c = editor.translateClick(x, y);  
-    		NsharpDataPaneResource rsc = (NsharpDataPaneResource)getDescriptor().getPaneResource();
-    		if((rsc.getDataPanel1Background().contains(c) == true || rsc.getDataPanel2Background().contains(c) == true) && rsc.isSumP1Visible() == true) {
-    			this.mode = Mode.PARCELLINE_DOWN;
-    			//changeMouse(this.mode);
-    		}
-    		editor.refresh();
-    	}
+        theLastMouseX = x;
+        theLastMouseY = y;
+        if (getPaneDisplay() == null) {
+            return false;
+        } else if (mouseButton == 1) {
+            this.mode = Mode.CREATE;
+            Coordinate c = editor.translateClick(x, y);
+            NsharpDataPaneResource rsc = (NsharpDataPaneResource) getDescriptor()
+                    .getPaneResource();
+            if ((rsc.getDataPanel1Background().contains(c) == true
+                    || rsc.getDataPanel2Background().contains(c) == true)
+                    && rsc.isSumP1Visible() == true) {
+                this.mode = Mode.PARCELLINE_DOWN;
+            }
+            editor.refresh();
+        }
 
-    	return false;
+        return false;
     }
-
 
     @Override
     public boolean handleMouseUp(int x, int y, int mouseButton) {
-    	//System.out.println("skewtRsc handleMouseUp");
-    	if (getPaneDisplay() == null) {
-    		return false;
-    	}
-    	if(editor!=null){
-    		// button 1 is left mouse button 
-    		if (mouseButton == 1 ){
-    			Coordinate c = editor.translateClick(x, y);
-    			NsharpDataPaneResource rsc = (NsharpDataPaneResource)getDescriptor().getPaneResource();
-    			if((rsc.getDataPanel1Background().contains(c) == true || rsc.getDataPanel2Background().contains(c) == true )&& this.mode == Mode.PARCELLINE_DOWN) {
-    				//System.out.println("skewtRsc handleMouseUp panels");
-    				rsc.setUserPickedParcelLine(c);
-    				
-    			}
-    			this.mode = Mode.CREATE;
-    		} else if(mouseButton == 3){
-    			//right mouse button
-    			//System.out.println("skewtRsc handleMouseUp right button");
-    			NsharpMapResource.bringMapEditorToTop();
-    		}
-    		editor.refresh();
-    	}
-    	return false;
+        if (getPaneDisplay() == null) {
+            return false;
+        }
+        if (editor != null) {
+            // button 1 is left mouse button
+            if (mouseButton == 1) {
+                Coordinate c = editor.translateClick(x, y);
+                NsharpDataPaneResource rsc = (NsharpDataPaneResource) getDescriptor()
+                        .getPaneResource();
+                if ((rsc.getDataPanel1Background().contains(c) == true
+                        || rsc.getDataPanel2Background().contains(c) == true)
+                        && this.mode == Mode.PARCELLINE_DOWN) {
+                    rsc.setUserPickedParcelLine(c);
+                }
+                this.mode = Mode.CREATE;
+            } else if (mouseButton == 3) {
+                // right mouse button
+                if (AbstractNsharpMapResource.getMapResource(editor) != null) {
+                    AbstractNsharpMapResource.getMapResource(editor)
+                            .bringMapEditorToTop();
+                }
+            }
+            editor.refresh();
+        }
+        return false;
     }
 }

@@ -115,6 +115,7 @@ import systems.uom.common.USCustomary;;
  *                                      into
  *                                      get{High|Low}InverseCentralMeridian()
  * Nov 05, 2015  5070       randerso    Adjust font sizes for dpi scaling
+ * Apr 28, 2020  77667      smanoj      Flight Information Region (FIR) update.
  * Jul 15, 2020  8191       randerso    Updated for changes to LatLonPoint
  *
  * </pre>
@@ -125,6 +126,7 @@ import systems.uom.common.USCustomary;;
 public class IntlSigmetResource extends
         AbstractNatlCntrsResource<IntlSigmetResourceData, NCMapDescriptor>
         implements INatlCntrsResource {
+
     private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(IntlSigmetResource.class);
 
@@ -134,6 +136,10 @@ public class IntlSigmetResource extends
             .getConverterTo(USCustomary.NAUTICAL_MILE);
 
     private IFont font = null;
+
+
+
+
 
     private float baseFontSize = 12;
 
@@ -268,13 +274,12 @@ public class IntlSigmetResource extends
                 }
             }
 
-            // latestSigmetIssuanceTimeForMessageId =
-            // latestSigmetIssuanceTimeForMessageId;
-            // Now that we've determined the latest issuances for each messageId
-            // -- we make a second
-            // pass through the data time matched to this frame. This time,
-            // we purge anything superseded by a later issuance.
-
+            /*
+             * Now that we've determined the latest issuances for each messageId
+             * -- we make a second pass through the data time matched to this
+             * frame. This time, we purge anything superseded by a later
+             * issuance.
+             */
             String[] keys = new String[1];
             keys = fd.condensedIntligLinkedHashMap.keySet().toArray(keys);
             for (String key : keys) {
@@ -778,7 +783,7 @@ public class IntlSigmetResource extends
                                 /*
                                  * (Non-Javadoc) This is retained from legacy
                                  * code: If any of the sigmets
-                                 * (KZNY/KZMA/KZHU/TJZS) in the Atlantic are
+                                 * (KZWY/KZMA/KZHU/TJZS) in the Atlantic are
                                  * encountered, the label is preceded with the
                                  * character 'A'.
                                  */
@@ -955,7 +960,6 @@ public class IntlSigmetResource extends
                  * arc does not get drawn correctly. Hence the code to render
                  * the polygon and its arc point-by-point have been added here.
                  */
-
                 /*
                  * PixelCoordinate prevLoc = null; for (Coordinate
                  * currCoordinate :
@@ -1623,24 +1627,19 @@ public class IntlSigmetResource extends
 
             List<Geometry> geomList = new ArrayList<>();
             if (!g.isEmpty()) {
-                // Algorithm:
-                // Process primitive geometry type (non collection). Algorithm
-                // works
-                // in that it walks the geometry, when two points cross, it adds
-                // or
-                // subtracts 360 to the offset to flatten out the geometry. When
-                // first part is done, geometries will be continuous and not
-                // limited
-                // to -180 to 180, they will be technically be > neg infinitive,
-                // <
-                // pos infinity given that the algorithm supports wrapping
-                // around
-                // the world multiple times. When we have the continuous
-                // geometry,
-                // we split it up into sections by intersecting with a 360 deg
-                // inverse central meridian. We then normalize the points for
-                // each
-                // section back to -180 to 180
+                /*
+                 * Algorithm: Process primitive geometry type (non collection).
+                 * Algorithm works in that it walks the geometry, when two
+                 * points cross, it adds or subtracts 360 to the offset to
+                 * flatten out the geometry. When first part is done, geometries
+                 * will be continuous and not limited to -180 to 180, they will
+                 * be technically be > neg infinitive, < pos infinity given that
+                 * the algorithm supports wrapping around the world multiple
+                 * times. When we have the continuous geometry, we split it up
+                 * into sections by intersecting with a 360 deg inverse central
+                 * meridian. We then normalize the points for each section back
+                 * to -180 to 180
+                 */
                 boolean handle = false;
                 if (checker.needsChecking()) {
                     boolean polygon = g instanceof Polygon;
@@ -1692,11 +1691,12 @@ public class IntlSigmetResource extends
                         }
                     }
                     if (handle) {
-                        // All coords in geometry should be denormalized now,
-                        // get
-                        // adjusted envelope, divide envelope into sections, for
-                        // each section, intersect with geometry and add to
-                        // geom list
+                        /*
+                         * All coords in geometry should be denormalized now,
+                         * get adjusted envelope, divide envelope into sections,
+                         * for each section, intersect with geometry and add to
+                         * geom list
+                         */
                         List<Geometry> sections = new ArrayList<>();
                         List<Double> rolls = new ArrayList<>();
                         GeometryFactory gf = g.getFactory();
@@ -2022,7 +2022,7 @@ public class IntlSigmetResource extends
          *            - The Air Traffic Service Unit
          *            <p>
          *            If any of the input parameters are set to one of the
-         *            following stations - KZMA / KZNY / KZHU / TJZS, then the
+         *            following stations - KZMA / KZWY / KZHU / TJZS, then the
          *            method returns true.
          * @return true if the International SIGMET is issued for/in the
          *         Atlantic region or false otherwise
@@ -2031,20 +2031,20 @@ public class IntlSigmetResource extends
                 String atsu) {
             boolean inAtlantic = false;
             if (issueOff != null && ((issueOff.contains("KZMA"))
-                    || (issueOff.contains("KZNY"))
+                    || (issueOff.contains("KZWY"))
                     || (issueOff.contains("KZHU"))
                     || (issueOff.contains("TJZS")))) {
                 inAtlantic = true;
             }
 
             if (omwo != null && ((omwo.contains("KZMA"))
-                    || (omwo.contains("KZNY")) || (omwo.contains("KZHU"))
+                    || (omwo.contains("KZWY")) || (omwo.contains("KZHU"))
                     || (omwo.contains("TJZS")))) {
                 inAtlantic = true;
             }
 
             if (atsu != null && ((atsu.contains("KZMA"))
-                    || (atsu.contains("KZNY")) || (atsu.contains("KZHU"))
+                    || (atsu.contains("KZWY")) || (atsu.contains("KZHU"))
                     || (atsu.contains("TJZS")))) {
                 inAtlantic = true;
             }
