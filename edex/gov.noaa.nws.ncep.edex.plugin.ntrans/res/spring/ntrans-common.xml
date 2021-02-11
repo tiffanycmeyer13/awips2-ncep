@@ -20,7 +20,7 @@
         <property name="pathProvider">
             <ref bean="ntransPathProvider" />
         </property>
-        <property name="compression" value="LZF"/>
+        <property name="compression" value="GZIP"/>
 	</bean>
 
 	<bean factory-bean="pluginRegistry" factory-method="register">
