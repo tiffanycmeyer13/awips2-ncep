@@ -19,7 +19,6 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IPartListener;
-import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
@@ -36,18 +35,17 @@ import gov.noaa.nws.ncep.ui.nctextui.dbutil.NctextDbQuery;
 import gov.noaa.nws.ncep.ui.nctextui.dbutil.NctextStationInfo;
 import gov.noaa.nws.ncep.ui.nctextui.rsc.NctextuiResource;
 import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
-import gov.noaa.nws.ncep.viz.ui.display.NcDisplayMngr;
 
 /**
- * 
+ *
  * gov.noaa.nws.ncep.ui.nctextui.palette.NctextPaletteWindow
- * 
+ *
  * This java class performs the NCTEXT GUI construction. This code has been
  * developed by the SIB for use in the AWIPS2 system.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * 
+ *
  * Date         Ticket#     Engineer    Description
  * -------      -------     --------    -----------
  * 12/24/2009   TBD         Chin Chen   Initial coding
@@ -56,11 +54,10 @@ import gov.noaa.nws.ncep.viz.ui.display.NcDisplayMngr;
  * 02/15/2012   #972        G. Hull     NatlCntrsEditor 
  * 12/12/2016   R25982      J Beck      Modify support for Aviation > TAFs
  *                                      and Observed Data > TAFs Decoded
- *
+ * 04/14/2020   76579       k sunil     Added code to implement LATEST as the default range
  * </pre>
- * 
+ *
  * @author Chin Chen
- * @version 1.0
  */
 
 public class NctextuiPaletteWindow extends ViewPart
@@ -78,7 +75,7 @@ public class NctextuiPaletteWindow extends ViewPart
 
     private NctextDbQuery query;
 
-    private EReportTimeRange timeCovered = EReportTimeRange.TWELVE_HOURS;
+    private EReportTimeRange timeCovered = EReportTimeRange.LATEST;
 
     private EReportTimeRange tempTimeCovered;
 
@@ -87,6 +84,8 @@ public class NctextuiPaletteWindow extends ViewPart
     private boolean replaceText = true;
 
     private final static String GP_LABEL = "Select Data Type Group ";
+
+    private final static String LATEST = "Latest";
 
     private final static String PRODUCT_LABEL = "Select Data Type Product";
 
@@ -112,7 +111,7 @@ public class NctextuiPaletteWindow extends ViewPart
 
     private int btnGapX = 5;
 
-    private int timeBtnWidth = 40;
+    private int timeBtnWidth = 70;
 
     private int staBtnWidth = 75;
 
@@ -142,8 +141,8 @@ public class NctextuiPaletteWindow extends ViewPart
 
     private int currentTextIndex;
 
-    private Button oneHrBtn, threeHrBtn, sixHrBtn, twelveHrBtn, twentyfourHrBtn,
-            fourtyeightHrBtn, allHrBtn;
+    private Button latestBtn, oneHrBtn, threeHrBtn, sixHrBtn, twelveHrBtn,
+            twentyfourHrBtn, fourtyeightHrBtn, allHrBtn;
 
     /**
      * No-arg Constructor
@@ -227,16 +226,6 @@ public class NctextuiPaletteWindow extends ViewPart
             page.removePartListener(this);
         }
 
-    }
-
-    private void close() {
-        IWorkbenchPage wpage = PlatformUI.getWorkbench()
-                .getActiveWorkbenchWindow().getActivePage();
-
-        IViewPart vpart = wpage.findView("gov.noaa.nws.ncep.ui.NCTEXTUI");
-        wpage.hideView(vpart);
-
-        NcDisplayMngr.setPanningMode();
     }
 
     /**
@@ -468,18 +457,31 @@ public class NctextuiPaletteWindow extends ViewPart
                 timeCovered = EReportTimeRange.NONE;
                 if (!btnText.equals("all")) {
                     EReportTimeRange timeRange = EReportTimeRange.NONE;
-                    timeCovered = timeRange
-                            .getTimeRangeFromInt(Integer.valueOf(btnText));
+                    if (btnText.equals(LATEST)) {
+                        timeCovered = EReportTimeRange.LATEST;
+                    } else {
+                        timeCovered = timeRange
+                                .getTimeRangeFromInt(Integer.valueOf(btnText));
+
+                    }
                 }
                 handleStnMarkingRequestByBtn();
             }
 
         };
 
+        latestBtn = new Button(timeGp, SWT.RADIO | SWT.BORDER);
+        latestBtn.setText(LATEST);
+        latestBtn.setEnabled(true);
+        latestBtn.setBounds(timeGp.getBounds().x + btnGapX,
+                timeGp.getBounds().y + labelGap, timeBtnWidth, btnHeight);
+        latestBtn.addListener(SWT.MouseUp, btnListeener);
+
         oneHrBtn = new Button(timeGp, SWT.RADIO | SWT.BORDER);
         oneHrBtn.setText("1");
         oneHrBtn.setEnabled(true);
-        oneHrBtn.setBounds(timeGp.getBounds().x + btnGapX,
+        oneHrBtn.setBounds(
+                btnGapX + latestBtn.getBounds().x + latestBtn.getBounds().width,
                 timeGp.getBounds().y + labelGap, timeBtnWidth, btnHeight);
         oneHrBtn.addListener(SWT.MouseUp, btnListeener);
 
@@ -542,6 +544,7 @@ public class NctextuiPaletteWindow extends ViewPart
                         + fourtyeightHrBtn.getBounds().width,
                 sixHrBtn.getBounds().y + sixHrBtn.getBounds().height + btnGapY,
                 timeBtnWidth, btnHeight);
+        allHrBtn.addListener(SWT.MouseUp, btnListeener);
 
         if (timeCovered == EReportTimeRange.ONE_HOUR)
             oneHrBtn.setSelection(true);
@@ -555,10 +558,11 @@ public class NctextuiPaletteWindow extends ViewPart
             twentyfourHrBtn.setSelection(true);
         else if (timeCovered == EReportTimeRange.FORTYEIGHT_HOURS)
             fourtyeightHrBtn.setSelection(true);
-        else
+        else if (timeCovered == EReportTimeRange.NONE)
             allHrBtn.setSelection(true);
+        else
+            latestBtn.setSelection(true);
 
-        allHrBtn.addListener(SWT.MouseUp, btnListeener);
         createStaStnBtns(composite);
 
     }
@@ -883,7 +887,7 @@ public class NctextuiPaletteWindow extends ViewPart
                 }
 
                 if (nctextuiPaletteWindow.getTimeCovered()
-                        .getTimeRange() == 0) {
+                        .getTimeRange() <= 0) {
 
                     text.append("Report unavailable in database.\n");
 
@@ -1104,6 +1108,8 @@ public class NctextuiPaletteWindow extends ViewPart
             fourtyeightHrBtn.setSelection(false);
             allHrBtn.setEnabled(false);
             allHrBtn.setSelection(false);
+            latestBtn.setEnabled(false);
+            latestBtn.setSelection(false);
 
             // Disable the button group
             timeGp.setEnabled(false);
@@ -1139,6 +1145,7 @@ public class NctextuiPaletteWindow extends ViewPart
             twentyfourHrBtn.setEnabled(true);
             fourtyeightHrBtn.setEnabled(true);
             allHrBtn.setEnabled(true);
+            latestBtn.setEnabled(true);
 
             // Enable the button group
             timeGp.setEnabled(true);
@@ -1156,6 +1163,7 @@ public class NctextuiPaletteWindow extends ViewPart
             }
 
         }
+
     }
 
     private void selectHourCoveredButton(EReportTimeRange timeCovered) {
@@ -1172,6 +1180,8 @@ public class NctextuiPaletteWindow extends ViewPart
             twentyfourHrBtn.setSelection(true);
         else if (timeCovered == EReportTimeRange.FORTYEIGHT_HOURS)
             fourtyeightHrBtn.setSelection(true);
+        else if (timeCovered == EReportTimeRange.LATEST)
+            latestBtn.setSelection(true);
         else
             allHrBtn.setSelection(true);
     }

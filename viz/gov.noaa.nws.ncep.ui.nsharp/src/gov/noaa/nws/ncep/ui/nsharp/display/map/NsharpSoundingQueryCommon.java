@@ -10,21 +10,21 @@ package gov.noaa.nws.ncep.ui.nsharp.display.map;
  * <pre>
  * SOFTWARE HISTORY
  * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 10/2010	229			    Chin Chen	Initial coding
- * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own thread to avoid gui locked out during load
- *
+ * Date         Ticket#     Engineer    Description
+ * -------      -------     --------    -----------
+ * 10/2010      229         Chin Chen   Initial coding
+ * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own
+ *                                      thread to avoid gui locked out during load
+ * 04/06/2020   73571       smanoj      NSHARP D2D port refactor
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
+ * 
  */
 import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingLayer;
 import gov.noaa.nws.ncep.ui.nsharp.NsharpStationInfo;
 import gov.noaa.nws.ncep.ui.nsharp.display.NsharpEditor;
 import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpResourceHandler;
-import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
 
 import java.util.List;
 import java.util.Map;
@@ -49,13 +49,13 @@ public class NsharpSoundingQueryCommon {
 
         Job uijob = new UIJob("handleQueryResponse") {
             public IStatus runInUIThread(IProgressMonitor monitor) {
-                NatlCntrsEditor mapEditor = NsharpMapResource.getMapEditor();
-                if (mapEditor != null) {
-                    mapEditor.refresh();
+
+                if (NsharpEditor.getActiveNsharpEditor() != null) {
+                    NsharpEditor.getActiveNsharpEditor().refresh();
                 }
                 if (soundingLysLstMap.size() <= 0) {
-                    postToMsgBox("No sounding data returned from DB for this station!!");
-                    // return Status.OK_STATUS;
+                    postToMsgBox(
+                            "No sounding data returned from DB for this station!!");
                 } else {
                     NsharpResourceHandler rscHdr = NsharpEditor
                             .createOrOpenEditor().getRscHandler();
