@@ -183,6 +183,7 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
  * 01/09/2020   71072       smanoj      Fix some NullPointerException issues
  * Apr 06, 2020 77420       tjensen     Allow delete of specific contour labels
+ * 02/01/2021   87515       wkwock      Move CWA out of PGEN
  *
  * </pre>
  *
@@ -569,7 +570,7 @@ public class PgenResource
 
     }
 
-    private void drawSelected(IGraphicsTarget target,
+    protected void drawSelected(IGraphicsTarget target,
             PaintProperties paintProps) {
 
         if (!elSelected.isEmpty()
@@ -1686,7 +1687,7 @@ public class PgenResource
      * @param paintProps
      *            Paint properties from the paint() method.
      */
-    private void drawProduct(IGraphicsTarget target,
+    public void drawProduct(IGraphicsTarget target,
             PaintProperties paintProps) {
         drawFilledElements(target, paintProps);
 

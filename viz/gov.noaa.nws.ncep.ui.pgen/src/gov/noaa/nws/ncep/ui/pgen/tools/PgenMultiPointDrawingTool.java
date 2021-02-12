@@ -20,7 +20,6 @@ import org.geotools.referencing.datum.DefaultEllipsoid;
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
 import org.locationtech.jts.geom.Coordinate;
 
-import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.DisplayType;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.FontStyle;
@@ -66,6 +65,7 @@ import gov.noaa.nws.ncep.viz.common.LocatorUtil;
  * 05/12        #708        J. Wu       Use data frame time for Track element
  * 08/13        #1025       J. Wu       Populate VOR data for "Isolated" CONV_SIGMET.
  * 12/12/2016   17469       W. Kwock    Added CWA Formatter
+ * 02/01/2021   87515       wkwock      Remove CWA
  * 
  * </pre>
  * 
@@ -239,8 +239,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                 return false;
 
             if (button == 3) {
-                if (points.size() == 0 && !PgenConstant.CWA_FORMATTER
-                        .equalsIgnoreCase(pgenType)) {
+                if (points.size() == 0) {
                     closeAttrDlg(attrDlg, pgenType);
                     attrDlg = null;
                     PgenUtil.setSelectingMode();
@@ -374,9 +373,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                     || "NCON_SIGMET".equalsIgnoreCase(pgenTypeString)
                     || "AIRM_SIGMET".equalsIgnoreCase(pgenTypeString)
                     || "OUTL_SIGMET".equalsIgnoreCase(pgenTypeString)
-                    || "CCFP_SIGMET".equalsIgnoreCase(pgenTypeString)
-                    || PgenConstant.CWA_FORMATTER
-                            .equalsIgnoreCase(pgenTypeString))
+                    || "CCFP_SIGMET".equalsIgnoreCase(pgenTypeString))
                 return DrawableType.CONV_SIGMET;
             else if (VolcanoAshCloud.SIGMET_PGEN_TYPE
                     .equalsIgnoreCase(pgenTypeString))

@@ -97,6 +97,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * 03/20/2019   #7572       dgilling    Code cleanup.
  * 11/04/2019   70576       smanoj      Update to allow forecaster change/update alphanumeric labels.
  * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
+ * 02/01/2021   87515       wkwock      Remove CWA
  *
  * </pre>
  *
@@ -335,17 +336,21 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
         if (PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(this.pgenType)) {
             this.getShell().setText("Convective SIGMET Edit");
-        } else if (PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(this.pgenType)) {
+        } else if (PgenConstant.TYPE_NCON_SIGMET
+                .equalsIgnoreCase(this.pgenType)) {
             this.getShell().setText("Non-convective SIGMET Edit");
-        } else if (PgenConstant.TYPE_AIRM_SIGMET.equalsIgnoreCase(this.pgenType)) {
+        } else if (PgenConstant.TYPE_AIRM_SIGMET
+                .equalsIgnoreCase(this.pgenType)) {
             this.getShell().setText("AIRMET Edit");
-        } else if (PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(this.pgenType)) {
+        } else if (PgenConstant.TYPE_OUTL_SIGMET
+                .equalsIgnoreCase(this.pgenType)) {
             this.getShell().setText("Convective Outlook Edit");
         }
 
         if (PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(this.pgenType)
                 || PgenConstant.TYPE_AIRM_SIGMET.equalsIgnoreCase(this.pgenType)
-                || PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(this.pgenType)) {
+                || PgenConstant.TYPE_OUTL_SIGMET
+                        .equalsIgnoreCase(this.pgenType)) {
             SigmetCommAttrDlg.this.setLineType(AREA);
         }
 
@@ -435,9 +440,8 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
         cs.setColorValue(new RGB(clr.getRed(), clr.getGreen(), clr.getBlue()));// new
                                                                                // RGB(0,255,0));
 
-        if (!PgenConstant.TYPE_INTL_SIGMET.equalsIgnoreCase(pgenType) 
-                && !PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pgenType)
-                && !PgenConstant.CWA_FORMATTER.equalsIgnoreCase(pgenType)) {
+        if (!PgenConstant.TYPE_INTL_SIGMET.equalsIgnoreCase(pgenType)
+                && !PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pgenType)) {
             btnLine.setEnabled(false);
             btnIsolated.setEnabled(false);
             comboLine.setEnabled(false);
@@ -604,13 +608,15 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
     private String getVOR(Coordinate[] coors) {
         boolean isSnapped = false;
-        String vorConnector = (PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(pgenType)
-                || PgenConstant.TYPE_AIRM_SIGMET.equalsIgnoreCase(pgenType)) ? " TO " : "-";
+        String vorConnector = (PgenConstant.TYPE_NCON_SIGMET
+                .equalsIgnoreCase(pgenType)
+                || PgenConstant.TYPE_AIRM_SIGMET.equalsIgnoreCase(pgenType))
+                        ? " TO "
+                        : "-";
 
-        if (PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(pgenType) 
+        if (PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(pgenType)
                 || PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pgenType)
-                || PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(pgenType)
-                || PgenConstant.CWA_FORMATTER.equalsIgnoreCase(pgenType)) {
+                || PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(pgenType)) {
             return SnapUtil.getVORText(coors, vorConnector, lineType, 6,
                     isSnapped, true, false, pgenType);
         }
@@ -623,10 +629,13 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
         } else {
             Button[] btns = attrButtonMap.get("lineType");
             if (btns != null) {
-                if (lineType.equals(AREA) 
-                        || PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(pgenType)
-                        || PgenConstant.TYPE_AIRM_SIGMET.equalsIgnoreCase(pgenType)
-                        || PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(pgenType)) {
+                if (lineType.equals(AREA)
+                        || PgenConstant.TYPE_NCON_SIGMET
+                                .equalsIgnoreCase(pgenType)
+                        || PgenConstant.TYPE_AIRM_SIGMET
+                                .equalsIgnoreCase(pgenType)
+                        || PgenConstant.TYPE_OUTL_SIGMET
+                                .equalsIgnoreCase(pgenType)) {
                     btns[0].setSelection(true);
                     btns[1].setSelection(false);
                     btns[2].setSelection(false);
@@ -898,8 +907,8 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
                     .equalsIgnoreCase(SigmetCommAttrDlg.this.pgenType)
                     || PgenConstant.TYPE_AIRM_SIGMET
                             .equalsIgnoreCase(SigmetCommAttrDlg.this.pgenType)
-                    || PgenConstant.TYPE_OUTL_SIGMET
-                            .equalsIgnoreCase(SigmetCommAttrDlg.this.pgenType)) {
+                    || PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(
+                            SigmetCommAttrDlg.this.pgenType)) {
                 return s.toUpperCase();
             }
 
@@ -979,8 +988,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
         List<AbstractDrawableComponent> newList = new ArrayList<>();
 
         if (drawingLayer != null) {
-            adcList = drawingLayer
-                    .getAllSelected();
+            adcList = drawingLayer.getAllSelected();
         }
 
         if (adcList != null && !adcList.isEmpty()) {
@@ -1003,19 +1011,18 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
 
-            List<AbstractDrawableComponent> oldList = new ArrayList<>(
-                    adcList);
+            List<AbstractDrawableComponent> oldList = new ArrayList<>(adcList);
             drawingLayer.replaceElements(oldList, newList);
         }
 
         AbstractDrawableComponent newCmp = null;
 
-        for ( AbstractDrawableComponent adc : newList) {
+        for (AbstractDrawableComponent adc : newList) {
             newCmp = adc;
             drawingLayer.removeElement(adc);
         }
 
-        if(newCmp != null){
+        if (newCmp != null) {
             drawingLayer.addElement(newCmp);
             drawingLayer.addSelected(newCmp);
             drawingLayer.issueRefresh();
@@ -1043,8 +1050,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
             return Color.cyan;
         }
 
-        if (PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pType)
-                || PgenConstant.CWA_FORMATTER.equalsIgnoreCase(pType)) {
+        if (PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pType)) {
             return Color.yellow;
         }
 

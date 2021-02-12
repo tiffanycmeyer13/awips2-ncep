@@ -24,6 +24,7 @@ package gov.noaa.nws.ncep.ui.pgen;
  * Feb 26, 2020  75024    smanoj    Added constants for Front Types and Labels
  * Mar 13, 2020  76151    tjensen   Added TYPE_TROPICAL_CYCLONE and
  *                                  TYPE_VOLCANIC_ASH
+ * Feb 01, 2021  87515    wkwock    Remove CWA
  *
  * </pre>
  *
@@ -176,10 +177,6 @@ public final class PgenConstant {
     public static final String G2G_BOUND_MARK = "9999";
 
     public static final String SIGMET = "SIGMET";
-
-    public static final String CWA_SIGMET = "CWA_SIGMET";
-
-    public static final String CWA_FORMATTER = "CWA_FORMATTER";
 
     public static final String TYPE_TROPICAL_TROF = "TROPICAL_TROF";
 
