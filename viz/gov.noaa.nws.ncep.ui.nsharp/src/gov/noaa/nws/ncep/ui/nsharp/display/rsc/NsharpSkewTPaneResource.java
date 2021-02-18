@@ -120,6 +120,8 @@ import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
  * Aug 02, 2019  7893       bhurley         Allow wind barbs to be fully
  *                                          displayed at the top and bottom
  *                                          pressure levels.
+ * Feb 15, 2021  86817      smanoj          Added readout features for Turbulence and Icing
+ *                                          similar to SkewT Graph.
  * 
  * </pre>
  *
@@ -1093,73 +1095,90 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource {
         }
     }
 
+    private void drawNsharpDataDisplay(IGraphicsTarget target,
+            double currentZoomLevel) throws VizException {
+        // draw FileName and Sampling data
+        drawNsharpFileNameAndSampling(target, currentZoomLevel);
+
+        // draw cursor data
+        if (cursorInSkewT && rscHandler.isGoodData()) {
+            if ((curseToggledFontLevel < CURSER_STRING_OFF)
+                    && (!cursorTopWindBarb || !windBarbMagnify)) {
+                drawNsharpSkewtCursorData(target);
+            }
+        }
+    }
+
     private void drawNsharpSkewtCursorData(IGraphicsTarget target)
             throws VizException {
-        IFont myFont;
-        myFont = target.initializeFont("Monospace", curseToggledFontLevel,
-                null);
-        myFont.setSmoothing(false);
-        myFont.setScaleFont(false);
+        if (cursorCor != null
+                && world.unMap(cursorCor.x, cursorCor.y) != null) {
+            IFont myFont;
+            myFont = target.initializeFont("Monospace", curseToggledFontLevel,
+                    null);
+            myFont.setSmoothing(false);
+            myFont.setScaleFont(false);
 
-        Coordinate c = NsharpWxMath
-                .reverseSkewTXY(world.unMap(cursorCor.x, cursorCor.y));
-        double p_mb = c.y;
-        double temp = c.x;
-        float htFt, htM, relh = -1;
-        String curStrFormat, curStrFormat1, htMStr, htFtStr;
-        String curStr, curStr1;
-        VerticalAlignment vAli;
-        HorizontalAlignment hAli;
+            Coordinate c = NsharpWxMath
+                    .reverseSkewTXY(world.unMap(cursorCor.x, cursorCor.y));
+            double p_mb = c.y;
+            double temp = c.x;
+            float htFt, htM, relh = -1;
+            String curStrFormat, curStrFormat1, htMStr, htFtStr;
+            String curStr, curStr1;
+            VerticalAlignment vAli;
+            HorizontalAlignment hAli;
 
-        htM = NsharpLibBasics.agl(soundingLys,
-                NsharpLibBasics.i_hght(soundingLys, (float) p_mb));
-        htFt = NsharpLibBasics.mtof(htM);
-        htMStr = Integer.toString(Math.round(htM));
-        htFtStr = Integer.toString(Math.round(htFt));
-        if (NsharpLibBasics.i_temp(soundingLys, (float) p_mb) > -9998.0
-                && NsharpLibBasics.i_dwpt(soundingLys,
-                        (float) p_mb) > -9998.0) {
-            relh = NsharpLibThermo.relh(soundingLys, (float) p_mb);
-            curStrFormat = "%4.0f/%.0fkt %4.0fmb  %sft/%sm agl  %2.0f%%\n";
-            curStr = String.format(curStrFormat,
-                    NsharpLibBasics.i_wdir(soundingLys, (float) p_mb),
-                    NsharpLibBasics.i_wspd(soundingLys, (float) p_mb), p_mb,
-                    htFtStr, htMStr, relh);
-        } else {
-            curStrFormat = "%4.0f/%.0fkt %4.0fmb  %sft/%sm agl\n";
-            curStr = String.format(curStrFormat,
-                    NsharpLibBasics.i_wdir(soundingLys, (float) p_mb),
-                    NsharpLibBasics.i_wspd(soundingLys, (float) p_mb), p_mb,
-                    htFtStr, htMStr);
+            htM = NsharpLibBasics.agl(soundingLys,
+                    NsharpLibBasics.i_hght(soundingLys, (float) p_mb));
+            htFt = NsharpLibBasics.mtof(htM);
+            htMStr = Integer.toString(Math.round(htM));
+            htFtStr = Integer.toString(Math.round(htFt));
+            if (NsharpLibBasics.i_temp(soundingLys, (float) p_mb) > -9998.0
+                    && NsharpLibBasics.i_dwpt(soundingLys,
+                            (float) p_mb) > -9998.0) {
+                relh = NsharpLibThermo.relh(soundingLys, (float) p_mb);
+                curStrFormat = "%4.0f/%.0fkt %4.0fmb  %sft/%sm agl  %2.0f%%\n";
+                curStr = String.format(curStrFormat,
+                        NsharpLibBasics.i_wdir(soundingLys, (float) p_mb),
+                        NsharpLibBasics.i_wspd(soundingLys, (float) p_mb), p_mb,
+                        htFtStr, htMStr, relh);
+            } else {
+                curStrFormat = "%4.0f/%.0fkt %4.0fmb  %sft/%sm agl\n";
+                curStr = String.format(curStrFormat,
+                        NsharpLibBasics.i_wdir(soundingLys, (float) p_mb),
+                        NsharpLibBasics.i_wspd(soundingLys, (float) p_mb), p_mb,
+                        htFtStr, htMStr);
+            }
+
+            curStrFormat1 = "%s(%s) %4.1f/%4.1f%cF(%4.1f/%4.1f%cC)\n";
+            temp = NsharpLibBasics.i_temp(soundingLys, (float) p_mb);
+            UnitConverter celciusToFahrenheit = SI.CELSIUS
+                    .getConverterTo(NonSI.FAHRENHEIT);
+            double tempF = celciusToFahrenheit.convert(temp);
+            double dp = NsharpLibBasics.i_dwpt(soundingLys, (float) p_mb);
+            double dpF = celciusToFahrenheit.convert(dp);
+            curStr1 = String.format(curStrFormat1, sTemperatureF, sTemperatureC,
+                    tempF, dpF, NsharpConstants.DEGREE_SYMBOL, temp, dp,
+                    NsharpConstants.DEGREE_SYMBOL);
+
+            // Adjust string plotting position
+            if (cursorCor.x < skewtXOrig + (200 / currentZoomLevel) * xRatio) {
+                hAli = HorizontalAlignment.LEFT;
+            } else {
+                hAli = HorizontalAlignment.RIGHT;
+            }
+            if (cursorCor.y > skewtYOrig + (50 / currentZoomLevel) * yRatio) {
+                vAli = VerticalAlignment.BOTTOM;
+            } else {
+                vAli = VerticalAlignment.TOP;
+            }
+
+            target.drawString(myFont, curStr + curStr1, cursorCor.x,
+                    cursorCor.y, 0.0, TextStyle.NORMAL,
+                    NsharpConstants.color_yellow, hAli, vAli, null);
+            myFont.dispose();
         }
-
-        curStrFormat1 = "%s(%s) %4.1f/%4.1f%cF(%4.1f/%4.1f%cC)\n";
-        temp = NsharpLibBasics.i_temp(soundingLys, (float) p_mb);
-        UnitConverter celciusToFahrenheit = SI.CELSIUS
-                .getConverterTo(NonSI.FAHRENHEIT);
-        double tempF = celciusToFahrenheit.convert(temp);
-        double dp = NsharpLibBasics.i_dwpt(soundingLys, (float) p_mb);
-        double dpF = celciusToFahrenheit.convert(dp);
-        curStr1 = String.format(curStrFormat1, sTemperatureF, sTemperatureC,
-                tempF, dpF, NsharpConstants.DEGREE_SYMBOL, temp, dp,
-                NsharpConstants.DEGREE_SYMBOL);
-
-        // Adjust string plotting position
-        if (cursorCor.x < skewtXOrig + (200 / currentZoomLevel) * xRatio) {
-            hAli = HorizontalAlignment.LEFT;
-        } else {
-            hAli = HorizontalAlignment.RIGHT;
-        }
-        if (cursorCor.y > skewtYOrig + (50 / currentZoomLevel) * yRatio) {
-            vAli = VerticalAlignment.BOTTOM;
-        } else {
-            vAli = VerticalAlignment.TOP;
-        }
-
-        target.drawString(myFont, curStr + curStr1, cursorCor.x, cursorCor.y,
-                0.0, TextStyle.NORMAL, NsharpConstants.color_yellow, hAli, vAli,
-                null);
-        myFont.dispose();
     }
 
     private void paintIcing(double zoomLevel, IGraphicsTarget target)
@@ -1787,14 +1806,6 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource {
                     }
 
                 }
-                drawNsharpFileNameAndSampling(target, currentZoomLevel);
-                // draw cursor data
-                if (cursorInSkewT && rscHandler.isGoodData()) {
-                    if ((curseToggledFontLevel < CURSER_STRING_OFF)
-                            && (!cursorTopWindBarb || !windBarbMagnify)) {
-                        drawNsharpSkewtCursorData(target);
-                    }
-                }
 
             } else if (currentGraphMode == NsharpConstants.GRAPH_ICING
                     && rscHandler.isGoodData()) {
@@ -1803,6 +1814,10 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource {
                     && rscHandler.isGoodData()) {
                 paintTurbulence(currentZoomLevel, target);
             }
+
+            // Display sample readout features in the NsharpEditor
+            // for Skew-T, Turbulence and Icing Graph.
+            drawNsharpDataDisplay(target, currentZoomLevel);
 
         }
     }
