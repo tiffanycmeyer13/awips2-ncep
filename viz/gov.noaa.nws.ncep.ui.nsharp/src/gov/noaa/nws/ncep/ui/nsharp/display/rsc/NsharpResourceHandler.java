@@ -36,6 +36,8 @@
  * 01/20/2019  17377     wkwock     Auto-update new arrival NSHARP display.
  * 04/15/2019  7480      bhurley    Improved auto-update and added check to prevent potential NPE.
  * 03/17/2020  73571     smanoj     Prevent potential NPE.
+ * 02/24/2021  86817     smanoj     Add right-click menu option "Sample" for
+ *                                  Turbulence and Icing in NsharpEditor.
  *
  * </pre>
  * 
@@ -676,6 +678,10 @@ public class NsharpResourceHandler {
 
     public void setCurrentGraphMode(int currentGraphMode) {
         this.currentGraphMode = currentGraphMode;
+        if((NsharpEditor.getActiveNsharpEditor()) !=null){
+            (NsharpEditor.getActiveNsharpEditor()).setGraphMode(currentGraphMode);
+        }
+
         if (!paneConfigurationName.equals(NsharpConstants.PANE_LITE_D2D_CFG_STR)
                 && !paneConfigurationName
                         .equals(NsharpConstants.PANE_OPC_CFG_STR)) {

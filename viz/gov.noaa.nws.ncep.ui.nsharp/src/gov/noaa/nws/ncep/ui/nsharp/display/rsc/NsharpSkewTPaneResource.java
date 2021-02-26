@@ -33,6 +33,7 @@ import com.raytheon.uf.viz.core.drawables.PaintProperties;
 import com.raytheon.uf.viz.core.exception.VizException;
 import com.raytheon.uf.viz.core.rsc.AbstractResourceData;
 import com.raytheon.uf.viz.core.rsc.LoadProperties;
+import com.raytheon.uf.viz.core.sampling.ISamplingResource;
 import com.raytheon.uf.viz.d2d.ui.perspectives.D2D5Pane;
 import com.raytheon.viz.ui.perspectives.VizPerspectiveListener;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -105,13 +106,16 @@ import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
  * 01/15/2019   7697        bsteffen    Display aircraft info for ACARS
  * 02/11/2019   7574        bhurley     Added checks to prevent NPEs
  * 02/15/2021   86817       smanoj      Added readout features for Turbulence and Icing
- *                                      similar to SkewT Graph.
+ *                                      similar to SkewT Graph. 
+ * 02/24/2021   86817       smanoj      Added right-click menu option "Sample"
+ *                                      for Turbulence and Icing.
  * 
  * </pre>
  *
  * @author Chin Chen
  */
-public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource {
+public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource
+        implements ISamplingResource {
 
     private static final float ENTRAIN_DEFAULT = 0.0f;
 
@@ -252,6 +256,10 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource {
     private boolean cursorTopWindBarb = false;
 
     private boolean windBarbMagnify = false;
+
+    private boolean isSampleDisplay= true;
+
+    private boolean isSampling = false;
 
     private static final transient IUFStatusHandler statusHandler = UFStatus
             .getHandler(NsharpSkewTPaneResource.class);
@@ -1083,11 +1091,13 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource {
         // draw FileName and Sampling data
         drawNsharpFileNameAndSampling(target, currentZoomLevel);
 
-        // draw cursor data
-        if (cursorInSkewT && rscHandler.isGoodData()) {
-            if ((curseToggledFontLevel < CURSER_STRING_OFF)
-                    && (!cursorTopWindBarb || !windBarbMagnify)) {
-                drawNsharpSkewtCursorData(target);
+        if (isSampleDisplay) {
+            // draw cursor data
+            if (cursorInSkewT && rscHandler.isGoodData()) {
+                if ((curseToggledFontLevel < CURSER_STRING_OFF)
+                        && (!cursorTopWindBarb || !windBarbMagnify)) {
+                    drawNsharpSkewtCursorData(target);
+                }
             }
         }
     }
@@ -1787,13 +1797,27 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource {
                     }
 
                 }
-
+                // sample display is always on for SKEWT (no option to turn it
+                // off)
+                isSampleDisplay = true;
             } else if (currentGraphMode == NsharpConstants.GRAPH_ICING
                     && rscHandler.isGoodData()) {
                 paintIcing(currentZoomLevel, target);
+                // check Sample menu option enabled
+                if (isSampling()) {
+                    isSampleDisplay = true;
+                } else {
+                    isSampleDisplay = false;
+                }
             } else if (currentGraphMode == NsharpConstants.GRAPH_TURB
                     && rscHandler.isGoodData()) {
                 paintTurbulence(currentZoomLevel, target);
+                // check Sample menu option enabled
+                if (isSampling()) {
+                    isSampleDisplay = true;
+                } else {
+                    isSampleDisplay = false;
+                }
             }
 
             // Display sample readout features in the NsharpEditor
@@ -3201,4 +3225,14 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource {
         font10 = target.initializeFont("Monospace", font10Size, null);
     }
 
+   @Override
+    public boolean isSampling() {
+        return isSampling;
+    }
+
+    @Override
+    public void setSampling(boolean isSampling) {
+        this.isSampling = isSampling;
+        issueRefresh();
+    }
 }
