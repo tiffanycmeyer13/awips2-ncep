@@ -150,7 +150,16 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jan 28, 2021  86821      achalla      Refactored width attribute in International SIGMET Edit GUI,
  *                                       SIGMET Save output and International SIGMET message to show Integer.
  * Feb 05, 2021  87538      smanoj       Added FCST Lat/Lon for Tropical Cyclone, also fixed some issues.
- * 
+ * Feb 18, 2021  86828      achalla      Created updateFirBtn() method to check the correct FIR Region buttons
+ * Feb 24, 2021  86827      srussell     Updated createDialogAreaGeneral():
+ *                                       Removed the setWidthStr() call in the
+ *                                       set and reset area, it was preventing
+ *                                       user entered values from being used.
+ *                                       Updated getFirString() removed the
+ *                                       uneeded call to JTS covers() method
+ * Feb 26, 2021  87541      achalla      Updated getFirString() to identify and select AWC Backup FIR Regions
+ *                                       and drop AWC AOR FIR Regions if  the sigmet polygon crosses over
+ *                                       or partially extends into those regions.
  * </pre>
  *
  * @author gzhang
@@ -355,6 +364,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private final Map<String, Button[]> attrButtonMap = new HashMap<>();
 
+    private final Map<String, Button[]> firButtonMap = new HashMap<>();
+
     /**
      * Colors to indicate if Phenom lat/lon input is in correct format.
      */
@@ -373,6 +384,15 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private String editableAttrAltitudeSelection;
 
     private SigmetCancelDlg sigmetCnlDlg = null;
+
+    // Fir Regions selection buttons
+    private Button btnPacific;
+
+    private Button btnAtlantic;
+
+    private Button btnMexico;
+
+    private Button btnOther;
 
     /**
      * Constructor.
@@ -401,6 +421,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 sb.append(strings[i] + "  ");
             }
         }
+
         txtInfo.setText(sb.toString());
 
     }
@@ -1596,6 +1617,25 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         });
     }
 
+    public void setNewFirID(Button btn) {
+        editableFirID = getFirs();
+        String newFir = btn.getText();
+        if (btn.getSelection()) {
+            if (!editableFirID.contains(newFir)) {
+                if (editableFirID.length() == 0) {
+                    editableFirID = editableFirID.concat(newFir);
+                } else {
+                    editableFirID = editableFirID.concat(" " + newFir);
+                }
+            }
+        } else {
+            if (editableFirID.contains(newFir)) {
+                editableFirID = editableFirID.replaceFirst(newFir, "");
+            }
+        }
+        editableFirID.trim();
+    }
+
     private void createFirRegion(Composite detailsComposite) {
         editableFirID = getFirs();
         setEditableAttrFir(editableFirID);
@@ -1611,37 +1651,23 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         top8.setLayout(new GridLayout(8, false));
         top8.setText(SigmetConstant.PACIFIC);
         for (String s : SigmetInfo.FIR_PACIFIC) {
-            final Button btn = new Button(top8, SWT.CHECK);
-            btn.setText(s);
-            btn.addSelectionListener(new SelectionAdapter() {
+            btnPacific = new Button(top8, SWT.CHECK);
+            btnPacific.setText(s);
+            // map all fir buttons with their name as keys
+            firButtonMap.put(s, new Button[] { btnPacific });
+            btnPacific.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent event) {
-                    editableFirID = getFirs();
-                    String newFir = btn.getText();
-                    if (btn.getSelection()) {
-                        if (!editableFirID.contains(newFir)) {
-                            if (editableFirID.length() == 0) {
-                                editableFirID = editableFirID.concat(newFir);
-                            } else {
-                                editableFirID = editableFirID
-                                        .concat(" " + newFir);
-                            }
-                        }
-                    } else {
-                        if (editableFirID.contains(newFir)) {
-                            editableFirID = editableFirID.replaceFirst(newFir,
-                                    "");
-                        }
-                    }
-                    editableFirID.trim();
+                    setNewFirID(btnPacific);
                 }
             });
 
             if (editableFirID != null) {
                 if (editableFirID.contains(s)) {
-                    btn.setSelection(true);
+                    btnPacific.setSelection(true);
                 }
             }
+
         }
 
         Group top9 = new Group(top7, SWT.TOP);
@@ -1650,37 +1676,21 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         top9.setLayout(new GridLayout(8, false));
         top9.setText(SigmetConstant.ATLANTIC);
         for (String s : SigmetInfo.FIR_ATLANTIC) {
-            final Button btn = new Button(top9, SWT.CHECK);
-            btn.setText(s);
-            btn.addSelectionListener(new SelectionAdapter() {
-
+            btnAtlantic = new Button(top9, SWT.CHECK);
+            btnAtlantic.setText(s);
+            // map all fir buttons with their name as keys
+            firButtonMap.put(s, new Button[] { btnAtlantic });
+            btnAtlantic.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent event) {
-                    editableFirID = getFirs();
-                    String newFir = btn.getText();
-                    if (btn.getSelection()) {
-                        if (!editableFirID.contains(newFir)) {
-                            if (editableFirID.length() == 0) {
-                                editableFirID = editableFirID.concat(newFir);
-                            } else {
-                                editableFirID = editableFirID
-                                        .concat(" " + newFir);
-                            }
-                        }
-                    } else {
-                        if (editableFirID.contains(newFir)) {
-                            editableFirID = editableFirID.replaceFirst(newFir,
-                                    "");
-                        }
-                    }
-                    editableFirID.trim();
+                    setNewFirID(btnAtlantic);
                 }
 
             });
 
             if (editableFirID != null) {
                 if (editableFirID.contains(s)) {
-                    btn.setSelection(true);
+                    btnAtlantic.setSelection(true);
                 }
             }
         }
@@ -1696,36 +1706,20 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         firMexicoGrp.setLayout(new GridLayout(8, false));
         firMexicoGrp.setText(SigmetConstant.MEXICO);
         for (String s : SigmetInfo.FIR_MEXICO) {
-            final Button btn = new Button(firMexicoGrp, SWT.CHECK);
-            btn.setText(s);
-
-            btn.addSelectionListener(new SelectionAdapter() {
+            btnMexico = new Button(firMexicoGrp, SWT.CHECK);
+            btnMexico.setText(s);
+            // map all fir buttons with their name as keys
+            firButtonMap.put(s, new Button[] { btnMexico });
+            btnMexico.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent event) {
-                    editableFirID = getFirs();
-                    String newFir = btn.getText();
-                    if (btn.getSelection()) {
-                        if (!editableFirID.contains(newFir)) {
-                            if (editableFirID.length() == 0) {
-                                editableFirID = editableFirID.concat(newFir);
-                            } else {
-                                editableFirID = editableFirID
-                                        .concat(" " + newFir);
-                            }
-                        }
-                    } else {
-                        if (editableFirID.contains(newFir)) {
-                            editableFirID = editableFirID.replaceFirst(newFir,
-                                    "");
-                        }
-                    }
-                    editableFirID.trim();
+                    setNewFirID(btnMexico);
                 }
             });
 
             if (editableFirID != null) {
                 if (editableFirID.contains(s)) {
-                    btn.setSelection(true);
+                    btnMexico.setSelection(true);
                 }
             }
         }
@@ -1736,39 +1730,24 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         firOtherGrp.setLayout(new GridLayout(8, false));
         firOtherGrp.setText(SigmetConstant.OTHER_SITES);
         for (String s : SigmetInfo.FIR_OTHER) {
-            final Button btn = new Button(firOtherGrp, SWT.CHECK);
-            btn.setText(s);
-
-            btn.addSelectionListener(new SelectionAdapter() {
+            btnOther = new Button(firOtherGrp, SWT.CHECK);
+            btnOther.setText(s);
+            // map all fir buttons with their name as keys
+            firButtonMap.put(s, new Button[] { btnOther });
+            btnOther.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent event) {
-                    editableFirID = getFirs();
-                    String newFir = btn.getText();
-                    if (btn.getSelection()) {
-                        if (!editableFirID.contains(newFir)) {
-                            if (editableFirID.length() == 0) {
-                                editableFirID = editableFirID.concat(newFir);
-                            } else {
-                                editableFirID = editableFirID
-                                        .concat(" " + newFir);
-                            }
-                        }
-                    } else {
-                        if (editableFirID.contains(newFir)) {
-                            editableFirID = editableFirID.replaceFirst(newFir,
-                                    "");
-                        }
-                    }
-                    editableFirID.trim();
+                    setNewFirID(btnOther);
                 }
             });
 
             if (editableFirID != null) {
                 if (editableFirID.contains(s)) {
-                    btn.setSelection(true);
+                    btnOther.setSelection(true);
                 }
             }
         }
+
     }
 
     public String getFirs() {
@@ -1804,7 +1783,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         if (coors != null && lineType != null) {
             IMapDescriptor mapDescriptor = SigmetAttrDlg.this.drawingLayer
                     .getDescriptor();
-            double width = Double.parseDouble(widthStr);
+
+            double width = Double.parseDouble(this.widthStr);
 
             if (SigmetAttrDlg.AREA.equals(lineType)) {
 
@@ -1841,8 +1821,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         for (Entry<String, Polygon> entry : firPolygonMap.entrySet()) {
             String aFir = entry.getKey();
             Polygon firP = entry.getValue();
-            if ((firP.covers(areaP) || firP.intersects(areaP))
-                    && (!fir.toString().contains(aFir.substring(0, 4)))) {
+
+            if (firP.intersects(areaP)
+                    && !(fir.toString().contains(aFir.substring(0, 4)))) {
                 fir.append(aFir.substring(0, 4)).append(" ");
             }
 
@@ -1852,10 +1833,42 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         String[] firIdArray = firId.split(" ");
 
-        StringBuilder firNameBuilder = new StringBuilder();
-        for (
+        // AWC Backup FIR Regions
+        List<String> firIdAWCBackup = new ArrayList<>();
 
-        String id : firIdArray) {
+        Collections.addAll(firIdAWCBackup, SigmetInfo.FIR_MEXICO);
+        Collections.addAll(firIdAWCBackup, SigmetInfo.FIR_OTHER);
+
+        List<String> newFirID = new ArrayList<>();
+
+        if (firIdArray != null && firIdArray.length > 1) {
+
+            for (String element : firIdArray) {
+
+                for (int i = 0; i < firIdAWCBackup.size(); i++) {
+
+                    if (element.equals(firIdAWCBackup.get(i))) {
+                        newFirID.add(element);
+                    }
+
+                }
+
+            }
+        }
+
+        if (newFirID.size() > 0) {
+
+            firIdArray = newFirID.stream().toArray(String[]::new);
+
+            firId = " ";
+            for (String element : firIdArray) {
+                firId = firId.concat(element.toString() + " ");
+
+            }
+        }
+
+        StringBuilder firNameBuilder = new StringBuilder();
+        for (String id : firIdArray) {
             String firName = "";
             for (String s : SigmetInfo.FIR_ARRAY) {
                 if (id.equals(s.substring(0, 4))) {
@@ -2316,7 +2329,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         lblText.setText("Width: ");
         final Text txtWidth = new Text(top, SWT.SINGLE | SWT.BORDER);
         attrControlMap.put("widthStr", txtWidth);
-        txtWidth.setText("10.00");
+        txtWidth.setText(WIDTH);
         txtWidth.setEnabled(false);
         attrButtonMap.put(LINE_TYPE,
                 new Button[] { btnArea, btnLine, btnIsolated });
@@ -2374,7 +2387,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         // set and reset
         setLineType(AREA);
         setSideOfLine(comboLine.getText());
-        setWidthStr(txtWidth.getText());
 
         if (!PgenConstant.TYPE_INTL_SIGMET.equalsIgnoreCase(pgenType)
                 && !PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pgenType)) {
@@ -4160,6 +4172,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     public void setSigmet(
             gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement sigmet) {
         this.sigmet = sigmet;
+
         Button[] buttons = attrButtonMap.get(EDITABLE_ATTR_FROM_LINE);
         Coordinate[] coors = ((Sigmet) sigmet).getLinePoints();
         String s = "";
@@ -4176,11 +4189,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
         }
-
         if (txtInfo != null && !txtInfo.isDisposed() && s != null) {
             this.resetText(s, txtInfo);
         }
-
         // TTR 974 - "editableAttrFromLine" needs update as well.
         if (s != null) {
             ((Sigmet) sigmet).setEditableAttrFromLine(s);
@@ -4813,10 +4824,51 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
         }
+        // update Fir-Region buttons
+        updateFirBtn();
+
         if (txtInfo != null && !txtInfo.isDisposed()) {
             this.resetText(s.toString(), txtInfo);
         }
 
+    }
+
+    public void updateFirBtn() {
+
+        // save the previous FIR Region ID
+        String oldEditableFirID = editableAttrFir;
+        if (oldEditableFirID.equals(null) || oldEditableFirID.equals("")) {
+            return;
+        }
+
+        String[] copyFir = SigmetInfo.FIR_ARRAY.clone();
+        String[] loopFIR = new String[copyFir.length];
+
+        for (int i = 0; copyFir != null && i < copyFir.length; i++) {
+            loopFIR[i] = copyFir[i].substring(0, 4);
+        }
+
+        editableFirID = "";
+        String newEditableFirID = getFirs();
+
+        Button[] firButt = null;
+
+        for (String str : loopFIR) {
+
+            firButt = firButtonMap.get(str);
+
+            for (int i = 0; firButt != null && i < firButt.length; i++) {
+
+                if (newEditableFirID.contains(str)) {
+
+                    firButt[i].setSelection(true);
+
+                } else {
+                    firButt[i].setSelection(false);
+                }
+            }
+
+        }
     }
 
     public void copyEditableAttrToSigmetAttrDlg(Sigmet sig) {
