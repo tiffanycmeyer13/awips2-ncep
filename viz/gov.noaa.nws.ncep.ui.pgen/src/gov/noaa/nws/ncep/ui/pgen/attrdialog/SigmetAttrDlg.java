@@ -162,6 +162,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Feb 26, 2021  87541      achalla      Updated getFirString() to identify and select AWC Backup FIR Regions
  *                                       and drop AWC AOR FIR Regions if  the sigmet polygon crosses over
  *                                       or partially extends into those regions.
+ * Mar 08, 2021  88654      smanoj       TOPS Attribute saved in Isolated INTL SIGMET.
  * Mar 09, 2021  88219      achalla      Added a duplicate set of Level Info attributes within
  *                                       the Forecast Section of the Edit Attributes area in the
  *                                       Int'l SIGMET Edit GUI for the VOLCANIC_ASH phenomenon and
@@ -2004,7 +2005,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 SigmetAttrDlg.this
-                        .setEditableAttrFcstCntr(fcstCenterText.getText());
+                        .setEditableAttrFcstCntr((fcstCenterText.getText()).trim());
             }
         });
 
@@ -3198,6 +3199,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevel(String editableAttrLevel) {
         this.editableAttrLevel = editableAttrLevel;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevel(editableAttrLevel);
     }
 
     public String getEditableAttrLevelInfo1() {
@@ -3206,6 +3208,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelInfo1(String editableAttrLevelInfo1) {
         this.editableAttrLevelInfo1 = editableAttrLevelInfo1;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevelInfo1(editableAttrLevelInfo1);
     }
 
     public String getEditableAttrLevelInfo2() {
@@ -3214,6 +3217,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelInfo2(String editableAttrLevelInfo2) {
         this.editableAttrLevelInfo2 = editableAttrLevelInfo2;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevelInfo2(editableAttrLevelInfo2);
     }
 
     public String getEditableAttrLevelText1() {
@@ -3222,6 +3226,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelText1(String editableAttrLevelText1) {
         this.editableAttrLevelText1 = editableAttrLevelText1;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevelText1(editableAttrLevelText1);
     }
 
     public String getEditableAttrLevelText2() {
@@ -3230,6 +3235,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelText2(String editableAttrLevelText2) {
         this.editableAttrLevelText2 = editableAttrLevelText2;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevelText2(editableAttrLevelText2);
     }
 
     public String getEditableAttrFromLine() {
@@ -3877,6 +3883,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(" ").append(SigmetConstant.WITHIN).append(" ");
                     sb.append((int) SigmetAttrDlg.this.getWidth());
                     sb.append(" ").append(SigmetConstant.NM_CENTER).append(".");
+                    sb.append(getLevelInfo(tops).toString()).append(".");
                 } else {
                     sb.append(" ").append(SigmetConstant.WI).append(" ");
                     sb.append((int) SigmetAttrDlg.this.getWidth());
@@ -3951,45 +3958,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(" ").append(SigmetConstant.LINE_FM);
                 }
                 sb.append(locationDesc).append(".");
+
+                if (isTropCyc) {
+                    // Add Level Info for Line Sigmet
+                    sb.append(getLevelInfo(tops).toString()).append(".");
+                }
             }
 
             // in C: if( ! tc )nmap_pgsigw.c@4062
             if (!isTropCyc) {
-
-                // ------ TOPS
-                if (tops != null && (!NONE.equals(tops))) {
-                    if (SigmetConstant.TOPS.equals(tops)) {
-                        sb.append(" ").append(SigmetConstant.TOP);
-                    }
-                    String levelInfo1 = SigmetAttrDlg.this
-                            .getEditableAttrLevelText1();
-                    if (levelInfo1 != null) {
-                        if ((SigmetAttrDlg.this.getEditableAttrLevelInfo1()
-                                .equalsIgnoreCase(SigmetConstant.ABV))
-                                || (SigmetAttrDlg.this
-                                        .getEditableAttrLevelInfo1()
-                                        .equalsIgnoreCase(
-                                                SigmetConstant.BLW))) {
-                            sb.append(" ").append(SigmetAttrDlg.this
-                                    .getEditableAttrLevelInfo1());
-                        }
-                    }
-                    sb.append(" ").append(SigmetConstant.FL);
-                    String text1 = SigmetAttrDlg.this
-                            .getEditableAttrLevelText1();
-                    sb.append(text1 == null ? "" : text1);
-
-                    String levelInfo2 = SigmetAttrDlg.this
-                            .getEditableAttrLevelInfo2();
-                    if (!NONE.equals(levelInfo2)) {
-                        sb.append("/");
-                        String text2 = SigmetAttrDlg.this
-                                .getEditableAttrLevelText2();
-                        sb.append(text2 == null ? "" : text2);
-
-                    }
-                    sb.append(".");
-                }
+                //------ TOPS 
+                sb.append(getLevelInfo(tops).toString());
 
                 // ------ movement
                 String movement = SigmetAttrDlg.this.getEditableAttrMovement();
@@ -4121,6 +4100,43 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
 
             return sb.toString();
+        }
+
+        private StringBuilder getLevelInfo(String tops) {
+            StringBuilder levelTxt = new StringBuilder();
+
+            // ------ TOPS
+            if (tops != null && (!NONE.equals(tops))) {
+                if (SigmetConstant.TOPS.equals(tops)) {
+                    levelTxt.append(" ").append(SigmetConstant.TOP);
+                }
+
+                String levelInfo1 = SigmetAttrDlg.this
+                        .getEditableAttrLevelText1();
+                if (levelInfo1 != null) {
+                    if ((SigmetAttrDlg.this.getEditableAttrLevelInfo1()
+                            .equalsIgnoreCase(SigmetConstant.ABV))
+                            || (SigmetAttrDlg.this.getEditableAttrLevelInfo1()
+                                    .equalsIgnoreCase(SigmetConstant.BLW))) {
+                        levelTxt.append(" ").append(
+                                SigmetAttrDlg.this.getEditableAttrLevelInfo1());
+                    }
+                }
+
+                levelTxt.append(" ").append(SigmetConstant.FL);
+                String text1 = SigmetAttrDlg.this.getEditableAttrLevelText1();
+                levelTxt.append(text1 == null ? "" : text1);
+
+                String levelInfo2 = SigmetAttrDlg.this
+                        .getEditableAttrLevelInfo2();
+                if (!NONE.equals(levelInfo2)) {
+                    levelTxt.append("/");
+                    String text2 = SigmetAttrDlg.this
+                            .getEditableAttrLevelText2();
+                    levelTxt.append(text2 == null ? "" : text2);
+                }
+            }
+            return levelTxt;
         }
 
         private StringBuilder getfcstLatLonLoc(String lineInfo) {
