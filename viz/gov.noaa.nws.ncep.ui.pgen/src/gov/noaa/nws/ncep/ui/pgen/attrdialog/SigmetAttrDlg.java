@@ -73,8 +73,10 @@ import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
 import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.attrdialog.vaadialog.SpinnerSlider;
 import gov.noaa.nws.ncep.ui.pgen.display.FillPatternList.FillPattern;
 import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
+import gov.noaa.nws.ncep.ui.pgen.display.ILine;
 import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
 import gov.noaa.nws.ncep.ui.pgen.elements.Product;
@@ -156,10 +158,25 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       set and reset area, it was preventing
  *                                       user entered values from being used.
  *                                       Updated getFirString() removed the
- *                                       uneeded call to JTS covers() method
+ *                                       unneeded call to JTS covers() method
  * Feb 26, 2021  87541      achalla      Updated getFirString() to identify and select AWC Backup FIR Regions
  *                                       and drop AWC AOR FIR Regions if  the sigmet polygon crosses over
  *                                       or partially extends into those regions.
+ * Mar 08, 2021  88654      smanoj       TOPS Attribute saved in Isolated INTL SIGMET.
+ * Mar 09, 2021  88219      achalla      Added a duplicate set of Level Info attributes within
+ *                                       the Forecast Section of the Edit Attributes area in the
+ *                                       Int'l SIGMET Edit GUI for the VOLCANIC_ASH phenomenon and
+ *                                       Removed the existing Altitudes attributes
+ * Mar 09, 2021  87540      srussell     Added createLineWidthControls() to
+ *                                       install a slider & spinner to control
+ *                                       the line width of polygons.
+ *                                       Updated okPressed() to support the new
+ *                                       line width controls when the "Apply"
+ *                                       button is pressed.
+ *                                       Updated setAttrForDlg() to support the
+ *                                       new line width GUI controls.
+ * Mar 15, 2021  88217     smanoj        SIGMET CANCEL SAVE Enhancement.
+ *
  * </pre>
  *
  * @author gzhang
@@ -169,8 +186,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(SigmetAttrDlg.class);
-
-    private static final long FOUR_HR_MS = 4 * TimeUtil.MILLIS_PER_HOUR;
 
     private static final long SIX_HR_MS = 6 * TimeUtil.MILLIS_PER_HOUR;
 
@@ -216,11 +231,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private static final String EDITABLE_ATTR_FCST_VADESC = "editableAttrFcstVADesc";
 
-    private static final String EDITABLE_ATTR_ALT_LEVEL_TEXT = "editableAttrAltLevelText";
-
     private static final String EDITABLE_ATTR_RAL_SELECTION = "editableAttrRALSelection";
 
     private static final String EDITABLE_ATTR_ALTITUDE_SELECTION = "editableAttrAltitudeSelection";
+
+    private static final String EDITABLE_ATTR_POLYGON_LINE_WIDTH = "editableAttrPolygonLineWidth";
 
     private static final String STATUS_NEW = "0";
 
@@ -394,6 +409,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private Button btnOther;
 
+    // Line Width Controls
+    private Button chkBoxLineWidth;
+
+    private Label lineWidthLabel;
+
+    private SpinnerSlider lineWidthSpinSlide;
+
     /**
      * Constructor.
      */
@@ -446,11 +468,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         // Create a copy of the currently selected element
                         Sigmet newEl = (Sigmet) el.copy();
 
-                        // Update the new Element with these current attributes
+                        // Update the new Element with these current
+                        // attributes
                         copyEditableAttrToSigmet(newEl);// 20100115
 
                         // Change type and update From line
                         newEl = convertType(newEl);
+                        newEl.update(this);
 
                         newList.add(newEl);
 
@@ -548,6 +572,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         if (clr != null) {
             this.setColor(clr);
         }
+
+        if (attr instanceof ILine) {
+            float lw = attr.getLineWidth();
+            if (lw > 0) {
+                this.setLineWidth(lw);
+            }
+
+        }
     }
 
     @Override
@@ -571,7 +603,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     @Override
     public float getLineWidth() {
-        return (float) 1.0;
+        return this.lineWidthSpinSlide.getSelection();
+    }
+
+    public void setLineWidth(float lineWidth) {
+        int lw = 0;
+        lw = (int) lineWidth;
+        this.lineWidthSpinSlide.setSelection(lw);
     }
 
     @Override
@@ -617,14 +655,19 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             if (STATUS_CANCEL
                     .equals(SigmetAttrDlg.this.getEditableAttrStatus())) {
-                if (!SigmetAttrDlg.this.isSigmetActive()) {
-                    statusHandler.warn(
-                            "Unable to Save SIGMET product for CANCEL: SIGMET is not active.");
-                    break;
-                } else if (!sigmetCnlDlg.getValidationCheck()) {
-                    statusHandler.warn(
-                            "Unable to Save SIGMET product for CANCEL: SIGMET Attributes are not Valid.");
-                    break;
+                if ((sigmetCnlDlg == null)) {
+                    Sigmet sigmet = (Sigmet) getSigmet();
+                    try {
+                        sigmetCnlDlg = new SigmetCancelDlg(
+                                getInstance(getShell()), getShell(), sigmet);
+                    } catch (Exception ee) {
+                        statusHandler
+                                .warn("Unable to create SIGMET Cancellation Dialog: "
+                                        + ee.getLocalizedMessage(), ee);
+                    }
+                    if (sigmetCnlDlg != null) {
+                        sigmetCnlDlg.open();
+                    }
                 }
             }
 
@@ -816,7 +859,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         if (isSigmetActive()) {
                             Sigmet sigmet = (Sigmet) getSigmet();
                             try {
-                                sigmetCnlDlg = new SigmetCancelDlg(getShell(),
+                                sigmetCnlDlg = new SigmetCancelDlg(getInstance(getShell()),getShell(),
                                         sigmet);
                             } catch (Exception ee) {
                                 statusHandler
@@ -1681,6 +1724,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             // map all fir buttons with their name as keys
             firButtonMap.put(s, new Button[] { btnAtlantic });
             btnAtlantic.addSelectionListener(new SelectionAdapter() {
+
                 @Override
                 public void widgetSelected(SelectionEvent event) {
                     setNewFirID(btnAtlantic);
@@ -1705,7 +1749,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
         firMexicoGrp.setLayout(new GridLayout(8, false));
         firMexicoGrp.setText(SigmetConstant.MEXICO);
-        for (String s : SigmetInfo.FIR_MEXICO) {
+        for (
+
+        String s : SigmetInfo.FIR_MEXICO) {
             btnMexico = new Button(firMexicoGrp, SWT.CHECK);
             btnMexico.setText(s);
             // map all fir buttons with their name as keys
@@ -1729,7 +1775,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 4, 1));
         firOtherGrp.setLayout(new GridLayout(8, false));
         firOtherGrp.setText(SigmetConstant.OTHER_SITES);
-        for (String s : SigmetInfo.FIR_OTHER) {
+        for (
+
+        String s : SigmetInfo.FIR_OTHER) {
             btnOther = new Button(firOtherGrp, SWT.CHECK);
             btnOther.setText(s);
             // map all fir buttons with their name as keys
@@ -1962,7 +2010,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 SigmetAttrDlg.this
-                        .setEditableAttrFcstCntr(fcstCenterText.getText());
+                        .setEditableAttrFcstCntr((fcstCenterText.getText()).trim());
             }
         });
 
@@ -2021,6 +2069,104 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         });
     }
 
+    public void createLevelAltitudes(Group topLbl) {
+
+        Label lblLevelInfo = new Label(top, SWT.LEFT);
+        lblLevelInfo.setText("Level Info: ");
+
+        final Combo comboLevel = new Combo(topLbl, SWT.READ_ONLY);
+        attrControlMap.put(EDITABLE_ATTR_LEVEL, comboLevel);
+        comboLevel.setItems(NONE, "FCST", "TOPS");
+        setControl(comboLevel, EDITABLE_ATTR_LEVEL);
+
+        final Combo comboLevelInfo1 = new Combo(topLbl, SWT.READ_ONLY);
+        attrControlMap.put(EDITABLE_ATTR_LEVEL_INFO1, comboLevelInfo1);
+        comboLevelInfo1.setItems("TO", "ABV", "BLW", "BTN");
+        setControl(comboLevelInfo1, EDITABLE_ATTR_LEVEL_INFO1);
+
+        final Text txtLevelInfo1 = new Text(topLbl, SWT.SINGLE | SWT.BORDER);
+        attrControlMap.put(EDITABLE_ATTR_LEVEL_TEXT1, txtLevelInfo1);
+        txtLevelInfo1.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
+
+        txtLevelInfo1.addListener(SWT.Verify, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                e.doit = validateNumInput(e);
+            }
+        });
+
+        GridData gdText1 = new GridData();
+        gdText1.widthHint = 66;
+        gdText1.grabExcessHorizontalSpace = true;
+
+        txtLevelInfo1.setLayoutData(gdText1);
+
+        final Combo comboLevelInfo2 = new Combo(topLbl, SWT.READ_ONLY);
+        attrControlMap.put(EDITABLE_ATTR_LEVEL_INFO2, comboLevelInfo2);
+        comboLevelInfo2.setItems(NONE, "AND");
+        setControl(comboLevelInfo2, EDITABLE_ATTR_LEVEL_INFO2);
+
+        comboLevelInfo2.addListener(SWT.Selection, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                SigmetAttrDlg.this
+                        .setEditableAttrLevelInfo2(comboLevelInfo2.getText());
+            }
+        });
+
+        final Text txtLevelInfo2 = new Text(topLbl, SWT.SINGLE | SWT.BORDER);
+        attrControlMap.put(EDITABLE_ATTR_LEVEL_TEXT2, txtLevelInfo2);
+        txtLevelInfo2.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
+
+        txtLevelInfo2.addListener(SWT.Verify, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                e.doit = validateNumInput(e);
+            }
+        });
+        txtLevelInfo2.setLayoutData(gdText1);
+
+        txtLevelInfo2.addListener(SWT.Modify, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                SigmetAttrDlg.this
+                        .setEditableAttrLevelText2(txtLevelInfo2.getText());
+            }
+        });
+
+        comboLevel.addListener(SWT.Selection, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                setEditableAttrLevel(comboLevel.getText());
+                if (NONE.equals(comboLevel.getText())) {
+                    txtLevelInfo1.setText("");
+                    txtLevelInfo2.setText("");
+                    txtFreeText.setText("");
+                    comboLevelInfo2.select(0);
+                }
+            }
+        });
+
+        comboLevelInfo1.addListener(SWT.Selection, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                SigmetAttrDlg.this
+                        .setEditableAttrLevelInfo1(comboLevelInfo1.getText());
+            }
+        });
+
+        txtLevelInfo1.addListener(SWT.Modify, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                SigmetAttrDlg.this
+                        .setEditableAttrLevelText1(txtLevelInfo1.getText());
+            }
+        });
+
+    }
+
     private void createDetailsAreaForecastSectionVolcanic(
             Composite detailsComposite) {
 
@@ -2063,57 +2209,15 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         });
 
-        Group altGrp = new Group(topSecPhenom, SWT.LEFT);
-        altGrp.setLayoutData(
-                new GridData(SWT.RIGHT, SWT.CENTER, true, false, 2, 1));
-        altGrp.setLayout(new GridLayout(8, false));
+        Group altitudesGrp = new Group(topSecPhenom, SWT.LEFT);
+        altitudesGrp.setLayoutData(
+                new GridData(SWT.RIGHT, SWT.CENTER, true, false, 4, 1));
+        altitudesGrp.setLayout(new GridLayout(8, false));
+        altitudesGrp.setText("Altitudes");
 
-        Label lblAlt = new Label(altGrp, SWT.LEFT);
-        lblAlt.setText("Altitudes: ");
-        final Button abv = new Button(altGrp, SWT.RADIO);
-        abv.setText("ABV");
-        abv.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent event) {
-                SigmetAttrDlg.this.setEditableAttrAltitudeSelection("ABV");
-            }
-        });
-
-        final Button blw = new Button(altGrp, SWT.RADIO);
-        blw.setText("BLW");
-        blw.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent event) {
-                SigmetAttrDlg.this.setEditableAttrAltitudeSelection("BLW");
-            }
-        });
-
-        final Button btn = new Button(altGrp, SWT.RADIO);
-        btn.setText("BTN");
-        btn.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent event) {
-                SigmetAttrDlg.this.setEditableAttrAltitudeSelection("BTN");
-            }
-        });
-
-        attrButtonMap.put(EDITABLE_ATTR_ALTITUDE_SELECTION,
-                new Button[] { abv, blw, btn });
-
-        final Text kftText = new Text(altGrp, SWT.LEFT);
-        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_TEXT, kftText);
-
-        kftText.addListener(SWT.Modify, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                SigmetAttrDlg.this.setEditableAltLevelText(kftText.getText());
-            }
-        });
-        if (this.getEditableAltLevelText() != null) {
-            kftText.setText(this.getEditableAltLevelText());
-        }
-        Label lbl = new Label(altGrp, SWT.LEFT);
-        lbl.setText(" kFt ");
+        // Level Info attributes within the Forecast Section of
+        // VOLCANIC_ASH phenomenon
+        this.createLevelAltitudes(altitudesGrp);
 
         Group ralGrp = new Group(topSecPhenom, SWT.LEFT);
         ralGrp.setLayoutData(
@@ -2278,13 +2382,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         return lon;
     }
 
-    // -----------------------------------------------------------------------------------------------------
     @Override
     public Control createDialogArea(Composite parent) {
 
         top = (Composite) super.createDialogArea(parent);
 
-        GridLayout mainLayout = new GridLayout(8, false);
+        GridLayout mainLayout = new GridLayout(12, false);
         mainLayout.marginHeight = 3;
         mainLayout.marginWidth = 3;
         top.setLayout(mainLayout);
@@ -2292,12 +2395,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         this.getShell().setText("International SIGMET Edit");
         this.setShellStyle(SWT.RESIZE | SWT.CLOSE);
 
+        // Only the portion of the dialog that has the polygon menu
         createDialogAreaGeneral();
 
-        // ++++++++++++++++++++++++++++++++++++++++++++++++++++ selected
-
         if ("Pgen Select".equals(mouseHandlerName) || withExpandedArea) {
-            createDialogAreaSelected(parent);
+            // The full dialog box
+            createDialogAreaSelect(parent);
         }
         init();
         addSeparator(top.getParent());
@@ -2384,6 +2487,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         Color clr = Color.cyan;
         cs.setColorValue(new RGB(clr.getRed(), clr.getGreen(), clr.getBlue()));
 
+        // Line Width GUI
+        this.createLineWidthControls();
+
         // set and reset
         setLineType(AREA);
         setSideOfLine(comboLine.getText());
@@ -2397,7 +2503,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
     }
 
-    private void createDialogAreaSelected(Composite parent) {
+    private void createDialogAreaSelect(Composite parent) {
         String[] mwoItems = SigmetInfo.AREA_MAP
                 .get(SigmetInfo.getSigmetTypeString(pgenType));
 
@@ -2587,6 +2693,51 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             });
         }
+    }
+
+    /*
+     * Create widgets for the Line Width attribute
+     */
+    private void createLineWidthControls() {
+
+        // Line Width Label
+        lineWidthLabel = new Label(top, SWT.LEFT);
+        lineWidthLabel.setText("Line Width:");
+
+        // Line Width Spinner and Slider
+        lineWidthSpinSlide = new SpinnerSlider(top, SWT.HORIZONTAL, 1);
+        GridData gd = new GridData(150, 42);
+        gd.horizontalIndent = 6;
+        lineWidthSpinSlide.setLayoutData(gd);
+        lineWidthSpinSlide.setMinimum(1);
+        lineWidthSpinSlide.setMaximum(10);
+        lineWidthSpinSlide.setIncrement(1);
+        lineWidthSpinSlide.setPageIncrement(1);
+        lineWidthSpinSlide.setDigits(0);
+        attrControlMap.put(EDITABLE_ATTR_POLYGON_LINE_WIDTH,
+                lineWidthSpinSlide);
+    }
+
+    /**
+     * Sets the line width value of the dialog.
+     *
+     * @param lw
+     */
+    protected void setSpinnerLineWidth(float lw) {
+        lineWidthSpinSlide.setSelection((int) lw);
+    }
+
+    /**
+     * Returns the line width from the dialog.
+     */
+    public float getSpinnerLineWidth() {
+        if (chkBoxLineWidth.getSelection()) {
+
+            return lineWidthSpinSlide.getSelection();
+        } else {
+            return java.lang.Float.NaN;
+        }
+
     }
 
     private void populateIdList(String issueOffice) {
@@ -3053,6 +3204,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevel(String editableAttrLevel) {
         this.editableAttrLevel = editableAttrLevel;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevel(editableAttrLevel);
     }
 
     public String getEditableAttrLevelInfo1() {
@@ -3061,6 +3213,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelInfo1(String editableAttrLevelInfo1) {
         this.editableAttrLevelInfo1 = editableAttrLevelInfo1;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevelInfo1(editableAttrLevelInfo1);
     }
 
     public String getEditableAttrLevelInfo2() {
@@ -3069,6 +3222,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelInfo2(String editableAttrLevelInfo2) {
         this.editableAttrLevelInfo2 = editableAttrLevelInfo2;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevelInfo2(editableAttrLevelInfo2);
     }
 
     public String getEditableAttrLevelText1() {
@@ -3077,6 +3231,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelText1(String editableAttrLevelText1) {
         this.editableAttrLevelText1 = editableAttrLevelText1;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevelText1(editableAttrLevelText1);
     }
 
     public String getEditableAttrLevelText2() {
@@ -3085,6 +3240,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelText2(String editableAttrLevelText2) {
         this.editableAttrLevelText2 = editableAttrLevelText2;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevelText2(editableAttrLevelText2);
     }
 
     public String getEditableAttrFromLine() {
@@ -3408,7 +3564,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             StringBuilder sb = new StringBuilder();
             sb.append(SigmetAttrDlg.this.getEditableAttrArea());
             sb.append("_").append(SigmetAttrDlg.this.getEditableAttrId());
-            sb.append("_").append(SigmetAttrDlg.this.getEditableAttrSeqNum());
+
+            if (cnlSigmet) {
+                sb.append("_").append(sigmetCnlDlg.getSeriesNumber());
+            } else {
+                sb.append("_")
+                        .append(SigmetAttrDlg.this.getEditableAttrSeqNum());
+            }
+
             sb.append(".sigintl");
             return sb.toString();
         }
@@ -3732,6 +3895,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(" ").append(SigmetConstant.WITHIN).append(" ");
                     sb.append((int) SigmetAttrDlg.this.getWidth());
                     sb.append(" ").append(SigmetConstant.NM_CENTER).append(".");
+                    sb.append(getLevelInfo(tops).toString()).append(".");
                 } else {
                     sb.append(" ").append(SigmetConstant.WI).append(" ");
                     sb.append((int) SigmetAttrDlg.this.getWidth());
@@ -3806,45 +3970,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(" ").append(SigmetConstant.LINE_FM);
                 }
                 sb.append(locationDesc).append(".");
+
+                if (isTropCyc) {
+                    // Add Level Info for Line Sigmet
+                    sb.append(getLevelInfo(tops).toString()).append(".");
+                }
             }
 
             // in C: if( ! tc )nmap_pgsigw.c@4062
             if (!isTropCyc) {
-
-                // ------ TOPS
-                if (tops != null && (!NONE.equals(tops))) {
-                    if (SigmetConstant.TOPS.equals(tops)) {
-                        sb.append(" ").append(SigmetConstant.TOP);
-                    }
-                    String levelInfo1 = SigmetAttrDlg.this
-                            .getEditableAttrLevelText1();
-                    if (levelInfo1 != null) {
-                        if ((SigmetAttrDlg.this.getEditableAttrLevelInfo1()
-                                .equalsIgnoreCase(SigmetConstant.ABV))
-                                || (SigmetAttrDlg.this
-                                        .getEditableAttrLevelInfo1()
-                                        .equalsIgnoreCase(
-                                                SigmetConstant.BLW))) {
-                            sb.append(" ").append(SigmetAttrDlg.this
-                                    .getEditableAttrLevelInfo1());
-                        }
-                    }
-                    sb.append(" ").append(SigmetConstant.FL);
-                    String text1 = SigmetAttrDlg.this
-                            .getEditableAttrLevelText1();
-                    sb.append(text1 == null ? "" : text1);
-
-                    String levelInfo2 = SigmetAttrDlg.this
-                            .getEditableAttrLevelInfo2();
-                    if (!NONE.equals(levelInfo2)) {
-                        sb.append("/");
-                        String text2 = SigmetAttrDlg.this
-                                .getEditableAttrLevelText2();
-                        sb.append(text2 == null ? "" : text2);
-
-                    }
-                    sb.append(".");
-                }
+                //------ TOPS 
+                sb.append(getLevelInfo(tops).toString());
 
                 // ------ movement
                 String movement = SigmetAttrDlg.this.getEditableAttrMovement();
@@ -3873,8 +4009,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
 
             // ------ outlook if volcano ash
-            String startTime = getEditableAttrStartTime();
-
             if (PgenConstant.TYPE_VOLCANIC_ASH.equals(phen)) {
                 sb.append("\n").append(SigmetConstant.FCST).append(" ");
                 if (SigmetConstant.TRUE.equals(
@@ -3978,6 +4112,43 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
 
             return sb.toString();
+        }
+
+        private StringBuilder getLevelInfo(String tops) {
+            StringBuilder levelTxt = new StringBuilder();
+
+            // ------ TOPS
+            if (tops != null && (!NONE.equals(tops))) {
+                if (SigmetConstant.TOPS.equals(tops)) {
+                    levelTxt.append(" ").append(SigmetConstant.TOP);
+                }
+
+                String levelInfo1 = SigmetAttrDlg.this
+                        .getEditableAttrLevelText1();
+                if (levelInfo1 != null) {
+                    if ((SigmetAttrDlg.this.getEditableAttrLevelInfo1()
+                            .equalsIgnoreCase(SigmetConstant.ABV))
+                            || (SigmetAttrDlg.this.getEditableAttrLevelInfo1()
+                                    .equalsIgnoreCase(SigmetConstant.BLW))) {
+                        levelTxt.append(" ").append(
+                                SigmetAttrDlg.this.getEditableAttrLevelInfo1());
+                    }
+                }
+
+                levelTxt.append(" ").append(SigmetConstant.FL);
+                String text1 = SigmetAttrDlg.this.getEditableAttrLevelText1();
+                levelTxt.append(text1 == null ? "" : text1);
+
+                String levelInfo2 = SigmetAttrDlg.this
+                        .getEditableAttrLevelInfo2();
+                if (!NONE.equals(levelInfo2)) {
+                    levelTxt.append("/");
+                    String text2 = SigmetAttrDlg.this
+                            .getEditableAttrLevelText2();
+                    levelTxt.append(text2 == null ? "" : text2);
+                }
+            }
+            return levelTxt;
         }
 
         private StringBuilder getfcstLatLonLoc(String lineInfo) {
@@ -4140,10 +4311,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             return headers;
         }
 
-        public Map<String, Object> getAttrFromDlg() {
-            return new HashMap<>();
-        }
-
         @Override
         public void setAttrForDlg(IAttribute ia) {
             // No op
@@ -4221,7 +4388,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 statusHandler.debug(e.getLocalizedMessage(), e);
             }
             Control cont = attrControlMap.get(attr);
-
             if (cont instanceof Combo || cont instanceof Spinner
                     || cont instanceof Text) {
                 if (!cont.isDisposed()) {
@@ -4331,7 +4497,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     }
                 }
             }
-
         }
         tropCycFlag = false;
         withExpandedArea = false;
@@ -4949,4 +5114,5 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         ww.setBackground(clr);
         clr.dispose();
     }
+
 }
