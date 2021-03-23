@@ -21,11 +21,10 @@ import gov.noaa.nws.ncep.edex.tools.decoder.LatLonLocTbl;
 import gov.noaa.nws.ncep.edex.util.UtilN;
 
 /**
+ *
  * Non-Convective Significant Meteorological Information DecoderUtil
  *
  * This java class intends to serve as a decoder utility for NonConvsigmet.
- *
- * This code has been developed by the SIB for use in the AWIPS2 system.
  *
  * <pre>
  *
@@ -33,19 +32,21 @@ import gov.noaa.nws.ncep.edex.util.UtilN;
  *
  * Date          Ticket#  Engineer     Description
  * ------------- -------- ------------ -----------------------------------------
- * Jun 2009      ????     Uma Josyula  Initial creation
- * Jul 2011      ????     F. J. Yen    Fix for RTN TTR 9973--ConvSigment Decoder
+ * 06/2009                Uma Josyula  Initial creation
+ * 07/2011                F. J. Yen    Fix for RTN TTR 9973--ConvSigment Decoder
  *                                     Ignoring time range (NonConvsigmet, too).
- *                                     Set the rangeEnd time to the endTime
+ *                                      Set the rangeEnd time to the endTime
  * Jan 17, 2014           njensen      Handle if one or more locations not found
  *                                     in LatLonLocTbl
  * May 14, 2014  2536     bclement     moved WMO Header to common, removed
  *                                     TimeTools usage
  * Jul 15, 2020  8191     randerso     Updated for changes to LatLonPoint
+ * Aug 10, 2020  81343    tjensen      Add missing hazard types
  *
  * </pre>
  *
  * @author Uma Josyula
+ */
  */
 public class NonConvSigmetParser {
 
@@ -89,11 +90,6 @@ public class NonConvSigmetParser {
             Calendar issueTime = WMOTimeParser.findDataTime(theMatcher.group(3),
                     fileName);
             currentRecord.setIssueTime(issueTime);
-
-            /*
-             * 999999999999999999999999999999 DataTime dataTime = new
-             * DataTime(issueTime); currentRecord.setDataTime(dataTime); 999
-             */
         }
         return currentRecord;
     }
@@ -152,11 +148,9 @@ public class NonConvSigmetParser {
             currentRecord.setEndTime(endTime);
         }
 
-        /* 9999999999999999999999999999999 */
         DataTime dataTime = new DataTime(stTime, new TimeRange(stTime.getTime(),
                 endTime.getTimeInMillis() - stTime.getTimeInMillis()));
         currentRecord.setDataTime(dataTime);
-        /* 999 */
         return currentRecord;
     }
 
@@ -203,7 +197,7 @@ public class NonConvSigmetParser {
 
         final String FL_EXP2 = "BLW (FL)?([0-9]{3})";
 
-        final String HAZARDTYPE_EXP = " (TURB|ICGICIP|ICE) ";
+        final String HAZARDTYPE_EXP = " (TURB|ICGICIP|ICE|ICGIC|ICGIP|VA|DU) ";
 
         final String HAZARDINTS_EXP = "(OCNL [A-Z0-9]{2,})(BLW (FL)?([0-9]{3}).|BTN|TURB|ICGICIP|ICE|ICGIC|VA|DU)?";
 

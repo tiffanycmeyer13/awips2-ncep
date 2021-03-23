@@ -21,10 +21,11 @@ package gov.noaa.nws.ncep.edex.common.sounding;
  * 02/15/2012               Chin Chen         added fcsTime to support pfc sounding query
  * 07/23/2014               Chin Chen         Support PW
  * 03/05/2017   18784       wkwock            Handle not integer stationNum(stationID in DB)
+ * 01/27/2021   86815       smanoj            Added ARW and RAP to PFC Model Sounding for Nsharp.
+ * 
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
  */
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class NcSoundingProfile implements ISerializableObject {
     public static final float MISSING = -9999.f;
 
     public static enum PfcSndType {
-        NAMSND, GFSSND, RUC2SND, RUCPTYPSND, BROWSE, NONE
+        NAMSND, GFSSND, ARWSND, RAPSND, RUC2SND, RUCPTYPSND, BROWSE, NONE
     };
 
     public static enum MdlSndType {
@@ -59,9 +60,8 @@ public class NcSoundingProfile implements ISerializableObject {
     };
 
     public static enum ObsSndType {
-        NCUAIR, UAIR, DROP, TAMDAR, BUFRUA // same as uair but using bufrua
-                                           // decoder and data is saved in HDF5
-        , BROWSE, NONE
+        // same as uair but using bufrua decoder and data is saved in HDF5
+        NCUAIR, UAIR, DROP, TAMDAR, BUFRUA, BROWSE, NONE
     };
 
     // Important Note:
@@ -85,7 +85,6 @@ public class NcSoundingProfile implements ISerializableObject {
     private float stationElevation;
 
     // @DynamicSerializeElement
-    // private String stationId;
     @DynamicSerializeElement
     private double stationLatitude;
 
@@ -256,26 +255,5 @@ public class NcSoundingProfile implements ISerializableObject {
     public void setPw(float pw) {
         this.pw = pw;
     }
-
-    /*
-     * @Override protected AbstractStorageRecord cloneInternal() { // TODO
-     * Auto-generated method stub System.out.println(
-     * "NcSoundingProfile cloneInternal()"); return null; }
-     * 
-     * @Override public Object getDataObject() { // TODO Auto-generated method
-     * stub System.out.println("NcSoundingProfile getDataObject()"); return
-     * null; }
-     * 
-     * @Override public int getSizeInBytes() { // TODO Auto-generated method
-     * stub System.out.println("NcSoundingProfile getSizeInBytes()"); return 0;
-     * }
-     * 
-     * @Override public void reduce(int[] indices) { // TODO Auto-generated
-     * method stub System.out.println("NcSoundingProfile ()"); }
-     * 
-     * @Override public boolean validateDataSet() { // TODO Auto-generated
-     * method stub System.out.println("NcSoundingProfile validateDataSet()");
-     * return false; }
-     */
 
 }

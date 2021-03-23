@@ -72,7 +72,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorMatrixSelector;
  * ------------ ---------- ----------- --------------------------
  * 03/21/2012    229       Chin Chen    Initial coding
  * Aug 17, 2018  #7081     dgilling     Refactor based on CaveJFACEDialog.
- *
+ * Apr 22, 2020  76580     smanoj       Allow user to interact with NsharpEditor while
+ *                                      the dialog is open.
  * </pre>
  *
  * @author Chin Chen
@@ -106,7 +107,7 @@ public class NsharpDataDisplayConfigDialog extends AbstractNsharpConfigDlg {
 
     public NsharpDataDisplayConfigDialog(Shell parentShell) {
         super(parentShell, "Nsharp Data Display");
-
+        this.setShellStyle(SWT.MODELESS);
         availLine = Arrays.asList(NsharpConstants.lineNameArray);
 
         curLineProperty = configStore.getLinePropertyMap()
