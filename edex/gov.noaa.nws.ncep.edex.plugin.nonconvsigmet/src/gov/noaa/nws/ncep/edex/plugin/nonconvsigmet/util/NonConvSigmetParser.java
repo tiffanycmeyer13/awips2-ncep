@@ -47,7 +47,6 @@ import gov.noaa.nws.ncep.edex.util.UtilN;
  *
  * @author Uma Josyula
  */
- */
 public class NonConvSigmetParser {
 
     /**
