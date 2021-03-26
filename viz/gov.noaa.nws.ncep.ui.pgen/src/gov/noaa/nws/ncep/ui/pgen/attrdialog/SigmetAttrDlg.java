@@ -854,10 +854,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 if (btnCancel.getSelection()) {
                     if (SigmetAttrDlg.this.drawingLayer.getActiveProduct()
                             .getInputFile() != null) {
-
+                        Sigmet sigmet = (Sigmet) getSigmet();
                         // User can CANCEL a SIGMET if it is active
-                        if (isSigmetActive()) {
-                            Sigmet sigmet = (Sigmet) getSigmet();
+                        // or Open the Cancel Dialog if it is already a cancelled
+                        // Sigmet (ie. Cancelled Sigmet *.xml exist)
+                        if (isSigmetActive() || (sigmet != null && STATUS_CANCEL
+                                .equals(sigmet.getEditableAttrStatus()))) {
                             try {
                                 sigmetCnlDlg = new SigmetCancelDlg(getInstance(getShell()),getShell(),
                                         sigmet);
@@ -872,10 +874,18 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         } else {
                             statusHandler.warn(
                                     "Unable to cancel SIGMET product: SIGMET is not active.");
+                            //Can't Cancel but update
+                            btnCancel.setSelection(false);
+                            btnNewUpdate.setSelection(true);
+                            setEditableAttrStatus(STATUS_NEW);
                         }
                     } else {
                         statusHandler.warn(
                                 "Unable to cancel SIGMET product: SIGMET is not Saved.");
+                        //Can't Cancel but update
+                        btnCancel.setSelection(false);
+                        btnNewUpdate.setSelection(true);
+                        setEditableAttrStatus(STATUS_NEW);
                     }
                 }
             }
@@ -3401,8 +3411,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         SigmetAttrDlgSaveMsgDlg(Shell parShell) {
             super(parShell);
-            if (STATUS_CANCEL.equals(SigmetAttrDlg.this.getEditableAttrStatus())
-                    && SigmetAttrDlg.this.isSigmetActive()) {
+            if (STATUS_CANCEL
+                    .equals(SigmetAttrDlg.this.getEditableAttrStatus())) {
                 cnlSigmet = true;
             }
         }
