@@ -1,8 +1,5 @@
 package gov.noaa.nws.ncep.edex.plugin.mcidas.dao;
 
-import gov.noaa.nws.ncep.common.dataplugin.mcidas.McidasMapCoverage;
-import gov.noaa.nws.ncep.common.dataplugin.mcidas.McidasRecord;
-
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,27 +23,33 @@ import com.raytheon.uf.edex.database.plugin.DownscaleStoreUtil;
 import com.raytheon.uf.edex.database.plugin.DownscaleStoreUtil.IDataRecordCreator;
 import com.raytheon.uf.edex.database.plugin.PluginDao;
 
+import gov.noaa.nws.ncep.common.dataplugin.mcidas.McidasMapCoverage;
+import gov.noaa.nws.ncep.common.dataplugin.mcidas.McidasRecord;
+
 /**
  * This is a Data Access Object (DAO) driver to interact with McIDAS image
  * properties (satellite name and image type) and HDF5 data store.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * 
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 10/2009      144         T. Lee      Created
- * 11/2009      144         T. Lee      Implemented area name DAO
- * Nov 14, 2013 2393        bclement    added in-java interpolation
- * Mar 07, 2014 2791        bsteffen    Move Data Source/Destination to numeric
- *                                      plugin.
- * 08/15/2015   R7190      R. Reynolds  Modifications to handle mcidas area header info.
- * 12/03/2015   R13119     R. Reynolds  Enable purging of mcidas area files metadata.
- * 
+ *
+ * Date          Ticket#  Engineer     Description
+ * ------------- -------- ------------ -----------------------------------------
+ * Oct ??, 2009  144      T. Lee       Created
+ * Nov ??, 2009  144      T. Lee       Implemented area name DAO
+ * Nov 14, 2013  2393     bclement     added in-java interpolation
+ * Mar 07, 2014  2791     bsteffen     Move Data Source/Destination to numeric
+ *                                     plugin.
+ * Aug 15, 2015  7190     R. Reynolds  Modifications to handle mcidas area
+ *                                     header info.
+ * Dec 03, 2015  13119    R. Reynolds  Enable purging of mcidas area files
+ *                                     metadata.
+ * Mar 29, 2021  8374     randerso     Renamed IDataRecord.get/setProperties to
+ *                                     get/setProps
+ *
  * </pre>
- * 
+ *
  * @author tlee
- * @version 1.0
  */
 
 public class McidasDao extends PluginDao {
@@ -65,8 +68,7 @@ public class McidasDao extends PluginDao {
          */
         if (satRecord.getHeaderBlock() != null) {
             AbstractStorageRecord storageRecord = new ByteDataRecord("Header",
-                    satRecord.getDataURI(),
-                    (byte[]) satRecord.getHeaderBlock(), 1,
+                    satRecord.getDataURI(), satRecord.getHeaderBlock(), 1,
                     new long[] { satRecord.getHeaderBlock().length });
             storageRecord.setCorrelationObject(satRecord);
             dataStore.addDataRecord(storageRecord);
@@ -92,17 +94,18 @@ public class McidasDao extends PluginDao {
             } catch (Exception e) {
                 throw new StorageException(
                         "Unable to create grid geometry for record: "
-                                + satRecord, storageRecord, e);
+                                + satRecord,
+                        storageRecord, e);
             }
             GridDownscaler downScaler = new GridDownscaler(gridGeom);
 
-            storageRecord.setProperties(props);
+            storageRecord.setProps(props);
             storageRecord.setCorrelationObject(satRecord);
             // Store the base record.
             dataStore.addDataRecord(storageRecord);
 
-            BufferWrapper dataSource = BufferWrapper.wrapArray(
-                    storageRecord.getDataObject(), xdim, ydim);
+            BufferWrapper dataSource = BufferWrapper
+                    .wrapArray(storageRecord.getDataObject(), xdim, ydim);
             // this way of interpolating does not create the Data-interpolated/0
             // link to the full sized data. This shouldn't be an issue since the
             // retrieval code checks for level 0 and requests the full sized
@@ -114,14 +117,15 @@ public class McidasDao extends PluginDao {
                         public IDataRecord create(Object data,
                                 int downScaleLevel, Rectangle size)
                                 throws StorageException {
-                            long[] sizes = new long[] { size.width, size.height };
+                            long[] sizes = new long[] { size.width,
+                                    size.height };
                             String group = DataStoreFactory.createGroupName(
                                     satRecord.getDataURI(), null, true);
                             String name = String.valueOf(downScaleLevel);
                             IDataRecord rval = DataStoreFactory
                                     .createStorageRecord(name, group, data, 2,
                                             sizes);
-                            rval.setProperties(props);
+                            rval.setProps(props);
                             rval.setCorrelationObject(satRecord);
                             return rval;
                         }
@@ -141,22 +145,12 @@ public class McidasDao extends PluginDao {
         return dataStore;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.uf.edex.database.plugin.PluginDao#purgeAllData()
-     */
     @Override
     public void purgeAllData() throws PluginException {
         super.purgeAllData();
         purgeSpatialData();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.uf.edex.database.plugin.PluginDao#purgeExpiredData()
-     */
     @Override
     public void purgeExpiredData() throws PluginException {
         super.purgeExpiredData();
@@ -168,7 +162,7 @@ public class McidasDao extends PluginDao {
      * older than 2 days
      */
     private void purgeSpatialData() {
-        List<Object> args = new ArrayList<Object>(3);
+        List<Object> args = new ArrayList<>(3);
         args.add(McidasMapCoverage.class.getAnnotation(Table.class).name());
         args.add(McidasRecord.class.getAnnotation(Table.class).name());
         String formatString = "delete from %s where pid not in (select distinct coverage_pid from %s)";
