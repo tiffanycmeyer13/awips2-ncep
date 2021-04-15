@@ -19,11 +19,9 @@
  **/
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
 
-import com.raytheon.uf.common.status.IUFStatusHandler;
-import com.raytheon.uf.common.status.UFStatus;
-
 import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.CarSamBackupWmoHeader;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
 
@@ -67,15 +65,15 @@ import java.util.TimeZone;
  * Jun 01, 2020  78215    smanoj   Initial creation
  * Jun 16, 2020  79243    smanoj   Added Caribbean and South American FIRs.
  * Mar 15, 2021  88217    smanoj   Added capability to SAVE CANCEL file.
+ * Apr 07, 2021  88217    smanoj   Remove Hazard Type from Cancellation Information Text.
+ *                                 Also remove unused buttons.
+ * Apr 09, 2021  90325    smanoj   CARSAM Backup WMO headers update.
  * 
  * </pre>
  *
  * @author smanoj
  */
 public class SigmetCancelDlg extends AttrDlg {
-
-    private static final IUFStatusHandler statusHandler = UFStatus
-            .getHandler(SigmetAttrDlg.class);
 
     private Sigmet sigmet;
 
@@ -129,9 +127,7 @@ public class SigmetCancelDlg extends AttrDlg {
 
     private static final int CHECK_ID = IDialogConstants.CLIENT_ID + 1;
 
-    private static final int TEST_XML_ID = IDialogConstants.CLIENT_ID + 2;
-
-    private static final int SEND_ID =IDialogConstants.CLIENT_ID + 3;
+    private static final int PARENT_SAVE_ID = IDialogConstants.CLIENT_ID + 2;
 
     private static final int SAVE_ID = IDialogConstants.OK_ID;
 
@@ -140,6 +136,10 @@ public class SigmetCancelDlg extends AttrDlg {
     private static final String INTL_SIGMET = "INTL_SIGMET";
 
     private static final String STATUS_CANCEL = "2";
+
+    private Button btnCarSamBackUp;
+
+    private boolean isCarSamBackup = false;
 
     private SigmetAttrDlg parentDlg = null;
 
@@ -298,6 +298,36 @@ public class SigmetCancelDlg extends AttrDlg {
             }
         }
 
+        // CARSAM Backup Mode
+        Group backupGrp = new Group(firCarSAmericanGrp, SWT.TOP);
+        backupGrp.setLayoutData(
+                new GridData(SWT.RIGHT, SWT.CENTER, true, false, 1, 1));
+        backupGrp.setLayout(new GridLayout(8, false));
+        btnCarSamBackUp = new Button(backupGrp, SWT.CHECK);
+        btnCarSamBackUp.setText("CARSAM Backup Mode");
+        btnCarSamBackUp.setEnabled(false);
+        // CARSAM back mode only editable if Fir Region checked is
+        // one of the CARSAM sites
+        if(firID !=null ){
+            for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
+                    .getCarSamBackupWmoHeader()) {
+                if (firID.contains(carsamWmo.getFirID())) {
+                    btnCarSamBackUp.setEnabled(true);
+                    break;
+                }
+            }
+        }
+        if(parentDlg.isCarSamBackupMode()){
+            isCarSamBackup = true;
+            btnCarSamBackUp.setSelection(true);
+        }
+        btnCarSamBackUp.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                Button btn = (Button) event.getSource();
+                isCarSamBackup = btn.getSelection();
+            }
+        });
     }
 
     private void createSeriesTimeWMOArea(Composite topComposite) {
@@ -547,11 +577,27 @@ public class SigmetCancelDlg extends AttrDlg {
     private String getFileContent() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(getWmo());
-        sb.append("\n");
+        boolean isCarSamFir = false;
+        if (this.firID != null) {
+            for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
+                    .getCarSamBackupWmoHeader()) {
+                if (this.firID.contains(carsamWmo.getFirID())) {
+                    isCarSamFir = true;
+                    break;
+                }
+            }
+        }
 
-        sb.append(getAfospil());
-        sb.append("\n");
+        if (isCarSamFir && isCarSamBackup) {
+            sb.append(getWmoForCarSamBackup());
+            sb.append("\n");
+        } else {
+            sb.append(getWmo());
+            sb.append("\n");
+
+            sb.append(getAfospil());
+            sb.append("\n");
+        }
 
         sb.append(firID);
         sb.append(" ").append(SigmetConstant.SIGMET);
@@ -564,8 +610,7 @@ public class SigmetCancelDlg extends AttrDlg {
 
         sb.append(firName.replace('_', ' ')).append(" ")
                 .append(SigmetConstant.FIR).append(" ");
-        sb.append(qualifier.replace('_', ' '));
-        sb.append(" ").append(SigmetConstant.CNL);
+        sb.append(SigmetConstant.CNL);
 
         sb.append(" ").append(SigmetConstant.SIGMET);
         sb.append(" ").append(attrId);
@@ -600,13 +645,6 @@ public class SigmetCancelDlg extends AttrDlg {
     public void createButtonsForButtonBar(Composite parent) {
         createButton(parent, CHECK_ID, "CHECK", true);
 
-        // TODO Keeping it disabled for now according to direction from site.
-        // Will update as soon as we get more information from site.
-        Button testXMLbtn = createButton(parent, TEST_XML_ID, "TEST XML", true);
-        testXMLbtn.setEnabled(false);
-        Button testSendbtn = createButton(parent, SEND_ID, "SEND", true);
-        testSendbtn.setEnabled(false);
-
         createButton(parent, SAVE_ID, "SAVE", true);
 
         createButton(parent, CANCEL_ID, "CLOSE", true);
@@ -624,12 +662,6 @@ public class SigmetCancelDlg extends AttrDlg {
             }
             break;
 
-        case TEST_XML_ID:
-            break;
-
-        case SEND_ID:
-            break;
-
         default:
             break;
         }
@@ -644,8 +676,7 @@ public class SigmetCancelDlg extends AttrDlg {
     @Override
     public void okPressed() {
         //Invoke the same Save Dialog from the SigmetAttrDlg
-        int buttonId= IDialogConstants.CLIENT_ID + 2;
-        parentDlg.buttonPressed(buttonId);
+        parentDlg.buttonPressed(PARENT_SAVE_ID);
         close();
     }
 
@@ -672,6 +703,28 @@ public class SigmetCancelDlg extends AttrDlg {
         } else {
             return null;
         }
+    }
+
+    private String getWmoForCarSamBackup() {
+        StringBuilder sb = new StringBuilder();
+        String firStr = this.firID;
+        String phen = this.qualifier;
+
+        for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
+                .getCarSamBackupWmoHeader()) {
+            if (firStr.contains(carsamWmo.getFirID())) {
+                if (PgenConstant.TYPE_VOLCANIC_ASH.equals(phen)) {
+                    sb.append(carsamWmo.getWmoHeaderForVA());
+                } else if (PgenConstant.TYPE_TROPICAL_CYCLONE.equals(phen)) {
+                    sb.append(carsamWmo.getWmoHeaderForTC());
+                } else {
+                    sb.append(carsamWmo.getWmoHeaderForOther());
+                }
+                sb.append(" ").append(carsamWmo.getWmoID());
+                sb.append(" ").append(getTimeStringPlusHourInHMS(0));
+            }
+        }
+        return sb.toString();
     }
 
     private String getWmo() {
