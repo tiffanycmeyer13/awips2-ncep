@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -19,7 +20,6 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IPartListener;
-import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
@@ -29,25 +29,26 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
 import com.raytheon.uf.viz.core.drawables.ResourcePair;
+import com.raytheon.viz.ui.EditorUtil;
 import com.raytheon.viz.ui.UiUtil;
 
 import gov.noaa.nws.ncep.ui.nctextui.dbutil.EReportTimeRange;
 import gov.noaa.nws.ncep.ui.nctextui.dbutil.NctextDbQuery;
 import gov.noaa.nws.ncep.ui.nctextui.dbutil.NctextStationInfo;
 import gov.noaa.nws.ncep.ui.nctextui.rsc.NctextuiResource;
+import gov.noaa.nws.ncep.viz.ui.display.AbstractNcEditor;
 import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
-import gov.noaa.nws.ncep.viz.ui.display.NcDisplayMngr;
 
 /**
- * 
+ *
  * gov.noaa.nws.ncep.ui.nctextui.palette.NctextPaletteWindow
- * 
+ *
  * This java class performs the NCTEXT GUI construction. This code has been
  * developed by the SIB for use in the AWIPS2 system.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * 
+ *
  * Date         Ticket#     Engineer    Description
  * -------      -------     --------    -----------
  * 12/24/2009   TBD         Chin Chen   Initial coding
@@ -56,15 +57,29 @@ import gov.noaa.nws.ncep.viz.ui.display.NcDisplayMngr;
  * 02/15/2012   #972        G. Hull     NatlCntrsEditor 
  * 12/12/2016   R25982      J Beck      Modify support for Aviation > TAFs
  *                                      and Observed Data > TAFs Decoded
- *
- * </pre>
+ * 04/14/2020   76579       k sunil     Added code to implement LATEST as the default range
+ * 07/23/2020   80427       smanoj      Added Scrollbar to NCTEXT window. Also removed the
+ *                                      leading “-- Surface Hourlies: Station:” and trailing “$ --”
+ *                                      from station reports, and removed the repeats of station
+ *                                      reports when viewing station text readouts in Text Report.
+ * 08/03/2020   80399       smanoj      Removing "TAFs Decoded" from NCTEXT "Observed Data" menu.
+ * 09/30/2020   83351       smanoj      Fix Aviation TAFs State retrieval bug.
+ * 10/05/2020   83352       smanoj      Fix Offshore forecast retrieval bug.
+ * 10/16/2020   83597       smanoj      Aviation TAFs Hour Covered selection disabled,
+ *                                      but always set to "Latest".
+ * 10/21/2020   84059       smanoj      Fix NCTEXT Hour Covered Duplicate Selections issue.
+ * 11/12/2020   84877       smanoj      Fix Surface Hourlies Text Report bug.
+ * 11/20/2020   84061       smanoj      Fix some issues when loading NSharp alongside the NCText.
  * 
+ * </pre>
+ *
  * @author Chin Chen
- * @version 1.0
  */
 
 public class NctextuiPaletteWindow extends ViewPart
         implements SelectionListener, DisposeListener, IPartListener {
+
+    private static final String NCMAP_EDITOR_ID = "gov.noaa.nws.ncep.viz.ui.display.NcMapEditor";
 
     private String selectedGp = null;
 
@@ -78,15 +93,15 @@ public class NctextuiPaletteWindow extends ViewPart
 
     private NctextDbQuery query;
 
-    private EReportTimeRange timeCovered = EReportTimeRange.TWELVE_HOURS;
-
-    private EReportTimeRange tempTimeCovered;
+    private EReportTimeRange timeCovered = EReportTimeRange.LATEST;
 
     private boolean isState = false;
 
     private boolean replaceText = true;
 
     private final static String GP_LABEL = "Select Data Type Group ";
+
+    private final static String LATEST = "Latest";
 
     private final static String PRODUCT_LABEL = "Select Data Type Product";
 
@@ -112,7 +127,7 @@ public class NctextuiPaletteWindow extends ViewPart
 
     private int btnGapX = 5;
 
-    private int timeBtnWidth = 40;
+    private int timeBtnWidth = 70;
 
     private int staBtnWidth = 75;
 
@@ -134,6 +149,8 @@ public class NctextuiPaletteWindow extends ViewPart
 
     private boolean isEditorVisible = true;
 
+    private boolean tafSelected = false;
+
     private int dataTypeGpItem = 0;
 
     private int dataTypePdItem = 0;
@@ -142,8 +159,16 @@ public class NctextuiPaletteWindow extends ViewPart
 
     private int currentTextIndex;
 
-    private Button oneHrBtn, threeHrBtn, sixHrBtn, twelveHrBtn, twentyfourHrBtn,
-            fourtyeightHrBtn, allHrBtn;
+    private Button latestBtn, oneHrBtn, threeHrBtn, sixHrBtn, twelveHrBtn,
+            twentyfourHrBtn, fourtyeightHrBtn, allHrBtn;
+
+    private static final int MIN_WIDTH = 1000;
+
+    private static final int MIN_HEIGHT = 400;
+
+    private final static String TAFS_LABEL = "TAFs";
+
+    private final static String TAFS_DECODED_LABEL = "TAFs Decoded";
 
     /**
      * No-arg Constructor
@@ -225,18 +250,19 @@ public class NctextuiPaletteWindow extends ViewPart
 
             // remove the workbench part listener
             page.removePartListener(this);
+
+            // close any open NCText Map Editors
+            closeNCTextEditors();
         }
 
     }
 
-    private void close() {
-        IWorkbenchPage wpage = PlatformUI.getWorkbench()
-                .getActiveWorkbenchWindow().getActivePage();
-
-        IViewPart vpart = wpage.findView("gov.noaa.nws.ncep.ui.NCTEXTUI");
-        wpage.hideView(vpart);
-
-        NcDisplayMngr.setPanningMode();
+    private void closeNCTextEditors() {
+        if (EditorUtil.findEditor(NCMAP_EDITOR_ID) != null) {
+            AbstractNcEditor ncTextMapEditor = (AbstractNcEditor) EditorUtil
+                    .findEditor(NCMAP_EDITOR_ID);
+            ncTextMapEditor.getSite().getPage().closeEditor(ncTextMapEditor, false);
+        }
     }
 
     /**
@@ -245,10 +271,19 @@ public class NctextuiPaletteWindow extends ViewPart
      */
     @Override
     public void createPartControl(Composite parent) {
+        ScrolledComposite sc = new ScrolledComposite(parent,
+                SWT.H_SCROLL | SWT.V_SCROLL);
+        sc.setAlwaysShowScrollBars(true);
+        sc.setExpandHorizontal(true);
+        sc.setExpandVertical(true);
+        sc.setMinSize(MIN_WIDTH, MIN_HEIGHT);
+        Composite comp = new Composite(sc, SWT.NONE);
+        sc.setContent(comp);
+        GridLayout layout = new GridLayout(1, true);
+        comp.setLayout(layout);
 
-        parent.setLayout(new GridLayout(1, false));
         // create textGp group. It contains text and textMode group
-        textGp = new Group(parent, SWT.SHADOW_OUT);
+        textGp = new Group(comp, SWT.SHADOW_OUT);
         textGp.setLayout(new GridLayout());
         textGp.setText("Text Report");
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -259,7 +294,7 @@ public class NctextuiPaletteWindow extends ViewPart
 
         // Create ConfigGp group. It contains dataTypegp, dataProductGp, time
         // cover group and state/stn group
-        Group configGp = new Group(parent, SWT.SHADOW_ETCHED_OUT);
+        Group configGp = new Group(comp, SWT.SHADOW_ETCHED_OUT);
         configGp.setLayout(new GridLayout(3, false));
 
         createGpList(configGp);
@@ -318,8 +353,13 @@ public class NctextuiPaletteWindow extends ViewPart
                          * Widget list was created earlier. This part of code is
                          * listener event handler and is invoked when user picks
                          * gp
+                         * 
+                         * Skipping "TAFs Decoded" (#80399 - Remove "TAFs Decoded"
+                         * from NCTEXT "Observed Data" menu)
                          */
-                        typeWdgList.add(str);
+                        if (!str.contains(TAFS_DECODED_LABEL)) {
+                            typeWdgList.add(str);
+                        }
                     }
 
                     /*
@@ -333,17 +373,17 @@ public class NctextuiPaletteWindow extends ViewPart
                      * Check to make sure there is a type for this group, then
                      * enable or disable the "Hour Covered" buttons.
                      */
-
-                    String productType = null;
                     int productTypeListSize = typeWdgList.getSelectionCount();
 
                     if (productTypeListSize > 0) {
-
-                        productType = typeWdgList.getSelection()[0];
+                        selectedType = typeWdgList.getSelection()[0];
+                        currentProductName = selectedType;
+                        handleProductTypeStnMarking();
+                        setDataTypeProductItem(typeWdgList.getSelectionIndex());
 
                         // Disable the "Hour Covered" radio buttons for TAF text
                         // products
-                        enableOrDisableHoursButtons(productType);
+                        enableOrDisableHoursButtons(selectedType);
 
                     }
                 }
@@ -372,7 +412,11 @@ public class NctextuiPaletteWindow extends ViewPart
         for (String str : tempprodTypeList) {
             // add default product type list to widget list, note that widget
             // list was created earlier.
-            typeWdgList.add(str);
+            // Skipping "TAFs Decoded" (#80399 - Remove "TAFs Decoded" from
+            // NCTEXT "Observed Data" menu)
+            if (!str.contains(TAFS_DECODED_LABEL)) {
+                typeWdgList.add(str);
+            }
         }
 
         typeWdgList.setSelection(dataTypePdItem);
@@ -468,18 +512,31 @@ public class NctextuiPaletteWindow extends ViewPart
                 timeCovered = EReportTimeRange.NONE;
                 if (!btnText.equals("all")) {
                     EReportTimeRange timeRange = EReportTimeRange.NONE;
-                    timeCovered = timeRange
-                            .getTimeRangeFromInt(Integer.valueOf(btnText));
+                    if (btnText.equals(LATEST)) {
+                        timeCovered = EReportTimeRange.LATEST;
+                    } else {
+                        timeCovered = timeRange
+                                .getTimeRangeFromInt(Integer.valueOf(btnText));
+
+                    }
                 }
                 handleStnMarkingRequestByBtn();
             }
 
         };
 
+        latestBtn = new Button(timeGp, SWT.RADIO | SWT.BORDER);
+        latestBtn.setText(LATEST);
+        latestBtn.setEnabled(true);
+        latestBtn.setBounds(timeGp.getBounds().x + btnGapX,
+                timeGp.getBounds().y + labelGap, timeBtnWidth, btnHeight);
+        latestBtn.addListener(SWT.MouseUp, btnListeener);
+
         oneHrBtn = new Button(timeGp, SWT.RADIO | SWT.BORDER);
         oneHrBtn.setText("1");
         oneHrBtn.setEnabled(true);
-        oneHrBtn.setBounds(timeGp.getBounds().x + btnGapX,
+        oneHrBtn.setBounds(
+                btnGapX + latestBtn.getBounds().x + latestBtn.getBounds().width,
                 timeGp.getBounds().y + labelGap, timeBtnWidth, btnHeight);
         oneHrBtn.addListener(SWT.MouseUp, btnListeener);
 
@@ -542,6 +599,7 @@ public class NctextuiPaletteWindow extends ViewPart
                         + fourtyeightHrBtn.getBounds().width,
                 sixHrBtn.getBounds().y + sixHrBtn.getBounds().height + btnGapY,
                 timeBtnWidth, btnHeight);
+        allHrBtn.addListener(SWT.MouseUp, btnListeener);
 
         if (timeCovered == EReportTimeRange.ONE_HOUR)
             oneHrBtn.setSelection(true);
@@ -555,10 +613,11 @@ public class NctextuiPaletteWindow extends ViewPart
             twentyfourHrBtn.setSelection(true);
         else if (timeCovered == EReportTimeRange.FORTYEIGHT_HOURS)
             fourtyeightHrBtn.setSelection(true);
-        else
+        else if (timeCovered == EReportTimeRange.NONE)
             allHrBtn.setSelection(true);
+        else
+            latestBtn.setSelection(true);
 
-        allHrBtn.addListener(SWT.MouseUp, btnListeener);
         createStaStnBtns(composite);
 
     }
@@ -883,7 +942,7 @@ public class NctextuiPaletteWindow extends ViewPart
                 }
 
                 if (nctextuiPaletteWindow.getTimeCovered()
-                        .getTimeRange() == 0) {
+                        .getTimeRange() <= 0) {
 
                     text.append("Report unavailable in database.\n");
 
@@ -908,15 +967,11 @@ public class NctextuiPaletteWindow extends ViewPart
                  */
                 if (nctextuiPaletteWindow.isState()) {
 
-                    if (isTafProduct(currentProductName)) {
-                        textStr = new StringBuilder("");
-                    } else {
-                        textStr = new StringBuilder(
-                                "--State of " + StnPt.getState() + " -- "
-                                        + nctextuiPaletteWindow
-                                                .getCurrentProductName()
-                                        + " Report" + NEW_LINE);
-                    }
+                    textStr = new StringBuilder(
+                            "--State of " + StnPt.getState() + " -- "
+                                    + nctextuiPaletteWindow
+                                            .getCurrentProductName()
+                                    + " Report" + NEW_LINE);
 
                     for (List<Object[]> lstObj : rptLstList) {
 
@@ -929,28 +984,10 @@ public class NctextuiPaletteWindow extends ViewPart
 
                         // Add to the station header text if not TAF
                         if (!isTafProduct(currentProductName)) {
-
-                            textStr.append("-- "
-                                    + nctextuiPaletteWindow
-                                            .getCurrentProductName()
-                                    + ": " + "Station: " + stationId + "  "
-                                    + "--" + NEW_LINE);
-                        }
-
-                        /*
-                         * For "TAFs decoded" (NOT Aviation TAFs) we have a
-                         * special case and we must extract only the text for
-                         * the station of interest from the raw bulletin. We
-                         * don't display WMO headers, or other stations in the
-                         * bulletin.
-                         * 
-                         */
-                        if (currentProductName.equals("TAFs Decoded")) {
-                            textToDisp = getStationText(rawBulletin, stationId);
-                        } else {
                             textToDisp = rawBulletin;
+                        } else {
+                            textToDisp = getStationText(rawBulletin, stationId);
                         }
-
                         textToDisp = removeCR(textToDisp);
                         textStr.append(textToDisp + NEW_LINE);
                     }
@@ -987,22 +1024,12 @@ public class NctextuiPaletteWindow extends ViewPart
                     // get the raw bulletin
                     rawBulletin = (String) (rptLstList.get(0)
                             .get(currentTextIndex))[0];
-
-                    /*
-                     * For "TAFs decoded" we have a special case and must
-                     * extract the text for the station of interest from the raw
-                     * bulletin.
-                     */
-                    if (currentProductName.equals("TAFs Decoded")) {
-
+                    if (isTafProduct(currentProductName)) {
                         textToDisp = getStationText(rawBulletin,
                                 StnPt.getStnid());
-
                     } else {
-                        /* All other NCTEXT products use the entire bulletin */
                         textToDisp = rawBulletin;
                     }
-
                     textToDisp = removeCR(textToDisp);
                     textToDisp += NEW_LINE;
 
@@ -1086,7 +1113,9 @@ public class NctextuiPaletteWindow extends ViewPart
      */
     private void enableOrDisableHoursButtons(String productType) {
 
-        if (productType.equals("TAFs Decoded") || productType.equals("TAFs")) {
+        if (productType.equals(TAFS_LABEL)) {
+
+            tafSelected = true;
 
             // disable hour buttons
 
@@ -1104,26 +1133,23 @@ public class NctextuiPaletteWindow extends ViewPart
             fourtyeightHrBtn.setSelection(false);
             allHrBtn.setEnabled(false);
             allHrBtn.setSelection(false);
+            latestBtn.setEnabled(false);
+            latestBtn.setSelection(false);
 
             // Disable the button group
             timeGp.setEnabled(false);
 
             /*
-             * Set the selected button even though it is disabled, as good
-             * visual feedback (and like legacy)
+             * Aviation TAFs Hour Covered selection always set to "Latest"
              */
-            selectHourCoveredButton(getTimeCovered());
+            selectHourCoveredButton(EReportTimeRange.LATEST);
 
-            // Save the current time range covered
-            nctextuiPaletteWindow.setTempTimeCovered(
-                    (nctextuiPaletteWindow.getTimeCovered()));
 
             /*
-             * Set the time range covered to NONE. This affects the database
-             * query, so it doesn't try to query a time range. It's important we
-             * set this back to what is previously was.
+             * Set the time range covered to TWENTYFOUR_HOURS (instead of NONE)
+             * to improve database query performance. 
              */
-            nctextuiPaletteWindow.setTimeCovered((EReportTimeRange.NONE));
+            nctextuiPaletteWindow.setTimeCovered((EReportTimeRange.TWENTYFOUR_HOURS));
 
         } else {
 
@@ -1139,23 +1165,20 @@ public class NctextuiPaletteWindow extends ViewPart
             twentyfourHrBtn.setEnabled(true);
             fourtyeightHrBtn.setEnabled(true);
             allHrBtn.setEnabled(true);
+            latestBtn.setEnabled(true);
 
             // Enable the button group
             timeGp.setEnabled(true);
 
-            // If disabled previously, then restore the previous time range
-            // covered
-            if (nctextuiPaletteWindow
-                    .getTimeCovered() == EReportTimeRange.NONE) {
-
-                nctextuiPaletteWindow.setTimeCovered(
-                        (nctextuiPaletteWindow.getTempTimeCovered()));
-
-                // Now select the correct radio button
-                selectHourCoveredButton(timeCovered);
+            // Aviation "TAFs" was selected and buttons were disabled.
+            // Make sure timeCovered is set to LATEST when we are (re)enable
+            // the hour buttons for "Non-TAF" product.
+            if (tafSelected) {
+                nctextuiPaletteWindow.setTimeCovered((EReportTimeRange.LATEST));
+                tafSelected = false;
             }
-
         }
+
     }
 
     private void selectHourCoveredButton(EReportTimeRange timeCovered) {
@@ -1172,6 +1195,8 @@ public class NctextuiPaletteWindow extends ViewPart
             twentyfourHrBtn.setSelection(true);
         else if (timeCovered == EReportTimeRange.FORTYEIGHT_HOURS)
             fourtyeightHrBtn.setSelection(true);
+        else if (timeCovered == EReportTimeRange.LATEST)
+            latestBtn.setSelection(true);
         else
             allHrBtn.setSelection(true);
     }
@@ -1280,17 +1305,9 @@ public class NctextuiPaletteWindow extends ViewPart
         return this.dataTypePdItem;
     }
 
-    public EReportTimeRange getTempTimeCovered() {
-        return tempTimeCovered;
-    }
-
-    public void setTempTimeCovered(EReportTimeRange tempTimeCovered) {
-        this.tempTimeCovered = tempTimeCovered;
-    }
-
     public boolean isTafProduct(String product) {
 
-        if (product.equals("TAFs Decoded") || product.equals("TAFs")) {
+        if (product.equals(TAFS_LABEL)) {
             return true;
 
         } else {

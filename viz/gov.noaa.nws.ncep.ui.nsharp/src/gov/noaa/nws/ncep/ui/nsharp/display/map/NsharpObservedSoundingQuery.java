@@ -10,17 +10,22 @@ package gov.noaa.nws.ncep.ui.nsharp.display.map;
  * <pre>
  * SOFTWARE HISTORY
  * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 11/1/2010	362			Chin Chen	Initial coding
- * 12/16/2010   362         Chin Chen   add support of BUFRUA observed sounding and PFC (NAM and GFS) model sounding data
- * 07142015     RM#9173     Chin Chen   use NcSoundingQuery.genericSoundingDataQuery() to query observed sounding data
- * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own thread to avoid gui locked out during load
+ * Date         Ticket#     Engineer    Description
+ * -------      -------      --------   -----------
+ * 11/1/2010    362         Chin Chen   Initial coding
+ * 12/16/2010   362         Chin Chen   add support of BUFRUA observed sounding 
+ *                                      and PFC (NAM and GFS) model sounding data
+ * 07142015     RM#9173     Chin Chen   use NcSoundingQuery.genericSoundingDataQuery()
+ *                                      to query observed sounding data
+ * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own thread 
+ *                                      to avoid gui locked out during load
+ * 07/14/2020   80425       smanoj      Limit the amount of NSHARP D2D time queries by the
+ *                                      number of frames D2D is set to display.
  *
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
+ * 
  */
 
 import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingCube;
@@ -43,11 +48,16 @@ import com.vividsolutions.jts.geom.Coordinate;
 
 public class NsharpObservedSoundingQuery extends Job {
     private List<NsharpStationInfo> stnPtDataLineLst;
+
     private Map<String, List<NcSoundingLayer>> soundingLysLstMap;
+
     private boolean rawData;
 
-    public NsharpObservedSoundingQuery(String name) {
+    private int queryLimit;
+
+    public NsharpObservedSoundingQuery(String name, int queryLimit) {
         super(name);
+        this.queryLimit = queryLimit;
     }
 
     public void getObservedSndData(List<NsharpStationInfo> stnPtDataLineLst,
@@ -100,7 +110,8 @@ public class NsharpObservedSoundingQuery extends Job {
         }
         Long[] refTimeArray = refTimeLst.toArray(new Long[0]);
         long[] refTimelArray = new long[refTimeArray.length];
-        for (int i = 0; i < refTimeArray.length; i++)
+
+        for (int i = 0; i < Math.min(refTimeArray.length, queryLimit) ; i++)
             refTimelArray[i] = refTimeArray[i];
         NcSoundingCube cube = NcSoundingQuery.genericSoundingDataQuery(
                 refTimelArray, null, null, null, latLonAry, null,

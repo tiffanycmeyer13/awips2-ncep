@@ -75,8 +75,9 @@ import com.raytheon.uf.edex.core.EDEXUtil;
  * Dec 10, 2018  56039    tjensen      Use Canonical paths, refactor threading,
  *                                     handle retransmissions
  * Jun 07, 2019  64732    tjensen      Improve exception handling, logging
- * Jan 28, 2020  73722    smanoj       Fix to properly handle multiple 
+ * Jan 28, 2020  73722    smanoj       Fix to properly handle multiple
  *                                     localization levels
+ * Feb 02, 2021  87589    tjensen      Add NSBN cloning capability
  *
  * </pre>
  *
@@ -93,21 +94,35 @@ public class NSBNFileTransfer implements Processor {
 
     private static final String BASE_DIR_PROPERTY = "nsbn.drop.box";
 
-    private static final String DATE_SUBDIR_PROPERTY = "add.date.to.nsbn.dest.sub.dirs";
+    private static final boolean ADD_DATE_SUBDIR = Boolean
+            .getBoolean("add.date.to.nsbn.dest.sub.dirs");
+
+    private static final String CLONE_DIR_PROPERTY = "nsbn.clone.dir";
+
+    private static final String REJECT_DIR = System.getProperty(
+            "nsbn.reject.dir",
+            File.separatorChar + "nsbn_store" + File.separatorChar
+                    + "rejected_files" + File.separatorChar);
 
     private static final long FILE_PROCESS_WARNING_THRESHOLD = Long
-            .getLong("nsbn.file.process.warning");
+            .getLong("nsbn.file.process.warning", 60);
 
     private static final int NSBN_DEFAULT_THREADS = Integer
-            .getInteger("nsbn.default.pool.threads");
+            .getInteger("nsbn.default.pool.threads", 5);
 
     private static final int NSBN_REJECT_THREADS = Integer
-            .getInteger("nsbn.reject.pool.threads");
+            .getInteger("nsbn.reject.pool.threads", 2);
 
-    private static final String NSBN_STORE = "nsbn_store";
+    private static final boolean CLONE_NSBN_DATA = Boolean
+            .getBoolean("nsbn.clone.enabled");
 
-    private static final Path BASE_PATH = Paths
-            .get(System.getProperty(BASE_DIR_PROPERTY));
+    private static final Path BASE_PATH = Paths.get(System
+            .getProperty(BASE_DIR_PROPERTY, File.separatorChar + "nsbn_store"
+                    + File.separatorChar + "drop_box" + File.separatorChar));
+
+    private static final Path CLONE_PATH = Paths.get(System
+            .getProperty(CLONE_DIR_PROPERTY, File.separatorChar + "nsbn_store"
+                    + File.separatorChar + "clone" + File.separatorChar));
 
     private static final PosixFilePermission[] POSIX_FILE_PERMISSIONS = new PosixFilePermission[] {
             PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
@@ -274,6 +289,7 @@ public class NSBNFileTransfer implements Processor {
         final long FILE_MODIFIED_TIME = inFile.lastModified();
         String fileName = inFile.getAbsolutePath();
         statusHandler.info("File found for processing: " + fileName);
+
         boolean fileAccepted = false;
         StringBuilder path = new StringBuilder(fileName.length());
         String destDir = "";
@@ -309,7 +325,7 @@ public class NSBNFileTransfer implements Processor {
                      * If configured to do so, append sub-directories to the
                      * path based on the date
                      */
-                    if (Boolean.getBoolean(DATE_SUBDIR_PROPERTY)) {
+                    if (ADD_DATE_SUBDIR) {
                         path.append(sdfs.get().format(timeAdded))
                                 .append(File.separatorChar);
                     }
@@ -326,6 +342,17 @@ public class NSBNFileTransfer implements Processor {
                         public void run() {
                             File newFile;
                             try {
+                                if (CLONE_NSBN_DATA) {
+                                    StringBuilder clonePath = new StringBuilder();
+                                    clonePath.append(CLONE_PATH.toString())
+                                            .append(File.separatorChar)
+                                            .append(fileParent)
+                                            .append(File.separatorChar);
+                                    statusHandler.info(
+                                            "Cloning file " + fileName + "  to "
+                                                    + clonePath.toString());
+                                    cloneFile(clonePath, inFile);
+                                }
                                 newFile = createAndMoveNewFile(path, inFile);
                                 Map<String, Object> headers = new HashMap<>();
                                 headers.put("enqueueTime",
@@ -392,13 +419,12 @@ public class NSBNFileTransfer implements Processor {
              */
             executor = threadPoolExecutorMap.get(NSBN_REJECTED_EXECUTOR);
             executor.execute(new Runnable() {
+
                 @Override
                 public void run() {
                     StringBuilder rejectPath = new StringBuilder(
                             inFile.getPath().length());
-                    rejectPath.append(File.separator).append(NSBN_STORE)
-                            .append(File.separator).append("rejected_files")
-                            .append(File.separator).append(fileParent)
+                    rejectPath.append(REJECT_DIR).append(fileParent)
                             .append(File.separatorChar)
                             .append(sdfs.get().format(timeAdded))
                             .append(File.separatorChar);
@@ -413,6 +439,7 @@ public class NSBNFileTransfer implements Processor {
                     statusHandler.warn("The file " + inFile.getAbsolutePath()
                             + " was rejected for transfer.");
                 }
+
             });
 
         }
@@ -455,6 +482,33 @@ public class NSBNFileTransfer implements Processor {
         }
 
         statusHandler.info("TransferFile: " + inFile.getAbsolutePath());
+
+        return newFile;
+    }
+
+    private File cloneFile(StringBuilder path, File inFile) throws IOException {
+        File dir = new File(path.toString());
+        String fileName = inFile.getName();
+        File newFile = new File(dir, fileName);
+        Path oldPath = inFile.toPath();
+        Path newPath = newFile.toPath();
+
+        if (!dir.exists()) {
+            Files.createDirectories(dir.toPath(), POSIX_DIRECTORY_ATTRIBUTES);
+        }
+        try {
+            Files.copy(oldPath, newPath);
+        } catch (Exception e) {
+            statusHandler.error("Failed to copy " + inFile.getAbsolutePath()
+                    + " to " + dir.getAbsolutePath(), e);
+        }
+
+        try {
+            IOPermissionsHelper.applyFilePermissions(newPath, POSIX_FILE_SET);
+        } catch (Exception e1) {
+            statusHandler.warn(e1.getMessage(), e1);
+        }
+        statusHandler.info("CloneFile: " + newFile.getAbsolutePath());
 
         return newFile;
     }

@@ -49,7 +49,8 @@ import gov.noaa.nws.ncep.ui.nsharp.display.NsharpEditor;
  * ------------ ---------- ----------- --------------------------
  * 06/28/2012    229       Chin Chen    Initial coding
  * Aug 17, 2018  7081      dgilling     Refactor based on CaveJFACEDialog.
- *
+ * Apr 22, 2020  76580     smanoj       Allow user to interact with NsharpEditor while
+ *                                      the dialog is open.
  * </pre>
  *
  * @author Chin Chen
@@ -63,7 +64,7 @@ public class NsharpPaneConfigDialog extends AbstractNsharpConfigDlg {
 
     public NsharpPaneConfigDialog(Shell parentShell) {
         super(parentShell, "Nsharp Pane Configuration Selection");
-
+        this.setShellStyle(SWT.MODELESS);
         if (configStore != null) {
             paneConfigurationName = configStore.getGraphProperty()
                     .getPaneConfigurationName();

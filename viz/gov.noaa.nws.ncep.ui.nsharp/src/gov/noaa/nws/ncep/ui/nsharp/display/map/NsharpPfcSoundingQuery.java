@@ -10,18 +10,25 @@ package gov.noaa.nws.ncep.ui.nsharp.display.map;
  * <pre>
  * SOFTWARE HISTORY
  * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 11/1/2010	362			Chin Chen	Initial coding
- * 12/16/2010   362         Chin Chen   add support of BUFRUA observed sounding and PFC (NAM and GFS) model sounding data
- * 02/15/2012               Chin Chen   add  PFC sounding query algorithm for better performance getPfcSndDataBySndTmRange()
+ * Date         Ticket#     Engineer    Description
+ * -------      -------     --------    -----------
+ * 11/1/2010    362         Chin Chen   Initial coding
+ * 12/16/2010   362         Chin Chen   add support of BUFRUA observed sounding
+ *                                      and PFC (NAM and GFS) model sounding data
+ * 02/15/2012               Chin Chen   add  PFC sounding query algorithm for better
+ *                                      performance getPfcSndDataBySndTmRange()
  * Aug 05, 2015 4486        rjpeter     Changed Timestamp to Date.
- * 07202015     RM#9173     Chin Chen   use NcSoundingQuery.genericSoundingDataQuery() directly to query pc sounding data
- * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own thread to avoid gui locked out during load
+ * 07202015     RM#9173     Chin Chen   use NcSoundingQuery.genericSoundingDataQuery()
+ *                                      directly to query pc sounding data
+ * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own thread
+ *                                      to avoid gui locked out during load
+ * 07/14/2020   80425       smanoj      Limit the amount of NSHARP D2D time queries by the
+ *                                      number of frames D2D is set to display.
+ *
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
+ * 
  */
 
 import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingCube;
@@ -47,8 +54,11 @@ public class NsharpPfcSoundingQuery extends Job {
 
     private Map<String, List<NcSoundingLayer>> soundingLysLstMap;
 
-    public NsharpPfcSoundingQuery(String name) {
+    private int queryLimit;
+
+    public NsharpPfcSoundingQuery(String name, int queryLimit) {
         super(name);
+        this.queryLimit = queryLimit;
     }
 
     public void getPfcSndDataBySndTmRange(
@@ -71,6 +81,11 @@ public class NsharpPfcSoundingQuery extends Job {
             int i = 0;
             for (NsharpStationInfo.timeLineSpecific tmlinSpc : StnPt
                     .getTimeLineSpList()) {
+
+                if (i >= queryLimit) {
+                    break;
+                }
+
                 Date rangeTime = tmlinSpc.getTimeLine();
                 rangeTimeArray[i] = rangeTime.getTime();
                 i++;

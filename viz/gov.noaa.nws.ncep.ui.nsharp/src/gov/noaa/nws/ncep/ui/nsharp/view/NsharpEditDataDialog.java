@@ -63,7 +63,8 @@ import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpResourceHandler;
  * 08/06/2014    TTR828    Chin Chen    Set "add new level" as default selection
  * Aug 20, 2018  #7081     dgilling     Refactor based on CaveJFACEDialog.
  * Oct 01, 2018  7478      bsteffen     Allow 360 as a valid wind direction.
- *
+ * Apr 22, 2020  76580     smanoj       Allow user to interact with NsharpEditor while
+ *                                      the dialog is open.
  * </pre>
  *
  * @author Chin Chen
@@ -133,7 +134,7 @@ public class NsharpEditDataDialog extends CaveJFACEDialog {
 
     public NsharpEditDataDialog(Shell parentShell) {
         super(parentShell);
-
+        this.setShellStyle(SWT.MODELESS);
         this.colorBlue = new Color(parentShell.getDisplay(), 135, 206, 235);
         this.colorLightGrey = new Color(parentShell.getDisplay(), 211, 211,
                 211);
