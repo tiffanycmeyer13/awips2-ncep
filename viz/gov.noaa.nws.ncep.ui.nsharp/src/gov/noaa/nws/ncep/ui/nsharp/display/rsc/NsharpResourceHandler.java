@@ -1,13 +1,13 @@
 /**
- * 
+ *
  * gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpResourceHandler
- * 
+ *
  * This java class performs the NSHARP NsharpSkewTResource functions.
  * This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * 
+ *
  * Date        Ticket#   Engineer   Description
  * -------     --------  --------   -----------
  * 04/30/2012  229       Chin Chen  Initial coding
@@ -38,9 +38,12 @@
  * 03/17/2020  73571     smanoj     Prevent potential NPE.
  * 02/24/2021  86817     smanoj     Add right-click menu option "Sample" for
  *                                  Turbulence and Icing in NsharpEditor.
+ *04/20/2021   90449     srahimi    Sample data now displays for both T & I
+ *                                  options of NSharpEditor. S removed from default.
+ *
  *
  * </pre>
- * 
+ *
  * @author Chin Chen
  */
 package gov.noaa.nws.ncep.ui.nsharp.display.rsc;
@@ -207,7 +210,7 @@ public class NsharpResourceHandler {
 
     /**
      * <pre>
-     * {@code 
+     * {@code
      * stnTimeSndTable:
      * Store all sounding profiles property for GUI display control
      * 1st index refer to stnId, 2nd index refer to time line and 3rd point to
@@ -678,8 +681,9 @@ public class NsharpResourceHandler {
 
     public void setCurrentGraphMode(int currentGraphMode) {
         this.currentGraphMode = currentGraphMode;
-        if((NsharpEditor.getActiveNsharpEditor()) !=null){
-            (NsharpEditor.getActiveNsharpEditor()).setGraphMode(currentGraphMode);
+        if ((NsharpEditor.getActiveNsharpEditor()) != null) {
+            (NsharpEditor.getActiveNsharpEditor())
+                    .setGraphMode(currentGraphMode);
         }
 
         if (!paneConfigurationName.equals(NsharpConstants.PANE_LITE_D2D_CFG_STR)
@@ -1082,7 +1086,7 @@ public class NsharpResourceHandler {
      * element descriptions that are used in the other delete method, so this
      * can determine element descriptions based off the information available in
      * d2d.
-     * 
+     *
      * @param deletingDisplayInfo
      *            the display infos of the stations to delete
      * @param soundingType
@@ -2349,6 +2353,12 @@ public class NsharpResourceHandler {
                 / dataPageProperty.getNumberPagePerDisplay();
 
         weatherDataStore = new NsharpWeatherDataStore();
+
+        // set selected currentGraphMode to NSharp Editor
+
+        if (editor != null) {
+            editor.setGraphMode(currentGraphMode);
+        }
     }
 
     public void setDisplayDataPageMax(int displayDataPageMax) {
@@ -2770,8 +2780,8 @@ public class NsharpResourceHandler {
     }
 
     public void refreshPane() {
-        for (int i = 0; i < displayArray.length; i += 1) {
-            displayArray[i].refresh();
+        for (IRenderableDisplay element : displayArray) {
+            element.refresh();
         }
     }
 
