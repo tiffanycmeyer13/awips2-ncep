@@ -78,6 +78,7 @@ import com.raytheon.viz.ui.dialogs.CaveJFACEDialog;
  * 11/18/2015   R12829      J. Wu         Link "Contours Parameter" to the one defined on layer.
  * 04/14/2016   R13245      B. Yin        Changed time fields to 24 hour format.
  * 08/23/2016   R11434      J. Wu         All each parameter has its own list of level/fcsthr
+ * 04/23/2021   89949       smanoj        Fix Graph to Grid Issues.
  * 
  * </pre>
  * 
@@ -90,10 +91,10 @@ public class ContoursInfoDlg extends CaveJFACEDialog implements IContours {
     private static final IUFStatusHandler handler = UFStatus
             .getHandler(ContoursInfoDlg.class);
 
-    //Time field width
+    // Time field width
     private static final int TIME_FILED_WIDTH = 50;
 
-    //Time text limit 
+    // Time text limit
     private static final int TIME_TEXT_LIMIT = 4;
 
     // Contours information files
@@ -161,11 +162,6 @@ public class ContoursInfoDlg extends CaveJFACEDialog implements IContours {
 
     }
 
-    /**
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
-     */
     @Override
     protected void configureShell(Shell shell) {
         super.configureShell(shell);
@@ -672,8 +668,8 @@ public class ContoursInfoDlg extends CaveJFACEDialog implements IContours {
 
                                     cntrInfoSrcRoot = PgenStaticDataProvider
                                             .getProvider()
-                                            .getPgenLocalizationRoot()
-                                            + "/" + filepath;
+                                            .getPgenLocalizationRoot() + "/"
+                                            + filepath;
 
                                     if (PgenStaticDataProvider.getProvider()
                                             .getFile(cntrInfoSrcRoot) != null) {
@@ -716,8 +712,7 @@ public class ContoursInfoDlg extends CaveJFACEDialog implements IContours {
 
             } catch (Exception e) {
 
-                handler.handle(
-                        Priority.ERROR,
+                handler.handle(Priority.ERROR,
                         "ContoursInfoDlg: exception reading contourInfo xml in readInfoFilelistTbl .",
                         e);
 
@@ -761,13 +756,12 @@ public class ContoursInfoDlg extends CaveJFACEDialog implements IContours {
                     for (String path : contoursInfoParamFilelist) {
 
                         String cntrInfoParmFileRoot = PgenStaticDataProvider
-                                .getProvider().getPgenLocalizationRoot()
-                                + "/"
+                                .getProvider().getPgenLocalizationRoot() + "/"
                                 + path;
 
                         String cntrInfoParmFile = PgenStaticDataProvider
-                                .getProvider().getFileAbsolutePath(
-                                        cntrInfoParmFileRoot);
+                                .getProvider()
+                                .getFileAbsolutePath(cntrInfoParmFileRoot);
 
                         ContourRoot cntrInfoRoot = cntrInfoManager
                                 .unmarshalFromXmlFile(cntrInfoParmFile);
@@ -789,8 +783,7 @@ public class ContoursInfoDlg extends CaveJFACEDialog implements IContours {
 
                 } catch (Exception e) {
 
-                    handler.handle(
-                            Priority.ERROR,
+                    handler.handle(Priority.ERROR,
                             "ContoursInfoDlg: exception reading contourInfo xml in readInfoTbl .",
                             e);
                 }
@@ -1097,4 +1090,13 @@ public class ContoursInfoDlg extends CaveJFACEDialog implements IContours {
         updateComboText(fcsthrCombo, fcsthrTxt, fcsthrTxt.getText());
 
     }
+
+    /*
+     * return forecast hours for a contour parameter.
+     */
+    public static List<String> getFcstHrs(String parm) {
+        List<String> fcsthrs = getContourFcstHrs(parm);
+        return fcsthrs;
+    }
+
 }
