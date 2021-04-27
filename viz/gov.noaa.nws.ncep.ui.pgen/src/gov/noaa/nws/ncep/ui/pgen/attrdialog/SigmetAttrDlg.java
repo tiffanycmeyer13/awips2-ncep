@@ -81,6 +81,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
 import gov.noaa.nws.ncep.ui.pgen.elements.Product;
 import gov.noaa.nws.ncep.ui.pgen.elements.ProductTime;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.CarSamBackupWmoHeader;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.ISigmet;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
@@ -176,6 +177,9 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       Updated setAttrForDlg() to support the
  *                                       new line width GUI controls.
  * Mar 15, 2021  88217     smanoj        SIGMET CANCEL SAVE Enhancement.
+ * Mar 25, 2021  86828     achalla       Updated getFirs() to check FIR Region buttons instantly
+ *                                       when the area polygon is moved into new region
+ * Apr 09, 2021  90325     smanoj        CARSAM Backup WMO headers update.
  *
  * </pre>
  *
@@ -375,6 +379,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private String editableAttrFir;
 
+    private String editableAttrCarSamBackupMode;
+
     private final Map<String, Control> attrControlMap = new HashMap<>();
 
     private final Map<String, Button[]> attrButtonMap = new HashMap<>();
@@ -408,6 +414,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private Button btnMexico;
 
     private Button btnOther;
+
+    private Button btnCarSamBackUp;
+
+    private boolean isCarSamBackup = false;
 
     // Line Width Controls
     private Button chkBoxLineWidth;
@@ -443,7 +453,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 sb.append(strings[i] + "  ");
             }
         }
-
         txtInfo.setText(sb.toString());
 
     }
@@ -854,12 +863,15 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 if (btnCancel.getSelection()) {
                     if (SigmetAttrDlg.this.drawingLayer.getActiveProduct()
                             .getInputFile() != null) {
-
+                        Sigmet sigmet = (Sigmet) getSigmet();
                         // User can CANCEL a SIGMET if it is active
-                        if (isSigmetActive()) {
-                            Sigmet sigmet = (Sigmet) getSigmet();
+                        // or Open the Cancel Dialog if it is already a cancelled
+                        // Sigmet (ie. Cancelled Sigmet *.xml exist)
+                        if (isSigmetActive() || (sigmet != null && STATUS_CANCEL
+                                .equals(sigmet.getEditableAttrStatus()))) {
                             try {
-                                sigmetCnlDlg = new SigmetCancelDlg(getInstance(getShell()),getShell(),
+                                sigmetCnlDlg = new SigmetCancelDlg(
+                                        getInstance(getShell()), getShell(),
                                         sigmet);
                             } catch (Exception ee) {
                                 statusHandler
@@ -872,10 +884,18 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         } else {
                             statusHandler.warn(
                                     "Unable to cancel SIGMET product: SIGMET is not active.");
+                            //Can't Cancel but update
+                            btnCancel.setSelection(false);
+                            btnNewUpdate.setSelection(true);
+                            setEditableAttrStatus(STATUS_NEW);
                         }
                     } else {
                         statusHandler.warn(
                                 "Unable to cancel SIGMET product: SIGMET is not Saved.");
+                        //Can't Cancel but update
+                        btnCancel.setSelection(false);
+                        btnNewUpdate.setSelection(true);
+                        setEditableAttrStatus(STATUS_NEW);
                     }
                 }
             }
@@ -1796,6 +1816,34 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         }
 
+        // CARSAM Backup Mode
+        Group backupGrp = new Group(firCarSAmericanGrp, SWT.TOP);
+        backupGrp.setLayoutData(
+                new GridData(SWT.RIGHT, SWT.CENTER, true, false, 1, 1));
+        backupGrp.setLayout(new GridLayout(8, false));
+        btnCarSamBackUp = new Button(backupGrp, SWT.CHECK);
+        btnCarSamBackUp.setText("CARSAM Backup Mode");
+        btnCarSamBackUp.setEnabled(false);
+        // CARSAM back mode only editable if Fir Region checked is
+        // one of the CARSAM sites
+        if(editableFirID !=null ){
+            for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
+                    .getCarSamBackupWmoHeader()) {
+                if (editableFirID.contains(carsamWmo.getFirID())) {
+                    btnCarSamBackUp.setEnabled(true);
+                    break;
+                }
+            }
+        }
+        btnCarSamBackUp.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                Button btn = (Button) event.getSource();
+                isCarSamBackup = btn.getSelection();
+                SigmetAttrDlg.this.setEditableAttrFcstAvail(
+                        Boolean.toString(btn.getSelection()));
+            }
+        });
     }
 
     public String getFirs() {
@@ -1836,9 +1884,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             if (SigmetAttrDlg.AREA.equals(lineType)) {
 
-                Coordinate[] coorsP = new Coordinate[coors.length + 1];
-                coorsP = Arrays.copyOf(coors, coorsP.length);
-                coorsP[coorsP.length - 1] = coors[0];
+                // get the latest coordinate of the area polygon
+                Coordinate[] coorsNew = ((Sigmet) sigmet).getLinePoints();
+                Coordinate[] coorsP = new Coordinate[coorsNew.length + 1];
+
+                coorsP = Arrays.copyOf(coorsNew, coorsP.length);
+                coorsP[coorsP.length - 1] = coorsNew[0];
 
                 Polygon areaP = SigmetInfo.getPolygon(coorsP, mapDescriptor);
                 fir.append(getFirString(areaP));
@@ -2009,8 +2060,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         fcstCenterText.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                SigmetAttrDlg.this
-                        .setEditableAttrFcstCntr((fcstCenterText.getText()).trim());
+                SigmetAttrDlg.this.setEditableAttrFcstCntr(
+                        (fcstCenterText.getText()).trim());
             }
         });
 
@@ -3213,7 +3264,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelInfo1(String editableAttrLevelInfo1) {
         this.editableAttrLevelInfo1 = editableAttrLevelInfo1;
-        ((Sigmet) this.getSigmet()).setEditableAttrLevelInfo1(editableAttrLevelInfo1);
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrLevelInfo1(editableAttrLevelInfo1);
     }
 
     public String getEditableAttrLevelInfo2() {
@@ -3222,7 +3274,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelInfo2(String editableAttrLevelInfo2) {
         this.editableAttrLevelInfo2 = editableAttrLevelInfo2;
-        ((Sigmet) this.getSigmet()).setEditableAttrLevelInfo2(editableAttrLevelInfo2);
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrLevelInfo2(editableAttrLevelInfo2);
     }
 
     public String getEditableAttrLevelText1() {
@@ -3231,7 +3284,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelText1(String editableAttrLevelText1) {
         this.editableAttrLevelText1 = editableAttrLevelText1;
-        ((Sigmet) this.getSigmet()).setEditableAttrLevelText1(editableAttrLevelText1);
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrLevelText1(editableAttrLevelText1);
     }
 
     public String getEditableAttrLevelText2() {
@@ -3240,7 +3294,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevelText2(String editableAttrLevelText2) {
         this.editableAttrLevelText2 = editableAttrLevelText2;
-        ((Sigmet) this.getSigmet()).setEditableAttrLevelText2(editableAttrLevelText2);
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrLevelText2(editableAttrLevelText2);
     }
 
     public String getEditableAttrFromLine() {
@@ -3268,6 +3323,21 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     public void setEditableAttrFir(String editableAttrFir) {
         this.editableAttrFir = editableAttrFir;
         ((Sigmet) this.getSigmet()).setEditableAttrFir(editableAttrFir);
+    }
+
+    public String getEditableAttrCarSamBackupMode() {
+        return editableAttrCarSamBackupMode;
+    }
+
+    public void setEditableAttrCarSamBackupMode(
+            String editableAttrCarSamBackupMode) {
+        this.editableAttrCarSamBackupMode = editableAttrCarSamBackupMode;
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrCarSamBackupMode(editableAttrCarSamBackupMode);
+    }
+
+    public boolean isCarSamBackupMode() {
+        return isCarSamBackup;
     }
 
     private void setControl(Control cont, String prop) {
@@ -3401,8 +3471,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         SigmetAttrDlgSaveMsgDlg(Shell parShell) {
             super(parShell);
-            if (STATUS_CANCEL.equals(SigmetAttrDlg.this.getEditableAttrStatus())
-                    && SigmetAttrDlg.this.isSigmetActive()) {
+            if (STATUS_CANCEL
+                    .equals(SigmetAttrDlg.this.getEditableAttrStatus())) {
                 cnlSigmet = true;
             }
         }
@@ -3540,6 +3610,19 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         private String getFileContent() {
             StringBuilder sb = new StringBuilder();
 
+            // Check Fir to see it belong to CAR/SAM
+            boolean isCarSamFir = false;
+            if (SigmetAttrDlg.this.getFirs() != null) {
+                for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
+                        .getCarSamBackupWmoHeader()) {
+                    if ((SigmetAttrDlg.this.getFirs())
+                            .contains(carsamWmo.getFirID())) {
+                        isCarSamFir = true;
+                        break;
+                    }
+                }
+            }
+
             // C code: @4146, @5377
             if (SigmetInfo.getAFOSflg()) {
                 sb.append("ZCZC ");
@@ -3551,12 +3634,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 sb.append("\n").append("NNNN");
                 sb.append("\n");
             } else {
-                sb.append(getWmo());
-                sb.append("\n").append(getAfospil());
+                if (isCarSamFir && (SigmetAttrDlg.this.isCarSamBackup)) {
+                    // CARSAM Fir and it is in backup mode; WMO header but NO AWIPS PILL
+                    sb.append(getWmoForCarSamBackup());
+                } else {
+                    // Not CARSAM Backup Mode; Both WMO header and AWIPS PILL
+                    sb.append(getWmo());
+                    sb.append("\n").append(getAfospil());
+                }
                 sb.append("\n").append(getFirstLine());
                 sb.append("\n").append(getSecondLine());
             }
-
             return sb.toString();
         }
 
@@ -3573,6 +3661,30 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
 
             sb.append(".sigintl");
+            return sb.toString();
+        }
+
+        private String getWmoForCarSamBackup() {
+            StringBuilder sb = new StringBuilder();
+            String firStr = SigmetAttrDlg.this.getFirs();
+            String phen = SigmetAttrDlg.this.getEditableAttrPhenom();
+
+            for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
+                    .getCarSamBackupWmoHeader()) {
+                if (firStr.contains(carsamWmo.getFirID())) {
+                    if (PgenConstant.TYPE_VOLCANIC_ASH.equals(phen)) {
+                        sb.append(carsamWmo.getWmoHeaderForVA());
+                    } else if (PgenConstant.TYPE_TROPICAL_CYCLONE
+                            .equals(phen)) {
+                        sb.append(carsamWmo.getWmoHeaderForTC());
+                    } else {
+                        sb.append(carsamWmo.getWmoHeaderForOther());
+                    }
+                    sb.append(" ").append(carsamWmo.getWmoID());
+                    sb.append(" ").append(getTimeStringPlusHourInHMS(0));
+                }
+            }
+
             return sb.toString();
         }
 
@@ -3979,7 +4091,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             // in C: if( ! tc )nmap_pgsigw.c@4062
             if (!isTropCyc) {
-                //------ TOPS 
+                // ------ TOPS
                 sb.append(getLevelInfo(tops).toString());
 
                 // ------ movement
@@ -4357,6 +4469,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         }
         if (txtInfo != null && !txtInfo.isDisposed() && s != null) {
+            // Update FIR region buttons
+            this.updateFirBtn();
             this.resetText(s, txtInfo);
         }
         // TTR 974 - "editableAttrFromLine" needs update as well.
@@ -4989,9 +5103,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
         }
-        // update Fir-Region buttons
-        updateFirBtn();
-
         if (txtInfo != null && !txtInfo.isDisposed()) {
             this.resetText(s.toString(), txtInfo);
         }
@@ -5014,8 +5125,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
 
         editableFirID = "";
-        String newEditableFirID = getFirs();
-
+        String newEditableFirID = SigmetAttrDlg.this.getFirs();
+        /*
+         * need to update the current products Fir-Id otherwise xml file
+         * output's editableAttrFir will hold the initial value
+         */
+        setEditableAttrFir(newEditableFirID);
         Button[] firButt = null;
 
         for (String str : loopFIR) {

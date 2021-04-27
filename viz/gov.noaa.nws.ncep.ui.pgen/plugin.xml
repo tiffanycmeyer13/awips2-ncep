@@ -3454,7 +3454,6 @@
     </extension>
 
    <extension
-   
          point="com.raytheon.uf.viz.core.classContext">
          <classContext
             class="gov.noaa.nws.ncep.ui.pgen.palette.PgenPaletteWindow">
