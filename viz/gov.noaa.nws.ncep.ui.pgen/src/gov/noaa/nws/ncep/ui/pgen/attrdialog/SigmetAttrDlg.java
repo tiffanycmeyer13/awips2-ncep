@@ -180,6 +180,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Mar 25, 2021  86828     achalla       Updated getFirs() to check FIR Region buttons instantly
  *                                       when the area polygon is moved into new region
  * Apr 09, 2021  90325     smanoj        CARSAM Backup WMO headers update.
+ * Apr 28, 2021  90556     smanoj        Drop unneeded trailing attributes from
+ *                                       final Cancellation SIGMET Save.
  *
  * </pre>
  *
@@ -865,8 +867,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                             .getInputFile() != null) {
                         Sigmet sigmet = (Sigmet) getSigmet();
                         // User can CANCEL a SIGMET if it is active
-                        // or Open the Cancel Dialog if it is already a cancelled
-                        // Sigmet (ie. Cancelled Sigmet *.xml exist)
+                        // or Open the Cancel Dialog if it is already a
+                        // cancelled Sigmet (ie. Cancelled Sigmet *.xml exist
                         if (isSigmetActive() || (sigmet != null && STATUS_CANCEL
                                 .equals(sigmet.getEditableAttrStatus()))) {
                             try {
@@ -884,7 +886,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         } else {
                             statusHandler.warn(
                                     "Unable to cancel SIGMET product: SIGMET is not active.");
-                            //Can't Cancel but update
+                            // Can't Cancel but update
                             btnCancel.setSelection(false);
                             btnNewUpdate.setSelection(true);
                             setEditableAttrStatus(STATUS_NEW);
@@ -892,7 +894,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     } else {
                         statusHandler.warn(
                                 "Unable to cancel SIGMET product: SIGMET is not Saved.");
-                        //Can't Cancel but update
+                        // Can't Cancel but update
                         btnCancel.setSelection(false);
                         btnNewUpdate.setSelection(true);
                         setEditableAttrStatus(STATUS_NEW);
@@ -1826,7 +1828,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         btnCarSamBackUp.setEnabled(false);
         // CARSAM back mode only editable if Fir Region checked is
         // one of the CARSAM sites
-        if(editableFirID !=null ){
+        if (editableFirID != null) {
             for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
                     .getCarSamBackupWmoHeader()) {
                 if (editableFirID.contains(carsamWmo.getFirID())) {
@@ -3635,7 +3637,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 sb.append("\n");
             } else {
                 if (isCarSamFir && (SigmetAttrDlg.this.isCarSamBackup)) {
-                    // CARSAM Fir and it is in backup mode; WMO header but NO AWIPS PILL
+                    // CARSAM Fir and it is in backup mode; WMO header but NO
+                    // AWIPS PILL
                     sb.append(getWmoForCarSamBackup());
                 } else {
                     // Not CARSAM Backup Mode; Both WMO header and AWIPS PILL
@@ -3814,7 +3817,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         .append(SigmetAttrDlg.this.getEditableAttrStartTime());
                 sb.append("/")
                         .append(SigmetAttrDlg.this.getEditableAttrEndTime());
-                sb.append(" ");
+                sb.append(".");
+                return sb.toString();
             }
 
             firCalledForSecondLine = false;
