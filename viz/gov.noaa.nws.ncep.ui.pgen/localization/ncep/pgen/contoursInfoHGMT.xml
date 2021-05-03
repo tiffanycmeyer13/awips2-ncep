@@ -6,9 +6,9 @@
 
    08/01/2015   8213        P.           CAVE>PGEN 
                             Chowdhuri    Refinements to contoursInfo.xml
+   04/23/2021   89949       smanoj       Adding more forecast hours.
   
    @author pchowdhuri
-   @version 1
  
   This xml file is used to provide HGMT Contours attributes information, including
   the parameter name, level, forecast hour, and cint.
@@ -64,6 +64,15 @@
   	 <label text="f060"/>
   	 <label text="f066"/>
   	 <label text="f072"/>
+  	 <label text="f084"/>
+  	 <label text="f096"/>
+  	 <label text="f108"/>
+  	 <label text="f120"/>
+  	 <label text="f132"/>
+  	 <label text="f144"/>
+  	 <label text="f156"/>
+  	 <label text="f168"/>
+  	 <label text="f180"/>
      </fhrs>
      
      <!-- 

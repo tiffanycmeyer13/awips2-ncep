@@ -62,5 +62,6 @@
 !
 !NAME		RESTORE_FILENAME
 !
+MEDR		medrpress.tbl
 QPF_CED		qpf.tbl
 QPF_STR		str.tbl

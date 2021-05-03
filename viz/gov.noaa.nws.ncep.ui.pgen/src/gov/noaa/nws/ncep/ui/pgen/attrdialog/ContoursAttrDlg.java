@@ -163,6 +163,8 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSelectHandler;
  * 02/10/2020   74136       smanoj      Fixed NullPointerException when drawingLayer is null
  * 10/30/2020   84101       smanoj      Add "Snap Labels to ContourLine" option on the
  *                                      Contours Attributes dialog.
+ * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
+ * 
  * </pre>
  *
  * @author J. Wu
@@ -217,7 +219,8 @@ public class ContoursAttrDlg extends AttrDlg
 
     private final int MAX_QUICK_SYMBOLS = 15;
 
-    private final int ROUND_UP_ONE_HOUR = 15; // Threshold to advance 1 hour
+    // Threshold to advance 1 hour
+    private final int ROUND_UP_ONE_HOUR = 15;
 
     private int numOfContrSymbols = 2;
 
@@ -4095,7 +4098,7 @@ public class ContoursAttrDlg extends AttrDlg
 
     @Override
     public int open() {
-        if (drawingLayer == null ) {
+        if (drawingLayer == null) {
             return CANCEL;
         }
 
@@ -4743,6 +4746,16 @@ public class ContoursAttrDlg extends AttrDlg
      */
     public void setShiftDownInContourDialog(boolean shiftDown) {
         this.shiftDownInContourDialog = shiftDown;
+    }
+
+    /**
+     * Get the Forecast Hours from ContoursInfoDlg.
+     * 
+     * @return fcstHrs
+     */
+    public List<String> getContourFcstHrs(String param) {
+        List<String> fcstHrs = ContoursInfoDlg.getFcstHrs(param);
+        return fcstHrs;
     }
 
 }
