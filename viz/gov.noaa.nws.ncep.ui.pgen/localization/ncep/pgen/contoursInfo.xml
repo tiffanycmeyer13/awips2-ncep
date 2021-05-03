@@ -6,9 +6,9 @@
    
    08/01/2015   8213        P.          #R8213 CAVE>PGEN 
                             Chowdhuri   Refinements to contoursInfo.xml  
+   04/23/2021   89949       smanoj      Adding more parameter specific files.
    
    @author pchowdhuri
-   @version 1
  
   This xml file is used to provide parameter specific Contours attributes files, with 
   information including the parameter name, level, forecast hour, and cint.
@@ -25,6 +25,8 @@
 <root>
 	<contoursInfo name="cfiles" parm="path">
 		<cfiles>
+			<path>contoursInfoHGHT.xml</path>
+			<path>contoursInfoPMSL.xml</path>
 			<path>contoursInfoHGMT.xml</path>
 			<path>contoursInfoPRES.xml</path>
 			<path>contoursInfoTEMP.xml</path>
