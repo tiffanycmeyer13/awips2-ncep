@@ -182,7 +182,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Apr 09, 2021  90325     smanoj        CARSAM Backup WMO headers update.
  * Apr 28, 2021  90556     smanoj        Drop unneeded trailing attributes from
  *                                       final Cancellation SIGMET Save.
- *
+ * May 10, 2021  91845     smanoj        Save CARSAM Backupmode flag to the SIGMET xml.
+ * 
  * </pre>
  *
  * @author gzhang
@@ -1833,6 +1834,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     .getCarSamBackupWmoHeader()) {
                 if (editableFirID.contains(carsamWmo.getFirID())) {
                     btnCarSamBackUp.setEnabled(true);
+                    if ((SigmetAttrDlg.this
+                            .getEditableAttrCarSamBackupMode() != null)
+                            && (SigmetAttrDlg.this
+                                    .getEditableAttrCarSamBackupMode()
+                                    .contains("true"))) {
+                        btnCarSamBackUp.setSelection(true);
+                    } else {
+                        SigmetAttrDlg.this
+                                .setEditableAttrCarSamBackupMode("false");
+                    }
+
                     break;
                 }
             }
@@ -1842,7 +1854,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             public void widgetSelected(SelectionEvent event) {
                 Button btn = (Button) event.getSource();
                 isCarSamBackup = btn.getSelection();
-                SigmetAttrDlg.this.setEditableAttrFcstAvail(
+                SigmetAttrDlg.this.setEditableAttrCarSamBackupMode(
                         Boolean.toString(btn.getSelection()));
             }
         });
@@ -3683,11 +3695,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     } else {
                         sb.append(carsamWmo.getWmoHeaderForOther());
                     }
-                    sb.append(" ").append(carsamWmo.getWmoID());
-                    sb.append(" ").append(getTimeStringPlusHourInHMS(0));
+                    sb.append(" ").append(carsamWmo.getWmoID()).append(" ");
                 }
             }
-
+            sb.append(getTimeStringPlusHourInHMS(0));
             return sb.toString();
         }
 
@@ -5195,6 +5206,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         this.setEditableAttrLevelText1(sig.getEditableAttrLevelText1());
         this.setEditableAttrLevelText2(sig.getEditableAttrLevelText2());
         this.setEditableAttrFir(sig.getEditableAttrFir());
+        this.setEditableAttrCarSamBackupMode(sig.getEditableAttrCarSamBackupMode());
 
         String lineType = this.getType();
         if (lineType != null && lineType.contains(SigmetInfo.LINE_SEPERATER)) {

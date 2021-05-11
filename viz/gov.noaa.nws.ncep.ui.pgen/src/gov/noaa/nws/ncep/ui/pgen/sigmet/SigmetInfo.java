@@ -84,7 +84,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
  * Mar 15, 2021 86159       srussell    Added isValidLatLonArray method and 1
  *                                      call to it.
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
- * 
+ *
  * </pre>
  *
  * @author gzhang
@@ -179,7 +179,7 @@ public class SigmetInfo {
 
             availableOffices = readAvailableOfficesList();
 
-            awcBackupCarSamWmoHeaders= readAWCBackupCarSamWmoHeaders();
+            awcBackupCarSamWmoHeaders = readAWCBackupCarSamWmoHeaders();
 
             String[] officeNames = availableOffices.getOffices().stream()
                     .map(IssueOffice::getName).toArray(String[]::new);
@@ -245,7 +245,8 @@ public class SigmetInfo {
 
             } catch (SerializationException | LocalizationException
                     | IOException e) {
-                statusHandler.error("Unable to read AWCBackupCarSamWmoHeaders", e);
+                statusHandler.error("Unable to read AWCBackupCarSamWmoHeaders",
+                        e);
             }
         }
         return new AWCBackupCarSamWmoHeaders();
