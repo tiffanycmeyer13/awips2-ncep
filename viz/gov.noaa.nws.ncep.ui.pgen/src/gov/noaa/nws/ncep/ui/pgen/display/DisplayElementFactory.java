@@ -174,6 +174,9 @@ import gov.noaa.nws.ncep.viz.common.SnapUtil;
  *                                      account for update of units in
  *                                      SigmetInfo.getIsolated()
  *
+ *5/03/2021    90330        srahimi     Return Warning for Invalid Coordinates found for Isolated
+ *                                      Sigmet Point & Return Valid Coordinate
+ *
  * </pre>
  *
  * @author sgilbert
@@ -890,8 +893,8 @@ public class DisplayElementFactory {
         Coordinate[] points = watchBox.getLinePoints();
         ArrayList<Coordinate> ptsList = new ArrayList<>();
 
-        for (int ii = 0; ii < points.length; ii++) {
-            ptsList.add(points[ii]);
+        for (Coordinate point : points) {
+            ptsList.add(point);
         }
 
         // get displayElements for the watch box.
@@ -5155,19 +5158,29 @@ public class DisplayElementFactory {
 
             slist.addAll(createDisplayElements(centerSign, paintProps));
 
+            Coordinate vertex = locs[locs.length - 1];
+
+            if (Double.isNaN(vertex.x) || Double.isNaN(vertex.y)) {
+                handler.warn(
+                        "Invalid Coordinates Found for Isolated Sigmet Point");
+                return slist;
+            }
+
             try {
-                arcpts.addLineSegment(
-                        SigmetInfo.getIsolated(locs[locs.length - 1],
-                                widthInNautical, (IMapDescriptor) iDescriptor));
+
+                arcpts.addLineSegment(SigmetInfo.getIsolated(vertex,
+                        widthInNautical, (IMapDescriptor) iDescriptor));
             } catch (Throwable e) {
-                handler.error("Isolated: " + e.getCause());
-            } // OutOfMemoryError
+                handler.error("ERROR getting isolated SIGMET", e);
+            }
 
             arcpts.compile();
             slist.add(new LineDisplayElement(arcpts, dspClr[0],
+
                     sigmet.getLineWidth()));
 
             addTopText(sigmet, locs, dspClr, paintProps, slist);
+
             return slist;
         } else if (lineType.contains("Text")) {
 
@@ -6426,8 +6439,8 @@ public class DisplayElementFactory {
              */
             if (vect.getSpeed() < 0.5) {
                 double[][] pts = calculateCircle(start, sfactor * 0.1);
-                for (int ii = 0; ii < pts.length; ii++) {
-                    allpts.add(new Coordinate(pts[ii][0], pts[ii][1]));
+                for (double[] pt : pts) {
+                    allpts.add(new Coordinate(pt[0], pt[1]));
                 }
                 break;
             }

@@ -81,6 +81,7 @@ import com.raytheon.viz.ui.editor.AbstractEditor;
  * 08/14        ?           J. Wu       build gdoutf & cycle from contours' time.
  * 10/14        R5712       J. Wu       Fixed index-out-of-bound issue for productNames.
  * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
+ * 05/05/2021   91162       smanoj      ActivityType used for default configuration.
  * 
  * </pre>
  * 
@@ -152,6 +153,10 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
     private String currentFcstHr = "f000";
 
+    private String currentActivityType = "Default";
+
+    private String defaultProdName = null;
+
     /**
      * Constructor
      * 
@@ -177,8 +182,9 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
             for (String str : productNames) {
 
-                String value = productMaps.get(str);
-                String fileName = value.substring(value.lastIndexOf('/') + 1);
+                String[] prodValues = (productMaps.get(str)).split("/");
+                String fileName = prodValues[0]
+                        .substring(prodValues[0].lastIndexOf('/') + 1);
 
                 HashMap<String, String> map = GraphToGrid
                         .loadParameters(PgenStaticDataProvider.getProvider()
@@ -192,6 +198,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
                 }
 
             }
+            defaultProdName = getDefaultProdName();
 
             // Reset the "productNames" to keys in productMaps;
             productNames.clear();
@@ -278,7 +285,12 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             }
         });
 
-        prdCombo.select(0);
+        defaultProdName = getDefaultProdName();
+        if (defaultProdName != null) {
+            prdCombo.select(prdCombo.indexOf(defaultProdName));
+        } else {
+            prdCombo.select(0);
+        }
         currentPrd = prdCombo.getText();
 
         displayOption = new Button(prdComp, SWT.CHECK);
@@ -1199,4 +1211,26 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
     }
 
+    /**
+     * Updates defaultProdName according to the current activity type.
+     */
+    private String getDefaultProdName() {
+        defaultProdName = null;
+
+        PgenResource drawingLayer = PgenSession.getInstance().getPgenResource();
+        if (drawingLayer != null) {
+            currentActivityType = drawingLayer.getActiveProduct().getType();
+        }
+
+        for (String str : productNames) {
+            String[] prodValues = (productMaps.get(str)).split("/");
+            if (prodValues.length > 1) {
+                if (currentActivityType.equalsIgnoreCase(prodValues[1])) {
+                    defaultProdName = str;
+                }
+            }
+        }
+
+        return defaultProdName;
+    }
 }
