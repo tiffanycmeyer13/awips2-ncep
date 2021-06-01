@@ -1,9 +1,9 @@
 /*
- * gov.noaa.nws.ncep.ui.pgen.file.ProductConverter
- * 
+F * gov.noaa.nws.ncep.ui.pgen.file.ProductConverter
+ *
  * Date created: 17 February 2009
  *
- * This code has been developed by the SIB for use in the AWIPS2 system.
+ * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.standalone.util;
 
@@ -24,14 +24,14 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.Polygon;
 
 import gov.noaa.nws.ncep.common.staticdata.SPCCounty;
 import gov.noaa.nws.ncep.edex.common.stationTables.IStationField.StationField;
 import gov.noaa.nws.ncep.edex.common.stationTables.Station;
 import gov.noaa.nws.ncep.edex.common.stationTables.StationTable;
+import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.contours.ContourCircle;
 import gov.noaa.nws.ncep.ui.pgen.contours.ContourLine;
 import gov.noaa.nws.ncep.ui.pgen.contours.ContourMinmax;
@@ -63,6 +63,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.elements.MidCloudText;
 import gov.noaa.nws.ncep.ui.pgen.elements.Outlook;
 import gov.noaa.nws.ncep.ui.pgen.elements.Product;
+import gov.noaa.nws.ncep.ui.pgen.elements.Spenes;
 import gov.noaa.nws.ncep.ui.pgen.elements.Symbol;
 import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 import gov.noaa.nws.ncep.ui.pgen.elements.Track;
@@ -78,8 +79,6 @@ import gov.noaa.nws.ncep.ui.pgen.file.ColorType;
 import gov.noaa.nws.ncep.ui.pgen.file.Point;
 import gov.noaa.nws.ncep.ui.pgen.file.Products;
 import gov.noaa.nws.ncep.ui.pgen.file.TrackConverter;
-import gov.noaa.nws.ncep.ui.pgen.file.WatchBox.Hole;
-import gov.noaa.nws.ncep.ui.pgen.file.WatchBox.Outline;
 import gov.noaa.nws.ncep.ui.pgen.file.WatchBox.Status;
 import gov.noaa.nws.ncep.ui.pgen.gfa.Gfa;
 import gov.noaa.nws.ncep.ui.pgen.gfa.GfaRules;
@@ -89,47 +88,80 @@ import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.VaaInfo;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.Volcano;
 import gov.noaa.nws.ncep.ui.pgen.tca.TCAElement;
-import gov.noaa.nws.ncep.viz.common.SnapUtil;
+import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
 
 /**
  * Define a ProductConverter Class - some methods to convert the products
  * between XML format and the actual in-memory PGEN products.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 02/17/09		#63			J. Wu   	Initial Creation.
- * 01/11        #137        Q.Zhou      Move it from pgen.file to here (made some export)
- * 										Made standalone not depend on edex and isconverter condition.
- *             							Modified convertXML2WatchBox(), convertXML2Volcano()  
- * 
- * 11/1/2011   137          Q.Zhou      Copied from pgen.file again due to pgen refactor (Removed pgen.original).
- * 										Redo above modifications. Modified on new Text definition.
- * 02/12       597          S. Gurung   Moved snap functionalities to SnapUtil from SigmetInfo. 
- * 03/12       #676         Q. Zhou     Added Issue Office to IntlSigmet.  
- * 03/12       #599         Q. Zhou     Modified watchbox for anchor & county columns
- * 11/13       1065-TTR850  J. Wu       Added kink lines.
- * 05/14       TTR995       J. Wu       Set text's "auto" flag to false.
- * 02/15       R6158        J. Wu       Preserve ithw/iwidth for Text/AvnText/MidCloudText.
- * 03/15       R6872        J. Wu       Add status/forecaster/center in vgf2xml conversion.
- * 02/25/2016  R13544       S. Russell  Refactored convert(file.DrawableElement elem)
- *                                      to reduce its size and increase readability.
- *                                      Updated convertDELine() ( formerly part
- *                                      of the function above) to use a new
- *                                      constructor for Line() to save the
- *                                      flipSide value.
- *                                      Refactored converDEs() into convertListOfDEs()
- *
+ * Date         Ticket#     Engineer    Description
+ * ----------- ------------ ----------- ------------------------------
+ * 02/17/09     #63         J. Wu       Initial Creation.
+ * 04/20/09     #88         J. Wu       Added Text.
+ * 04/30/09     #89         J. Wu       Added Arc.
+ * 05/09        #42         S. Gilbert  Added pgenType and pgenCategory to constructors
+ * 05/09        #111        J. Wu       Added Vector
+ * 06/09        #116        B. Yin      Added DECollection
+ * 07/09        #131        J. Wu       Added more attributes for Layer
+ * 07/09        #104        S. Gilbert  Added AvnText
+ * 08/09        #135        B. Yin      Added Jet
+ * 08/09        #135        B. Yin      Handle relative location for jet text
+ * 08/09        #149        B. Yin      Added PgenType and PgenCategory for DECollections
+ * 09/09        #151        J. Wu       Added  more attributes for Product
+ * 11/09        #167        J. Wu       Added Contours
+ * 10/09        #163        S. Gilbert  Added TCA
+ * 11/09        #160        G. Zhang    Added Sigmet
+ * 01/10        #104        S. Gilbert  Added MidCloudText
+ * 03/10        #159        B. Yin      Added Watch and issued Watch information
+ * 03/10        #159        B. Yin      Added Watch status information
+ * 05/10        #267        B. Yin      Added Outlook
+ * 03/10        #223        M.Laryukhin Added Gfa
+ * 08/10        #137        Q. Zhou     Add a condition for standalone watchbox -- county
+ * 08/10        #215        J. Wu       Added Contours' attributes to Outlook
+ * 09/10                    Q. Zhou     Fix a typo on xmlStatusExpCal
+ * 09/10        #305/306    B. Yin      Added LabeledLine(Cloud and Turbulence)
+ * 11/10        #?          B. Yin      Changed Cloud label from AvnText to MidLevelCloudText
+ * 11/10                    Q.Zhou      Handle null situation for contour time
+ * 11/10                    J. Wu       Added ContourCircle into Contours
+ * 11/10                    Q.Zhou      Added code to get Avntext in convertXML2LabeledLine()
+ * 01/11                    J. Wu       Reworked on Product's attributes.
+ * 04/11        #?          B. Yin      Re-factor IAttribute
+ * 12/11        #?          B. Yin      Changed 'TO' to '-' in LLWS vorText
+ * 02/12        #597        S. Gurung   Moved snap functionalities to SnapUtil from SigmetInfo.
+ * 03/12        #676        Q. Zhou     Added Issue Office field.
+ * 03/12        #610        J. Wu       Restore issue/until times for GFA smears.
+ * 05/12        #808        J. Wu       Remove SnapUtil from converting GFA.
+ * 06/12        #734        J. Zeng     Add converter for spenes
+ * 12/12        #937        J. Wu       Update G_Airmet layers/hazard - "C&V"
+ * 11/13        #1049       B. Yin      Handle outlook type defined in layer.
+ * 12/13        TTR904      B. Yin      Added back the water zone string for Watch county list
+ * 11/13        #1065       J. Wu       Added Kink lines.
+ * 05/14        TTR995      J. Wu       Set Text's 'auto" flag to false.
+ * 09/14        TTR716      J. Wu       Use "-" for GFA Outlook's Vor text.
+ * 02/15        R6158       J. Wu       Preserve ithw/iwidth for Text/AvnText/MidCloudText.
+ * 03/15        R6872       J. Wu       Add status/forecaster/center in vgf2xml conversion.
+ * 08/05        R8879       B. Yin      Check Outlook/Contour by type
+ * 08/15        R8188       J. Lopez    Changed rotation of Hash Mark to match legacy
+ * 07/28/2016   R16077      J. Wu       Allow number of labels to be 0 for contour lines.
  * 04/28/20     77994       ksunil      new fields in Sigmet for Tropical Cyclone.
  * May 22, 2020 78000       ksunil      New Tropical Cyclone UI components for Fcst
+ * Feb 08, 2021 87538       smanoj      Added FCST Lat/Lon for Tropical Cyclone.
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
- * 
+ * May 14, 2021 91961       tjensen     Resync with gov.noaa.nws.ncep.ui.pgen.file.ProductConverter
+ *
+ *
  * </pre>
  *
  * @author J. Wu
  */
+
 public class ProductConverter {
+
+    private static final String HASH = "Hash";
+
+    private static final String BARB = "Barb";
 
     /*
      * Convert a XML file Products object to a list of PGEN in-memory Product
@@ -137,7 +169,7 @@ public class ProductConverter {
      */
     public static List<Product> convert(Products filePrds) {
 
-        List<Product> prd = new ArrayList<Product>();
+        List<Product> prd = new ArrayList<>();
 
         for (gov.noaa.nws.ncep.ui.pgen.file.Product fPrd : filePrds
                 .getProduct()) {
@@ -165,6 +197,7 @@ public class ProductConverter {
             if (fPrd.getStatus() != null) {
                 p.setStatus(fPrd.getStatus());
             }
+
             if (fPrd.isSaveLayers() != null) {
                 p.setSaveLayers(fPrd.isSaveLayers());
             } else {
@@ -196,7 +229,7 @@ public class ProductConverter {
     private static List<Layer> convertFileLayers(
             List<gov.noaa.nws.ncep.ui.pgen.file.Layer> flayers) {
 
-        List<Layer> layers = new ArrayList<Layer>();
+        List<Layer> layers = new ArrayList<>();
 
         for (gov.noaa.nws.ncep.ui.pgen.file.Layer fLayer : flayers) {
 
@@ -222,6 +255,8 @@ public class ProductConverter {
 
             lyr.setDrawables(convert(fLayer.getDrawableElement()));
 
+            lyr.setMetaInfo(fLayer.getMetaInfo());
+
             layers.add(lyr);
         }
 
@@ -229,95 +264,97 @@ public class ProductConverter {
     }
 
     /*
-     * Convert an XML file DrawableElement object to a list of PGEN in-memory
+     * Convert a XML file DrawableElement object to a list of PGEN in-memory
      * DrawableElement objects
      */
     private static List<AbstractDrawableComponent> convert(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem) {
 
-        List<AbstractDrawableComponent> des = new ArrayList<AbstractDrawableComponent>();
+        List<AbstractDrawableComponent> des = new ArrayList<>();
 
-        // Its a Line
         if (!elem.getLine().isEmpty()) {
             convertDELine(elem, des);
         }
-        // Its a Symbol
-        else if (!elem.getSymbol().isEmpty()) {
+
+        if (!elem.getSymbol().isEmpty()) {
             convertDESymbol(elem, des);
         }
-        // Its Text
-        else if (!elem.getText().isEmpty()) {
+
+        if (!elem.getText().isEmpty()) {
             convertDEText(elem, des);
         }
-        // Its AVN Text
-        else if (!elem.getAvnText().isEmpty()) {
-            convertDEAVNText(elem, des);
+
+        if (!elem.getAvnText().isEmpty()) {
+            convertDEAvnText(elem, des);
         }
-        // Its MidCloud Text
-        else if (!elem.getMidCloudText().isEmpty()) {
-            convertDECloudText(elem, des);
+
+        if (!elem.getMidCloudText().isEmpty()) {
+            convertDEMidCloudText(elem, des);
         }
-        // Its an Arc
-        else if (!elem.getArc().isEmpty()) {
+
+        if (!elem.getArc().isEmpty()) {
             convertDEArc(elem, des);
         }
 
-        // The types above can be used with a TrackCoverter for tracking storms
-        // so add them now. Not necessary for the types following this
-        // function call
         des.addAll(TrackConverter
                 .getTrackElementListByTrackBeanList(elem.getTrack()));
 
-        // Its a Vector
         if (!elem.getVector().isEmpty()) {
             convertDEVector(elem, des);
         }
-        // Its a TCA
-        else if (!elem.getTCA().isEmpty()) {
-            convertDE_TCA(elem, des);
+
+        if (!elem.getTCA().isEmpty()) {
+            convertDETca(elem, des);
         }
-        // Its a DECollection
-        else if (!elem.getDECollection().isEmpty()) {
-            convertDE_DECollection(elem, des);
+
+        if (!elem.getSpenes().isEmpty()) {
+            for (gov.noaa.nws.ncep.ui.pgen.file.Spenes fspenes : elem
+                    .getSpenes()) {
+                des.add(convertXML2Spenes(fspenes));
+            }
         }
-        // Its a Watch Box
-        else if (!elem.getWatchBox().isEmpty()) {
+
+        if (!elem.getDECollection().isEmpty()) {
+            convertDECollection(elem, des);
+        }
+
+        if (!elem.getWatchBox().isEmpty()) {
             for (gov.noaa.nws.ncep.ui.pgen.file.WatchBox fwb : elem
                     .getWatchBox()) {
                 des.add(convertXML2WatchBox(fwb));
             }
         }
-        // Conturs
-        else if (!elem.getContours().isEmpty()) {
+
+        if (!elem.getContours().isEmpty()) {
             for (gov.noaa.nws.ncep.ui.pgen.file.Contours fdec : elem
                     .getContours()) {
                 des.add(convertXML2Contours(fdec));
             }
         }
-        // Its an Outlook
-        else if (!elem.getOutlook().isEmpty()) {
+
+        if (!elem.getOutlook().isEmpty()) {
             for (gov.noaa.nws.ncep.ui.pgen.file.Outlook fotlk : elem
                     .getOutlook()) {
                 des.add(convertXML2Outlook(fotlk));
             }
         }
-        // Its a Sigment
-        else if (!elem.getSigmet().isEmpty()) {
-            convertDESigment(elem, des);
+
+        if (!elem.getSigmet().isEmpty()) {
+            convertDESigmet(elem, des);
         }
-        // Its a GFA
-        else if (!elem.getGfa().isEmpty()) {
-            convertDE_GFA(elem, des);
+
+        if (!elem.getGfa().isEmpty()) {
+            convertDEGfa(elem, des);
         }
-        // Its a Volcano
-        else if (!elem.getVolcano().isEmpty()) {
+
+        if (!elem.getVolcano().isEmpty()) {
             for (gov.noaa.nws.ncep.ui.pgen.file.Volcano fVol : elem
                     .getVolcano()) {
                 des.add(convertXML2Volcano(fVol));
             }
         }
-        // Its a TCM
-        else if (!elem.getTcm().isEmpty()) {
+
+        if (!elem.getTcm().isEmpty()) {
             for (gov.noaa.nws.ncep.ui.pgen.file.TCM ftcm : elem.getTcm()) {
                 des.add(convertXML2Tcm(ftcm));
             }
@@ -326,11 +363,13 @@ public class ProductConverter {
         return des;
     }
 
-    /*
+    /**
      * Convert an XML file DrawableElement object to a GFA object
+     *
+     * @param elem
+     * @param des
      */
-
-    private static void convertDE_GFA(
+    private static void convertDEGfa(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
         for (gov.noaa.nws.ncep.ui.pgen.file.Gfa fgfa : elem.getGfa()) {
@@ -343,7 +382,7 @@ public class ProductConverter {
                         fColor.getBlue(), fColor.getAlpha());
             }
 
-            ArrayList<Coordinate> linePoints = new ArrayList<Coordinate>();
+            ArrayList<Coordinate> linePoints = new ArrayList<>();
             nn = 0;
             for (Point pt : fgfa.getPoint()) {
                 linePoints.add(new Coordinate(pt.getLon(), pt.getLat()));
@@ -352,13 +391,18 @@ public class ProductConverter {
             Coordinate gfaTextCoordinate = new Coordinate(fgfa.getLonText(),
                     fgfa.getLatText());
 
+            String haz = nvl(fgfa.getHazard());
+            if (haz.equalsIgnoreCase("IFR")) {
+                haz = new String("C&V");
+            }
+
             Gfa gfa = new Gfa(null, clr, fgfa.getLineWidth(),
                     fgfa.getSizeScale(), fgfa.isClosed(), fgfa.isFilled(),
                     linePoints, gfaTextCoordinate, fgfa.getSmoothFactor(),
                     FillPattern.valueOf(fgfa.getFillPattern()),
-                    fgfa.getPgenCategory(), fgfa.getPgenType(),
-                    fgfa.getHazard(), fgfa.getFcstHr(), fgfa.getTag(),
-                    fgfa.getDesk(), fgfa.getIssueType(), fgfa.getCycleDay(),
+                    fgfa.getPgenCategory(), fgfa.getPgenType(), haz,
+                    fgfa.getFcstHr(), fgfa.getTag(), fgfa.getDesk(),
+                    fgfa.getIssueType(), fgfa.getCycleDay(),
                     fgfa.getCycleHour(), fgfa.getType(), fgfa.getArea(),
                     fgfa.getBeginning(), fgfa.getEnding(), fgfa.getStates());
 
@@ -384,15 +428,90 @@ public class ProductConverter {
                 gfa.setGfaType("");
                 gfa.setGfaValue("Type", fgfa.getType());
             }
+
+            // textVOR
+            String vorStr = fgfa.getTextVor();
+            if (vorStr != null) {
+                gfa.setGfaVorText(nvl(vorStr));
+            }
+
+            String cig = fgfa.getCig();
+            if (cig != null) {
+                gfa.setGfaValue(Gfa.CIG, fgfa.getCig());
+            } else {
+                gfa.setGfaValue(Gfa.CIG, "");
+            }
+
+            String vis = fgfa.getVis();
+            if (vis != null) {
+                gfa.setGfaValue(Gfa.VIS, fgfa.getVis());
+            } else {
+                gfa.setGfaValue(Gfa.VIS, "");
+            }
+
+            String airmetTag = fgfa.getAirmetTag();
+            if (airmetTag != null) {
+                gfa.setGfaValue(Gfa.AIRMET_TAG, airmetTag);
+            } else {
+                String prefix = "";
+                if (gfa.getGfaHazard().equals("TURB-HI")) {
+                    prefix = "H";
+                } else if (gfa.getGfaHazard().equals("TURB-LO")) {
+                    prefix = "L";
+                }
+
+                gfa.setGfaValue(Gfa.AIRMET_TAG, new String(
+                        prefix + gfa.getGfaTag() + gfa.getGfaDesk()));
+            }
+
+            String timeStr = fgfa.getIssueTime();
+            if (timeStr != null && timeStr.trim().length() >= 6) {
+                Calendar issueTimeCal = Calendar.getInstance();
+                int day = Integer.parseInt(timeStr.substring(0, 2));
+                int hour = Integer.parseInt(timeStr.substring(2, 4));
+                int min = Integer.parseInt(timeStr.substring(4));
+                issueTimeCal.set(Calendar.DAY_OF_MONTH, day);
+                issueTimeCal.set(Calendar.HOUR_OF_DAY, hour);
+                issueTimeCal.set(Calendar.MINUTE, min);
+                issueTimeCal.set(Calendar.SECOND, 0);
+                gfa.addAttribute(Gfa.ISSUE_TIME, issueTimeCal);
+            }
+
+            String timeStr2 = fgfa.getUntilTime();
+            if (timeStr2 != null && timeStr2.trim().length() >= 6) {
+                Calendar untilTimeCal = Calendar.getInstance();
+                int day = Integer.parseInt(timeStr.substring(0, 2));
+                int hour = Integer.parseInt(timeStr.substring(2, 4));
+                int min = Integer.parseInt(timeStr.substring(4));
+                untilTimeCal.set(Calendar.DAY_OF_MONTH, day);
+                untilTimeCal.set(Calendar.HOUR_OF_DAY, hour);
+                untilTimeCal.set(Calendar.MINUTE, min);
+                untilTimeCal.set(Calendar.SECOND, 0);
+                gfa.addAttribute(Gfa.UNTIL_TIME, untilTimeCal);
+            }
+
+            String timeStr3 = fgfa.getOutlookEndTime();
+            if (timeStr3 != null && timeStr3.trim().length() >= 6) {
+                Calendar otlkEndTimeCal = Calendar.getInstance();
+                int day = Integer.parseInt(timeStr.substring(0, 2));
+                int hour = Integer.parseInt(timeStr.substring(2, 4));
+                int min = Integer.parseInt(timeStr.substring(4));
+                otlkEndTimeCal.set(Calendar.DAY_OF_MONTH, day);
+                otlkEndTimeCal.set(Calendar.HOUR_OF_DAY, hour);
+                otlkEndTimeCal.set(Calendar.MINUTE, min);
+                otlkEndTimeCal.set(Calendar.SECOND, 0);
+                gfa.addAttribute(Gfa.OUTLOOK_END_TIME, otlkEndTimeCal);
+            }
+
             des.add(gfa);
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to a sigment
+    /**
+     * @param elem
+     * @param des
      */
-
-    private static void convertDESigment(
+    private static void convertDESigmet(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
         for (gov.noaa.nws.ncep.ui.pgen.file.Sigmet fSig : elem.getSigmet()) {
@@ -405,7 +524,7 @@ public class ProductConverter {
                         fColor.getBlue(), fColor.getAlpha());
             }
 
-            ArrayList<Coordinate> sigmetPoints = new ArrayList<Coordinate>();
+            ArrayList<Coordinate> sigmetPoints = new ArrayList<>();
             nn = 0;
             for (Point pt : fSig.getPoint()) {
                 sigmetPoints.add(new Coordinate(pt.getLon(), pt.getLat()));
@@ -417,11 +536,11 @@ public class ProductConverter {
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to a DEColleciton obj
+    /**
+     * @param elem
+     * @param des
      */
-
-    private static void convertDE_DECollection(
+    private static void convertDECollection(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
         for (gov.noaa.nws.ncep.ui.pgen.file.DECollection fdec : elem
@@ -448,11 +567,11 @@ public class ProductConverter {
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to a TCAElement
+    /**
+     * @param elem
+     * @param des
      */
-
-    private static void convertDE_TCA(
+    private static void convertDETca(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
         for (gov.noaa.nws.ncep.ui.pgen.file.TCA ftca : elem.getTCA()) {
@@ -484,10 +603,10 @@ public class ProductConverter {
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to a PGen vector
+    /**
+     * @param elem
+     * @param des
      */
-
     private static void convertDEVector(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
@@ -505,9 +624,10 @@ public class ProductConverter {
 
             VectorType vtype = null;
             String pgenType = fVector.getPgenType();
-            if (pgenType.equalsIgnoreCase("Hash")) {
+            if (pgenType.equalsIgnoreCase(HASH)) {
                 vtype = VectorType.HASH_MARK;
-            } else if (pgenType.equalsIgnoreCase("Barb")) {
+                fVector.setDirection(fVector.getDirection());
+            } else if (pgenType.equalsIgnoreCase(BARB)) {
                 vtype = VectorType.WIND_BARB;
             } else {
                 vtype = VectorType.ARROW;
@@ -524,10 +644,10 @@ public class ProductConverter {
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to a DrawableElement Arc
+    /**
+     * @param elem
+     * @param des
      */
-
     private static void convertDEArc(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
@@ -541,7 +661,7 @@ public class ProductConverter {
                         fColor.getBlue(), fColor.getAlpha());
             }
 
-            ArrayList<Coordinate> linePoints = new ArrayList<Coordinate>();
+            ArrayList<Coordinate> linePoints = new ArrayList<>();
             for (Point pt : fArc.getPoint()) {
                 linePoints.add(new Coordinate(pt.getLon(), pt.getLat()));
             }
@@ -559,11 +679,11 @@ public class ProductConverter {
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to a DEC cloud text
+    /**
+     * @param elem
+     * @param des
      */
-
-    private static void convertDECloudText(
+    private static void convertDEMidCloudText(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
         for (gov.noaa.nws.ncep.ui.pgen.file.MidCloudText mText : elem
@@ -603,11 +723,11 @@ public class ProductConverter {
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to AVN text
+    /**
+     * @param elem
+     * @param des
      */
-
-    private static void convertDEAVNText(
+    private static void convertDEAvnText(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
         for (gov.noaa.nws.ncep.ui.pgen.file.AvnText aText : elem.getAvnText()) {
@@ -645,8 +765,9 @@ public class ProductConverter {
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to DrawableElement text
+    /**
+     * @param elem
+     * @param des
      */
     private static void convertDEText(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
@@ -701,18 +822,15 @@ public class ProductConverter {
                 text.setIwidth(fText.getIwidth());
             }
 
-            /*
-             * if (fText.isAuto() != null) { text.setAuto(fText.isAuto()); }
-             */
             text.setAuto(false);
             des.add(text);
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to a Symbol object
+    /**
+     * @param elem
+     * @param des
      */
-
     private static void convertDESymbol(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
@@ -746,10 +864,10 @@ public class ProductConverter {
         }
     }
 
-    /*
-     * Convert an XML file DrawableElement object to a line
+    /**
+     * @param elem
+     * @param des
      */
-
     private static void convertDELine(
             gov.noaa.nws.ncep.ui.pgen.file.DrawableElement elem,
             List<AbstractDrawableComponent> des) {
@@ -763,7 +881,7 @@ public class ProductConverter {
                         fColor.getBlue(), fColor.getAlpha());
             }
 
-            ArrayList<Coordinate> linePoints = new ArrayList<Coordinate>();
+            ArrayList<Coordinate> linePoints = new ArrayList<>();
             nn = 0;
             for (Point pt : fLine.getPoint()) {
                 linePoints.add(new Coordinate(pt.getLon(), pt.getLat()));
@@ -785,9 +903,10 @@ public class ProductConverter {
                         fLine.getSizeScale(), fLine.isClosed(),
                         fLine.isFilled(), linePoints, fLine.getSmoothFactor(),
                         FillPattern.valueOf(fLine.getFillPattern()),
-                        fLine.getPgenCategory(), fLine.getPgenType(),
-                        fLine.isFlipSide());
+                        fLine.getPgenCategory(), fLine.getPgenType());
             }
+
+            line.setFlipSide(fLine.isFlipSide());
 
             des.add(line);
         }
@@ -845,7 +964,7 @@ public class ProductConverter {
     private static List<gov.noaa.nws.ncep.ui.pgen.file.Layer> convertLayers(
             List<Layer> layers) {
 
-        List<gov.noaa.nws.ncep.ui.pgen.file.Layer> flyrs = new ArrayList<gov.noaa.nws.ncep.ui.pgen.file.Layer>();
+        List<gov.noaa.nws.ncep.ui.pgen.file.Layer> flyrs = new ArrayList<>();
 
         for (Layer lyr : layers) {
             gov.noaa.nws.ncep.ui.pgen.file.Layer l = new gov.noaa.nws.ncep.ui.pgen.file.Layer();
@@ -878,7 +997,9 @@ public class ProductConverter {
             l.setFilled(lyr.isFilled());
             l.setInputFile(null);
             l.setOutputFile(null);
-            l.setDrawableElement(convertListOfDEs(lyr.getDrawables()));
+            l.setMetaInfo(lyr.getMetaInfo());
+
+            l.setDrawableElement(convertDEs(lyr.getDrawables()));
 
             flyrs.add(l);
         }
@@ -890,659 +1011,619 @@ public class ProductConverter {
      * Convert a list of in-memory PGEN DrawableElement objects into a list of
      * XML file DrawableElement objects
      */
-    private static gov.noaa.nws.ncep.ui.pgen.file.DrawableElement convertListOfDEs(
+    private static gov.noaa.nws.ncep.ui.pgen.file.DrawableElement convertDEs(
             List<AbstractDrawableComponent> des) {
 
         gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde = new gov.noaa.nws.ncep.ui.pgen.file.DrawableElement();
 
-        // For each ADC obj in the input List
         for (AbstractDrawableComponent adc : des) {
-
-            // If a single DE
             if (adc instanceof DrawableElement) {
                 DrawableElement de = (DrawableElement) adc;
-
-                // Its a Line
                 if (de instanceof Line) {
 
                     if (de instanceof Arc) {
-                        convertLODLineArc(fde, de);
+                        gov.noaa.nws.ncep.ui.pgen.file.Arc arc = new gov.noaa.nws.ncep.ui.pgen.file.Arc();
+
+                        for (Color clr : de.getColors()) {
+
+                            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+                            fclr.setRed(clr.getRed());
+                            fclr.setGreen(clr.getGreen());
+                            fclr.setBlue(clr.getBlue());
+                            fclr.setAlpha(clr.getAlpha());
+
+                            arc.getColor().add(fclr);
+                        }
+
+                        for (Coordinate crd : ((Arc) de).getLinePoints()) {
+
+                            Point fpt = new Point();
+                            fpt.setLat(crd.y);
+                            fpt.setLon(crd.x);
+
+                            arc.getPoint().add(fpt);
+                        }
+
+                        arc.setPgenCategory(de.getPgenCategory());
+                        arc.setLineWidth(de.getLineWidth());
+                        arc.setSizeScale(de.getSizeScale());
+                        arc.setSmoothFactor(((Arc) de).getSmoothFactor());
+                        arc.setClosed(((Arc) de).isClosedLine());
+                        arc.setFilled(((Arc) de).isFilled());
+                        arc.setPgenType(de.getPgenType());
+
+                        arc.setFillPattern(((Arc) de).getFillPattern().name());
+                        arc.setAxisRatio(((Arc) de).getAxisRatio());
+                        arc.setStartAngle(((Arc) de).getStartAngle());
+                        arc.setEndAngle(((Arc) de).getEndAngle());
+
+                        fde.getArc().add(arc);
+
                     } else if (de instanceof Gfa) {
-                        convertLODLineGFA(fde, de);
+                        gov.noaa.nws.ncep.ui.pgen.file.Gfa fgfa = new gov.noaa.nws.ncep.ui.pgen.file.Gfa();
+
+                        for (Color clr : de.getColors()) {
+
+                            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+                            fclr.setRed(clr.getRed());
+                            fclr.setGreen(clr.getGreen());
+                            fclr.setBlue(clr.getBlue());
+                            fclr.setAlpha(clr.getAlpha());
+
+                            fgfa.getColor().add(fclr);
+                        }
+
+                        for (Coordinate crd : ((Gfa) de).getLinePoints()) {
+
+                            Point fpt = new Point();
+                            fpt.setLat(crd.y);
+                            fpt.setLon(crd.x);
+
+                            fgfa.getPoint().add(fpt);
+                        }
+
+                        fgfa.setPgenCategory(de.getPgenCategory());
+                        fgfa.setLineWidth(de.getLineWidth());
+                        fgfa.setSizeScale(de.getSizeScale());
+                        fgfa.setSmoothFactor(((Gfa) de).getSmoothFactor());
+                        fgfa.setClosed(((Gfa) de).isClosedLine());
+                        fgfa.setFilled(((Gfa) de).isFilled());
+                        fgfa.setPgenType(de.getPgenType());
+                        Gfa e = (Gfa) de;
+                        if (e.getGfaTextCoordinate() != null) {
+                            fgfa.setLatText(e.getGfaTextCoordinate().y);
+                            fgfa.setLonText(e.getGfaTextCoordinate().x);
+                        }
+
+                        String haz = nvl(e.getGfaHazard());
+                        if (haz.equalsIgnoreCase("C&V")) {
+                            haz = new String("IFR");
+                        }
+                        fgfa.setHazard(haz);
+
+                        fgfa.setFcstHr(nvl(e.getGfaFcstHr()));
+                        fgfa.setTag(nvl(e.getGfaTag()));
+                        fgfa.setDesk(nvl(e.getGfaDesk()));
+                        fgfa.setIssueType(nvl(e.getGfaIssueType()));
+                        fgfa.setCycleDay(e.getGfaCycleDay());
+                        fgfa.setCycleHour(e.getGfaCycleHour());
+                        fgfa.setType(nvl(e.getGfaType()));
+                        fgfa.setArea(nvl(e.getGfaArea()));
+                        fgfa.setBeginning(nvl(e.getGfaBeginning()));
+                        fgfa.setEnding(nvl(e.getGfaEnding()));
+                        fgfa.setStates(nvl(e.getGfaStates()));
+                        fgfa.setGr(nvl(e.getGfaValue(Gfa.GR)));
+                        fgfa.setFrequency(nvl((e.getGfaValue(Gfa.FREQUENCY))));
+                        fgfa.setTsCategory(nvl(e.getGfaValue(Gfa.CATEGORY)));
+                        fgfa.setFzlRange(nvl(e.getGfaValue(Gfa.FZL_RANGE)));
+                        fgfa.setLevel(nvl(e.getGfaValue(Gfa.LEVEL)));
+                        fgfa.setIntensity(nvl(e.getGfaValue(Gfa.INTENSITY)));
+                        fgfa.setSpeed(nvl(e.getGfaValue(Gfa.SPEED)));
+                        fgfa.setDueTo(nvl(e.getGfaValue(Gfa.DUE_TO)));
+                        fgfa.setLyr(nvl(e.getGfaValue(Gfa.LYR)));
+                        fgfa.setCoverage(nvl(e.getGfaValue(Gfa.COVERAGE)));
+                        fgfa.setBottom(nvl(e.getGfaBottom()));
+                        fgfa.setTop(nvl(e.getGfaTop()));
+                        fgfa.setFzlTopBottom(
+                                nvl(e.getGfaValue(Gfa.FZL_TOP_BOTTOM)));
+                        fgfa.setContour(nvl(e.getGfaValue(Gfa.CONTOUR)));
+                        fgfa.setIsOutlook(e.isOutlook());
+                        if ("ICE".equals(e.getGfaHazard())) {
+                            fgfa.setType(nvl(e.getGfaValue("Type")));
+                        }
+
+                        fgfa.setCig(nvl(e.getGfaValue(Gfa.CIG)));
+                        fgfa.setVis(nvl(e.getGfaValue(Gfa.VIS)));
+
+                        if (e.getGfaValue(Gfa.AIRMET_TAG) != null) {
+                            fgfa.setAirmetTag(e.getGfaValue(Gfa.AIRMET_TAG));
+                        } else {
+                            String prefix = "";
+                            if (e.getGfaHazard().equals("TURB-HI")) {
+                                prefix = "H";
+                            } else if (e.getGfaHazard().equals("TURB-LO")) {
+                                prefix = "L";
+                            }
+
+                            fgfa.setAirmetTag(new String(
+                                    prefix + e.getGfaTag() + e.getGfaDesk()));
+                        }
+
+                        Calendar cal = e.getAttribute(Gfa.ISSUE_TIME,
+                                Calendar.class);
+                        SimpleDateFormat sdf = new SimpleDateFormat("ddHHmm");
+                        if (cal != null) {
+                            fgfa.setIssueTime(sdf.format(cal.getTime()));
+                        }
+
+                        cal = e.getAttribute(Gfa.UNTIL_TIME, Calendar.class);
+                        if (cal != null) {
+                            fgfa.setUntilTime(sdf.format(cal.getTime()));
+                        }
+
+                        cal = e.getAttribute(Gfa.OUTLOOK_END_TIME,
+                                Calendar.class);
+                        if (cal != null) {
+                            fgfa.setOutlookEndTime(sdf.format(cal.getTime()));
+                        }
+
+                        if (e.getAttribute(GfaRules.WORDING) != null) {
+                            GfaWording w = e.getAttribute(GfaRules.WORDING,
+                                    GfaWording.class);
+                            fgfa.setFromCondsDvlpg(GfaRules
+                                    .replacePlusWithCycle(w.getFromCondsDvlpg(),
+                                            e.getGfaCycleHour()));
+                            fgfa.setFromCondsEndg(GfaRules.replacePlusWithCycle(
+                                    w.getFromCondsEndg(), e.getGfaCycleHour()));
+                            fgfa.setCondsContg(GfaRules.replacePlusWithCycle(
+                                    w.getCondsContg(), e.getGfaCycleHour()));
+                            fgfa.setOtlkCondsDvlpg(GfaRules
+                                    .replacePlusWithCycle(w.getOtlkCondsDvlpg(),
+                                            e.getGfaCycleHour()));
+                            fgfa.setOtlkCondsEndg(GfaRules.replacePlusWithCycle(
+                                    w.getOtlkCondsEndg(), e.getGfaCycleHour()));
+                        }
+
+                        // textVOR
+                        String vorStr = ((Gfa) de).getGfaVorText();
+                        if (vorStr != null && ((Gfa) de).isOutlook()) {
+                            vorStr = vorStr.replaceAll(" TO ", "-");
+                        }
+                        fgfa.setTextVor(nvl(vorStr));
+
+                        fgfa.setFillPattern(
+                                nvl(((Gfa) de).getFillPattern().name()));
+
+                        fde.getGfa().add(fgfa);
+
                     } else if (de instanceof Track) {
                         fde.getTrack().add(TrackConverter
                                 .getTrackBeanByTrackElement((Track) de));
                     } else if (de instanceof Sigmet) {
-                        convertLODLineSigmet(fde, de);
+
+                        gov.noaa.nws.ncep.ui.pgen.file.Sigmet sigmet = new gov.noaa.nws.ncep.ui.pgen.file.Sigmet();
+
+                        for (Color clr : de.getColors()) {
+
+                            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+                            fclr.setRed(clr.getRed());
+                            fclr.setGreen(clr.getGreen());
+                            fclr.setBlue(clr.getBlue());
+                            fclr.setAlpha(clr.getAlpha());
+
+                            sigmet.getColor().add(fclr);
+                        }
+
+                        for (Coordinate crd : ((Sigmet) de).getLinePoints()) {
+
+                            Point fpt = new Point();
+                            fpt.setLat(crd.y);
+                            fpt.setLon(crd.x);
+
+                            sigmet.getPoint().add(fpt);
+                        }
+
+                        sigmet.setPgenCategory(de.getPgenCategory());
+                        sigmet.setLineWidth(de.getLineWidth());
+                        sigmet.setSizeScale(de.getSizeScale());
+                        sigmet.setSmoothFactor(((Sigmet) de).getSmoothFactor());
+                        sigmet.setClosed(((Sigmet) de).isClosedLine());
+                        sigmet.setFilled(((Sigmet) de).isFilled());
+                        sigmet.setPgenType(de.getPgenType());
+                        sigmet.setFillPattern(
+                                ((Sigmet) de).getFillPattern().name());
+
+                        sigmet.setType(((Sigmet) de).getType());
+                        sigmet.setWidth(((Sigmet) de).getWidth());
+
+                        sigmet.setEditableAttrArea(
+                                ((Sigmet) de).getEditableAttrArea());
+                        sigmet.setEditableAttrIssueOffice(
+                                ((Sigmet) de).getEditableAttrIssueOffice());
+                        sigmet.setEditableAttrStatus(
+                                ((Sigmet) de).getEditableAttrStatus());
+                        sigmet.setEditableAttrId(
+                                ((Sigmet) de).getEditableAttrId());
+                        sigmet.setEditableAttrSeqNum(
+                                ((Sigmet) de).getEditableAttrSeqNum());
+                        sigmet.setEditableAttrStartTime(
+                                ((Sigmet) de).getEditableAttrStartTime());
+                        sigmet.setEditableAttrEndTime(
+                                ((Sigmet) de).getEditableAttrEndTime());
+                        sigmet.setEditableAttrRemarks(
+                                ((Sigmet) de).getEditableAttrRemarks());
+                        sigmet.setEditableAttrPhenom(
+                                ((Sigmet) de).getEditableAttrPhenom());
+                        sigmet.setEditableAttrPhenom2(
+                                ((Sigmet) de).getEditableAttrPhenom2());
+                        sigmet.setEditableAttrPhenomName(
+                                ((Sigmet) de).getEditableAttrPhenomName());
+                        sigmet.setEditableAttrPhenomLat(
+                                ((Sigmet) de).getEditableAttrPhenomLat());
+                        sigmet.setEditableAttrPhenomLon(
+                                ((Sigmet) de).getEditableAttrPhenomLon());
+                        sigmet.setEditableAttrPhenomPressure(
+                                ((Sigmet) de).getEditableAttrPhenomPressure());
+                        sigmet.setEditableAttrPhenomMaxWind(
+                                ((Sigmet) de).getEditableAttrPhenomMaxWind());
+                        sigmet.setEditableAttrFreeText(
+                                ((Sigmet) de).getEditableAttrFreeText());
+                        sigmet.setEditableAttrFcstCntr(
+                                ((Sigmet) de).getEditableAttrFcstCntr());
+                        sigmet.setEditableAttrFcstPhenomLat(
+                                ((Sigmet) de).getEditableAttrFcstPhenomLat());
+                        sigmet.setEditableAttrFcstPhenomLon(
+                                ((Sigmet) de).getEditableAttrFcstPhenomLon());
+                        sigmet.setEditableAttrFcstTime(
+                                ((Sigmet) de).getEditableAttrFcstTime());
+                        sigmet.setEditableAttrFcstAvail(
+                                ((Sigmet) de).getEditableAttrFcstAvail());
+                        sigmet.setEditableAttrFcstVADesc(
+                                ((Sigmet) de).getEditableAttrFcstVADesc());
+                        sigmet.setEditableAttrTrend(
+                                ((Sigmet) de).getEditableAttrTrend());
+                        sigmet.setEditableAttrMovement(
+                                ((Sigmet) de).getEditableAttrMovement());
+                        sigmet.setEditableAttrPhenomSpeed(
+                                ((Sigmet) de).getEditableAttrPhenomSpeed());
+                        sigmet.setEditableAttrPhenomDirection(
+                                ((Sigmet) de).getEditableAttrPhenomDirection());
+                        sigmet.setEditableAttrLevel(
+                                ((Sigmet) de).getEditableAttrLevel());
+                        sigmet.setEditableAttrLevelInfo1(
+                                ((Sigmet) de).getEditableAttrLevelInfo1());
+                        sigmet.setEditableAttrLevelInfo2(
+                                ((Sigmet) de).getEditableAttrLevelInfo2());
+                        sigmet.setEditableAttrLevelText1(
+                                ((Sigmet) de).getEditableAttrLevelText1());
+                        sigmet.setEditableAttrLevelText2(
+                                ((Sigmet) de).getEditableAttrLevelText2());
+                        sigmet.setEditableAttrFromLine(
+                                ((Sigmet) de).getEditableAttrFromLine());
+                        sigmet.setEditableAttrFir(
+                                ((Sigmet) de).getEditableAttrFir());
+                        sigmet.setEditableAttrCarSamBackupMode(((Sigmet) de)
+                                .getEditableAttrCarSamBackupMode());
+                        sigmet.setEditableAttrRALSelection(
+                                ((Sigmet) de).getEditableAttrRALSelection());
+                        sigmet.setEditableAttrAltLevelText(
+                                ((Sigmet) de).getEditableAttrAltLevelText());
+                        sigmet.setEditableAttrAltitudeSelection(((Sigmet) de)
+                                .getEditableAttrAltitudeSelection());
+                        fde.getSigmet().add(sigmet);
+
+                    } else if (de instanceof Spenes) {
+                        fde.getSpenes().add(convertSpenes2XML((Spenes) de));
                     } else {
-                        convertLODLine(fde, de);
+                        gov.noaa.nws.ncep.ui.pgen.file.Line line = new gov.noaa.nws.ncep.ui.pgen.file.Line();
+
+                        for (Color clr : de.getColors()) {
+
+                            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+                            fclr.setRed(clr.getRed());
+                            fclr.setGreen(clr.getGreen());
+                            fclr.setBlue(clr.getBlue());
+                            fclr.setAlpha(clr.getAlpha());
+
+                            line.getColor().add(fclr);
+                        }
+
+                        for (Coordinate crd : ((Line) de).getLinePoints()) {
+
+                            Point fpt = new Point();
+                            fpt.setLat(crd.y);
+                            fpt.setLon(crd.x);
+
+                            line.getPoint().add(fpt);
+                        }
+
+                        line.setPgenCategory(de.getPgenCategory());
+                        line.setLineWidth(de.getLineWidth());
+                        line.setSizeScale(de.getSizeScale());
+                        line.setSmoothFactor(((Line) de).getSmoothFactor());
+                        line.setClosed(((Line) de).isClosedLine());
+                        line.setFilled(((Line) de).isFilled());
+                        line.setPgenType(de.getPgenType());
+
+                        line.setFillPattern(
+                                ((Line) de).getFillPattern().name());
+                        line.setFlipSide(((Line) de).isFlipSide());
+
+                        // specific attributes for KinkLine
+                        if (de instanceof KinkLine) {
+                            line.setArrowHeadType(
+                                    ((KinkLine) de).getArrowHeadType().name());
+                            line.setKinkPosition(
+                                    ((KinkLine) de).getKinkPosition());
+                        }
+
+                        fde.getLine().add(line);
+
+                    }
+                } else if (de instanceof Symbol || de instanceof ComboSymbol) {
+
+                    gov.noaa.nws.ncep.ui.pgen.file.Symbol symbol = new gov.noaa.nws.ncep.ui.pgen.file.Symbol();
+
+                    for (Color clr : de.getColors()) {
+
+                        gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+                        fclr.setRed(clr.getRed());
+                        fclr.setGreen(clr.getGreen());
+                        fclr.setBlue(clr.getBlue());
+                        fclr.setAlpha(clr.getAlpha());
+
+                        symbol.getColor().add(fclr);
                     }
 
+                    Point fpt = new Point();
+                    fpt.setLat(((ISinglePoint) de).getLocation().y);
+                    fpt.setLon(((ISinglePoint) de).getLocation().x);
+                    symbol.setPoint(fpt);
+
+                    symbol.setPgenType(de.getPgenType());
+                    symbol.setPgenCategory(de.getPgenCategory());
+                    symbol.setLineWidth(de.getLineWidth());
+                    symbol.setSizeScale(de.getSizeScale());
+                    symbol.setClear(((ISinglePoint) de).isClear());
+
+                    fde.getSymbol().add(symbol);
+                } else if (de instanceof AvnText) {
+
+                    gov.noaa.nws.ncep.ui.pgen.file.AvnText atext = new gov.noaa.nws.ncep.ui.pgen.file.AvnText();
+
+                    for (Color clr : de.getColors()) {
+
+                        gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+                        fclr.setRed(clr.getRed());
+                        fclr.setGreen(clr.getGreen());
+                        fclr.setBlue(clr.getBlue());
+                        fclr.setAlpha(clr.getAlpha());
+                        atext.getColor().add(fclr);
+                    }
+
+                    Point fpt = new Point();
+                    fpt.setLat(((ISinglePoint) de).getLocation().y);
+                    fpt.setLon(((ISinglePoint) de).getLocation().x);
+                    atext.setPoint(fpt);
+
+                    atext.setAvnTextType(
+                            ((AvnText) de).getAvnTextType().name());
+                    atext.setTopValue(((AvnText) de).getTopValue());
+                    atext.setBottomValue(((AvnText) de).getBottomValue());
+
+                    atext.setIthw(((AvnText) de).getIthw());
+
+                    atext.setIwidth(((AvnText) de).getIwidth());
+
+                    atext.setJustification(
+                            ((AvnText) de).getJustification().name());
+                    atext.setStyle(((AvnText) de).getStyle().name());
+                    atext.setFontName(((AvnText) de).getFontName());
+                    atext.setFontSize(((AvnText) de).getFontSize());
+                    atext.setSymbolPatternName(
+                            ((AvnText) de).getSymbolPatternName());
+                    atext.setPgenType(de.getPgenType());
+                    atext.setPgenCategory(de.getPgenCategory());
+
+                    fde.getAvnText().add(atext);
+                } else if (de instanceof MidCloudText) {
+
+                    MidCloudText mcde = (MidCloudText) de;
+
+                    gov.noaa.nws.ncep.ui.pgen.file.MidCloudText mtext = new gov.noaa.nws.ncep.ui.pgen.file.MidCloudText();
+
+                    for (Color clr : de.getColors()) {
+
+                        gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+                        fclr.setRed(clr.getRed());
+                        fclr.setGreen(clr.getGreen());
+                        fclr.setBlue(clr.getBlue());
+                        fclr.setAlpha(clr.getAlpha());
+                        mtext.getColor().add(fclr);
+                    }
+
+                    Point fpt = new Point();
+                    fpt.setLat(((ISinglePoint) de).getLocation().y);
+                    fpt.setLon(((ISinglePoint) de).getLocation().x);
+                    mtext.setPoint(fpt);
+
+                    mtext.setCloudTypes(mcde.getCloudTypes());
+                    mtext.setCloudAmounts(mcde.getCloudAmounts());
+                    mtext.setTurbulenceType(mcde.getTurbulencePattern());
+                    mtext.setTurbulenceLevels(mcde.getTurbulenceLevels());
+                    mtext.setIcingType(mcde.getIcingPattern());
+                    mtext.setIcingLevels(mcde.getIcingLevels());
+                    mtext.setTstormTypes(mcde.getTstormTypes());
+                    mtext.setTstormLevels(mcde.getTstormLevels());
+
+                    mtext.setIthw(mcde.getIthw());
+                    mtext.setIwidth(mcde.getIwidth());
+
+                    mtext.setJustification(mcde.getJustification().name());
+                    mtext.setStyle(mcde.getStyle().name());
+                    mtext.setFontName(mcde.getFontName());
+                    mtext.setFontSize(mcde.getFontSize());
+                    mtext.setPgenType(mcde.getPgenType());
+                    mtext.setPgenCategory(mcde.getPgenCategory());
+
+                    fde.getMidCloudText().add(mtext);
+                } else if (de instanceof Text) {
+
+                    gov.noaa.nws.ncep.ui.pgen.file.Text text = new gov.noaa.nws.ncep.ui.pgen.file.Text();
+
+                    for (Color clr : de.getColors()) {
+
+                        gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+                        fclr.setRed(clr.getRed());
+                        fclr.setGreen(clr.getGreen());
+                        fclr.setBlue(clr.getBlue());
+                        fclr.setAlpha(clr.getAlpha());
+                        text.getColor().add(fclr);
+                    }
+
+                    Point fpt = new Point();
+                    fpt.setLat(((ISinglePoint) de).getLocation().y);
+                    fpt.setLon(((ISinglePoint) de).getLocation().x);
+                    text.setPoint(fpt);
+
+                    for (String st : ((Text) de).getString()) {
+                        text.getTextLine().add(new String(st));
+                    }
+
+                    text.setXOffset(((Text) de).getXOffset());
+                    text.setYOffset(((Text) de).getYOffset());
+                    text.setDisplayType(((Text) de).getDisplayType().name());
+                    text.setMask(((Text) de).maskText());
+                    text.setRotationRelativity(
+                            ((Text) de).getRotationRelativity().name());
+                    text.setRotation(((Text) de).getRotation());
+
+                    text.setIthw(((Text) de).getIthw());
+                    text.setIwidth(((Text) de).getIwidth());
+
+                    text.setJustification(
+                            ((Text) de).getJustification().name());
+                    text.setStyle(((Text) de).getStyle().name());
+                    text.setFontName(((Text) de).getFontName());
+                    text.setFontSize(((Text) de).getFontSize());
+                    text.setPgenType(((Text) de).getPgenType());
+                    text.setPgenCategory(de.getPgenCategory());
+
+                    text.setHide(((Text) de).getHide());
+                    text.setAuto(((Text) de).getAuto());
+
+                    fde.getText().add(text);
+
+                } else if (de instanceof Vector) {
+
+                    gov.noaa.nws.ncep.ui.pgen.file.Vector vector = new gov.noaa.nws.ncep.ui.pgen.file.Vector();
+
+                    for (Color clr : de.getColors()) {
+
+                        gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+                        fclr.setRed(clr.getRed());
+                        fclr.setGreen(clr.getGreen());
+                        fclr.setBlue(clr.getBlue());
+                        fclr.setAlpha(clr.getAlpha());
+
+                        vector.getColor().add(fclr);
+                    }
+
+                    Point fpt = new Point();
+                    fpt.setLat(((ISinglePoint) de).getLocation().y);
+                    fpt.setLon(((ISinglePoint) de).getLocation().x);
+                    vector.setPoint(fpt);
+
+                    vector.setPgenType(de.getPgenType());
+                    vector.setPgenCategory(de.getPgenCategory());
+
+                    vector.setLineWidth(de.getLineWidth());
+                    vector.setSizeScale(de.getSizeScale());
+                    vector.setClear(((Vector) de).isClear());
+
+                    vector.setDirection(((Vector) de).getDirection());
+                    vector.setSpeed(((Vector) de).getSpeed());
+                    vector.setArrowHeadSize(((Vector) de).getArrowHeadSize());
+                    vector.setDirectionOnly(((Vector) de).hasDirectionOnly());
+
+                    fde.getVector().add(vector);
                 }
-                // Its a Symbol
-                else if (de instanceof Symbol || de instanceof ComboSymbol) {
-                    convertLODSymbol(fde, de);
-                }
-                // Its AvnText
-                else if (de instanceof AvnText) {
-                    convertLODAvnText(fde, de);
-                }
-                // Its MidCloudText
-                else if (de instanceof MidCloudText) {
-                    convertLODMidCloutText(fde, de);
-                }
-                // Its Text
-                else if (de instanceof Text) {
-                    convertLODText(fde, de);
-                }
-                // Its a Vector
-                else if (de instanceof Vector) {
-                    converLODVector(fde, de);
-                }
-                // Its a Watch Box
+
                 else if (de instanceof WatchBox) {
                     fde.getWatchBox().add(convertWatchBox2XML((WatchBox) de));
-                }
-                // Its a TCM
-                else if (de instanceof Tcm) {
+                } else if (de instanceof Tcm) {
                     fde.getTcm().add(convertTcm2XML((Tcm) de));
-                }
-                // Its a TCAElement
-                else if (de instanceof TCAElement) {
-                    convertLODTCAElement(fde, de);
-                }
-                // Its a Voclcano
-                else if (de instanceof Volcano) {
+                } else if (de instanceof TCAElement) {
+
+                    TCAElement tcaEl = (TCAElement) de;
+
+                    gov.noaa.nws.ncep.ui.pgen.file.TCA tca = new gov.noaa.nws.ncep.ui.pgen.file.TCA();
+
+                    tca.setPgenType(tcaEl.getPgenType());
+                    tca.setPgenCategory(tcaEl.getPgenCategory());
+
+                    tca.setStormNumber(tcaEl.getStormNumber());
+                    tca.setStormName(tcaEl.getStormName());
+                    tca.setBasin(tcaEl.getBasin());
+                    tca.setIssueStatus(tcaEl.getIssueStatus());
+                    tca.setStormType(tcaEl.getStormType());
+                    tca.setAdvisoryNumber(tcaEl.getAdvisoryNumber());
+                    // tca.setAdvisoryTime( tcaEl.getAdvisoryTime() );
+                    tca.setTimeZone(tcaEl.getTimeZone());
+                    tca.setTextLocation(tcaEl.getTextLocation());
+
+                    Calendar advTime = tcaEl.getAdvisoryTime();
+                    XMLGregorianCalendar xmlCal = null;
+                    try {
+                        xmlCal = DatatypeFactory.newInstance()
+                                .newXMLGregorianCalendar(
+                                        advTime.get(Calendar.YEAR),
+                                        advTime.get(Calendar.MONTH) + 1,
+                                        advTime.get(Calendar.DAY_OF_MONTH),
+                                        advTime.get(Calendar.HOUR_OF_DAY),
+                                        advTime.get(Calendar.MINUTE),
+                                        advTime.get(Calendar.SECOND),
+                                        advTime.get(Calendar.MILLISECOND), 0);
+                    } catch (DatatypeConfigurationException e) {
+                        e.printStackTrace();
+                    }
+                    tca.setAdvisoryTime(xmlCal);
+
+                    tca.setAdvisories(tcaEl.getAdvisories());
+
+                    fde.getTCA().add(tca);
+                } else if (de instanceof Volcano) {
                     fde.getVolcano().add(convertVolcano2XML((Volcano) de));
                 }
-            }
-            // Not a Single DrawableElement, but a DE Collection
-            else if (adc instanceof DECollection) {
+            } else if (adc instanceof DECollection) {
 
-                if (adc.getName().equalsIgnoreCase("Contours")) {
-                    fde.getContours().add(convertContours2XML((Contours) adc));
-                } else if (adc.getName().equalsIgnoreCase("Outlook")) {
+                if (adc instanceof Outlook) {
                     fde.getOutlook().add(convertOutlook2XML((Outlook) adc));
+                } else if (adc instanceof Contours) {
+                    fde.getContours().add(convertContours2XML((Contours) adc));
                 } else {
                     fde.getDECollection()
                             .add(convertDECollection2XML((DECollection) adc));
                 }
             }
-
-        } // end For Loop: For each ADC obj in the input List
+        }
 
         return fde;
-    }
-
-    /*
-     * Convert in-memory PGEN TCA DrawableElement object into a list held in an
-     * XML file DrawableElement fde
-     */
-
-    private static void convertLODTCAElement(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        TCAElement tcaEl = (TCAElement) de;
-
-        gov.noaa.nws.ncep.ui.pgen.file.TCA tca = new gov.noaa.nws.ncep.ui.pgen.file.TCA();
-
-        tca.setPgenType(tcaEl.getPgenType());
-        tca.setPgenCategory(tcaEl.getPgenCategory());
-
-        tca.setStormNumber(tcaEl.getStormNumber());
-        tca.setStormName(tcaEl.getStormName());
-        tca.setBasin(tcaEl.getBasin());
-        tca.setIssueStatus(tcaEl.getIssueStatus());
-        tca.setStormType(tcaEl.getStormType());
-        tca.setAdvisoryNumber(tcaEl.getAdvisoryNumber());
-        tca.setTimeZone(tcaEl.getTimeZone());
-        tca.setTextLocation(tcaEl.getTextLocation());
-
-        Calendar advTime = tcaEl.getAdvisoryTime();
-        XMLGregorianCalendar xmlCal = null;
-        try {
-            xmlCal = DatatypeFactory.newInstance().newXMLGregorianCalendar(
-                    advTime.get(Calendar.YEAR), advTime.get(Calendar.MONTH) + 1,
-                    advTime.get(Calendar.DAY_OF_MONTH),
-                    advTime.get(Calendar.HOUR_OF_DAY),
-                    advTime.get(Calendar.MINUTE), advTime.get(Calendar.SECOND),
-                    advTime.get(Calendar.MILLISECOND), 0);
-        } catch (DatatypeConfigurationException e) {
-            e.printStackTrace();
-        }
-        tca.setAdvisoryTime(xmlCal);
-
-        tca.setAdvisories(tcaEl.getAdvisories());
-
-        fde.getTCA().add(tca);
-    }
-
-    /*
-     * Convert in-memory PGEN Vector DrawableElement object into a list held in
-     * an XML file DrawableElement fde
-     */
-    private static void converLODVector(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        gov.noaa.nws.ncep.ui.pgen.file.Vector vector = new gov.noaa.nws.ncep.ui.pgen.file.Vector();
-
-        for (Color clr : de.getColors()) {
-
-            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
-
-            fclr.setRed(clr.getRed());
-            fclr.setGreen(clr.getGreen());
-            fclr.setBlue(clr.getBlue());
-            fclr.setAlpha(clr.getAlpha());
-
-            vector.getColor().add(fclr);
-        }
-
-        Point fpt = new Point();
-        fpt.setLat(((ISinglePoint) de).getLocation().y);
-        fpt.setLon(((ISinglePoint) de).getLocation().x);
-        vector.setPoint(fpt);
-
-        vector.setPgenType(de.getPgenType());
-        vector.setPgenCategory(de.getPgenCategory());
-
-        vector.setLineWidth(de.getLineWidth());
-        vector.setSizeScale(de.getSizeScale());
-        vector.setClear(((Vector) de).isClear());
-
-        vector.setDirection(((Vector) de).getDirection());
-        vector.setSpeed(((Vector) de).getSpeed());
-        vector.setArrowHeadSize(((Vector) de).getArrowHeadSize());
-        vector.setDirectionOnly(((Vector) de).hasDirectionOnly());
-
-        fde.getVector().add(vector);
-    }
-
-    /*
-     * Convert in-memory PGEN Text DrawableElement object into a list held in an
-     * XML file DrawableElement fde
-     */
-
-    private static void convertLODText(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        gov.noaa.nws.ncep.ui.pgen.file.Text text = new gov.noaa.nws.ncep.ui.pgen.file.Text();
-
-        for (Color clr : de.getColors()) {
-
-            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
-
-            fclr.setRed(clr.getRed());
-            fclr.setGreen(clr.getGreen());
-            fclr.setBlue(clr.getBlue());
-            fclr.setAlpha(clr.getAlpha());
-            text.getColor().add(fclr);
-        }
-
-        Point fpt = new Point();
-        fpt.setLat(((ISinglePoint) de).getLocation().y);
-        fpt.setLon(((ISinglePoint) de).getLocation().x);
-        text.setPoint(fpt);
-
-        for (String st : ((Text) de).getString()) {
-            text.getTextLine().add(new String(st));
-        }
-
-        text.setXOffset(((Text) de).getXOffset());
-        text.setYOffset(((Text) de).getYOffset());
-        text.setDisplayType(((Text) de).getDisplayType().name());
-        text.setMask(((Text) de).maskText());
-        text.setRotationRelativity(((Text) de).getRotationRelativity().name());
-        text.setRotation(((Text) de).getRotation());
-        text.setJustification(((Text) de).getJustification().name());
-        text.setStyle(((Text) de).getStyle().name());
-        text.setFontName(((Text) de).getFontName());
-        text.setFontSize(((Text) de).getFontSize());
-        text.setPgenType(((Text) de).getPgenType());
-        text.setPgenCategory(de.getPgenCategory());
-
-        text.setHide(((Text) de).getHide());
-        text.setAuto(((Text) de).getAuto());
-
-        text.setIthw(((Text) de).getIthw());
-        text.setIwidth(((Text) de).getIwidth());
-
-        fde.getText().add(text);
-    }
-
-    /*
-     * Convert in-memory PGEN MidCloudText DrawableElement object into a list
-     * held in an XML file DrawableElement fde
-     */
-    private static void convertLODMidCloutText(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        MidCloudText mcde = (MidCloudText) de;
-
-        gov.noaa.nws.ncep.ui.pgen.file.MidCloudText mtext = new gov.noaa.nws.ncep.ui.pgen.file.MidCloudText();
-
-        for (Color clr : de.getColors()) {
-
-            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
-
-            fclr.setRed(clr.getRed());
-            fclr.setGreen(clr.getGreen());
-            fclr.setBlue(clr.getBlue());
-            fclr.setAlpha(clr.getAlpha());
-            mtext.getColor().add(fclr);
-        }
-
-        Point fpt = new Point();
-        fpt.setLat(((ISinglePoint) de).getLocation().y);
-        fpt.setLon(((ISinglePoint) de).getLocation().x);
-        mtext.setPoint(fpt);
-
-        mtext.setCloudTypes(mcde.getCloudTypes());
-        mtext.setCloudAmounts(mcde.getCloudAmounts());
-        mtext.setTurbulenceType(mcde.getTurbulencePattern());
-        mtext.setTurbulenceLevels(mcde.getTurbulenceLevels());
-        mtext.setIcingType(mcde.getIcingPattern());
-        mtext.setIcingLevels(mcde.getIcingLevels());
-        mtext.setTstormTypes(mcde.getTstormTypes());
-        mtext.setTstormLevels(mcde.getTstormLevels());
-
-        mtext.setIthw(mcde.getIthw());
-        mtext.setIwidth(mcde.getIwidth());
-
-        mtext.setJustification(mcde.getJustification().name());
-        mtext.setStyle(mcde.getStyle().name());
-        mtext.setFontName(mcde.getFontName());
-        mtext.setFontSize(mcde.getFontSize());
-        mtext.setPgenType(mcde.getPgenType());
-        mtext.setPgenCategory(mcde.getPgenCategory());
-
-        fde.getMidCloudText().add(mtext);
-    }
-
-    /*
-     * Convert in-memory PGEN AvnText DrawableElement object into a list held in
-     * an XML file DrawableElement fde
-     */
-    private static void convertLODAvnText(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        gov.noaa.nws.ncep.ui.pgen.file.AvnText atext = new gov.noaa.nws.ncep.ui.pgen.file.AvnText();
-
-        for (Color clr : de.getColors()) {
-
-            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
-
-            fclr.setRed(clr.getRed());
-            fclr.setGreen(clr.getGreen());
-            fclr.setBlue(clr.getBlue());
-            fclr.setAlpha(clr.getAlpha());
-            atext.getColor().add(fclr);
-        }
-
-        Point fpt = new Point();
-        fpt.setLat(((ISinglePoint) de).getLocation().y);
-        fpt.setLon(((ISinglePoint) de).getLocation().x);
-        atext.setPoint(fpt);
-
-        atext.setAvnTextType(((AvnText) de).getAvnTextType().name());
-        atext.setTopValue(((AvnText) de).getTopValue());
-        atext.setBottomValue(((AvnText) de).getBottomValue());
-
-        atext.setIthw(((AvnText) de).getIthw());
-        atext.setIwidth(((AvnText) de).getIwidth());
-
-        atext.setJustification(((AvnText) de).getJustification().name());
-        atext.setStyle(((AvnText) de).getStyle().name());
-        atext.setFontName(((AvnText) de).getFontName());
-        atext.setFontSize(((AvnText) de).getFontSize());
-        atext.setSymbolPatternName(((AvnText) de).getSymbolPatternName());
-        atext.setPgenType(de.getPgenType());
-        atext.setPgenCategory(de.getPgenCategory());
-
-        fde.getAvnText().add(atext);
-    }
-
-    /*
-     * Convert in-memory PGEN Symbol DrawableElement object into a list held in
-     * an XML file DrawableElement fde
-     */
-    private static void convertLODSymbol(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        gov.noaa.nws.ncep.ui.pgen.file.Symbol symbol = new gov.noaa.nws.ncep.ui.pgen.file.Symbol();
-
-        for (Color clr : de.getColors()) {
-
-            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
-
-            fclr.setRed(clr.getRed());
-            fclr.setGreen(clr.getGreen());
-            fclr.setBlue(clr.getBlue());
-            fclr.setAlpha(clr.getAlpha());
-
-            symbol.getColor().add(fclr);
-        }
-
-        Point fpt = new Point();
-        fpt.setLat(((ISinglePoint) de).getLocation().y);
-        fpt.setLon(((ISinglePoint) de).getLocation().x);
-        symbol.setPoint(fpt);
-
-        symbol.setPgenType(de.getPgenType());
-        symbol.setPgenCategory(de.getPgenCategory());
-        symbol.setLineWidth(de.getLineWidth());
-        symbol.setSizeScale(de.getSizeScale());
-        symbol.setClear(((ISinglePoint) de).isClear());
-
-        fde.getSymbol().add(symbol);
-    }
-
-    /*
-     * Convert in-memory PGEN Line DrawableElement object into a list held in an
-     * XML file DrawableElement fde
-     */
-    private static void convertLODLine(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        gov.noaa.nws.ncep.ui.pgen.file.Line line = new gov.noaa.nws.ncep.ui.pgen.file.Line();
-
-        for (Color clr : de.getColors()) {
-
-            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
-
-            fclr.setRed(clr.getRed());
-            fclr.setGreen(clr.getGreen());
-            fclr.setBlue(clr.getBlue());
-            fclr.setAlpha(clr.getAlpha());
-
-            line.getColor().add(fclr);
-        }
-
-        for (Coordinate crd : ((Line) de).getLinePoints()) {
-
-            Point fpt = new Point();
-            fpt.setLat(crd.y);
-            fpt.setLon(crd.x);
-
-            line.getPoint().add(fpt);
-        }
-
-        line.setPgenCategory(de.getPgenCategory());
-        line.setLineWidth(de.getLineWidth());
-        line.setSizeScale(de.getSizeScale());
-        line.setSmoothFactor(((Line) de).getSmoothFactor());
-        line.setClosed(((Line) de).isClosedLine());
-        line.setFilled(((Line) de).isFilled());
-        line.setPgenType(de.getPgenType());
-
-        line.setFillPattern(((Line) de).getFillPattern().name());
-        line.setFlipSide(((Line) de).isFlipSide());
-
-        // specific attributes for KinkLine
-        if (de instanceof KinkLine) {
-            line.setArrowHeadType(((KinkLine) de).getArrowHeadType().name());
-            line.setKinkPosition(((KinkLine) de).getKinkPosition());
-        }
-
-        fde.getLine().add(line);
-    }
-
-    /*
-     * Convert in-memory PGEN Sigmet DrawableElement object into a list held in
-     * an XML file DrawableElement fde
-     */
-    private static void convertLODLineSigmet(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        gov.noaa.nws.ncep.ui.pgen.file.Sigmet sigmet = new gov.noaa.nws.ncep.ui.pgen.file.Sigmet();
-
-        for (Color clr : de.getColors()) {
-
-            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
-
-            fclr.setRed(clr.getRed());
-            fclr.setGreen(clr.getGreen());
-            fclr.setBlue(clr.getBlue());
-            fclr.setAlpha(clr.getAlpha());
-
-            sigmet.getColor().add(fclr);
-        }
-
-        for (Coordinate crd : ((Sigmet) de).getLinePoints()) {
-
-            Point fpt = new Point();
-            fpt.setLat(crd.y);
-            fpt.setLon(crd.x);
-
-            sigmet.getPoint().add(fpt);
-        }
-
-        sigmet.setPgenCategory(de.getPgenCategory());
-        sigmet.setLineWidth(de.getLineWidth());
-        sigmet.setSizeScale(de.getSizeScale());
-        sigmet.setSmoothFactor(((Sigmet) de).getSmoothFactor());
-        sigmet.setClosed(((Sigmet) de).isClosedLine());
-        sigmet.setFilled(((Sigmet) de).isFilled());
-        sigmet.setPgenType(de.getPgenType());
-        sigmet.setFillPattern(((Sigmet) de).getFillPattern().name());
-
-        sigmet.setType(((Sigmet) de).getType());
-        sigmet.setWidth(((Sigmet) de).getWidth());
-
-        sigmet.setEditableAttrArea(((Sigmet) de).getEditableAttrArea());
-        sigmet.setEditableAttrIssueOffice(
-                ((Sigmet) de).getEditableAttrIssueOffice());
-        sigmet.setEditableAttrStatus(((Sigmet) de).getEditableAttrStatus());
-        sigmet.setEditableAttrId(((Sigmet) de).getEditableAttrId());
-        sigmet.setEditableAttrSeqNum(((Sigmet) de).getEditableAttrSeqNum());
-        sigmet.setEditableAttrStartTime(
-                ((Sigmet) de).getEditableAttrStartTime());
-        sigmet.setEditableAttrEndTime(((Sigmet) de).getEditableAttrEndTime());
-        sigmet.setEditableAttrRemarks(((Sigmet) de).getEditableAttrRemarks());
-        sigmet.setEditableAttrPhenom(((Sigmet) de).getEditableAttrPhenom());
-        sigmet.setEditableAttrPhenom2(((Sigmet) de).getEditableAttrPhenom2());
-        sigmet.setEditableAttrPhenomName(
-                ((Sigmet) de).getEditableAttrPhenomName());
-        sigmet.setEditableAttrPhenomLat(
-                ((Sigmet) de).getEditableAttrPhenomLat());
-        sigmet.setEditableAttrPhenomLon(
-                ((Sigmet) de).getEditableAttrPhenomLon());
-        sigmet.setEditableAttrPhenomPressure(
-                ((Sigmet) de).getEditableAttrPhenomPressure());
-        sigmet.setEditableAttrPhenomMaxWind(
-                ((Sigmet) de).getEditableAttrPhenomMaxWind());
-        sigmet.setEditableAttrFreeText(((Sigmet) de).getEditableAttrFreeText());
-        sigmet.setEditableAttrTrend(((Sigmet) de).getEditableAttrTrend());
-        sigmet.setEditableAttrMovement(((Sigmet) de).getEditableAttrMovement());
-        sigmet.setEditableAttrPhenomSpeed(
-                ((Sigmet) de).getEditableAttrPhenomSpeed());
-        sigmet.setEditableAttrPhenomDirection(
-                ((Sigmet) de).getEditableAttrPhenomDirection());
-        sigmet.setEditableAttrLevel(((Sigmet) de).getEditableAttrLevel());
-        sigmet.setEditableAttrLevelInfo1(
-                ((Sigmet) de).getEditableAttrLevelInfo1());
-        sigmet.setEditableAttrLevelInfo2(
-                ((Sigmet) de).getEditableAttrLevelInfo2());
-        sigmet.setEditableAttrLevelText1(
-                ((Sigmet) de).getEditableAttrLevelText1());
-        sigmet.setEditableAttrLevelText2(
-                ((Sigmet) de).getEditableAttrLevelText2());
-        sigmet.setEditableAttrFromLine(((Sigmet) de).getEditableAttrFromLine());
-        sigmet.setEditableAttrFir(((Sigmet) de).getEditableAttrFir());
-        sigmet.setEditableAttrCarSamBackupMode(((Sigmet) de).getEditableAttrCarSamBackupMode());
-
-        fde.getSigmet().add(sigmet);
-    }
-
-    /*
-     * Convert in-memory PGEN GFA DrawableElement object into a list held in an
-     * XML file DrawableElement fde
-     */
-    private static void convertLODLineGFA(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        gov.noaa.nws.ncep.ui.pgen.file.Gfa fgfa = new gov.noaa.nws.ncep.ui.pgen.file.Gfa();
-
-        for (Color clr : de.getColors()) {
-
-            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
-
-            fclr.setRed(clr.getRed());
-            fclr.setGreen(clr.getGreen());
-            fclr.setBlue(clr.getBlue());
-            fclr.setAlpha(clr.getAlpha());
-
-            fgfa.getColor().add(fclr);
-        }
-
-        for (Coordinate crd : ((Gfa) de).getLinePoints()) {
-
-            Point fpt = new Point();
-            fpt.setLat(crd.y);
-            fpt.setLon(crd.x);
-
-            fgfa.getPoint().add(fpt);
-        }
-
-        fgfa.setPgenCategory(de.getPgenCategory());
-        fgfa.setLineWidth(de.getLineWidth());
-        fgfa.setSizeScale(de.getSizeScale());
-        fgfa.setSmoothFactor(((Gfa) de).getSmoothFactor());
-        fgfa.setClosed(((Gfa) de).isClosedLine());
-        fgfa.setFilled(((Gfa) de).isFilled());
-        fgfa.setPgenType(de.getPgenType());
-        Gfa e = (Gfa) de;
-        if (e.getGfaTextCoordinate() != null) {
-            fgfa.setLatText(e.getGfaTextCoordinate().y);
-            fgfa.setLonText(e.getGfaTextCoordinate().x);
-        }
-        fgfa.setHazard(nvl(e.getGfaHazard()));
-        fgfa.setFcstHr(nvl(e.getGfaFcstHr()));
-        fgfa.setTag(nvl(e.getGfaTag()));
-        fgfa.setDesk(nvl(e.getGfaDesk()));
-        fgfa.setIssueType(nvl(e.getGfaIssueType()));
-        fgfa.setCycleDay(e.getGfaCycleDay());
-        fgfa.setCycleHour(e.getGfaCycleHour());
-        fgfa.setType(nvl(e.getGfaType()));
-        fgfa.setArea(nvl(e.getGfaArea()));
-        fgfa.setBeginning(nvl(e.getGfaBeginning()));
-        fgfa.setEnding(nvl(e.getGfaEnding()));
-        fgfa.setStates(nvl(e.getGfaStates()));
-        fgfa.setGr(nvl(e.getGfaValue(Gfa.GR)));
-        fgfa.setFrequency(nvl((e.getGfaValue(Gfa.FREQUENCY))));
-        fgfa.setTsCategory(nvl(e.getGfaValue(Gfa.CATEGORY)));
-        fgfa.setFzlRange(nvl(e.getGfaValue(Gfa.FZL_RANGE)));
-        fgfa.setLevel(nvl(e.getGfaValue(Gfa.LEVEL)));
-        fgfa.setIntensity(nvl(e.getGfaValue(Gfa.INTENSITY)));
-        fgfa.setSpeed(nvl(e.getGfaValue(Gfa.SPEED)));
-        fgfa.setDueTo(nvl(e.getGfaValue(Gfa.DUE_TO)));
-        fgfa.setLyr(nvl(e.getGfaValue(Gfa.LYR)));
-        fgfa.setCoverage(nvl(e.getGfaValue(Gfa.COVERAGE)));
-        fgfa.setBottom(nvl(e.getGfaBottom()));
-        fgfa.setTop(nvl(e.getGfaTop()));
-        fgfa.setFzlTopBottom(nvl(e.getGfaValue(Gfa.FZL_TOP_BOTTOM)));
-        fgfa.setContour(nvl(e.getGfaValue(Gfa.CONTOUR)));
-        fgfa.setIsOutlook(e.isOutlook());
-        if ("ICE".equals(e.getGfaHazard())) {
-            fgfa.setType(nvl(e.getGfaValue("Type")));
-        }
-        Calendar cal = e.getAttribute(Gfa.ISSUE_TIME, Calendar.class);
-        SimpleDateFormat sdf = new SimpleDateFormat("ddHHmm");
-        if (cal != null) {
-            fgfa.setIssueTime(sdf.format(cal.getTime()));
-        }
-        cal = e.getAttribute(Gfa.UNTIL_TIME, Calendar.class);
-        if (cal != null) {
-            fgfa.setUntilTime(sdf.format(cal.getTime()));
-        }
-        if (e.getAttribute(GfaRules.WORDING) != null) {
-            GfaWording w = e.getAttribute(GfaRules.WORDING, GfaWording.class);
-            fgfa.setFromCondsDvlpg(GfaRules.replacePlusWithCycle(
-                    w.getFromCondsDvlpg(), e.getGfaCycleHour()));
-            fgfa.setFromCondsEndg(GfaRules.replacePlusWithCycle(
-                    w.getFromCondsEndg(), e.getGfaCycleHour()));
-            fgfa.setCondsContg(GfaRules.replacePlusWithCycle(w.getCondsContg(),
-                    e.getGfaCycleHour()));
-            fgfa.setOtlkCondsDvlpg(GfaRules.replacePlusWithCycle(
-                    w.getOtlkCondsDvlpg(), e.getGfaCycleHour()));
-            fgfa.setOtlkCondsEndg(GfaRules.replacePlusWithCycle(
-                    w.getOtlkCondsEndg(), e.getGfaCycleHour()));
-        }
-        // textVOR
-        ArrayList<Coordinate> pts = e.getPoints();
-        pts = SnapUtil.getSnapWithStation(pts, SnapUtil.VOR_STATION_LIST, 10,
-                16, false);
-        Coordinate[] a = new Coordinate[pts.size()];
-        a = pts.toArray(a);
-        String s = "";
-        if (fgfa.getHazard().equalsIgnoreCase("FZLVL")) {
-            if (fgfa.isClosed()) {
-                s = SnapUtil.getVORText(a, "-", "Area", -1, true, false, true);
-            } else {
-                s = SnapUtil.getVORText(a, "-", "Line", -1, true, false, true);
-            }
-        } else if (fgfa.getHazard().equalsIgnoreCase("LLWS")) {
-            s = SnapUtil.getVORText(a, "-", "Area", -1, true, false, true);
-        } else {
-            s = SnapUtil.getVORText(a, " TO ", "Area", -1, true, false, true);
-        }
-        fgfa.setTextVor(s);
-
-        fgfa.setFillPattern(nvl(((Gfa) de).getFillPattern().name()));
-
-        fde.getGfa().add(fgfa);
-    }
-
-    /*
-     * Convert in-memory PGEN Arc DrawableElement object into a list held in an
-     * XML file DrawableElement fde
-     */
-    private static void convertLODLineArc(
-            gov.noaa.nws.ncep.ui.pgen.file.DrawableElement fde,
-            DrawableElement de) {
-        gov.noaa.nws.ncep.ui.pgen.file.Arc arc = new gov.noaa.nws.ncep.ui.pgen.file.Arc();
-
-        for (Color clr : de.getColors()) {
-
-            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
-
-            fclr.setRed(clr.getRed());
-            fclr.setGreen(clr.getGreen());
-            fclr.setBlue(clr.getBlue());
-            fclr.setAlpha(clr.getAlpha());
-
-            arc.getColor().add(fclr);
-        }
-
-        for (Coordinate crd : ((Arc) de).getLinePoints()) {
-
-            Point fpt = new Point();
-            fpt.setLat(crd.y);
-            fpt.setLon(crd.x);
-
-            arc.getPoint().add(fpt);
-        }
-
-        arc.setPgenCategory(de.getPgenCategory());
-        arc.setLineWidth(de.getLineWidth());
-        arc.setSizeScale(de.getSizeScale());
-        arc.setSmoothFactor(((Arc) de).getSmoothFactor());
-        arc.setClosed(((Arc) de).isClosedLine());
-        arc.setFilled(((Arc) de).isFilled());
-        arc.setPgenType(de.getPgenType());
-
-        arc.setFillPattern(((Arc) de).getFillPattern().name());
-        arc.setAxisRatio(((Arc) de).getAxisRatio());
-        arc.setStartAngle(((Arc) de).getStartAngle());
-        arc.setEndAngle(((Arc) de).getEndAngle());
-
-        fde.getArc().add(arc);
     }
 
     /**
      * Convert a DECollection to a format that can be used by jaxb and saved to
      * XML files
-     * 
+     *
      * @param dec
      * @return
      */
@@ -1559,14 +1640,14 @@ public class ProductConverter {
         fdec.setPgenType(dec.getPgenType());
         fdec.setPgenCategory(dec.getPgenCategory());
 
-        List<AbstractDrawableComponent> componentList = new ArrayList<AbstractDrawableComponent>();
+        List<AbstractDrawableComponent> componentList = new ArrayList<>();
         Iterator<AbstractDrawableComponent> it = dec.getComponentIterator();
 
         while (it.hasNext()) {
             componentList.add(it.next());
         }
 
-        fdec.setDrawableElement(convertListOfDEs(componentList));
+        fdec.setDrawableElement(convertDEs(componentList));
 
         return fdec;
 
@@ -1574,7 +1655,7 @@ public class ProductConverter {
 
     /**
      * Convert a DECollection in an XML file to a jet element
-     * 
+     *
      * @param dec
      * @return
      */
@@ -1590,8 +1671,9 @@ public class ProductConverter {
 
         if (elem.getLine() != null) {
             jet.add(convertJetLine(elem.getLine().get(0), jet));
-        } else
+        } else {
             return null;
+        }
 
         if (elem.getVector() != null) {
             for (gov.noaa.nws.ncep.ui.pgen.file.Vector fVector : elem
@@ -1613,6 +1695,12 @@ public class ProductConverter {
                     }
 
                     if (de.getText() != null) {
+                        // Set text to (0,0) in order to reset the flight level
+                        // location during snapping.
+                        // (User may save the jet in one projection and open in
+                        // a different one.
+                        de.getText().get(0).getPoint().setLat((double) 0);
+                        de.getText().get(0).getPoint().setLon((double) 0);
                         wind.add(convertJetFL(de.getText().get(0), jet));
                     }
 
@@ -1622,12 +1710,21 @@ public class ProductConverter {
             }
         }
 
+        // Snap jet
+        if (PgenSession.getInstance() != null) {
+            PgenSnapJet st = new PgenSnapJet(
+                    PgenSession.getInstance().getPgenResource().getDescriptor(),
+                    PgenUtil.getActiveEditor(), null);
+            jet.setSnapTool(st);
+            st.snapJet(jet);
+        }
+
         return jet;
     }
 
     /**
      * Convert a XML Line to a jet line
-     * 
+     *
      * @return
      */
     private static JetLine convertJetLine(
@@ -1640,7 +1737,7 @@ public class ProductConverter {
                     fColor.getBlue(), fColor.getAlpha());
         }
 
-        ArrayList<Coordinate> linePoints = new ArrayList<Coordinate>();
+        ArrayList<Coordinate> linePoints = new ArrayList<>();
         nn = 0;
         for (Point pt : jetLine.getPoint()) {
             linePoints.add(new Coordinate(pt.getLon(), pt.getLat()));
@@ -1659,7 +1756,7 @@ public class ProductConverter {
 
     /**
      * Convert a vector from XML to jet hash
-     * 
+     *
      * @param fVector
      * @param jet
      * @return
@@ -1678,7 +1775,7 @@ public class ProductConverter {
         VectorType vtype = null;
         String pgenType = fVector.getPgenType();
 
-        if (pgenType.equalsIgnoreCase("Hash")) {
+        if (pgenType.equalsIgnoreCase(HASH)) {
             vtype = VectorType.HASH_MARK;
         }
         JetHash hash = jet.new JetHash(null, clr, fVector.getLineWidth(),
@@ -1694,7 +1791,7 @@ public class ProductConverter {
 
     /**
      * Convert a Vector from XML to jet barb
-     * 
+     *
      * @param fVector
      * @param jet
      * @return
@@ -1713,7 +1810,7 @@ public class ProductConverter {
         VectorType vtype = null;
         String pgenType = fVector.getPgenType();
 
-        if (pgenType.equalsIgnoreCase("Barb")) {
+        if (pgenType.equalsIgnoreCase(BARB)) {
             vtype = VectorType.WIND_BARB;
         }
         JetBarb barb = jet.new JetBarb(null, clr, fVector.getLineWidth(),
@@ -1728,7 +1825,7 @@ public class ProductConverter {
 
     /**
      * Convert an XML text to a jet flight level text
-     * 
+     *
      * @param fText
      * @return
      */
@@ -1760,14 +1857,14 @@ public class ProductConverter {
                 fText.isMask(), DisplayType.valueOf(fText.getDisplayType()),
                 fText.getPgenCategory(), fText.getPgenType());
 
-        text.setLatLonFlag(true);
+        text.setLatLonFlag(false);
 
         return text;
     }
 
     /**
      * Convert a Contours object to an XML Contours object.
-     * 
+     *
      * @param cnt
      * @return
      */
@@ -1776,9 +1873,9 @@ public class ProductConverter {
 
         gov.noaa.nws.ncep.ui.pgen.file.Contours contours = new gov.noaa.nws.ncep.ui.pgen.file.Contours();
 
-        contours.setCollectionName("Contours");
-        contours.setPgenType("Contours");
-        contours.setPgenCategory("MET");
+        contours.setCollectionName(PgenConstant.CONTOURS);
+        contours.setPgenType(PgenConstant.CONTOURS);
+        contours.setPgenCategory(PgenConstant.CATEGORY_MET);
 
         contours.setParm(cnt.getParm());
         contours.setLevel(cnt.getLevel());
@@ -1821,14 +1918,12 @@ public class ProductConverter {
 
         Iterator<AbstractDrawableComponent> it = cnt.getComponentIterator();
         while (it.hasNext()) {
-
             AbstractDrawableComponent next = it.next();
 
             if (next instanceof DECollection) {
                 contours.getDECollection()
                         .add(convertDECollection2XML((DECollection) next));
             }
-
         }
 
         return contours;
@@ -1837,14 +1932,14 @@ public class ProductConverter {
 
     /**
      * Convert a JAXB XML Contours object to a PGEN Contours object.
-     * 
+     *
      * @param cnt
      * @return
      */
     private static Contours convertXML2Contours(
             gov.noaa.nws.ncep.ui.pgen.file.Contours cnt) {
 
-        Contours contours = new Contours("Contours");
+        Contours contours = new Contours(PgenConstant.CONTOURS);
 
         contours.setPgenType(cnt.getPgenType());
         contours.setPgenCategory(cnt.getPgenCategory());
@@ -1859,18 +1954,20 @@ public class ProductConverter {
 
         Calendar cntTime = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         XMLGregorianCalendar xmlCal = cnt.getTime1();
-        if (xmlCal != null)
+        if (xmlCal != null) {
             cntTime.set(xmlCal.getYear(), xmlCal.getMonth() - 1,
                     xmlCal.getDay(), xmlCal.getHour(), xmlCal.getMinute(),
                     xmlCal.getSecond());
+        }
         contours.setTime1(cntTime);
 
         Calendar cntTime2 = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         XMLGregorianCalendar xmlCal2 = cnt.getTime2();
-        if (xmlCal2 != null)
+        if (xmlCal2 != null) {
             cntTime2.set(xmlCal2.getYear(), xmlCal2.getMonth() - 1,
                     xmlCal2.getDay(), xmlCal2.getHour(), xmlCal2.getMinute(),
                     xmlCal2.getSecond());
+        }
         contours.setTime2(cntTime2);
 
         for (gov.noaa.nws.ncep.ui.pgen.file.DECollection fdec : cnt
@@ -1884,6 +1981,11 @@ public class ProductConverter {
                 String[] labelString = null;
                 int numOfLabels = 0;
 
+                /*
+                 * If a contour line's label is hidden, sets the line's
+                 * "numOfLabels" to 0.
+                 */
+                boolean zeroLabels = false;
                 for (AbstractDrawableComponent de : delist) {
 
                     de.setParent(contourLine);
@@ -1891,6 +1993,9 @@ public class ProductConverter {
 
                     if (de instanceof Text) {
                         numOfLabels++;
+                        if (((Text) de).getHide()) {
+                            zeroLabels = true;
+                        }
 
                         if (labelString == null) {
                             labelString = ((Text) de).getText();
@@ -1900,6 +2005,9 @@ public class ProductConverter {
                 }
 
                 // Set the number of labels and label strings
+                if (zeroLabels) {
+                    numOfLabels = 0;
+                }
                 contourLine.setNumOfLabels(numOfLabels);
                 contourLine.setLabelString(labelString);
 
@@ -1946,8 +2054,118 @@ public class ProductConverter {
     }
 
     /**
+     * convert a Spenes element to XML file
+     *
+     * @param spenes
+     * @return
+     */
+    private static gov.noaa.nws.ncep.ui.pgen.file.Spenes convertSpenes2XML(
+            Spenes spenes) {
+        gov.noaa.nws.ncep.ui.pgen.file.Spenes fspenes = new gov.noaa.nws.ncep.ui.pgen.file.Spenes();
+        // set color
+        fspenes.setPgenCategory(spenes.getPgenCategory());
+        fspenes.setPgenType(spenes.getPgenType());
+        fspenes.setLineWidth(spenes.getLineWidth());
+        fspenes.setSmoothLevel(spenes.getSmoothFactor());
+        fspenes.setInitDateTime(spenes.getInitDateTime());
+        fspenes.setStateZ000(spenes.getStateZ000());
+        fspenes.setLatestDataUsed(spenes.getLatestDataUsed());
+        fspenes.setObsHr(spenes.getObsHr());
+        fspenes.setForecasters(spenes.getForecasters());
+        fspenes.setLocation(spenes.getLocation());
+        fspenes.setAttnWFOs(spenes.getAttnWFOs());
+        fspenes.setAttnRFCs(spenes.getAttnRFCs());
+        fspenes.setEvent(spenes.getEvent());
+        fspenes.setSatAnalysisTrends(spenes.getSatAnalysisTrend());
+        fspenes.setShortTermBegin(spenes.getShortTermBegin());
+        fspenes.setShortTermEnd(spenes.getShortTermEnd());
+        fspenes.setOutLookLevel(spenes.getOutlookLevel());
+        fspenes.setAddlInfo(spenes.getAddlInfo());
+        fspenes.setLatlon(spenes.getLatLon());
+
+        // set points
+        for (Coordinate crd : spenes.getLinePoints()) {
+
+            Point fpt = new Point();
+            fpt.setLat(crd.y);
+            fpt.setLon(crd.x);
+
+            fspenes.getPoint().add(fpt);
+        }
+        Point fpt = new Point();
+        Coordinate crd = new Coordinate();
+        crd = spenes.getLinePoints()[0];
+        fpt.setLat(crd.y);
+        fpt.setLon(crd.x);
+        fspenes.getPoint().add(fpt);
+
+        // set color
+        for (Color clr : spenes.getColors()) {
+
+            gov.noaa.nws.ncep.ui.pgen.file.Color fclr = new gov.noaa.nws.ncep.ui.pgen.file.Color();
+
+            fclr.setRed(clr.getRed());
+            fclr.setGreen(clr.getGreen());
+            fclr.setBlue(clr.getBlue());
+            fclr.setAlpha(clr.getAlpha());
+            fspenes.getColor().add(fclr);
+        }
+
+        return fspenes;
+    }
+
+    /**
+     * Convert XML to spenes element
+     *
+     * @param fwb
+     * @return
+     */
+    private static Spenes convertXML2Spenes(
+            gov.noaa.nws.ncep.ui.pgen.file.Spenes fspenes) {
+        Spenes sp = new Spenes();
+
+        sp.setPgenCategory(fspenes.getPgenCategory());
+        sp.setPgenType(fspenes.getPgenType());
+        sp.setLineWidth(fspenes.getLineWidth());
+        sp.setSmoothFactor(fspenes.getSmoothLevel());
+        sp.setInitDateTime(fspenes.getInitDateTime());
+        sp.setLatestData(fspenes.getLatestDataUsed());
+        sp.setObsHr(fspenes.getObsHr());
+        sp.setForecasters(fspenes.getForecasters());
+        sp.setStateZ000(fspenes.getStateZ0000());
+        sp.setLocation(fspenes.getLocation());
+        sp.setAttnWFOs(fspenes.getAttnWFOs());
+        sp.setAttnRFCs(fspenes.getAttnRFCs());
+        sp.setEvent(fspenes.getEvent());
+        sp.setSatAnalysisTrend(fspenes.getSatAnalysisTrends());
+        sp.setShortTermBegin(fspenes.getShortTermBegin());
+        sp.setShortTermEnd(fspenes.getShortTermEnd());
+        sp.setOutlookLevel(fspenes.getOutLookLevel());
+        sp.setAddlInfo(fspenes.getAddlInfo());
+        sp.setLatLon(fspenes.getLatlon());
+        // set color
+        Color[] clr = new Color[fspenes.getColor().size()];
+        int nn = 0;
+        for (gov.noaa.nws.ncep.ui.pgen.file.Color fColor : fspenes.getColor()) {
+            clr[nn++] = new Color(fColor.getRed(), fColor.getGreen(),
+                    fColor.getBlue(), fColor.getAlpha());
+        }
+        sp.setColors(clr);
+
+        // set points
+        ArrayList<Coordinate> linePoints = new ArrayList<>();
+        nn = 0;
+        for (Point pt : fspenes.getPoint()) {
+            linePoints.add(new Coordinate(pt.getLon(), pt.getLat()));
+        }
+        sp.setPointsOnly(linePoints);
+
+        return sp;
+    }
+
+    /**
      * Convert a WatchBox element to file
-     * 
+     *
      * @param wb
      * @return
      */
@@ -2069,14 +2287,25 @@ public class ProductConverter {
             String cntyName = "";
             if (cnty.getName() != null) {
                 cntyName = cnty.getName().replaceAll("City of ", "")
-                        .replaceAll(" City", "");
+                        .replaceAll(" City", "").replaceAll(" ", "_")
+                        .replaceAll("'", "").replaceAll("\\.", "");
+                ;
             }
 
             fwb.getCounties().add(String.format(
-                    "%1$-7s%2$-5s%3$-12s%4$6.2f%5$8.2f%6$7s%7$5s %8$s",
+                    "%1$-7s%2$-5s%3$-17s%4$5.2f%5$8.2f%6$7s %7$-5s %8$s",
                     cnty.getUgcId(), cnty.getState(), cntyName,
                     cnty.getCentriod().y, cnty.getCentriod().x, cnty.getFips(),
                     cnty.getWfo(), cnty.getZoneName().toUpperCase()));
+        }
+
+        // set original counties
+        if (wb.getOriginalCountyList() != null) {
+            for (SPCCounty cnty : wb.getOriginalCountyList()) {
+
+                fwb.getOriginalCounties().add(String.format("%1$-7s %2$7s",
+                        cnty.getUgcId(), cnty.getFips()));
+            }
         }
 
         // set states
@@ -2119,6 +2348,7 @@ public class ProductConverter {
                                                 .get(Calendar.MILLISECOND),
                                         0);
                     } catch (DatatypeConfigurationException e) {
+                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                     fws.setStatusValidTime(xmlCal);
@@ -2140,6 +2370,7 @@ public class ProductConverter {
                                         statusExpTime.get(Calendar.MILLISECOND),
                                         0);
                     } catch (DatatypeConfigurationException e) {
+                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                     fws.setStatusExpTime(xmlCal);
@@ -2150,54 +2381,12 @@ public class ProductConverter {
             }
         }
 
-        // set outlines and holes
-        Geometry union = wb.getCountyUnion();
-
-        if (union != null) {
-            // loop through all polygons in the union
-            for (int ii = 0; ii < union.getNumGeometries(); ii++) {
-
-                // set outlines
-                Polygon poly = (Polygon) union.getGeometryN(ii);
-
-                LineString outside = poly.getExteriorRing();
-
-                Outline ol = new Outline();
-
-                for (Coordinate pt : outside.getCoordinates()) {
-                    Point fpt = new Point();
-                    fpt.setLat(pt.y);
-                    fpt.setLon(pt.x);
-                    ol.getPoint().add(fpt);
-                }
-
-                fwb.getOutline().add(ol);
-
-                // loop through all holes of the polygon
-                for (int jj = 0; jj < poly.getNumInteriorRing(); jj++) {
-
-                    LineString ls = poly.getInteriorRingN(jj);
-                    Hole hole = new Hole();
-
-                    for (Coordinate pt : ls.getCoordinates()) {
-                        Point fpt = new Point();
-                        fpt.setLat(pt.y);
-                        fpt.setLon(pt.x);
-                        hole.getPoint().add(fpt);
-                    }
-
-                    fwb.getHole().add(hole);
-
-                }
-            }
-        }
-
         return fwb;
     }
 
     /**
      * Convert XML to WatchBox element
-     * 
+     *
      * @param fwb
      * @return
      */
@@ -2238,48 +2427,60 @@ public class ProductConverter {
         wb.setSeverity(fwb.getSeverity());
         wb.setTimeZone(fwb.getTimeZone());
 
-        if (fwb.getHailSize() != null)
+        if (fwb.getHailSize() != null) {
             wb.setHailSize(fwb.getHailSize());
+        }
 
-        if (fwb.getGust() != null)
+        if (fwb.getGust() != null) {
             wb.setGust(fwb.getGust());
+        }
 
-        if (fwb.getTop() != null)
+        if (fwb.getTop() != null) {
             wb.setTop(fwb.getTop());
+        }
 
-        if (fwb.getMoveDir() != null)
+        if (fwb.getMoveDir() != null) {
             wb.setMoveDir(fwb.getMoveDir());
+        }
 
-        if (fwb.getMoveSpeed() != null)
+        if (fwb.getMoveSpeed() != null) {
             wb.setMoveSpeed(fwb.getMoveSpeed());
+        }
 
         wb.setAdjAreas(fwb.getAdjAreas());
 
-        if (fwb.getReplWatch() != null)
+        if (fwb.getReplWatch() != null) {
             wb.setReplWatch(fwb.getReplWatch());
+        }
 
-        if (fwb.getContWatch() != null)
+        if (fwb.getContWatch() != null) {
             wb.setContWatch(fwb.getContWatch());
+        }
 
-        if (fwb.getIssueFlag() != null)
+        if (fwb.getIssueFlag() != null) {
             wb.setIssueFlag(fwb.getIssueFlag());
+        }
 
         wb.setForecaster(fwb.getForecaster());
 
-        if (fwb.getWatchNumber() != null)
+        if (fwb.getWatchNumber() != null) {
             wb.setWatchNumber(fwb.getWatchNumber());
+        }
 
         wb.setEndPointAnc(fwb.getEndPointAnc());
         wb.setEndPointVor(fwb.getEndPointVor());
 
-        if (fwb.getWatchAreaNm() != null)
+        if (fwb.getWatchAreaNm() != null) {
             wb.setWathcAreaNm(fwb.getWatchAreaNm());
+        }
 
-        if (fwb.getHalfWidthNm() != null)
+        if (fwb.getHalfWidthNm() != null) {
             wb.setHalfWidthNm(fwb.getHalfWidthNm());
+        }
 
-        if (fwb.getHalfWidthSm() != null)
+        if (fwb.getHalfWidthSm() != null) {
             wb.setHalfWidthSm(fwb.getHalfWidthSm());
+        }
 
         // set color
 
@@ -2292,7 +2493,7 @@ public class ProductConverter {
         wb.setColors(clr);
 
         // set points
-        ArrayList<Coordinate> linePoints = new ArrayList<Coordinate>();
+        ArrayList<Coordinate> linePoints = new ArrayList<>();
         nn = 0;
         for (Point pt : fwb.getPoint()) {
             linePoints.add(new Coordinate(pt.getLon(), pt.getLat()));
@@ -2315,22 +2516,21 @@ public class ProductConverter {
          */
         String fileDir = ProductConverter.class.getProtectionDomain()
                 .getCodeSource().getLocation().toString();
-        // file:/usr1/qzhou/to11dr3/workspace/gov.noaa.nws.ncep.pgen/bin/
-        // file:/usr1/qzhou/R1G1-6/workspace/gov.noaa.nws.ncep.standalone/
-        // file:/usr1/qzhou/R1G1-6/workspace/gov.noaa.nws.ncep.standalone/distXC/xmlConverter.jar
-        if (fileDir.endsWith(".jar"))
+        if (fileDir.endsWith(".jar")) {
             fileDir = fileDir.substring(5, (fileDir.lastIndexOf("/") + 1));
-        else
+        } else {
             fileDir = fileDir.substring(5);
+        }
 
         // set anchor points
         Station anchors[] = new Station[fwb.getAnchorPoints().size()];
         nn = 0;
         for (String str : fwb.getAnchorPoints()) {
-            if (!str.equalsIgnoreCase(""))
+            if (!str.equalsIgnoreCase("")) {
                 anchors[nn++] = (new StationTable(
                         fileDir + "table/spcwatch.xml")).getStation(
                                 StationField.STID, str.substring(0, 3));
+            }
         }
         wb.setAnchors(anchors[0], anchors[1]);
 
@@ -2341,8 +2541,9 @@ public class ProductConverter {
         for (String str : fwb.getCounties()) {
             // str = MIC147 MI St. Clair 42.94 -82.68 26147 DTX
             String[] substr = str.split("\\s+");
-            if (substr.length > 1)
+            if (substr.length > 1) {
                 str = substr[5];
+            }
 
             county[n] = (new StationTable(fileDir + "table/mzcntys.xml"))
                     .getStation(StationField.STNM, str);
@@ -2398,7 +2599,7 @@ public class ProductConverter {
 
     /**
      * Convert an Outlook object to an XML Outlook object.
-     * 
+     *
      * @param cnt
      * @return
      */
@@ -2453,6 +2654,7 @@ public class ProductConverter {
                         issueTime.get(Calendar.MINUTE),
                         issueTime.get(Calendar.SECOND), 0, 0);
             } catch (DatatypeConfigurationException e) {
+                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             fotlk.setIssueTime(xmlCal);
@@ -2470,6 +2672,7 @@ public class ProductConverter {
                         expTime.get(Calendar.MINUTE),
                         expTime.get(Calendar.SECOND), 0, 0);
             } catch (DatatypeConfigurationException e) {
+                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             fotlk.setExpTime(xmlCal);
@@ -2493,7 +2696,7 @@ public class ProductConverter {
 
     /**
      * Convert a JAXB XML Outlook object to a PGEN Outlook object.
-     * 
+     *
      * @param cnt
      * @return
      */
@@ -2598,7 +2801,6 @@ public class ProductConverter {
             props.load(fis);
             fis.close();
         } catch (Exception e) {
-            e.printStackTrace();
         }
 
         return props;
@@ -2606,9 +2808,9 @@ public class ProductConverter {
 
     /**
      * Convert XML to Volcano element
-     * 
+     *
      * public for saving elements with SaveMsgDlg and TEST/RESUME types
-     * 
+     *
      * @param fVol
      * @return Volcano element
      */
@@ -2636,13 +2838,14 @@ public class ProductConverter {
          */
         boolean isNoneDrawable = false;
 
-        ArrayList<Coordinate> volPoints = new ArrayList<Coordinate>();
+        ArrayList<Coordinate> volPoints = new ArrayList<>();
         nn = 0;
         for (Point pt : fVol.getPoint()) {
             volPoints.add(new Coordinate(pt.getLon(), pt.getLat()));
         }
-        if (!isNoneDrawable)
+        if (!isNoneDrawable) {
             vol.setPoints(volPoints);
+        }
 
         vol.setName(fVol.getName());
         vol.setNumber(fVol.getNumber());
@@ -2681,9 +2884,9 @@ public class ProductConverter {
 
     /**
      * Convert Volcano element to XML file
-     * 
+     *
      * public for saving elements with SaveMsgDlg and TEST/RESUME types
-     * 
+     *
      * @param vol
      * @return XML file
      */
@@ -2709,8 +2912,9 @@ public class ProductConverter {
         }
 
         for (Coordinate crd : vol.getLinePoints()) {
-            if (isNoneDrawable)
+            if (isNoneDrawable) {
                 break;
+            }
             Point fpt = new Point();
             fpt.setLat(crd.y);
             fpt.setLon(crd.x);
@@ -2765,7 +2969,7 @@ public class ProductConverter {
 
     /**
      * Convert a DECollection in an XML file to a labeled line element
-     * 
+     *
      * @param dec
      * @return
      */
@@ -2788,45 +2992,6 @@ public class ProductConverter {
 
                         gov.noaa.nws.ncep.ui.pgen.file.DrawableElement lblDe = lblDec
                                 .getDrawableElement();
-
-                        if (lblDe.getLine() != null) {
-                            // convert arrow lines
-                            for (gov.noaa.nws.ncep.ui.pgen.file.Line arrowLine : lblDe
-                                    .getLine()) {
-
-                                // get colors
-                                Color[] clr = new Color[arrowLine.getColor()
-                                        .size()];
-                                int nn = 0;
-                                for (gov.noaa.nws.ncep.ui.pgen.file.Color fColor : arrowLine
-                                        .getColor()) {
-                                    clr[nn++] = new Color(fColor.getRed(),
-                                            fColor.getGreen(), fColor.getBlue(),
-                                            fColor.getAlpha());
-                                }
-
-                                ArrayList<Coordinate> linePoints = new ArrayList<Coordinate>();
-                                nn = 0;
-                                for (Point pt : arrowLine.getPoint()) {
-                                    linePoints.add(new Coordinate(pt.getLon(),
-                                            pt.getLat()));
-                                }
-
-                                Line line = new Line(null, clr,
-                                        arrowLine.getLineWidth(),
-                                        arrowLine.getSizeScale(),
-                                        arrowLine.isClosed(),
-                                        arrowLine.isFilled(), linePoints,
-                                        arrowLine.getSmoothFactor(),
-                                        FillPattern.valueOf(
-                                                arrowLine.getFillPattern()),
-                                        arrowLine.getPgenCategory(),
-                                        arrowLine.getPgenType());
-
-                                line.setParent(lbl);
-                                lbl.addArrow(line);
-                            }
-                        }
 
                         if (lblDe.getMidCloudText() != null) {
                             // convert label texts.
@@ -2867,14 +3032,6 @@ public class ProductConverter {
                                         aText.getPgenType());
 
                                 // text.setTwoColumns(false);
-                                if (aText.getIthw() != null) {
-                                    text.setIthw(aText.getIthw());
-                                }
-
-                                if (aText.getIwidth() != null) {
-                                    text.setIwidth(aText.getIwidth());
-                                }
-
                                 text.setParent(lbl);
                                 lbl.setSpe(text);
                             }
@@ -2914,7 +3071,7 @@ public class ProductConverter {
                                         aText.getPgenCategory(),
                                         aText.getPgenType());
 
-                                // text.setTwoColumns(false);
+                                // preserve ithw/iwidth
                                 if (aText.getIthw() != null) {
                                     text.setIthw(aText.getIthw());
                                 }
@@ -2930,6 +3087,46 @@ public class ProductConverter {
                         if (lblDe.getText() != null) {
                             handleCcfpText(lblDe, lbl);
                         }
+
+                        if (lblDe.getLine() != null) {
+                            // convert arrow lines
+                            for (gov.noaa.nws.ncep.ui.pgen.file.Line arrowLine : lblDe
+                                    .getLine()) {
+
+                                // get colors
+                                Color[] clr = new Color[arrowLine.getColor()
+                                        .size()];
+                                int nn = 0;
+                                for (gov.noaa.nws.ncep.ui.pgen.file.Color fColor : arrowLine
+                                        .getColor()) {
+                                    clr[nn++] = new Color(fColor.getRed(),
+                                            fColor.getGreen(), fColor.getBlue(),
+                                            fColor.getAlpha());
+                                }
+
+                                ArrayList<Coordinate> linePoints = new ArrayList<>();
+                                nn = 0;
+                                for (Point pt : arrowLine.getPoint()) {
+                                    linePoints.add(new Coordinate(pt.getLon(),
+                                            pt.getLat()));
+                                }
+
+                                Line line = new Line(null, clr,
+                                        arrowLine.getLineWidth(),
+                                        arrowLine.getSizeScale(),
+                                        arrowLine.isClosed(),
+                                        arrowLine.isFilled(), linePoints,
+                                        arrowLine.getSmoothFactor(),
+                                        FillPattern.valueOf(
+                                                arrowLine.getFillPattern()),
+                                        arrowLine.getPgenCategory(),
+                                        arrowLine.getPgenType());
+
+                                line.setParent(lbl);
+                                lbl.addArrow(line);
+                            }
+                        }
+
                         ll.addLabel(lbl);
                     }
 
@@ -2952,7 +3149,7 @@ public class ProductConverter {
                                 fColor.getAlpha());
                     }
 
-                    ArrayList<Coordinate> linePoints = new ArrayList<Coordinate>();
+                    ArrayList<Coordinate> linePoints = new ArrayList<>();
                     nn = 0;
                     for (Point pt : fLine.getPoint()) {
                         linePoints
@@ -2979,7 +3176,7 @@ public class ProductConverter {
 
     /**
      * Convert a DECollection in an XML file to a cloud element
-     * 
+     *
      * @param dec
      * @return
      */
@@ -2992,7 +3189,7 @@ public class ProductConverter {
 
     /**
      * Convert a DECollection in an XML file to a turbulence element
-     * 
+     *
      * @param dec
      * @return
      */
@@ -3056,7 +3253,7 @@ public class ProductConverter {
 
     /**
      * Convert a JAXB XML TCM object to a PGEN Tcm object.
-     * 
+     *
      * @param cnt
      * @return
      */
@@ -3092,7 +3289,7 @@ public class ProductConverter {
 
     /**
      * Convert a Tcm object to an XML TCM object.
-     * 
+     *
      * @param cnt
      * @return
      */

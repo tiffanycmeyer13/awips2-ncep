@@ -82,6 +82,7 @@ import com.raytheon.viz.ui.editor.AbstractEditor;
  * 10/14        R5712       J. Wu       Fixed index-out-of-bound issue for productNames.
  * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
  * 05/05/2021   91162       smanoj      ActivityType used for default configuration.
+ * 05/13/2021   91162       smanoj      Fixed UELE issue and updated currentProductParams.
  * 
  * </pre>
  * 
@@ -416,7 +417,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             @Override
             public void handleEvent(org.eclipse.swt.widgets.Event event) {
                 currentProductParams.put("CYCLE", cycleCombo.getText());
-                setParameters(generateParameters());
+                updateCurrentProductParameters();
             }
         });
 
@@ -450,7 +451,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
                     currentFcstHr = fcstCombo.getText();
                     if (currentProductParams != null) {
                         currentProductParams.put("FCST_HR", currentFcstHr);
-                        setParameters(generateParameters());
+                        updateCurrentProductParameters();
                     }
                 }
             }
@@ -468,7 +469,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
                     currentFcstHr = fcsthrTxt.getText();
                     if (currentProductParams != null) {
                         currentProductParams.put("FCST_HR", currentFcstHr);
-                        setParameters(generateParameters());
+                        updateCurrentProductParameters();
                     }
                 }
             }
@@ -502,6 +503,15 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
         }
 
+    }
+
+    /*
+     * Update current product with new parameters
+     */
+    private void updateCurrentProductParameters() {
+        HashMap<String, String> currentParams = generateParameters();
+        setParameters(currentParams);
+        currentProductParams.putAll(currentParams);
     }
 
     /*
@@ -1223,10 +1233,12 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
         }
 
         for (String str : productNames) {
-            String[] prodValues = (productMaps.get(str)).split("/");
-            if (prodValues.length > 1) {
-                if (currentActivityType.equalsIgnoreCase(prodValues[1])) {
-                    defaultProdName = str;
+            if (productMaps.get(str) != null) {
+                String[] prodValues = (productMaps.get(str)).split("/");
+                if (prodValues.length > 1) {
+                    if (currentActivityType.equalsIgnoreCase(prodValues[1])) {
+                        defaultProdName = str;
+                    }
                 }
             }
         }
