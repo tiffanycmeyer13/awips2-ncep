@@ -183,6 +183,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Apr 28, 2021  90556     smanoj        Drop unneeded trailing attributes from
  *                                       final Cancellation SIGMET Save.
  * May 10, 2021  91845     smanoj        Save CARSAM Backupmode flag to the SIGMET xml.
+ * May 28, 2021  91845     smanoj        Drawing SIGMET spanning multiple FIRs in Backupmode.
  * 
  * </pre>
  *
@@ -1772,9 +1773,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
         firMexicoGrp.setLayout(new GridLayout(8, false));
         firMexicoGrp.setText(SigmetConstant.MEXICO);
-        for (
-
-        String s : SigmetInfo.FIR_MEXICO) {
+        for (String s : SigmetInfo.FIR_MEXICO) {
             btnMexico = new Button(firMexicoGrp, SWT.CHECK);
             btnMexico.setText(s);
             // map all fir buttons with their name as keys
@@ -1798,10 +1797,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 4, 1));
         firOtherGrp.setLayout(new GridLayout(8, false));
         firOtherGrp.setText(SigmetConstant.OTHER_SITES);
-        for (
-
-        String s : SigmetInfo.FIR_OTHER) {
-            btnOther = new Button(firOtherGrp, SWT.CHECK);
+        for (String s : SigmetInfo.FIR_OTHER) {
+            btnOther = new Button(firOtherGrp, SWT.RADIO);
             btnOther.setText(s);
             // map all fir buttons with their name as keys
             firButtonMap.put(s, new Button[] { btnOther });
@@ -1849,6 +1846,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
         }
+
         btnCarSamBackUp.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
@@ -1856,6 +1854,30 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 isCarSamBackup = btn.getSelection();
                 SigmetAttrDlg.this.setEditableAttrCarSamBackupMode(
                         Boolean.toString(btn.getSelection()));
+                if (isCarSamBackup) {
+                    editableFirID = getFirs();
+                    String[] firValues = editableFirID.split(" ");
+                    for (String firVal : firValues) {
+                        for (String other : SigmetInfo.FIR_OTHER) {
+                            if (other.contains(firVal)) {
+                                // Multiple FIRs not allowed in Backup Mode
+                                // uncheck FIR_MEXICO if FIR_OTHER selected.
+                                editableFirID = firVal;
+                                for (String str : SigmetInfo.FIR_MEXICO) {
+                                    Button[] firButt = firButtonMap.get(str);
+                                    for (int i = 0; firButt != null
+                                            && i < firButt.length; i++) {
+                                        if (firButt[i].getText()
+                                                .contains(str)) {
+                                            firButt[i].setSelection(false);
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         });
     }
@@ -3696,6 +3718,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         sb.append(carsamWmo.getWmoHeaderForOther());
                     }
                     sb.append(" ").append(carsamWmo.getWmoID()).append(" ");
+                    break;
                 }
             }
             sb.append(getTimeStringPlusHourInHMS(0));
