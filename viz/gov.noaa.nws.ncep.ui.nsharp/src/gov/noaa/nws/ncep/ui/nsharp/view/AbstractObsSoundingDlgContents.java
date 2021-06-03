@@ -53,7 +53,8 @@ import com.raytheon.uf.common.status.UFStatus.Priority;
  * Date          Ticket#  Engineer  Description
  * ------------- -------- --------- -----------------
  * Mar 20, 2020  73571    smanoj   Initial creation
- *
+ * Jun 22, 2020  79556    smanoj   Fixing some errors and enhancements.
+ * 
  * </pre>
  *
  * @author smanoj
@@ -127,12 +128,17 @@ public abstract class AbstractObsSoundingDlgContents {
                             "%1$ty%1$tm%1$td/%1$tH(%3$s) %2$s", cal,
                             currentSndType.toString(), dayOfWeek);
                     if (!timeLimit) {
-                        timeList.add(gmtTimeStr);
+                        if (!timeList.contains(gmtTimeStr)) {
+                            timeList.add(gmtTimeStr);
+                        }
                     } else {
                         int hour = cal.get(Calendar.HOUR_OF_DAY);
                         // "00z and 12z only hour
-                        if ((hour == 0) || (hour == 12))
-                            timeList.add(gmtTimeStr);
+                        if ((hour == 0) || (hour == 12)) {
+                            if (!timeList.contains(gmtTimeStr)) {
+                                timeList.add(gmtTimeStr);
+                            }
+                        }
                     }
                 }
             }
@@ -149,7 +155,7 @@ public abstract class AbstractObsSoundingDlgContents {
         String selectedSndTime = null;
 
         if (selectedTimeList.isEmpty()) {
-            statusHandler.handle(Priority.INFO,
+            statusHandler.handle(Priority.WARN,
                     "Data not available to Mark Points on Map for "
                             + currentSndType.toString());
         } else {

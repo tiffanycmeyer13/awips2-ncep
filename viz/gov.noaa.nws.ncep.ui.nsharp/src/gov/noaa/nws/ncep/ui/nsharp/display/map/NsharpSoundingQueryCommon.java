@@ -16,6 +16,8 @@ package gov.noaa.nws.ncep.ui.nsharp.display.map;
  * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own
  *                                      thread to avoid gui locked out during load
  * 04/06/2020   73571       smanoj      NSHARP D2D port refactor
+ * 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
+ * 
  * </pre>
  * 
  * @author Chin Chen
@@ -38,7 +40,13 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.progress.UIJob;
 
+import com.raytheon.uf.common.status.IUFStatusHandler;
+import com.raytheon.uf.common.status.UFStatus;
+import com.raytheon.uf.common.status.UFStatus.Priority;
+
 public class NsharpSoundingQueryCommon {
+    private static final IUFStatusHandler statusHandler = UFStatus
+            .getHandler(NsharpModelSoundingQuery.class);
 
     /*
      * Load sounding data to NsharpEditor, run in an UI thread
@@ -54,11 +62,12 @@ public class NsharpSoundingQueryCommon {
                     NsharpEditor.getActiveNsharpEditor().refresh();
                 }
                 if (soundingLysLstMap.size() <= 0) {
-                    postToMsgBox(
+                    statusHandler.handle(Priority.WARN,
                             "No sounding data returned from DB for this station!!");
                 } else {
                     NsharpResourceHandler rscHdr = NsharpEditor
                             .createOrOpenEditor().getRscHandler();
+                    rscHdr.deleteRscAll();
                     rscHdr.addRsc(soundingLysLstMap, currentStnInfo);
 
                     NsharpEditor.bringEditorToTop();

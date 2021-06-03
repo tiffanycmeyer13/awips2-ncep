@@ -73,7 +73,13 @@ import gov.noaa.nws.ncep.ui.pgen.elements.SymbolLocationSet;
  * Date          Ticket#  Engineer  Description
  * ------------- -------- --------- -----------------
  * Mar 23, 2020  73571    smanoj   Initial creation
- *
+ * Jun 22, 2020  79556    smanoj   Fixing some errors.
+ * Nov 20, 2020  84061    smanoj   NSHARP artifacts(green diamonds) to plot
+ *                                 in the D2D "Map" Editor.
+ * Dec 07, 2020  85537    smanoj   Fix issue with disable NSHARP resource
+ *                                 by unchecking the "Editable" check box
+ *                                 in the resource menu.
+ * 
  * </pre>
  *
  * @author smanoj
@@ -81,6 +87,8 @@ import gov.noaa.nws.ncep.ui.pgen.elements.SymbolLocationSet;
 public abstract class AbstractNsharpMapResource extends
         AbstractVizResource<AbstractNsharpMapResourceData, MapDescriptor>
         implements RemoveListener {
+
+    private static final String MAP_EDITOR_ID = "com.raytheon.viz.ui.glmap.GLMapEditor";
 
     private static final transient IUFStatusHandler statusHandler = UFStatus
             .getHandler(AbstractNsharpMapResource.class);
@@ -120,10 +128,12 @@ public abstract class AbstractNsharpMapResource extends
     }
 
     public void createMapEditor() {
-        if (EditorUtil.getActiveEditor() != null) {
-            mapEditor = ((AbstractEditor) EditorUtil.getActiveEditor());
+        // Find the correct Map Editor to load NSHARP artifacts(green diamonds)
+        if (EditorUtil.findEditor(MAP_EDITOR_ID) != null) {
+            mapEditor = ((AbstractEditor) EditorUtil.findEditor(MAP_EDITOR_ID));
             mapRrcs.put(mapEditor, this);
         }
+
     }
 
     public AbstractEditor getMapEditor() {
@@ -162,10 +172,14 @@ public abstract class AbstractNsharpMapResource extends
 
     public void setPoints(List<NsharpStationInfo> points) {
         if (points == null) {
-            this.pickedPoint.clear();
+            if ((this.pickedPoint != null) && (!this.pickedPoint.isEmpty())) {
+                this.pickedPoint.clear();
+            }
+            if ((this.points != null) && (!this.points.isEmpty())) {
+                this.points.clear();
+            }
             symbolToMark = null;
             symbolSet = null;
-            this.points.clear();
         } else {
             this.points = points;
         }
@@ -297,25 +311,27 @@ public abstract class AbstractNsharpMapResource extends
                     sizeScale, clear, locations, category, type);
 
         }
-        // generate symbol for picked stn to mark X
-        if (pickedPoint != null && pickedPoint.size() > 0) {
-            Coordinate[] locations = new Coordinate[pickedPoint.size()];
-            int i = 0;
-            for (NsharpStationInfo p : pickedPoint) {
-                double lon, lat;
-                lon = p.getLongitude();
-                lat = p.getLatitude();
-                locations[i++] = new Coordinate(lon, lat);
+
+        symbolToMark = null;
+        if (isEditable()) {
+            // generate symbol for picked stn to mark X
+            if (pickedPoint != null && pickedPoint.size() > 0) {
+                Coordinate[] locations = new Coordinate[pickedPoint.size()];
+                int i = 0;
+                for (NsharpStationInfo p : pickedPoint) {
+                    double lon, lat;
+                    lon = p.getLongitude();
+                    lat = p.getLatitude();
+                    locations[i++] = new Coordinate(lon, lat);
+                }
+                type = mapRscData.getStnMarkerType().toString();
+                Color[] colors = new Color[] { new Color(NsharpConstants.color_red.red, NsharpConstants.color_red.green,
+                        NsharpConstants.color_red.blue) };
+                symbolToMark = new SymbolLocationSet(null, colors, lineWidth, sizeScale * 2, clear, locations, category,
+                        type);
+            } else {
+                symbolToMark = null;
             }
-            type = mapRscData.getStnMarkerType().toString();
-            Color[] colors = new Color[] {
-                    new Color(NsharpConstants.color_red.red,
-                            NsharpConstants.color_red.green,
-                            NsharpConstants.color_red.blue) };
-            symbolToMark = new SymbolLocationSet(null, colors, lineWidth,
-                    sizeScale * 2, clear, locations, category, type);
-        } else {
-            symbolToMark = null;
         }
     }
 

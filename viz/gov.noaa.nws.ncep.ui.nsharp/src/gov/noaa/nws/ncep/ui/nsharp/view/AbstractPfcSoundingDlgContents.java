@@ -54,7 +54,8 @@ import com.raytheon.uf.common.status.UFStatus.Priority;
  * Date          Ticket#  Engineer  Description
  * ------------- -------- --------- -----------------
  * Mar 20, 2020  73571    smanoj   Initial creation
- *
+ * Jun 22, 2020  79556    smanoj   Fixing some errors and enhancements.
+ * 
  * </pre>
  *
  * @author smanoj
@@ -109,11 +110,20 @@ public abstract class AbstractPfcSoundingDlgContents {
 
         for (int i = 0; i < availablefileList.size(); i++) {
             String fl = availablefileList.get(i);
+            int fileYear = Integer.parseInt(fl.substring(0, 4));
+            int calYear = Calendar.getInstance().get(Calendar.YEAR);
+
+            // process current data
+            if (fileYear > calYear) {
+                continue;
+            }
+
             long reftimeMs = NcSoundingQuery.convertRefTimeStr(fl);
 
             NcSoundingTimeLines timeLines = NcSoundingQuery
                     .soundingRangeTimeLineQuery(sndStr, fl, null);
-            if (timeLines != null && timeLines.getTimeLines().length > 0) {
+            if (timeLines != null && timeLines.getTimeLines().length > 0
+                    && timeList.isEmpty()) {
                 for (Object obj : timeLines.getTimeLines()) {
                     Date rangestart = (Date) obj;
 
@@ -134,11 +144,15 @@ public abstract class AbstractPfcSoundingDlgContents {
                     }
 
                     if (!timeLimit) {
-                        timeList.add(gmtTimeStr);
+                        if (!timeList.contains(gmtTimeStr)) {
+                            timeList.add(gmtTimeStr);
+                        }
                     } else {
                         int hour = cal.get(Calendar.HOUR_OF_DAY);
-                        if ((hour == 0) || (hour == 12))
+                        if (((hour == 0) || (hour == 12))
+                                && (!timeList.contains(gmtTimeStr))) {
                             timeList.add(gmtTimeStr);
+                        }
                     }
                 }
             }
@@ -151,7 +165,7 @@ public abstract class AbstractPfcSoundingDlgContents {
         String selectedSndTime = null;
 
         if (selectedTimeList.isEmpty()) {
-            statusHandler.handle(Priority.INFO,
+            statusHandler.handle(Priority.WARN,
                     "Data not available to Mark Points on Map for "
                             + currentSndType.toString());
         } else {
