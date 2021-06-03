@@ -25,7 +25,7 @@ requires: awips2-python
 AWIPS II CLI Installation - Contains The AWIPS II CLI Component.
 
 # Turn off the brp-python-bytecompile script
-%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+%global _python_bytecompile_extra 0
 
 %prep
 # Verify That The User Has Specified A BuildRoot.

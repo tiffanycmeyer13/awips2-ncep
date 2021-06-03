@@ -1,6 +1,6 @@
 %define __prelink_undo_cmd %{nil}
 # disable jar repacking
-%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-java-repack-jars[[:space:]].*$!!g')
+%global __jar_repack 0
 # Change the brp-python-bytecompile script to use the AWIPS2 version of Python
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's/\/usr\/bin\/python/\/awips2\/python\/bin\/python/g')
 
