@@ -184,6 +184,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       final Cancellation SIGMET Save.
  * May 10, 2021  91845     smanoj        Save CARSAM Backupmode flag to the SIGMET xml.
  * May 28, 2021  91845     smanoj        Drawing SIGMET spanning multiple FIRs in Backupmode.
+ * Jun 04, 2021  91845     smanoj        Fixing some issues with Backupmode and CANCEL.
  * 
  * </pre>
  *
@@ -1837,9 +1838,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                                     .getEditableAttrCarSamBackupMode()
                                     .contains("true"))) {
                         btnCarSamBackUp.setSelection(true);
+                        SigmetAttrDlg.this.isCarSamBackup = true;
                     } else {
                         SigmetAttrDlg.this
                                 .setEditableAttrCarSamBackupMode("false");
+                        SigmetAttrDlg.this.isCarSamBackup = false;
                     }
 
                     break;
@@ -3840,6 +3843,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
 
+            firCalledForSecondLine = false;
+
             // ---------------------CANCEL
             if (cnlSigmet) {
                 sb.append(SigmetConstant.CNL);
@@ -3854,8 +3859,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 sb.append(".");
                 return sb.toString();
             }
-
-            firCalledForSecondLine = false;
 
             // ---------------------phenomnon
 
