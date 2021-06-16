@@ -150,6 +150,7 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * Feb 08, 2021 87538       smanoj      Added FCST Lat/Lon for Tropical Cyclone.
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * May 14, 2021 91961       tjensen     Resync with gov.noaa.nws.ncep.ui.pgen.file.ProductConverter
+ * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
  *
  *
  * </pre>
@@ -1301,6 +1302,16 @@ public class ProductConverter {
                                 ((Sigmet) de).getEditableAttrLevelText1());
                         sigmet.setEditableAttrLevelText2(
                                 ((Sigmet) de).getEditableAttrLevelText2());
+                        sigmet.setEditableAttrAltLevel(
+                                ((Sigmet) de).getEditableAttrAltLevel());
+                        sigmet.setEditableAttrAltLevelInfo1(
+                                ((Sigmet) de).getEditableAttrAltLevelInfo1());
+                        sigmet.setEditableAttrAltLevelInfo2(
+                                ((Sigmet) de).getEditableAttrAltLevelInfo2());
+                        sigmet.setEditableAttrAltLevelText1(
+                                ((Sigmet) de).getEditableAttrAltLevelText1());
+                        sigmet.setEditableAttrAltLevelText2(
+                                ((Sigmet) de).getEditableAttrAltLevelText2());
                         sigmet.setEditableAttrFromLine(
                                 ((Sigmet) de).getEditableAttrFromLine());
                         sigmet.setEditableAttrFir(
