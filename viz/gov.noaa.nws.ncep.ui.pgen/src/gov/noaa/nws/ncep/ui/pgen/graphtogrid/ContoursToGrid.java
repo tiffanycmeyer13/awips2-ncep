@@ -62,6 +62,7 @@ import com.vividsolutions.jts.geom.impl.CoordinateArraySequence;
  * 01/27/2016   R13166      J. Wu       Allow symbol only & label only Minmax.
  * 07/21/2016   R16077      J. Wu       Allow number of labels to be 0 for contour lines.
  * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
+ * 06/14/2021   91162       smanoj      Turn extend off, so grid lines match contour lines.
  * 
  * </pre>
  * 
@@ -136,9 +137,11 @@ public class ContoursToGrid extends GraphToGrid {
                 newPt[1] = jj + 1;
                 lonlat = gtrans.gridToWorld(newPt);
 
-                c = new Coordinate(lonlat[0], lonlat[1]);
+                if (lonlat != null) {
+                    c = new Coordinate(lonlat[0], lonlat[1]);
 
-                gridPts[ii + jj * kx] = c;
+                    gridPts[ii + jj * kx] = c;
+                }
             }
         }
 
@@ -210,7 +213,9 @@ public class ContoursToGrid extends GraphToGrid {
          * 
          * ?It is reasonable to always extend the lines regardless of bounds?
          */
-        boolean extend = true;
+        // Always 'extend' the lines logic is not working properly, so turning
+        // it off for now.
+        boolean extend = false;
 
         float[][] flat, flon;
         float[][] fi_orig, fj_orig;
