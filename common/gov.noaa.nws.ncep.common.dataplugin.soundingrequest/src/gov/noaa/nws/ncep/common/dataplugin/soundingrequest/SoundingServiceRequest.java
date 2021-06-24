@@ -13,11 +13,12 @@ package gov.noaa.nws.ncep.common.dataplugin.soundingrequest;
  * 05/20/2015	RM#8306     Chin Chen   Initial coding - eliminate NSHARP dependence on uEngine
  * 07/20/2015   RM#9173     Chin Chen   Clean up NcSoundingQuery and Obsolete NcSoundingQuery2 and MergeSounding2
  * 09/22/2016   RM15953     R.Reynolds  Added capability for wind interpolation
+ * 01/27/2021   86815       smanoj      Added ARW and RAP to PFC Model Sounding in Nsharp.
  * 
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
+ * 
  */
 import com.raytheon.uf.common.serialization.annotations.DynamicSerialize;
 import com.raytheon.uf.common.serialization.annotations.DynamicSerializeElement;
@@ -53,15 +54,17 @@ public class SoundingServiceRequest implements IServerRequest {
     private String[] stnIdAry = null;
 
     @DynamicSerializeElement
-    private String modelType; // grid model type name
+    // grid model type name
+    private String modelType;
 
     @DynamicSerializeElement
-    private boolean merge = true; // default true, except when user request
-                                  // "raw data" for observed data.
+    // default true, except when user request
+    // "raw data" for observed data.
+    private boolean merge = true;
 
     @DynamicSerializeElement
-    private boolean interpolation = true; // default true, for grid model use
-                                          // only
+    // default true, for grid model use only
+    private boolean interpolation = true;
 
     @DynamicSerializeElement
     private String level;
@@ -79,11 +82,22 @@ public class SoundingServiceRequest implements IServerRequest {
     }
 
     public static enum SoundingRequestType {
-        GET_SOUNDING_DATA_GENERIC, GET_SOUNDING_REF_TIMELINE, GET_SOUNDING_RANGESTART_TIMELINE, GET_SOUNDING_STATION_INFO, NONE
+        GET_SOUNDING_DATA_GENERIC,
+        GET_SOUNDING_REF_TIMELINE,
+        GET_SOUNDING_RANGESTART_TIMELINE,
+        GET_SOUNDING_STATION_INFO,
+        NONE
     }
 
     public static enum SoundingType {
-        GRID_MODEL_SND, OBS_UAIR_SND, OBS_BUFRUA_SND, PFC_NAM_SND, PFC_GFS_SND, NA
+        GRID_MODEL_SND,
+        OBS_UAIR_SND,
+        OBS_BUFRUA_SND,
+        PFC_NAM_SND,
+        PFC_GFS_SND,
+        PFC_ARW_SND,
+        PFC_RAP_SND,
+        NA
     }
 
     public SoundingRequestType getReqType() {

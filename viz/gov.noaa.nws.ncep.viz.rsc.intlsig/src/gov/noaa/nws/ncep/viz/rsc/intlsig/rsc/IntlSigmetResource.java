@@ -116,6 +116,7 @@ import systems.uom.common.USCustomary;;
  *                                      get{High|Low}InverseCentralMeridian()
  * Nov 05, 2015  5070       randerso    Adjust font sizes for dpi scaling
  * Jul 15, 2020  8191       randerso    Updated for changes to LatLonPoint
+ * Apr 28, 2020  77667      smanoj      Flight Information Region (FIR) update.
  *
  * </pre>
  *
@@ -128,14 +129,14 @@ public class IntlSigmetResource extends
     private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(IntlSigmetResource.class);
 
-    private IntlSigmetResourceData intlSigmetResourceDataObj;
+    private final IntlSigmetResourceData intlSigmetResourceDataObj;
 
     private static final UnitConverter mToNM = SI.METRE
             .getConverterTo(USCustomary.NAUTICAL_MILE);
 
     private IFont font = null;
 
-    private float baseFontSize = 12;
+    private final float baseFontSize = 12;
 
     private enum WeatherHazardType {
         /** Thunder Storm */
@@ -203,14 +204,7 @@ public class IntlSigmetResource extends
         /** WiDe SPRead Dust Storm */
         WDSPR_DS,
         /** WiDe SPRead Sand Storm */
-        WDSPR_SS,
-        WIND,
-        FZRA,
-        TEST,
-        CANCEL,
-        OTHER,
-        UNKNOWN,
-        NIL
+        WDSPR_SS, WIND, FZRA, TEST, CANCEL, OTHER, UNKNOWN, NIL
     }
 
     /**
@@ -268,13 +262,12 @@ public class IntlSigmetResource extends
                 }
             }
 
-            // latestSigmetIssuanceTimeForMessageId =
-            // latestSigmetIssuanceTimeForMessageId;
-            // Now that we've determined the latest issuances for each messageId
-            // -- we make a second
-            // pass through the data time matched to this frame. This time,
-            // we purge anything superseded by a later issuance.
-
+            /*
+             * Now that we've determined the latest issuances for each messageId
+             * -- we make a second pass through the data time matched to this
+             * frame. This time, we purge anything superseded by a later
+             * issuance.
+             */
             String[] keys = new String[1];
             keys = fd.condensedIntligLinkedHashMap.keySet().toArray(keys);
             for (String key : keys) {
@@ -354,8 +347,7 @@ public class IntlSigmetResource extends
 
                 boolean enabled = false;
                 int weatherHarzardListSize = (weatherHarzardList != null)
-                        ? weatherHarzardList.size()
-                        : 0;
+                        ? weatherHarzardList.size() : 0;
 
                 for (int i = 0; i < weatherHarzardListSize; i++) {
 
@@ -460,8 +452,6 @@ public class IntlSigmetResource extends
                                 .isLocationLookUpFailed();
                         if (polygonVertexPixelCoordListSize > 1
                                 && !isLocationLookUpFailed) {
-                            // this.drawPolygon(graphicsTarget,condensedISIG.polygonVertexPixelCoordList,polygonLineColor,polygonLineWidth,lineStyle);
-
                             Coordinate[] polygonCoordinatesList = condensedISIG
                                     .getPolygonLatLonCoordinates();
                             this.drawPolygon(polygonCoordinatesList,
@@ -479,13 +469,6 @@ public class IntlSigmetResource extends
                              * Get the centroid of the polygon in world
                              * coordinates to render the symbol
                              */
-                            /*
-                             * tempSymbolLocationWorldCoord =
-                             * condensedISIG.getCentroidInWorldCoordinates(
-                             * condensedISIG, this.getDescriptor(),
-                             * condensedISIG.polygonVertexPixelCoordList);
-                             */
-
                             tempSymbolLocationWorldCoord = condensedISIG
                                     .getCentroidInWorldCoordinates(
                                             polygonCoordinatesList,
@@ -659,10 +642,10 @@ public class IntlSigmetResource extends
                                      */
                                     if (weatherHarzardList
                                             .get(i) == WeatherHazardType.MW
-                                            || weatherHarzardList.get(
-                                                    i) == WeatherHazardType.WS
-                                            || weatherHarzardList.get(
-                                                    i) == WeatherHazardType.WIND
+                                            || weatherHarzardList
+                                                    .get(i) == WeatherHazardType.WS
+                                            || weatherHarzardList
+                                                    .get(i) == WeatherHazardType.WIND
                                             || weatherHarzardList.get(
                                                     i) == WeatherHazardType.WTSPT) {
                                         isDrawText = true;
@@ -778,7 +761,7 @@ public class IntlSigmetResource extends
                                 /*
                                  * (Non-Javadoc) This is retained from legacy
                                  * code: If any of the sigmets
-                                 * (KZNY/KZMA/KZHU/TJZS) in the Atlantic are
+                                 * (KZWY/KZMA/KZHU/TJZS) in the Atlantic are
                                  * encountered, the label is preceded with the
                                  * character 'A'.
                                  */
@@ -945,31 +928,6 @@ public class IntlSigmetResource extends
                                 polygonWorldCoordinateArray,
                                 arrayOfVerticesOnEitherSide[0],
                                 arrayOfVerticesOnEitherSide[1]);
-
-                /*
-                 * (Non-Javadoc) Ideally, it should be easy to just use the
-                 * existing IntlSigmetResource.drawPolygon() method coupled with
-                 * the IGraphicsTarget.drawArc() method. However when doing
-                 * this, it was observed that given the multiple conversions
-                 * that take place between the world and pixel coordinates, the
-                 * arc does not get drawn correctly. Hence the code to render
-                 * the polygon and its arc point-by-point have been added here.
-                 */
-
-                /*
-                 * PixelCoordinate prevLoc = null; for (Coordinate
-                 * currCoordinate :
-                 * arrayOfVerticesOnEitherSideForPolygonWithArc[0]) { double[]
-                 * latLon = { currCoordinate.x, currCoordinate.y };
-                 * PixelCoordinate currLoc = new
-                 * PixelCoordinate(descriptor.worldToPixel(latLon)); if (prevLoc
-                 * != null) { graphicsTarget.drawLine(prevLoc.getX(),
-                 * prevLoc.getY(), prevLoc.getZ(), currLoc.getX(),
-                 * currLoc.getY(), currLoc.getZ(), polygonLineColor,
-                 * polygonLineWidth, lineStyle); }
-                 *
-                 * prevLoc = currLoc; }
-                 */
 
                 /*
                  * (Non-Javadoc) prevLoc is set to the last element of the first
@@ -1623,24 +1581,19 @@ public class IntlSigmetResource extends
 
             List<Geometry> geomList = new ArrayList<>();
             if (!g.isEmpty()) {
-                // Algorithm:
-                // Process primitive geometry type (non collection). Algorithm
-                // works
-                // in that it walks the geometry, when two points cross, it adds
-                // or
-                // subtracts 360 to the offset to flatten out the geometry. When
-                // first part is done, geometries will be continuous and not
-                // limited
-                // to -180 to 180, they will be technically be > neg infinitive,
-                // <
-                // pos infinity given that the algorithm supports wrapping
-                // around
-                // the world multiple times. When we have the continuous
-                // geometry,
-                // we split it up into sections by intersecting with a 360 deg
-                // inverse central meridian. We then normalize the points for
-                // each
-                // section back to -180 to 180
+                /*
+                 * Algorithm: Process primitive geometry type (non collection).
+                 * Algorithm works in that it walks the geometry, when two
+                 * points cross, it adds or subtracts 360 to the offset to
+                 * flatten out the geometry. When first part is done, geometries
+                 * will be continuous and not limited to -180 to 180, they will
+                 * be technically be > neg infinitive, < pos infinity given that
+                 * the algorithm supports wrapping around the world multiple
+                 * times. When we have the continuous geometry, we split it up
+                 * into sections by intersecting with a 360 deg inverse central
+                 * meridian. We then normalize the points for each section back
+                 * to -180 to 180
+                 */
                 boolean handle = false;
                 if (checker.needsChecking()) {
                     boolean polygon = g instanceof Polygon;
@@ -1692,11 +1645,12 @@ public class IntlSigmetResource extends
                         }
                     }
                     if (handle) {
-                        // All coords in geometry should be denormalized now,
-                        // get
-                        // adjusted envelope, divide envelope into sections, for
-                        // each section, intersect with geometry and add to
-                        // geom list
+                        /*
+                         * All coords in geometry should be denormalized now,
+                         * get adjusted envelope, divide envelope into sections,
+                         * for each section, intersect with geometry and add to
+                         * geom list
+                         */
                         List<Geometry> sections = new ArrayList<>();
                         List<Double> rolls = new ArrayList<>();
                         GeometryFactory gf = g.getFactory();
@@ -1810,6 +1764,8 @@ public class IntlSigmetResource extends
                     Coordinate startingPointCoordinate = new Coordinate(
                             arrayLatLonPoints[0].getLongitude(),
                             arrayLatLonPoints[0].getLatitude());
+                    coordinates[coordinateArrayLength
+                            - 1] = startingPointCoordinate;
                     coordinates[coordinateArrayLength
                             - 1] = startingPointCoordinate;
                 }
@@ -1975,10 +1931,9 @@ public class IntlSigmetResource extends
                  * instead?
                  */
                 stnLongitude = (double) IDecoderConstantsN.FLOAT_MISSING;
-                statusHandler.debug(
-                        "Unable to retrieve the latitude and longitude of "
-                                + sigmetIssueOffice + " from the database",
-                        e);
+                statusHandler
+                        .debug("Unable to retrieve the latitude and longitude of "
+                                + sigmetIssueOffice + " from the database", e);
             }
         }
 
@@ -2022,7 +1977,7 @@ public class IntlSigmetResource extends
          *            - The Air Traffic Service Unit
          *            <p>
          *            If any of the input parameters are set to one of the
-         *            following stations - KZMA / KZNY / KZHU / TJZS, then the
+         *            following stations - KZMA / KZWY / KZHU / TJZS, then the
          *            method returns true.
          * @return true if the International SIGMET is issued for/in the
          *         Atlantic region or false otherwise
@@ -2031,20 +1986,20 @@ public class IntlSigmetResource extends
                 String atsu) {
             boolean inAtlantic = false;
             if (issueOff != null && ((issueOff.contains("KZMA"))
-                    || (issueOff.contains("KZNY"))
+                    || (issueOff.contains("KZWY"))
                     || (issueOff.contains("KZHU"))
                     || (issueOff.contains("TJZS")))) {
                 inAtlantic = true;
             }
 
             if (omwo != null && ((omwo.contains("KZMA"))
-                    || (omwo.contains("KZNY")) || (omwo.contains("KZHU"))
+                    || (omwo.contains("KZWY")) || (omwo.contains("KZHU"))
                     || (omwo.contains("TJZS")))) {
                 inAtlantic = true;
             }
 
             if (atsu != null && ((atsu.contains("KZMA"))
-                    || (atsu.contains("KZNY")) || (atsu.contains("KZHU"))
+                    || (atsu.contains("KZWY")) || (atsu.contains("KZHU"))
                     || (atsu.contains("TJZS")))) {
                 inAtlantic = true;
             }
@@ -2833,7 +2788,7 @@ public class IntlSigmetResource extends
      *
      */
     private class FrameData extends AbstractFrameData {
-        private HashMap<String, IntlSigmetRscDataObj> condensedIntligLinkedHashMap;
+        private final HashMap<String, IntlSigmetRscDataObj> condensedIntligLinkedHashMap;
 
         /**
          * Constructor
@@ -2863,8 +2818,8 @@ public class IntlSigmetResource extends
         @Override
         public boolean updateFrameData(IRscDataObject rscDataObj) {
             if (!(rscDataObj instanceof IntlSigmetRscDataObj)) {
-                statusHandler.debug(
-                        "IntlSigmetResource:updateFrameData() processing.....\n"
+                statusHandler
+                        .debug("IntlSigmetResource:updateFrameData() processing.....\n"
                                 + "Data belongs to a different class :"
                                 + rscDataObj.getClass().toString());
                 return false;
@@ -2905,17 +2860,17 @@ public class IntlSigmetResource extends
      */
     @SuppressWarnings("hiding")
     private class SymbolAttributesSubSet<RGB, Integer, Float, Boolean, String> {
-        private RGB symbolColor;
+        private final RGB symbolColor;
 
-        private Integer lineWidth;
+        private final Integer lineWidth;
 
-        private Float symbolSize;
+        private final Float symbolSize;
 
-        private Integer symbolWidth;
+        private final Integer symbolWidth;
 
-        private Boolean symbolEnable;
+        private final Boolean symbolEnable;
 
-        private String symbolType;
+        private final String symbolType;
 
         public SymbolAttributesSubSet(RGB inSymbolColor, Integer symbolWidth,
                 Float symbolSize, Boolean symbolEnable, String symbolType,

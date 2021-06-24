@@ -1,4 +1,39 @@
 /**
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
+ *
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
+ *
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
+ *
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
+package gov.noaa.nws.ncep.ui.nsharp.view;
+
+import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingProfile;
+import gov.noaa.nws.ncep.ui.nsharp.NsharpConstants;
+import gov.noaa.nws.ncep.ui.nsharp.display.map.AbstractNsharpMapResource;
+
+import java.util.Arrays;
+import java.util.List;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Listener;
+
+/**
  * 
  * gov.noaa.nws.ncep.ui.nsharp.view.ObservedSoundingDialogContents
  * 
@@ -8,208 +43,39 @@
  * <pre>
  * SOFTWARE HISTORY
  * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 01/2011	    229			Chin Chen	Initial coding
- * 09/14/2011   457         S. Gurung   Renamed H5UAIR to NCUAIR
- * Aug 05, 2015 4486        rjpeter     Changed Timestamp to Date.
- * 07202015     RM#9173     Chin Chen   use NcSoundingQuery.genericSoundingDataQuery() to query grid model sounding data
+ * Date         Ticket#     Engineer    Description
+ * -------      -------     --------    -----------
+ * 01/2011       229         Chin Chen    Initial coding
+ * 09/14/2011    457         S. Gurung    Renamed H5UAIR to NCUAIR
+ * Aug 05,2015   4486        rjpeter      Changed Timestamp to Date.
+ * 07202015      RM#9173     Chin Chen    use NcSoundingQuery.genericSoundingDataQuery()
+ *                                        to query grid model sounding data
+ * 04/02/2020    73571       smanoj       NSHARP D2D port refactor
  *
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
  */
-package gov.noaa.nws.ncep.ui.nsharp.view;
+public class NsharpObservedSoundingDialogContents
+        extends AbstractObsSoundingDlgContents {
 
-import gov.noaa.nws.ncep.viz.soundingrequest.NcSoundingQuery;
-import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingProfile;
-import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingStnInfo;
-import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingStnInfoCollection;
-import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingTimeLines;
-import gov.noaa.nws.ncep.ui.nsharp.NsharpConstants;
-import gov.noaa.nws.ncep.ui.nsharp.NsharpStationInfo;
-import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResource;
+    private Group sndTimeListGp, midGp;
 
-import java.text.DateFormatSymbols;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
-
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Listener;
-
-public class NsharpObservedSoundingDialogContents {
-    private Composite parent;
-
-    private org.eclipse.swt.widgets.List sndTimeList;
-
-    private Group btnGp, sndTimeListGp, topGp, midGp;
-
-    private boolean timeLimit = false;
-
-    private boolean rawData = false;
-
-    private Button timeBtn, bufruaBtn, uairBtn, rawBtn;
-
-    private String FILE_UAIR = "UAIR";
-
-    private String FILE_BUFRUA = "BUFRUA";
-
-    // private String FILE_DROP = "DROP";
-    private NcSoundingProfile.ObsSndType currentSndType = NcSoundingProfile.ObsSndType.NONE;
-
-    private NsharpLoadDialog ldDia;
-
-    private ArrayList<String> selectedTimeList = new ArrayList<String>();
-
-    private Font newFont;
-
-    public boolean isRawData() {
-        return rawData;
-    }
-
-    public NcSoundingProfile.ObsSndType getCurrentSndType() {
-        return currentSndType;
-    }
+    private Button timeBtn, rawBtn;
 
     public NsharpObservedSoundingDialogContents(Composite parent) {
-        this.parent = parent;
+        super(parent);
         ldDia = NsharpLoadDialog.getAccess();
         newFont = ldDia.getNewFont();
     }
 
-    private void createObsvdSndUairList() {
-        sndTimeList.removeAll();
-
-        // use NcSoundingQuery to query
-        NcSoundingTimeLines timeLines = NcSoundingQuery
-                .soundingTimeLineQuery(currentSndType.toString());
-
-        if (timeLines != null && timeLines.getTimeLines() != null) {
-            DateFormatSymbols dfs = new DateFormatSymbols();
-            String[] defaultDays = dfs.getShortWeekdays();
-            Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-            ldDia.startWaitCursor();
-            for (Object timeLine : timeLines.getTimeLines()) {
-                Date synoptictime = (Date) timeLine;
-                if (synoptictime != null) {
-                    // need to format synoptictime to GMT time string.
-                    // Date.toString produce a local time Not GMT time
-                    cal.setTimeInMillis(synoptictime.getTime());
-                    String dayOfWeek = defaultDays[cal
-                            .get(Calendar.DAY_OF_WEEK)];
-                    // String gmtTimeStr =
-                    // String.format("%1$ty%1$tm%1$td/%1$tH%1$tM %2$s", cal,
-                    // currentSndType.toString());
-                    String gmtTimeStr = String.format(
-                            "%1$ty%1$tm%1$td/%1$tH(%3$s) %2$s", cal,
-                            currentSndType.toString(), dayOfWeek);
-                    if (!timeLimit) {
-                        // System.out.println("not 00z and 12z only");
-                        sndTimeList.add(gmtTimeStr);
-                    } else {
-                        int hour = cal.get(Calendar.HOUR_OF_DAY);
-                        // System.out.println("00z and 12z only hour = "+ hour);
-                        if ((hour == 0) || (hour == 12))
-                            sndTimeList.add(gmtTimeStr);
-                    }
-                }
-            }
-            ldDia.stopWaitCursor();
-        } else
-            System.out.println("EDEX timeline query return null");
-
-    }
-
-    private void queryAndMarkStn(String selectedSndTime) {
-        String selectTimetr = NcSoundingQuery
-                .convertSoundTimeDispStringToRangeStartTimeFormat(selectedSndTime);
-        NsharpMapResource nsharpMapResource = NsharpMapResource
-                .getOrCreateNsharpMapResource();
-        // Chin float lat, lon;
-        double lat, lon;
-        String stnInfoStr;
-
-        // use NcSoundingQuery to query stn info
-        NcSoundingStnInfoCollection sndStnInfoCol = NcSoundingQuery.genericSoundingStnInfoQuery(currentSndType.toString(),null, selectTimetr) ;
-               // .soundingStnInfoQuery(currentSndType.toString(), selectTimetr);
-        if (sndStnInfoCol != null && sndStnInfoCol.getStationInfo() != null) {
-
-            NcSoundingStnInfo[] stnInfoAry = sndStnInfoCol.getStationInfo();
-            // System.out.println("obs station number = "+ stnInfoAry.length );
-            // Note: A same station may have many reports
-            for (int i = 0; i < stnInfoAry.length; i++) {
-                NcSoundingStnInfo stnInfo = stnInfoAry[i];
-                Date synoptictime = null;
-                stnInfoStr = stnInfo.getStnId();
-                if (stnInfoStr == null || stnInfoStr.length() < 1)
-                    stnInfoStr = "*";
-                lat = stnInfo.getStationLatitude();
-                lon = stnInfo.getStationLongitude();
-                // elv = stnInfo.getStationElevation();
-                synoptictime = (Date) stnInfo.getSynopTime();
-
-                // convert to Nsharp's own station info struct
-                NsharpStationInfo stn = new NsharpStationInfo();
-                String packedStnInfoStr = stnInfoStr.replace(" ", "_");
-                stn.setStnDisplayInfo(packedStnInfoStr + " " + selectedSndTime
-                        + " " + currentSndType.toString());
-                stn.setLongitude(lon);
-                stn.setLatitude(lat);
-                stn.setStnId(stnInfoStr);
-                stn.setReftime(synoptictime);
-                stn.setRangestarttime(synoptictime);
-                stn.setSndType(currentSndType.toString());
-                // System.out.println("sndType= "+currentSndType);
-                // System.out.println("stn  lat ="+stn.getLatitude() +
-                // " lon="+stn.getLongitude());
-                nsharpMapResource.addPoint(stn);
-            }
-
-            NsharpMapResource.bringMapEditorToTop();
-        }
-    }
-
-    private void handleSndTimeSelection() {
-        String selectedSndTime = null;
-        if (sndTimeList.getSelectionCount() > 0) {
-            NsharpMapResource nsharpMapResource = NsharpMapResource
-                    .getOrCreateNsharpMapResource();// NsharpLoadDialog.getAccess().getNsharpMapResource();
-            nsharpMapResource.setPoints(null);
-            selectedTimeList.clear();
-            ldDia.startWaitCursor();
-            for (int i = 0; i < sndTimeList.getSelectionCount(); i++) {
-                selectedSndTime = sndTimeList.getSelection()[i];
-                selectedTimeList.add(selectedSndTime);
-                // System.out.println("selected sounding time is " +
-                // selectedSndTime);
-                int endIndex = selectedSndTime.indexOf(" ");
-                String queryingSndTime = selectedSndTime.substring(0, endIndex);
-                queryAndMarkStn(queryingSndTime);
-
-            }
-            ldDia.setObsSelectedTimeList(selectedTimeList);
-            ldDia.stopWaitCursor();
-        }
-    }
-
-    public void createObsvdDialogContents() {
+    public void createObsDialogContents() {
         currentSndType = ldDia.getActiveObsSndType();
         timeLimit = false;
         rawData = false;
         topGp = new Group(parent, SWT.SHADOW_ETCHED_IN);
         topGp.setLayout(new GridLayout(2, false));
 
-        // ldDia.setShellSize(false);
         ldDia.createSndTypeList(topGp);
 
         btnGp = new Group(topGp, SWT.SHADOW_ETCHED_IN);
@@ -227,8 +93,7 @@ public class NsharpObservedSoundingDialogContents {
                 sndTimeList.removeAll();
                 currentSndType = NcSoundingProfile.ObsSndType.NCUAIR;
                 ldDia.setActiveObsSndType(currentSndType);
-                createObsvdSndUairList();
-                // System.out.println("new obvSnd dialog uair btn");
+                createTimeList(currentSndType);
             }
         });
 
@@ -237,15 +102,15 @@ public class NsharpObservedSoundingDialogContents {
         bufruaBtn.setEnabled(true);
         bufruaBtn.setBounds(btnGp.getBounds().x + NsharpConstants.btnGapX,
                 uairBtn.getBounds().y + uairBtn.getBounds().height
-                        + NsharpConstants.btnGapY, NsharpConstants.btnWidth,
-                NsharpConstants.btnHeight);
+                        + NsharpConstants.btnGapY,
+                NsharpConstants.btnWidth, NsharpConstants.btnHeight);
         bufruaBtn.setFont(newFont);
         bufruaBtn.addListener(SWT.MouseUp, new Listener() {
             public void handleEvent(Event event) {
                 sndTimeList.removeAll();
                 currentSndType = NcSoundingProfile.ObsSndType.BUFRUA;
                 ldDia.setActiveObsSndType(currentSndType);
-                createObsvdSndUairList();
+                createTimeList(currentSndType);
             }
         });
 
@@ -254,10 +119,6 @@ public class NsharpObservedSoundingDialogContents {
         timeBtn = new Button(midGp, SWT.CHECK | SWT.BORDER);
         timeBtn.setText("00Z and 12Z only");
         timeBtn.setEnabled(true);
-        // timeBtn.setBounds(btnGp.getBounds().x+ NsharpConstants.btnGapX,
-        // browseBtn.getBounds().y + browseBtn.getBounds().height+
-        // NsharpConstants.btnGapY,
-        // NsharpConstants.btnWidth,NsharpConstants.btnHeight);
         timeBtn.setFont(newFont);
         timeBtn.addListener(SWT.MouseUp, new Listener() {
             public void handleEvent(Event event) {
@@ -269,9 +130,8 @@ public class NsharpObservedSoundingDialogContents {
                 // refresh sounding list if file type is selected already
                 if (currentSndType == NcSoundingProfile.ObsSndType.NCUAIR
                         || currentSndType == NcSoundingProfile.ObsSndType.BUFRUA) {
-                    createObsvdSndUairList();
+                    createTimeList(currentSndType);
                 }
-
             }
         });
         rawBtn = new Button(midGp, SWT.CHECK | SWT.BORDER);
@@ -287,7 +147,6 @@ public class NsharpObservedSoundingDialogContents {
                     rawData = true;
                 else
                     rawData = false;
-                ;
             }
         });
         // create file widget list
@@ -303,9 +162,19 @@ public class NsharpObservedSoundingDialogContents {
 
         // create a selection listener to handle user's selection on list
         sndTimeList.addListener(SWT.Selection, new Listener() {
-            // private String selectedSndTime=null;
             public void handleEvent(Event e) {
-                handleSndTimeSelection();
+                AbstractNsharpMapResource nsharpMapResource = ldDia.getMapRsc()
+                        .getOrCreateNsharpMapResource();
+                nsharpMapResource.setPoints(null);
+                selectedTimeList.clear();
+                if (sndTimeList.getSelectionCount() > 0) {
+                    for (int i = 0; i < sndTimeList.getSelectionCount(); i++) {
+                        selectedTimeList.add(sndTimeList.getSelection()[i]);
+                    }
+                }
+                handleSndTimeSelection(currentSndType);
+                nsharpMapResource.setPoints(stnPoints);
+                ldDia.getMapRsc().bringMapEditorToTop();
             }
         });
 
@@ -315,13 +184,18 @@ public class NsharpObservedSoundingDialogContents {
                 uairBtn.setSelection(true);
             else
                 bufruaBtn.setSelection(true);
-            createObsvdSndUairList();
-            selectedTimeList = ldDia.getObsSelectedTimeList();
+            createTimeList(currentSndType);
             Object[] selTimeObjectArray = selectedTimeList.toArray();
             String[] selTimeStringArray = Arrays.copyOf(selTimeObjectArray,
                     selTimeObjectArray.length, String[].class);
             sndTimeList.setSelection(selTimeStringArray);
-            handleSndTimeSelection();
+
+            AbstractNsharpMapResource nsharpMapResource = ldDia.getMapRsc()
+                    .getOrCreateNsharpMapResource();
+            nsharpMapResource.setPoints(null);
+            handleSndTimeSelection(currentSndType);
+            nsharpMapResource.setPoints(stnPoints);
+            ldDia.getMapRsc().bringMapEditorToTop();
         }
     }
 
@@ -352,16 +226,6 @@ public class NsharpObservedSoundingDialogContents {
             midGp.dispose();
             midGp = null;
         }
-        /*
-         * if(browseBtn != null){ browseBtn.removeListener(SWT.MouseUp,
-         * browseBtn.getListeners(SWT.MouseUp)[0]); browseBtn.dispose();
-         * browseBtn = null; }
-         * 
-         * 
-         * if(tamBtn != null){ tamBtn.removeListener(SWT.MouseUp,
-         * tamBtn.getListeners(SWT.MouseUp)[0]); tamBtn.dispose(); tamBtn =
-         * null; }
-         */
         if (bufruaBtn != null) {
             bufruaBtn.removeListener(SWT.MouseUp,
                     bufruaBtn.getListeners(SWT.MouseUp)[0]);
@@ -378,16 +242,21 @@ public class NsharpObservedSoundingDialogContents {
             btnGp.dispose();
             btnGp = null;
         }
-        /*
-         * if(newTabBtn != null){ newTabBtn.removeListener(SWT.MouseUp,
-         * newTabBtn.getListeners(SWT.MouseUp)[0]); newTabBtn.dispose();
-         * newTabBtn = null; }
-         */
+
         NsharpLoadDialog ldDia = NsharpLoadDialog.getAccess();
         ldDia.cleanSndTypeList();
         if (topGp != null) {
             topGp.dispose();
             topGp = null;
+        }
+    }
+
+    @Override
+    protected void setSndTimeList(List<String> timeList) {
+        this.selectedTimeList.clear();
+        this.sndTimeList.removeAll();
+        for (int i = 0; i < timeList.size(); i++) {
+            this.sndTimeList.add(timeList.get(i));
         }
     }
 }

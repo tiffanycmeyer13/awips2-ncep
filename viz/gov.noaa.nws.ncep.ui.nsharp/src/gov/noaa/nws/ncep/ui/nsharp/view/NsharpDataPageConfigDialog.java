@@ -59,7 +59,8 @@ import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpResourceHandler;
  * 05/23/2010               Chin Chen   Initial coding
  * 08/10/2015    RM#9396    Chin Chen   implement new OPC pane configuration
  * Aug 20, 2018  #7081      dgilling    Refactor based on CaveJFACEDialog.
- *
+ * Apr 22, 2020  76580      smanoj      Allow user to interact with NsharpEditor while
+ *                                      the dialog is open.
  * </pre>
  *
  * @author Chin Chen
@@ -87,7 +88,7 @@ public class NsharpDataPageConfigDialog extends AbstractNsharpConfigDlg {
 
     public NsharpDataPageConfigDialog(Shell parentShell) {
         super(parentShell, "Data Page Display Configuration");
-
+        this.setShellStyle(SWT.MODELESS);
         dpp = configStore.getDataPageProperty();
         paneConfigurationName = configStore.getGraphProperty()
                 .getPaneConfigurationName();
