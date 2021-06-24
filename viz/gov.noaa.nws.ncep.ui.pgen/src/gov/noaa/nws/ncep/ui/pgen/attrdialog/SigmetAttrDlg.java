@@ -226,6 +226,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private static final String EDITABLE_ATTR_LEVEL = "editableAttrLevel";
 
+    private static final String EDITABLE_ATTR_ALT_LEVEL_TEXT2 = "editableAttrAltLevelText2";
+
+    private static final String EDITABLE_ATTR_ALT_LEVEL_INFO2 = "editableAttrAltLevelInfo2";
+
+    private static final String EDITABLE_ATTR_ALT_LEVEL_TEXT1 = "editableAttrAltLevelText1";
+
+    private static final String EDITABLE_ATTR_ALT_LEVEL_INFO1 = "editableAttrAltLevelInfo1";
+
+    private static final String EDITABLE_ATTR_ALT_LEVEL = "editableAttrAltLevel";
+
     private static final String EDITABLE_ATTR_PHENOM2 = "editableAttrPhenom2";
 
     private static final String EDITABLE_ATTR_TREND = "editableAttrTrend";
@@ -381,6 +391,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private String editableAttrLevelText1;
 
     private String editableAttrLevelText2;
+
+    private String editableAttrAltLevel;
+
+    private String editableAttrAltLevelInfo1;
+
+    private String editableAttrAltLevelInfo2;
+
+    private String editableAttrAltLevelText1;
+
+    private String editableAttrAltLevelText2;
 
     private String editableAttrAltLevelText;
 
@@ -2175,17 +2195,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         lblLevelInfo.setText("Level Info: ");
 
         final Combo comboLevel = new Combo(topLbl, SWT.READ_ONLY);
-        attrControlMap.put(EDITABLE_ATTR_LEVEL, comboLevel);
+        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL, comboLevel);
         comboLevel.setItems(NONE, "FCST", "TOPS");
-        setControl(comboLevel, EDITABLE_ATTR_LEVEL);
+        setControl(comboLevel, EDITABLE_ATTR_ALT_LEVEL);
 
         final Combo comboLevelInfo1 = new Combo(topLbl, SWT.READ_ONLY);
-        attrControlMap.put(EDITABLE_ATTR_LEVEL_INFO1, comboLevelInfo1);
+        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_INFO1, comboLevelInfo1);
         comboLevelInfo1.setItems("TO", "ABV", "BLW", "BTN");
-        setControl(comboLevelInfo1, EDITABLE_ATTR_LEVEL_INFO1);
+        setControl(comboLevelInfo1, EDITABLE_ATTR_ALT_LEVEL_INFO1);
 
         final Text txtLevelInfo1 = new Text(topLbl, SWT.SINGLE | SWT.BORDER);
-        attrControlMap.put(EDITABLE_ATTR_LEVEL_TEXT1, txtLevelInfo1);
+        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_TEXT1, txtLevelInfo1);
         txtLevelInfo1.setLayoutData(
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
 
@@ -2203,20 +2223,20 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtLevelInfo1.setLayoutData(gdText1);
 
         final Combo comboLevelInfo2 = new Combo(topLbl, SWT.READ_ONLY);
-        attrControlMap.put(EDITABLE_ATTR_LEVEL_INFO2, comboLevelInfo2);
+        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_INFO2, comboLevelInfo2);
         comboLevelInfo2.setItems(NONE, "AND");
-        setControl(comboLevelInfo2, EDITABLE_ATTR_LEVEL_INFO2);
+        setControl(comboLevelInfo2, EDITABLE_ATTR_ALT_LEVEL_INFO2);
 
         comboLevelInfo2.addListener(SWT.Selection, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                SigmetAttrDlg.this
-                        .setEditableAttrLevelInfo2(comboLevelInfo2.getText());
+                SigmetAttrDlg.this.setEditableAttrAltLevelInfo2(
+                        comboLevelInfo2.getText());
             }
         });
 
         final Text txtLevelInfo2 = new Text(topLbl, SWT.SINGLE | SWT.BORDER);
-        attrControlMap.put(EDITABLE_ATTR_LEVEL_TEXT2, txtLevelInfo2);
+        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_TEXT2, txtLevelInfo2);
         txtLevelInfo2.setLayoutData(
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
 
@@ -2232,14 +2252,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 SigmetAttrDlg.this
-                        .setEditableAttrLevelText2(txtLevelInfo2.getText());
+                        .setEditableAttrAltLevelText2(txtLevelInfo2.getText());
             }
         });
 
         comboLevel.addListener(SWT.Selection, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                setEditableAttrLevel(comboLevel.getText());
+                setEditableAttrAltLevel(comboLevel.getText());
                 if (NONE.equals(comboLevel.getText())) {
                     txtLevelInfo1.setText("");
                     txtLevelInfo2.setText("");
@@ -2252,8 +2272,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         comboLevelInfo1.addListener(SWT.Selection, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                SigmetAttrDlg.this
-                        .setEditableAttrLevelInfo1(comboLevelInfo1.getText());
+                SigmetAttrDlg.this.setEditableAttrAltLevelInfo1(
+                        comboLevelInfo1.getText());
             }
         });
 
@@ -2261,7 +2281,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 SigmetAttrDlg.this
-                        .setEditableAttrLevelText1(txtLevelInfo1.getText());
+                        .setEditableAttrAltLevelText1(txtLevelInfo1.getText());
             }
         });
 
@@ -3347,6 +3367,55 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 .setEditableAttrLevelText2(editableAttrLevelText2);
     }
 
+    public String getEditableAttrAltLevel() {
+        return editableAttrAltLevel;
+    }
+
+    public void setEditableAttrAltLevel(String editableAttrLevel) {
+        this.editableAttrAltLevel = editableAttrLevel;
+        ((Sigmet) this.getSigmet()).setEditableAttrAltLevel(editableAttrLevel);
+    }
+
+    public String getEditableAttrAltLevelInfo1() {
+        return editableAttrAltLevelInfo1;
+    }
+
+    public void setEditableAttrAltLevelInfo1(String editableAttrLevelInfo1) {
+        this.editableAttrAltLevelInfo1 = editableAttrLevelInfo1;
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrAltLevelInfo1(editableAttrLevelInfo1);
+    }
+
+    public String getEditableAttrAltLevelInfo2() {
+        return editableAttrAltLevelInfo2;
+    }
+
+    public void setEditableAttrAltLevelInfo2(String editableAttrLevelInfo2) {
+        this.editableAttrAltLevelInfo2 = editableAttrLevelInfo2;
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrAltLevelInfo2(editableAttrLevelInfo2);
+    }
+
+    public String getEditableAttrAltLevelText1() {
+        return editableAttrAltLevelText1;
+    }
+
+    public void setEditableAttrAltLevelText1(String editableAttrLevelText1) {
+        this.editableAttrAltLevelText1 = editableAttrLevelText1;
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrAltLevelText1(editableAttrLevelText1);
+    }
+
+    public String getEditableAttrAltLevelText2() {
+        return editableAttrAltLevelText2;
+    }
+
+    public void setEditableAttrAltLevelText2(String editableAttrLevelText2) {
+        this.editableAttrAltLevelText2 = editableAttrLevelText2;
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrAltLevelText2(editableAttrLevelText2);
+    }
+
     public String getEditableAttrFromLine() {
         return editableAttrFromLine;
     }
@@ -3959,7 +4028,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
 
             // ------------ VOLCANIC_ASH
-
+            String altLevelInfo = null;
             if (PgenConstant.TYPE_VOLCANIC_ASH.equals(phen)) {
                 // phenName in C code: volcn
                 sb.append(phenName == null ? "" : phenName);
@@ -3988,6 +4057,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     } else {
                         sb.append(strLon);
                     }
+                    altLevelInfo = getEditableAttrAltLevel();
                 }
             }
 
@@ -4178,7 +4248,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         SigmetAttrDlg.this.getEditableAttrFcstAvail())) {
                     sb.append(SigmetAttrDlg.this.getEditableAttrFcstTime())
                             .append("Z");
-
+                    sb.append(getAltLevelInfo(altLevelInfo).toString());
                     String ral = SigmetAttrDlg.this
                             .getEditableAttrRALSelection();
                     if (ral != null) {
@@ -4308,6 +4378,45 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     levelTxt.append("/");
                     String text2 = SigmetAttrDlg.this
                             .getEditableAttrLevelText2();
+                    levelTxt.append(text2 == null ? "" : text2);
+                }
+            }
+            return levelTxt;
+        }
+
+        private StringBuilder getAltLevelInfo(String tops) {
+            StringBuilder levelTxt = new StringBuilder();
+
+            // ------ TOPS
+            if (tops != null && (!NONE.equals(tops))) {
+                if (SigmetConstant.FCST.equals(tops)) {
+                    levelTxt.append(" ").append(SigmetConstant.FCST);
+                }
+
+                String levelInfo1 = SigmetAttrDlg.this
+                        .getEditableAttrAltLevelText1();
+                if (levelInfo1 != null) {
+                    if ((SigmetAttrDlg.this.getEditableAttrAltLevelInfo1()
+                            .equalsIgnoreCase(SigmetConstant.ABV))
+                            || (SigmetAttrDlg.this
+                                    .getEditableAttrAltLevelInfo1()
+                                    .equalsIgnoreCase(SigmetConstant.BLW))) {
+                        levelTxt.append(" ").append(SigmetAttrDlg.this
+                                .getEditableAttrAltLevelInfo1());
+                    }
+                }
+
+                levelTxt.append(" ").append(SigmetConstant.FL);
+                String text1 = SigmetAttrDlg.this
+                        .getEditableAttrAltLevelText1();
+                levelTxt.append(text1 == null ? "" : text1);
+
+                String levelInfo2 = SigmetAttrDlg.this
+                        .getEditableAttrAltLevelInfo2();
+                if (!NONE.equals(levelInfo2)) {
+                    levelTxt.append("/");
+                    String text2 = SigmetAttrDlg.this
+                            .getEditableAttrAltLevelText2();
                     levelTxt.append(text2 == null ? "" : text2);
                 }
             }
@@ -5241,6 +5350,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         this.setEditableAttrLevelInfo2(sig.getEditableAttrLevelInfo2());
         this.setEditableAttrLevelText1(sig.getEditableAttrLevelText1());
         this.setEditableAttrLevelText2(sig.getEditableAttrLevelText2());
+        this.setEditableAttrAltLevel(sig.getEditableAttrAltLevel());
+        this.setEditableAttrAltLevelInfo1(sig.getEditableAttrAltLevelInfo1());
+        this.setEditableAttrAltLevelInfo2(sig.getEditableAttrAltLevelInfo2());
+        this.setEditableAttrAltLevelText1(sig.getEditableAttrAltLevelText1());
+        this.setEditableAttrAltLevelText2(sig.getEditableAttrAltLevelText2());
         this.setEditableAttrFir(sig.getEditableAttrFir());
         this.setEditableAttrCarSamBackupMode(
                 sig.getEditableAttrCarSamBackupMode());
