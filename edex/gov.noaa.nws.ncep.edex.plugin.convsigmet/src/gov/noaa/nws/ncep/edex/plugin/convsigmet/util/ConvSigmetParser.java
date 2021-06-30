@@ -42,6 +42,9 @@ import gov.noaa.nws.ncep.edex.util.UtilN;
  * May 14, 2014  2536     bclement   moved WMO Header to common, removed
  *                                   TimeTools usage
  * Jul 15, 2020  8191     randerso   Updated for changes to LatLonPoint
+ * Dec 14  2020  82254    srussell   Updated processPhenomena(), removed excess
+                                     white space in the regular expression pattern
+                                     ISOLDISTANCE_EXP
  *
  * </pre>
  *
@@ -429,7 +432,7 @@ public class ConvSigmetParser {
                     currentSection.setDistance(distance);
                 }
             } else if ("ISOL".equals(classType)) {
-                final String ISOLDISTANCE_EXP = "ISOL (\\S|\\s)* TS D([0-9]{2})";
+                final String ISOLDISTANCE_EXP = "ISOL(\\S|\\s)*TS D([0-9]{2})";
                 final Pattern isoldistancePattern = Pattern
                         .compile(ISOLDISTANCE_EXP);
                 Matcher isoldisMatcher = isoldistancePattern.matcher(theFlight);

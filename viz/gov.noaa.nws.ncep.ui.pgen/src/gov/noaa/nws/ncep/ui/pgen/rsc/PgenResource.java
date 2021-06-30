@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.InputDialog;
@@ -183,7 +184,11 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
  * 01/09/2020   71072       smanoj      Fix some NullPointerException issues
  * Apr 06, 2020 77420       tjensen     Allow delete of specific contour labels
+ * Oct 07, 2020 81798       smanoj      Add New Label option should stop showing up
+ *                                      if 10 labels already exist on the Contour.
+ * Dec 09, 2020 85217       smanoj      Moving ADD_NEW_LABEL to PgenConstant.
  * 02/01/2021   87515       wkwock      Move CWA out of PGEN
+
  *
  * </pre>
  *
@@ -2273,6 +2278,27 @@ public class PgenResource
                 }
             });
         }
+
+        // Remove "Add New Label" from the menu if the
+        // number of labels greater than or equal to 10.
+        if (nlabels >= 10) {
+            int menuItemIndex = 0;
+            List<String> actList = getActionList(
+                    this.getSelectedDE().getPgenType(), PgenConstant.ADD_NEW_LABEL);
+
+            if (actList != null) {
+                for (String act : actList) {
+                    if (PgenConstant.ADD_NEW_LABEL.equalsIgnoreCase(act)) {
+                        IContributionItem[] items = menuManager.getItems();
+                        IContributionItem item = items[menuItemIndex];
+                        menuManager.remove(item);
+                        break;
+                    }
+                    menuItemIndex++;
+                }
+            }
+        }
+
     }
 
     private void generateSubMenuForContourLabel(IMenuManager menuManager,

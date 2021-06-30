@@ -42,6 +42,7 @@ import gov.noaa.nws.ncep.edex.util.UtilN;
  * May 14, 2014  2536     bclement     moved WMO Header to common, removed
  *                                     TimeTools usage
  * Jul 15, 2020  8191     randerso     Updated for changes to LatLonPoint
+ * Aug 10, 2020  81343    tjensen      Add missing hazard types
  *
  * </pre>
  *
@@ -89,11 +90,6 @@ public class NonConvSigmetParser {
             Calendar issueTime = WMOTimeParser.findDataTime(theMatcher.group(3),
                     fileName);
             currentRecord.setIssueTime(issueTime);
-
-            /*
-             * 999999999999999999999999999999 DataTime dataTime = new
-             * DataTime(issueTime); currentRecord.setDataTime(dataTime); 999
-             */
         }
         return currentRecord;
     }
@@ -152,11 +148,9 @@ public class NonConvSigmetParser {
             currentRecord.setEndTime(endTime);
         }
 
-        /* 9999999999999999999999999999999 */
         DataTime dataTime = new DataTime(stTime, new TimeRange(stTime.getTime(),
                 endTime.getTimeInMillis() - stTime.getTimeInMillis()));
         currentRecord.setDataTime(dataTime);
-        /* 999 */
         return currentRecord;
     }
 
@@ -203,7 +197,7 @@ public class NonConvSigmetParser {
 
         final String FL_EXP2 = "BLW (FL)?([0-9]{3})";
 
-        final String HAZARDTYPE_EXP = " (TURB|ICGICIP|ICE) ";
+        final String HAZARDTYPE_EXP = " (TURB|ICGICIP|ICE|ICGIC|ICGIP|VA|DU) ";
 
         final String HAZARDINTS_EXP = "(OCNL [A-Z0-9]{2,})(BLW (FL)?([0-9]{3}).|BTN|TURB|ICGICIP|ICE|ICGIC|VA|DU)?";
 

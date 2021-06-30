@@ -97,8 +97,9 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * 03/20/2019   #7572       dgilling    Code cleanup.
  * 11/04/2019   70576       smanoj      Update to allow forecaster change/update alphanumeric labels.
  * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
+ * 06/26/2020   79977       pbutler     Added code to add data editableAttrFromLine: states, lakes, coastal waters
+ * 08/18/2020   81809       mroos       Remove States list duplication
  * 02/01/2021   87515       wkwock      Remove CWA
- *
  * </pre>
  *
  * @author gzhang
@@ -260,6 +261,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
                 || this.getEditableAttrSequence().length() == 0) {
             this.setEditableAttrSequence("1");
         }
+
         ba.setEditableAttrSeqNum(this.getEditableAttrSequence());
         ba.setType(this.getLineType());
         ba.setWidth(this.getWidth());
@@ -903,9 +905,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
                 s = "";
             }
 
-            if (PgenConstant.TYPE_NCON_SIGMET
-                    .equalsIgnoreCase(SigmetCommAttrDlg.this.pgenType)
-                    || PgenConstant.TYPE_AIRM_SIGMET
+            if (PgenConstant.TYPE_AIRM_SIGMET
                             .equalsIgnoreCase(SigmetCommAttrDlg.this.pgenType)
                     || PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(
                             SigmetCommAttrDlg.this.pgenType)) {
@@ -973,19 +973,27 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
             }
         }
 
-        List<String> s = getAreaStringList(cSigPoly, mapDescriptor, "state",
-                "bounds.statebnds");
-        List<String> l = getAreaStringList(cSigPoly, mapDescriptor, "id",
+        List<String> states = getAreaStringList(cSigPoly, mapDescriptor,
+                "state", "bounds.statebnds");
+        List<String> lakes = getAreaStringList(cSigPoly, mapDescriptor, "id",
                 "bounds.greatlakesbnds");
-        List<String> c = getAreaStringList(cSigPoly, mapDescriptor, "id",
-                "bounds.adjcstlbnds");
+        List<String> coastalWaters = getAreaStringList(cSigPoly, mapDescriptor,
+                "id", "bounds.adjcstlbnds");
 
-        return getStates(s, l, c);
+        return getStates(states, lakes, coastalWaters);
     }
 
     public void saveApplyPressed() {
         List<AbstractDrawableComponent> adcList = null;
         List<AbstractDrawableComponent> newList = new ArrayList<>();
+
+        String newEditableLine = this.getEditableAttrFromLine();
+
+        if (PgenConstant.TYPE_NCON_SIGMET
+                .equals(this.asig.getPgenType().trim())) {
+            this.setEditableAttrFromLine(newEditableLine);
+            this.asig.setEditableAttrFromLine(newEditableLine);
+        }
 
         if (drawingLayer != null) {
             adcList = drawingLayer.getAllSelected();
@@ -1296,6 +1304,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
         s.append(this.getVOR(coors));
         s.append(SigmetInfo.LINE_SEPERATER);
         String fromLineText = s.append("VOR").toString();
+
         SigmetCommAttrDlg.this.setEditableAttrFromLine(fromLineText);
 
         if (txtInfo != null && !txtInfo.isDisposed() && s != null) {
@@ -1313,5 +1322,4 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
         this.setLineType(sig.getType());
         this.setWidth("" + (sig.getWidth()));
     }
-
 }
