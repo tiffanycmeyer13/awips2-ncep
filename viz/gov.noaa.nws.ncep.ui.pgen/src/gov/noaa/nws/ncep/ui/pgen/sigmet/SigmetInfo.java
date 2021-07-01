@@ -85,6 +85,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
  *                                      call to it.
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * Jun 29, 2021 93036       smanoj      Changes for QC alerts for Int'l SIGMETS.
+ * Jul 01, 2021 93750       mroos       Extend time options for VOLCANIC_ASH products
  *
  * </pre>
  *
@@ -123,6 +124,10 @@ public class SigmetInfo {
 
     public static final String[] SPEED_ARRAY = new String[] { "5", "10", "15",
             "20", "25", "30", "35", "40", "45", "50" };
+
+    public static final String[] VOL_ASH_SPEED_ARRAY = new String[] { "5", "10",
+            "15", "20", "25", "30", "35", "40", "45", "50", "60", "70", "80",
+            "90", "100" };
 
     public static final String[] ROUND_TO_ARRAY = new String[] { "0", "5", "15",
             "30" };

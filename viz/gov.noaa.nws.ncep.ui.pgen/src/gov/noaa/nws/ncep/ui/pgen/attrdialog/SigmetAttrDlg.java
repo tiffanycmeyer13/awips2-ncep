@@ -191,6 +191,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jun 09, 2021  90732     mroos         Correcting Level Info locations, drop-down box, and observed info
  * Jun 29, 2021  93036     smanoj        Changes for QC alerts for Int'l SIGMETS.
  * Jun 30, 2021  93038     mroos         Change default Trend attribute and allow default attributes to change
+ * Jul 01, 2021  93750     mroos         Add alternate speed list for VOLCANIC_ASH products
  *
  * </pre>
  *
@@ -763,8 +764,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                             .length() > 0)) {
                 String[] locPair = SigmetAttrDlg.this
                         .getEditableAttrFcstVADesc().split("-");
-                for (int i = 0; i < locPair.length; i++) {
-                    String locTemp = locPair[i];
+                for (String element : locPair) {
+                    String locTemp = element;
                     locTemp = locTemp.trim();
                     String[] latlonPair = locTemp.split(" ");
                     if (latlonPair.length > 1) {
@@ -1635,7 +1636,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         lblSpeed.setText("Speed: ");
         final Combo comboSpeed = new Combo(top4, SWT.READ_ONLY);
         attrControlMap.put(EDITABLE_ATTR_PHENOM_SPEED, comboSpeed);
-        comboSpeed.setItems(SigmetInfo.SPEED_ARRAY);
+        comboSpeed.setItems(PgenConstant.TYPE_VOLCANIC_ASH.equals(
+                this.getEditableAttrPhenom()) ? SigmetInfo.VOL_ASH_SPEED_ARRAY
+                        : SigmetInfo.SPEED_ARRAY);
         if (editableAttrPhenomSpeed == null) {
             comboSpeed.select(0);
             this.setEditableAttrPhenomSpeed(comboSpeed.getText());
