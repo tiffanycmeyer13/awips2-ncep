@@ -106,10 +106,14 @@ import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
  * 01/15/2019   7697        bsteffen    Display aircraft info for ACARS
  * 02/11/2019   7574        bhurley     Added checks to prevent NPEs
  * 02/15/2021   86817       smanoj      Added readout features for Turbulence and Icing
- *                                      similar to SkewT Graph. 
+ *                                      similar to SkewT Graph.
  * 02/24/2021   86817       smanoj      Added right-click menu option "Sample"
  *                                      for Turbulence and Icing.
- * 
+ * 07/06/2021   93845       omoncayo    Configure Similar to NSHARP Skew-T Display
+ *                                      and Enable Sampling Features for Turbulence
+ *                                      and Icing Displays
+ *                                      ( change default isSampling to true )
+ *
  * </pre>
  *
  * @author Chin Chen
@@ -257,9 +261,9 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource
 
     private boolean windBarbMagnify = false;
 
-    private boolean isSampleDisplay= true;
+    private boolean isSampleDisplay = true;
 
-    private boolean isSampling = false;
+    private boolean isSampling = true;
 
     private static final transient IUFStatusHandler statusHandler = UFStatus
             .getHandler(NsharpSkewTPaneResource.class);
@@ -2252,8 +2256,7 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource
                         "drawHeightMark exception1:", e);
             }
         }
-        for (int j = 0; j < NsharpConstants.HEIGHT_LEVEL_METERS.length; j++) {
-            int meters = NsharpConstants.HEIGHT_LEVEL_METERS[j];
+        for (int meters : NsharpConstants.HEIGHT_LEVEL_METERS) {
             // plot the meters scale
             double pressure = NsharpLibBasics.i_pres(soundingLys,
                     meters + sfcAsl);
@@ -3225,7 +3228,7 @@ public class NsharpSkewTPaneResource extends NsharpAbstractPaneResource
         font10 = target.initializeFont("Monospace", font10Size, null);
     }
 
-   @Override
+    @Override
     public boolean isSampling() {
         return isSampling;
     }
