@@ -192,6 +192,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jun 29, 2021  93036     smanoj        Changes for QC alerts for Int'l SIGMETS.
  * Jun 30, 2021  93038     mroos         Change default Trend attribute and allow default attributes to change
  * Jul 01, 2021  93750     mroos         Add alternate speed list for VOLCANIC_ASH products
+ * Jul 06, 2021  93039     mroos         Removed extraneous spaces from VOLCANIC_ASH save text.
  *
  * </pre>
  *
@@ -2520,7 +2521,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 SigmetAttrDlg.this
-                        .setEditableAttrFcstVADesc(descText.getText());
+                        .setEditableAttrFcstVADesc(descText.getText().trim());
             }
         });
 
@@ -4506,6 +4507,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                                 .getEditableAttrLevelText2();
                         levelTxt.append(text2 == null ? "" : text2);
                     }
+                    levelTxt.append(".");
                 }
             } else {
                 levelTxt = null;
@@ -4570,8 +4572,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     latval = getValRoundedToNearest15Min(latval);
                     lonval = getValRoundedToNearest15Min(lonval);
 
-                    fcstLatLonLoc.append(" ")
-                            .append(lat.substring(0, lat.length() - 4));
+                    if (i != 0) {
+                        fcstLatLonLoc.append(" ");
+                    }
+                    fcstLatLonLoc.append(lat.substring(0, lat.length() - 4));
                     fcstLatLonLoc.append(Integer.toString(latval)).append(" ");
                     fcstLatLonLoc.append(lon.substring(0, lon.length() - 5));
                     String strLon = Integer.toString(lonval);
