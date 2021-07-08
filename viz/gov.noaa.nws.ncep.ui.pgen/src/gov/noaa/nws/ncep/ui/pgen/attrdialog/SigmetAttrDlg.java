@@ -159,6 +159,9 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Feb 26, 2021  87541      achalla      Updated getFirString() to identify and select AWC Backup FIR Regions
  *                                       and drop AWC AOR FIR Regions if  the sigmet polygon crosses over
  *                                       or partially extends into those regions.
+ * Mar 25, 2021  86828     achalla       Updated getFirs() to check FIR Region buttons instantly
+ *                                       when the area polygon is moved into new region
+ *
  * </pre>
  *
  * @author gzhang
@@ -416,7 +419,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 sb.append(strings[i] + "  ");
             }
         }
-
         txtInfo.setText(sb.toString());
 
     }
@@ -1585,9 +1587,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             if (SigmetAttrDlg.AREA.equals(lineType)) {
 
-                Coordinate[] coorsP = new Coordinate[coors.length + 1];
-                coorsP = Arrays.copyOf(coors, coorsP.length);
-                coorsP[coorsP.length - 1] = coors[0];
+                // get the latest coordinate of the area polygon
+                Coordinate[] coorsNew = ((Sigmet) sigmet).getLinePoints();
+                Coordinate[] coorsP = new Coordinate[coorsNew.length + 1];
+
+                coorsP = Arrays.copyOf(coorsNew, coorsP.length);
+                coorsP[coorsP.length - 1] = coorsNew[0];
 
                 Polygon areaP = SigmetInfo.getPolygon(coorsP, mapDescriptor);
                 fir.append(getFirString(areaP));
@@ -1758,8 +1763,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         fcstCenterText.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                SigmetAttrDlg.this
-                        .setEditableAttrFcstCntr(fcstCenterText.getText());
+                SigmetAttrDlg.this.setEditableAttrFcstCntr(
+                        (fcstCenterText.getText()).trim());
             }
         });
 
@@ -3903,6 +3908,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         }
         if (txtInfo != null && !txtInfo.isDisposed() && s != null) {
+            // Update FIR region buttons
+            this.updateFirBtn();
             this.resetText(s, txtInfo);
         }
         // TTR 974 - "editableAttrFromLine" needs update as well.
@@ -4537,9 +4544,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
         }
-        // update Fir-Region buttons
-        updateFirBtn();
-
         if (txtInfo != null && !txtInfo.isDisposed()) {
             this.resetText(s.toString(), txtInfo);
         }
@@ -4562,8 +4566,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
 
         editableFirID = "";
-        String newEditableFirID = getFirs();
-
+        String newEditableFirID = SigmetAttrDlg.this.getFirs();
+        /*
+         * need to update the current products Fir-Id otherwise xml file
+         * output's editableAttrFir will hold the initial value
+         */
+        setEditableAttrFir(newEditableFirID);
         Button[] firButt = null;
 
         for (String str : loopFIR) {
