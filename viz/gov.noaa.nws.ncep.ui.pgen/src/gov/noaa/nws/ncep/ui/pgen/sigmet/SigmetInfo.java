@@ -84,6 +84,8 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
  * Mar 15, 2021 86159       srussell    Added isValidLatLonArray method and 1
  *                                      call to it.
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
+ * Jun 29, 2021 93036       smanoj      Changes for QC alerts for Int'l SIGMETS.
+ * Jul 01, 2021 93750       mroos       Extend time options for VOLCANIC_ASH products
  *
  * </pre>
  *
@@ -123,6 +125,10 @@ public class SigmetInfo {
     public static final String[] SPEED_ARRAY = new String[] { "5", "10", "15",
             "20", "25", "30", "35", "40", "45", "50" };
 
+    public static final String[] VOL_ASH_SPEED_ARRAY = new String[] { "5", "10",
+            "15", "20", "25", "30", "35", "40", "45", "50", "60", "70", "80",
+            "90", "100" };
+
     public static final String[] ROUND_TO_ARRAY = new String[] { "0", "5", "15",
             "30" };
 
@@ -148,6 +154,15 @@ public class SigmetInfo {
 
     public static final String[] FIR_OTHER = new String[] { "MUFH", "MKJK",
             "MDCS", "TTZP" };
+
+    public static final String[] LEVEL_ARRAY = new String[] { "TOPS", "FCST",
+            "-none-" };
+
+    public static final String[] LEVEL_INFO_ARRAY = new String[] { "TO", "ABV",
+            "BLW", "BTN" };
+
+    public static final String[] LEVEL_INFO_2_ARRAY = new String[] { "-none-",
+            "AND" };
 
     public static final String[] TREND_ARRAY = new String[] { "-none-", "NC",
             "WKN", "INTSF" };
