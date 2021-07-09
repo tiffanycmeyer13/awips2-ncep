@@ -87,8 +87,6 @@ import javax.xml.bind.annotation.XmlType;
  * ???          ???         ???         Initial Creation.
  * 04/28/20     77994       ksunil      new fields for TC.
  * May 22, 2020 78000       ksunil      New Tropical Cyclone UI components for Fcst
- * Feb 08, 2021 87538       smanoj      Added FCST Lat/Lon for Tropical Cyclone.
- * 
  * </pre>
  *
  */
@@ -228,12 +226,6 @@ public class Sigmet {
     protected String editableAttrFcstCntr;
 
     @XmlAttribute
-    protected String editableAttrFcstPhenomLat;
-
-    @XmlAttribute
-    protected String editableAttrFcstPhenomLon;
-
-    @XmlAttribute
     protected String editableAttrFcstVADesc;
 
     @XmlAttribute
@@ -297,22 +289,6 @@ public class Sigmet {
 
     public void setEditableAttrFcstCntr(String editableAttrFcstCntr) {
         this.editableAttrFcstCntr = editableAttrFcstCntr;
-    }
-
-    public String getEditableAttrFcstPhenomLat() {
-        return editableAttrFcstPhenomLat;
-    }
-
-    public void setEditableAttrFcstPhenomLat(String editableAttrFcstPhenomLat) {
-        this.editableAttrFcstPhenomLat = editableAttrFcstPhenomLat;
-    }
-
-    public String getEditableAttrFcstPhenomLon() {
-        return editableAttrFcstPhenomLon;
-    }
-
-    public void setEditableAttrFcstPhenomLon(String editableAttrFcstPhenomLon) {
-        this.editableAttrFcstPhenomLon = editableAttrFcstPhenomLon;
     }
 
     /**
