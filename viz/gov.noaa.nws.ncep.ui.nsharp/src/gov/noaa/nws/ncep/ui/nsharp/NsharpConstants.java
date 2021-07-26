@@ -53,11 +53,11 @@ import gov.noaa.nws.ncep.viz.localization.NcPathManager.NcPathConstants;
  * @author Chin Chen
  */
 public class NsharpConstants {
-    public static final Rectangle NSHARP_SkewTRectangle = new Rectangle(0, 0,
-            3200, 1850);
+    public static Rectangle NSHARP_SkewTRectangle = new Rectangle(0, 0, 3200,
+            1850);
 
-    public static final Rectangle NSHARP_HodoRectangle = new Rectangle(0, 0,
-            100, 100);
+    public static Rectangle NSHARP_HodoRectangle = new Rectangle(0, 0, 100,
+            100);
 
     public static final int DEFAULT_CANVAS_HEIGHT = 700;
 

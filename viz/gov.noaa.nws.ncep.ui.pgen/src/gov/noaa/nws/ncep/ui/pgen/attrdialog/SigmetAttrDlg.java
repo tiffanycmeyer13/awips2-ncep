@@ -137,62 +137,90 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       INTL_SIGMET.
  * Jan 31, 2020  73863      smanoj       Added check to validate lat/lon values.
  * Mar 13, 2020  76151      tjensen      Code cleanup and added null checks
- * Apr 21, 2020  76155      ksunil       ID values for INTL is dependent on WMO value selected
- * Apr 21, 2020  77994      ksunil       Tropical Cyclone and Volcanic Ash should default to 6 hours end time.
+ * Apr 21, 2020  76155      ksunil       ID values for INTL is dependent on WMO
+ *                                       value selected
+ * Apr 21, 2020  77994      ksunil       Tropical Cyclone and Volcanic Ash
+ *                                       should default to 6 hours end time.
  *               78000                   New fcst widget items for TC
  * May 12, 2020  77473      ksunil       INtl Sigmet input validation framework
  * Apr 28, 2020  77667      smanoj       Flight Information Region (FIR) update.
  * May 04, 2020  77670      smanoj       Format changes for Thunderstorm.
  * May 06, 2020  77691      smanoj       Format changes for Volcanic Ash.
- * May 14, 2020  77691      smanoj       Additional format changes for VA ERUPTION.
+ * May 14, 2020  77691      smanoj       Additional format changes for VA
+ *                                       ERUPTION.
  * May 18, 2020  77690      smanoj       Tropical Cyclone format changes.
  * May 22, 2020  78470      smanoj       INTL Sigmet Save ID Bug Fix.
- * May 22, 2020  78000      ksunil       New Tropical Cyclone UI components for Fcst
- * Jun 4,  2020  79256      ksunil       Series ID is now a function of Issuing Office
- * Jun 03, 2020  78215      smanoj       INTL Sigmet Cancel functionality changes.
- * Jun 11, 2020  79243      smanoj       Added Caribbean and South American FIRs.
- * Jul 01, 2020  79980      smanoj       Tropical Cyclone FCST Center enhancement.
- * Aug 19, 2020  81314      smanoj       INTL Sigmet Volcanic Ash GUI enhancement.
- * Jan 28, 2021  86821      achalla      Refactored width attribute in International SIGMET Edit GUI,
- *                                       SIGMET Save output and International SIGMET message to show Integer.
- * Feb 05, 2021  87538      smanoj       Added FCST Lat/Lon for Tropical Cyclone, also fixed some issues.
- * Feb 18, 2021  86828      achalla      Created updateFirBtn() method to check the correct FIR Region buttons
+ * May 22, 2020  78000      ksunil       New Tropical Cyclone UI components for
+ *                                       Fcst
+ * Jun 04, 2020  79256      ksunil       Series ID is now a function of Issuing
+ *                                       Office
+ * Jun 03, 2020  78215      smanoj       INTL Sigmet Cancel functionality
+ *                                       changes.
+ * Jun 11, 2020  79243      smanoj       Added Caribbean and South American
+ *                                       FIRs.
+ * Jul 01, 2020  79980      smanoj       Tropical Cyclone FCST Center
+ *                                       enhancement.
+ * Aug 19, 2020  81314      smanoj       INTL Sigmet Volcanic Ash GUI
+ *                                       enhancement.
+ * Jan 28, 2021  86821      achalla      Refactored width attribute in
+ *                                       International SIGMET Edit GUI, SIGMET
+ *                                       Save output and International SIGMET
+ *                                       message to show Integer.
+ * Feb 05, 2021  87538      smanoj       Added FCST Lat/Lon for Tropical
+ *                                       Cyclone, also fixed some issues.
+ * Feb 18, 2021  86828      achalla      Created updateFirBtn() method to check
+ *                                       the correct FIR Region buttons
  * Feb 24, 2021  86827      srussell     Updated createDialogAreaGeneral():
  *                                       Removed the setWidthStr() call in the
  *                                       set and reset area, it was preventing
  *                                       user entered values from being used.
  *                                       Updated getFirString() removed the
  *                                       unneeded call to JTS covers() method
- * Feb 26, 2021  87541      achalla      Updated getFirString() to identify and select AWC Backup FIR Regions
- *                                       and drop AWC AOR FIR Regions if  the sigmet polygon crosses over
- *                                       or partially extends into those regions.
- * Mar 08, 2021  88654      smanoj       TOPS Attribute saved in Isolated INTL SIGMET.
- * Mar 09, 2021  88219      achalla      Added a duplicate set of Level Info attributes within
- *                                       the Forecast Section of the Edit Attributes area in the
- *                                       Int'l SIGMET Edit GUI for the VOLCANIC_ASH phenomenon and
- *                                       Removed the existing Altitudes attributes
+ * Feb 26, 2021  87541      achalla      Updated getFirString() to identify and
+ *                                       select AWC Backup FIR Regions and drop
+ *                                       AWC AOR FIR Regions if  the sigmet
+ *                                       polygon crosses over or partially
+ *                                       extends into those regions.
+ * Mar 08, 2021  88654      smanoj       TOPS Attribute saved in Isolated INTL
+ *                                       SIGMET.
+ * Mar 09, 2021  88219      achalla      Added a duplicate set of Level Info
+ *                                       attributes within the Forecast Section
+ *                                       of the Edit Attributes area in the
+ *                                       Int'l SIGMET Edit GUI for the
+ *                                       VOLCANIC_ASH phenomenon and Removed the
+ *                                       existing Altitudes attributes
  * Mar 09, 2021  87540      srussell     Added createLineWidthControls() to
  *                                       install a slider & spinner to control
- *                                       the line width of polygons.
- *                                       Updated okPressed() to support the new
- *                                       line width controls when the "Apply"
- *                                       button is pressed.
- *                                       Updated setAttrForDlg() to support the
- *                                       new line width GUI controls.
- * Mar 15, 2021  88217     smanoj        SIGMET CANCEL SAVE Enhancement.
- * Mar 25, 2021  86828     achalla       Updated getFirs() to check FIR Region buttons instantly
- *                                       when the area polygon is moved into new region
- * Apr 09, 2021  90325     smanoj        CARSAM Backup WMO headers update.
- * Apr 28, 2021  90556     smanoj        Drop unneeded trailing attributes from
+ *                                       the line width of polygons. Updated
+ *                                       okPressed() to support the new line
+ *                                       width controls when the "Apply" button
+ *                                       is pressed. Updated setAttrForDlg() to
+ *                                       support the new line width GUI
+ *                                       controls.
+ * Mar 15, 2021  88217      smanoj       SIGMET CANCEL SAVE Enhancement.
+ * Mar 25, 2021  86828      achalla      Updated getFirs() to check FIR Region
+ *                                       buttons instantly when the area polygon
+ *                                       is moved into new region
+ * Apr 09, 2021  90325      smanoj       CARSAM Backup WMO headers update.
+ * Apr 28, 2021  90556      smanoj       Drop unneeded trailing attributes from
  *                                       final Cancellation SIGMET Save.
- * May 10, 2021  91845     smanoj        Save CARSAM Backupmode flag to the SIGMET xml.
- * May 28, 2021  91845     smanoj        Drawing SIGMET spanning multiple FIRs in Backupmode.
- * Jun 04, 2021  91845     smanoj        Fixing some issues with Backupmode and CANCEL.
- * Jun 09, 2021  90732     mroos         Correcting Level Info locations, drop-down box, and observed info
- * Jun 29, 2021  93036     smanoj        Changes for QC alerts for Int'l SIGMETS.
- * Jun 30, 2021  93038     mroos         Change default Trend attribute and allow default attributes to change
- * Jul 01, 2021  93750     mroos         Add alternate speed list for VOLCANIC_ASH products
- * Jul 06, 2021  93039     mroos         Removed extraneous spaces from VOLCANIC_ASH save text.
+ * May 10, 2021  91845      smanoj       Save CARSAM Backupmode flag to the
+ *                                       SIGMET xml.
+ * May 28, 2021  91845      smanoj       Drawing SIGMET spanning multiple FIRs
+ *                                       in Backupmode.
+ * Jun 04, 2021  91845      smanoj       Fixing some issues with Backupmode and
+ *                                       CANCEL.
+ * Jun 09, 2021  90732      mroos        Correcting Level Info locations,
+ *                                       drop-down box, and observed info
+ * Jun 29, 2021  93036      smanoj       Changes for QC alerts for Int'l
+ *                                       SIGMETS.
+ * Jun 30, 2021  93038      mroos        Change default Trend attribute and
+ *                                       allow default attributes to change
+ * Jul 01, 2021  93750      mroos        Add alternate speed list for
+ *                                       VOLCANIC_ASH products
+ * Jul 06, 2021  93039      mroos        Removed extraneous spaces from
+ *                                       VOLCANIC_ASH save text.
+ * Jul 21, 2021  93981      tjensen      Make SaveDlg block.
  *
  * </pre>
  *
@@ -3714,6 +3742,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     .equals(SigmetAttrDlg.this.getEditableAttrStatus())) {
                 cnlSigmet = true;
             }
+            this.setShellStyle(SWT.TITLE | SWT.CLOSE | SWT.PRIMARY_MODAL);
         }
 
         @Override
