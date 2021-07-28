@@ -80,6 +80,10 @@ import gov.noaa.nws.ncep.viz.common.dbQuery.NcDirectDbQuery;
  * 12/12/2016   R25982      J Beck      Modify support for Aviation > TAFs
  *                                      and Observed Data > TAFs Decoded
  * 04/14/2020   76579       k sunil     code tweaks to support the "Latest" time range
+ * 07/23/2020   80427       smanoj      Added DEFAULT_TIME_RANGE to improve query
+ *                                      performance for "Latest" time range.
+ * 11/20/2020   84061       smanoj      Fix a Null Pointer Issue, when data not available.
+ *
  * </pre>
  *
  * @author Chin Chen
@@ -180,6 +184,8 @@ public class NctextDbQuery {
     private static Map<String, String> fileExtToFileTypeMap = new HashMap<>();
 
     private boolean autoUpdate;
+
+    private static final int DEFAULT_TIME_RANGE = 2;
 
     // read file type info from database
     private List<Object[]> readfileTypeInfoList() {
@@ -654,15 +660,8 @@ public class NctextDbQuery {
         Map<String, RequestConstraint> rcMap = new HashMap<>();
         rcMap.put(PluginDataObject.PLUGIN_NAME_ID, new RequestConstraint(
                 OBS_SFC_HRLY_TABLE, ConstraintType.EQUALS));
-        if (rptTimeRange.getTimeRange() > 0) {
-            Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-            SimpleDateFormat timeInSimple = new SimpleDateFormat(DATE_FORMAT);
-            Date date = new Date(cal.getTimeInMillis()
-                    - rptTimeRange.getTimeRange() * MILLISECONDS_IN_HOUR);
-            String dateStr = timeInSimple.format(date);
-            rcMap.put(REFERENCE_TIME_KEY, new RequestConstraint(dateStr,
-                    ConstraintType.GREATER_THAN_EQUALS));
-        }
+        rcMap.put(REFERENCE_TIME_KEY, new RequestConstraint(
+                getDateStr(rptTimeRange), ConstraintType.GREATER_THAN_EQUALS));
 
         for (NctextStationInfo sta : listOfStateStn) {
             rtnList = new ArrayList<>();
@@ -745,8 +744,9 @@ public class NctextDbQuery {
                 // If looking only for the latest, grab only the first. It is
                 // already sorted.
                 if (rptTimeRange == EReportTimeRange.LATEST) {
-                    report = (String) timeDataMap.values().stream().findFirst()
-                            .get();
+                    if (!timeDataMap.isEmpty()) {
+                        report = (String) timeDataMap.values().stream().findFirst().get();
+                    }
                 } else {
                     for (Map.Entry<Object, Object> entry : timeDataMap
                             .entrySet()) {
@@ -773,15 +773,8 @@ public class NctextDbQuery {
         Map<String, RequestConstraint> rcMap = new HashMap<>();
         rcMap.put(PluginDataObject.PLUGIN_NAME_ID, new RequestConstraint(
                 OBS_SYN_DATA_TABLE, ConstraintType.EQUALS));
-        if (rptTimeRange.getTimeRange() > 0) {
-            Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-            SimpleDateFormat timeInSimple = new SimpleDateFormat(DATE_FORMAT);
-            Date date = new Date(cal.getTimeInMillis()
-                    - rptTimeRange.getTimeRange() * MILLISECONDS_IN_HOUR);
-            String dateStr = timeInSimple.format(date);
-            rcMap.put(REFERENCE_TIME_KEY, new RequestConstraint(dateStr,
-                    ConstraintType.GREATER_THAN_EQUALS));
-        }
+        rcMap.put(REFERENCE_TIME_KEY, new RequestConstraint(
+                getDateStr(rptTimeRange), ConstraintType.GREATER_THAN_EQUALS));
         Date date = new Date();
         @SuppressWarnings("deprecation")
         int timeoffset = date.getTimezoneOffset();
@@ -839,8 +832,9 @@ public class NctextDbQuery {
                 // If we are looking only for the latest, grab only the first
                 // one. It is already sorted.
                 if (rptTimeRange == EReportTimeRange.LATEST) {
-                    report = (String) timeDataMap.values().stream().findFirst()
-                            .get();
+                    if (!timeDataMap.isEmpty()) {
+                        report = (String) timeDataMap.values().stream().findFirst().get();
+                    }
                 } else {
                     for (Map.Entry<Object, Object> entry : timeDataMap
                             .entrySet()) {
@@ -926,15 +920,9 @@ public class NctextDbQuery {
         rcMap.put(PluginDataObject.PLUGIN_NAME_ID, new RequestConstraint(
                 OBS_SND_DATA_TABLE, ConstraintType.EQUALS));
         rcMap.put("nil", new RequestConstraint("FALSE", ConstraintType.EQUALS));
-        if (rptTimeRange.getTimeRange() > 0) {
-            Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-            SimpleDateFormat timeInSimple = new SimpleDateFormat(DATE_FORMAT);
-            Date date = new Date(cal.getTimeInMillis()
-                    - rptTimeRange.getTimeRange() * MILLISECONDS_IN_HOUR);
-            String dateStr = timeInSimple.format(date);
-            rcMap.put(REFERENCE_TIME_KEY, new RequestConstraint(dateStr,
-                    ConstraintType.GREATER_THAN_EQUALS));
-        }
+        rcMap.put(REFERENCE_TIME_KEY, new RequestConstraint(
+                getDateStr(rptTimeRange), ConstraintType.GREATER_THAN_EQUALS));
+
         List<PointDataView> pdvList = null;
         Map<Object, Object> timeDataMap = new HashMap<>();
         Date date = new Date();
@@ -1200,5 +1188,22 @@ public class NctextDbQuery {
             return pdc;
         } else
             return null;
+    }
+
+    private String getDateStr(EReportTimeRange rptTimeRange) {
+        // if time range is less than or equal to 0, use DEFAULT_TIME_RANGE
+        // to calculate the specified constraint time value
+        int timeRange = DEFAULT_TIME_RANGE;
+
+        if (rptTimeRange != null && rptTimeRange.getTimeRange() > 0) {
+            timeRange = rptTimeRange.getTimeRange();
+        }
+
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        SimpleDateFormat timeInSimple = new SimpleDateFormat(DATE_FORMAT);
+        Date date = new Date(
+                cal.getTimeInMillis() - timeRange * MILLISECONDS_IN_HOUR);
+        String dateStr = timeInSimple.format(date);
+        return dateStr;
     }
 }

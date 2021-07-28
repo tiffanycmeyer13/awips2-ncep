@@ -67,7 +67,8 @@ import com.raytheon.uf.viz.core.requests.ThriftClient;
  * Date          Ticket#  Engineer  Description
  * ------------- -------- --------- -----------------
  * Mar 20, 2020  73571    smanoj   Initial creation
- *
+ * Jun 22, 2020  79556    smanoj   Fixing some errors and enhancements.
+ * 
  * </pre>
  *
  * @author smanoj
@@ -205,11 +206,19 @@ public abstract class AbstractMdlSoundingDlgContents {
 
         for (int i = 0; i < availableFileList.size(); i++) {
             String fl = availableFileList.get(i);
+            int fileYear = Integer.parseInt(fl.substring(0, 4));
+            int calYear = Calendar.getInstance().get(Calendar.YEAR);
+
+            //process current data
+            if (fileYear > calYear) {
+                continue;
+            }
             long reftimeMs = NcSoundingQuery.convertRefTimeStr(fl);
             NcSoundingTimeLines timeLines = NcSoundingQuery
                     .soundingRangeTimeLineQuery(MdlSndType.ANY.toString(), fl,
                             selectedModelType);
-            if ((timeLines != null) && (timeLines.getTimeLines().length > 0)) {
+            if ((timeLines != null) && (timeLines.getTimeLines().length > 0)
+                    && sndTimeList.isEmpty()) {
                 for (Object obj : timeLines.getTimeLines()) {
                     Date rangestart = (Date) obj;
                     // need to format rangestart to GMT time string.
@@ -226,8 +235,10 @@ public abstract class AbstractMdlSoundingDlgContents {
                         // don't need to add it to list again.
                         continue;
                     }
-                    sndTimeList.add(gmtTimeStr);
-                    timeLineToFileMap.put(gmtTimeStr, fl);
+                    if (!sndTimeList.contains(gmtTimeStr)) {
+                        sndTimeList.add(gmtTimeStr);
+                        timeLineToFileMap.put(gmtTimeStr, fl);
+                    }
                 }
             }
         }
