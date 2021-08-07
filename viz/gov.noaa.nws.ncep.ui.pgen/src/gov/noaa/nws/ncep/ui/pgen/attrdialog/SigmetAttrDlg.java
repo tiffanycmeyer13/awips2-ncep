@@ -221,6 +221,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jul 06, 2021  93039      mroos        Removed extraneous spaces from
  *                                       VOLCANIC_ASH save text.
  * Jul 21, 2021  93981      tjensen      Make SaveDlg block.
+ * Jul 26, 2021  93964      omoncayo     Eliminate gosh volcanos menu for Cyclone
+ *                                       populate Observed Phenom Lat and Lon
  *
  * </pre>
  *
@@ -1242,62 +1244,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         Shell shell = getShell();
         Label lblSEPhenomName = new Label(topPhenom, SWT.LEFT);
-        lblSEPhenomName.setText("Select / Enter\nPhenom Name: ");
+        lblSEPhenomName.setText("Select/Enter\nPhenom Name: ");
 
         final Text txtSEPhenomName = new Text(topPhenom, SWT.LEFT | SWT.BORDER);
         attrControlMap.put(EDITABLE_ATTR_PHENOM_NAME, txtSEPhenomName);
         txtSEPhenomName.setLayoutData(
-                new GridData(SWT.FILL, SWT.CENTER, true, false, 6, 1));
+                new GridData(SWT.FILL, SWT.CENTER, true, true, 7, 1));
+
         txtSEPhenomName.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
                 setEditableAttrPhenomName(txtSEPhenomName.getText());
-                setPhenomLatLon(txtSEPhenomName.getText());
-            }
-        });
-
-        final ToolBar tb = new ToolBar(topPhenom, SWT.HORIZONTAL);
-        final ToolItem ti = new ToolItem(tb, SWT.DROP_DOWN);
-        final Menu mu = new Menu(shell, SWT.POP_UP);
-
-        for (int i = 0; i < SigmetInfo.VOL_NAME_BUCKET_ARRAY.length; i++) {
-            // first option is entering name
-            if (i == 0) {
-                MenuItem mi1 = new MenuItem(mu, SWT.PUSH);
-                mi1.setText(SigmetInfo.VOL_NAME_BUCKET_ARRAY[i]);
-            } else {
-                MenuItem mi1 = new MenuItem(mu, SWT.CASCADE);
-                mi1.setText(SigmetInfo.VOL_NAME_BUCKET_ARRAY[i]);
-                Menu mi1Menu = new Menu(shell, SWT.DROP_DOWN);
-                mi1.setMenu(mi1Menu);
-
-                List<String> list = SigmetInfo.VOLCANO_BUCKET_MAP
-                        .get(SigmetInfo.VOL_NAME_BUCKET_ARRAY[i]);
-                int size = list.size();
-                for (int j = 0; j < size; j++) {
-                    final MenuItem mi1MenuMi1 = new MenuItem(mi1Menu, SWT.PUSH);
-                    mi1MenuMi1.setText(list.get(j));
-                    mi1MenuMi1.addListener(SWT.Selection, new Listener() {
-                        @Override
-                        public void handleEvent(Event e) {
-                            txtSEPhenomName.setText(mi1MenuMi1.getText());
-                            setPhenomLatLon(mi1MenuMi1.getText());
-                        }
-                    });
-                }
-            }
-        }
-
-        ti.addListener(SWT.Selection, new Listener() {
-            /*
-             * Main button clicked: Pop up the menu showing all the symbols.
-             */
-            @Override
-            public void handleEvent(Event event) {
-                Rectangle bounds = ti.getBounds();
-                Point point = tb.toDisplay(bounds.x, bounds.y + bounds.height);
-                mu.setLocation(point);
-                mu.setVisible(true);
             }
         });
 
@@ -1305,7 +1262,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         lblPheLat.setText("Observed Phenom\nLat: ");
         txtPheLat = new Text(topPhenom, SWT.LEFT | SWT.BORDER);
         attrControlMap.put("editableAttrPhenomLat", txtPheLat);
-
+        txtPheLat.setText(txtInfo.getText().split(" ")[0]);
+        setEditableAttrPhenomLat(
+                getPhenomLatLon(txtPheLat.getText().trim(), true));
+        txtPheLat.setLayoutData(gdText);
         txtPheLat.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
@@ -1340,13 +1300,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         });
 
-        txtPheLat.setLayoutData(gdText);
-
         Label lblPheLon = new Label(topPhenom, SWT.LEFT);
         lblPheLon.setText("Observed Phenom\nLon: ");
         txtPheLon = new Text(topPhenom, SWT.LEFT | SWT.BORDER);
         attrControlMap.put("editableAttrPhenomLon", txtPheLon);
-
+        txtPheLon.setText(txtInfo.getText().split(" ")[1]);
+        setEditableAttrPhenomLon(
+                getPhenomLatLon(txtPheLon.getText().trim(), false));
+        txtPheLon.setLayoutData(gdText);
         txtPheLon.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
@@ -1380,8 +1341,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
         });
-
-        txtPheLon.setLayoutData(gdText);
 
         Label lblPressure = new Label(topPhenom, SWT.LEFT);
         lblPressure.setEnabled(tropCycFlag);
@@ -2015,6 +1974,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         }
         btnCarSamBackUp.addSelectionListener(new SelectionAdapter() {
+
             @Override
             public void widgetSelected(SelectionEvent event) {
                 Button btn = (Button) event.getSource();
@@ -2046,6 +2006,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     }
                 }
             }
+
         });
     }
 

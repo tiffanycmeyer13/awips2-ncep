@@ -12,7 +12,6 @@ import gov.noaa.nws.ncep.ui.pgen.PgenSession;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.contours.ContourLine;
 import gov.noaa.nws.ncep.ui.pgen.contours.Contours;
-import gov.noaa.nws.ncep.ui.pgen.display.CurveFitter;
 import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
@@ -23,19 +22,22 @@ import java.util.ArrayList;
 import org.locationtech.jts.geom.Coordinate;
 
 /**
- * Class for Graph-to-Grid to extend contour lines to an given boundary
- * and prepare data for later calculation in grid space.
+ * Class for Graph-to-Grid to extend contour lines to an given boundary and
+ * prepare data for later calculation in grid space.
  * 
  * <pre>
  * SOFTWARE HISTORY
  * Date         Ticket#     Engineer    Description
- * ------------ ---------- ----------- --------------------------
+ * ------------ ---------- ----------- ---------------------------------------
  * 03/10        #215        J. Wu       Initial Creation.
  * 06/15/2021   91162       smanoj      Added Null Pointer check.
+ * 08/03/2021   94798       smanoj      Removed parametric curve fitting
+ *                                      performed on the set of points
+ *                                      in the contour line.
  * 
  * </pre>
  * 
- * @author	J. Wu
+ * @author J. Wu
  */
 
 public class ContoursExtension {
@@ -109,6 +111,7 @@ public class ContoursExtension {
         this.contour = currentGraph;
         this.gtrans = gtrans;
         this.extColors = extClr;
+
         setExtent(kx, ky);
 
         setCatmap(cmap);
@@ -177,7 +180,6 @@ public class ContoursExtension {
     public void setExtent(int kx, int ky) {
         this.kx = kx;
         this.ky = ky;
-
     }
 
     /**
@@ -340,9 +342,9 @@ public class ContoursExtension {
                     cline.getLabelString()[0]);
 
             /*
-             * Smooth the line
+             * Convert points in the line to map coordinates
              */
-            smoothLine(line, ii);
+            convertPointsToMapCoordinates(line, ii);
 
             /*
              * Extend the line
@@ -355,9 +357,10 @@ public class ContoursExtension {
     }
 
     /**
-     * Compute extension points.
+     * Compute points in the contour line and convert those pixel coordinates to
+     * map coordinates.
      */
-    private void smoothLine(Line ln, int index) {
+    private void convertPointsToMapCoordinates(Line ln, int index) {
 
         if (ln != null) {
 
@@ -368,9 +371,7 @@ public class ContoursExtension {
              * Find the visible part of the contour line in the current view.
              */
             Coordinate[] pts = ln.getLinePoints();
-            float density;
             double[][] pixels;
-            double[][] smoothpts;
 
             /*
              * convert lat/lon coordinates to pixel coordinates
@@ -378,25 +379,9 @@ public class ContoursExtension {
             pixels = PgenUtil.latlonToPixel(pts, drawingLayer.getDescriptor());
 
             /*
-             * Apply parametric smoothing on pixel coordinates, if required
-             */
-            if (ln.getSmoothFactor() > 0) {
-                float devScale = 50.0f;
-                if (ln.getSmoothFactor() == 1) {
-                    density = devScale / 1.0f;
-                } else {
-                    density = devScale / 5.0f;
-                }
-
-                smoothpts = CurveFitter.fitParametricCurve(pixels, density);
-            } else {
-                smoothpts = pixels;
-            }
-
-            /*
              * Save the points (in map coordinate).
              */
-            int origPts = smoothpts.length;
+            int origPts = pixels.length;
 
             nOrigPts[index] = origPts;
 
@@ -406,10 +391,10 @@ public class ContoursExtension {
             double[] pt;
             double[] ptsIn = new double[origPts * 2];
 
-            for (int kk = 0; kk < smoothpts.length; kk++) {
+            for (int kk = 0; kk < pixels.length; kk++) {
 
-                pt = drawingLayer.getDescriptor().pixelToWorld(new double[] {
-                        smoothpts[kk][0], smoothpts[kk][1], 0.0 });
+                pt = drawingLayer.getDescriptor().pixelToWorld(
+                        new double[] { pixels[kk][0], pixels[kk][1], 0.0 });
 
                 ptsIn[kk * 2] = pt[0];
                 ptsIn[kk * 2 + 1] = pt[1];
