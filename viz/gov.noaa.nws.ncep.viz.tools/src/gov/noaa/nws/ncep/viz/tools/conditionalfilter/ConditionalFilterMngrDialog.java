@@ -50,7 +50,8 @@ import gov.noaa.nws.ncep.viz.ui.display.NcDisplayMngr;
  * 02/11/13      #972            G. Hull         AbstractEditor instead of NCMapEditor
  * May 16, 2016 5647             tgurney         Remove minimize and maximize buttons
  * 12/10/2019   72281            K Sunil         Changes to make this work in both NCP and D2D
- *
+ * 08/24/2021   93101            smanoj          Fix Null Pointer Exception.
+ * 
  * </pre>
  *
  * @author sgurung
@@ -213,11 +214,12 @@ public class ConditionalFilterMngrDialog extends Dialog {
                             .getFilterManagerInstance(perspective)
                             .getConditionalFilter(seldPlugin, condFilterName);
 
-                    if (cf != null && cf.getLocalizationFile().getContext()
-                            .getLocalizationLevel() == LocalizationLevel.USER) {
-                        deleteCondFilterBtn.setEnabled(true);
-                    } else {
-                        deleteCondFilterBtn.setEnabled(false);
+                    deleteCondFilterBtn.setEnabled(false);
+                    if (cf != null && cf.getLocalizationFile() != null) {
+                        if (cf.getLocalizationFile().getContext()
+                                .getLocalizationLevel() == LocalizationLevel.USER) {
+                            deleteCondFilterBtn.setEnabled(true);
+                        }
                     }
                 } else {
                     copyCondFilterBtn.setEnabled(false);

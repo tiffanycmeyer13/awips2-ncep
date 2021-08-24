@@ -27,6 +27,7 @@ import org.apache.commons.lang.Validate;
 import com.raytheon.uf.common.serialization.ISerializableObject;
 import com.raytheon.uf.common.status.IUFStatusHandler;
 import com.raytheon.uf.common.status.UFStatus;
+import com.raytheon.uf.common.status.UFStatus.Priority;
 import com.raytheon.uf.common.time.DataTime;
 import com.raytheon.uf.common.time.TimeRange;
 import com.raytheon.uf.viz.core.AbstractTimeMatcher;
@@ -70,11 +71,11 @@ import com.raytheon.uf.viz.core.rsc.LoadProperties;
  *                                      timeline settings based on cached information.
  * 04/20/16       R17324   P. Moyer     Added BINNING_FOR_GRID_RESOURCES time matching.
  *                                      Eliminated redundant generic types.
+ * 08/24/2021     93101    smanoj       Added error handling for allAvailDataTimes.
  * 
  * </pre>
  * 
  * @author ghull
- * @version 1.0
  */
 @XmlAccessorType(XmlAccessType.NONE)
 public class NCTimeMatcher extends AbstractTimeMatcher implements
@@ -312,6 +313,10 @@ public class NCTimeMatcher extends AbstractTimeMatcher implements
     }
 
     public boolean isDataAvailable() {
+        if (allAvailDataTimes == null) {
+            statusHandler.handle(Priority.WARN, "Data Not Available");
+            return false;
+        }
         return !allAvailDataTimes.isEmpty();
     }
 
