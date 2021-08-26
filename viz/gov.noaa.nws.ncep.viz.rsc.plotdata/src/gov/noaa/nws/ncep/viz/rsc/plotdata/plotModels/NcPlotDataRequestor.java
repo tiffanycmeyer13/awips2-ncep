@@ -97,7 +97,8 @@ import gov.noaa.nws.ncep.viz.rsc.plotdata.rsc.Tracer;
  * 03/05/2017   18784        wkwock       Handle not integer stationNum(stationID in DB)
  * Mar 14, 2019 7581         tgurney      Improved error logging and cleanup
  * Mar 18, 2019 7581         tgurney      Fix locking issue
- *
+ * Aug 24, 2021  93101       smanoj       Fix the issues with displaying nctaf in ncp perspective.
+ * 
  * </pre>
  */
 
@@ -419,8 +420,8 @@ public class NcPlotDataRequestor {
                 .getParameterDefns();
 
         for (PlotParameterDefn plotPrmDefn : listOfPlotParamDefns) {
-            if (plotPrmDefn.getMetParamName()
-                    .equals(metPrm.getMetParamName())) {
+            if ((plotPrmDefn.getMetParamName() != null) && (plotPrmDefn
+                    .getMetParamName().equals(metPrm.getMetParamName()))) {
                 String plotParamName = plotPrmDefn.getPlotParamName();
                 for (String condPlotParamName : condPlotParamNameSet) {
                     if (condPlotParamName.equals(plotParamName)) {
@@ -437,11 +438,16 @@ public class NcPlotDataRequestor {
                                         plotPrmDefn.getPlotUnit());
 
                         try {
-                            if (!condMetParam.hasStringValue()) {
-                                condMetParam.setValue(
-                                        metPrm.getValueAs(
-                                                condMetParam.getUnitStr()),
-                                        condMetParam.getUnit());
+
+                            if (!condMetParam.hasStringValue()
+                                    && !condMetParam.getUnitStr().isEmpty()) {
+                                if (metPrm.getValueAs(
+                                        condMetParam.getUnitStr()) != null) {
+                                    condMetParam.setValue(
+                                            metPrm.getValueAs(
+                                                    condMetParam.getUnitStr()),
+                                            condMetParam.getUnit());
+                                }
                             } else {
                                 condMetParam.setStringValue(
                                         metPrm.getStringValue());
@@ -456,11 +462,13 @@ public class NcPlotDataRequestor {
                                     formattedPlotString = new String(
                                             condMetParam.getStringValue());
                                 } else {
-                                    formattedPlotString = new String(
-                                            Double.toString(condMetParam
-                                                    .getValueAs(condMetParam
-                                                            .getUnitStr())
-                                                    .doubleValue()));
+                                    if (!condMetParam.getUnitStr().isEmpty()) {
+                                        formattedPlotString = new String(
+                                                Double.toString(condMetParam
+                                                        .getValueAs(condMetParam
+                                                                .getUnitStr())
+                                                        .doubleValue()));
+                                    }
                                 }
                             }
 
@@ -477,11 +485,15 @@ public class NcPlotDataRequestor {
                                         .substring(plotTrim);
                             }
 
-                            displayStationPlot = condMetParam.hasStringValue()
-                                    ? reqConstraint
-                                            .evaluate(formattedPlotString)
-                                    : reqConstraint.evaluate(Double
-                                            .parseDouble(formattedPlotString));
+                            if (formattedPlotString != null) {
+                                displayStationPlot = condMetParam
+                                        .hasStringValue()
+                                                ? reqConstraint.evaluate(
+                                                        formattedPlotString)
+                                                : reqConstraint.evaluate(
+                                                        Double.parseDouble(
+                                                                formattedPlotString));
+                            }
                             break;
 
                         } catch (Exception e) {
@@ -710,6 +722,11 @@ public class NcPlotDataRequestor {
 
         String dbParamName = plotPrmDefn.getDbParamName();
         String metParamName = plotPrmDefn.getMetParamName();
+
+        if (dbParamName == null) {
+            return;
+        }
+
         // the input args
         String[] deriveParams = plotPrmDefn.getDeriveParams();
 
@@ -1586,40 +1603,43 @@ public class NcPlotDataRequestor {
                         }
 
                         String stationId = currentStation.info.stationId;
-
                         DataTime dataTime = stationIdToDataTimeMap
                                 .get(stationId);
 
                         // Caution: Single-element constructor; assumes this is
                         // an
                         // observation time, and not a forecast time. See below.
-                        DataTime retrievedDataTime = new DataTime(
-                                new Date(pdv.getLong(REFTIME_DB_NAME_LABEL)));
 
-                        // Since the constraints we use (if
-                        // plotProp.hasDistinctStationId) are "stationID" IN
-                        // list-of-all-stationIDs -AND- dataTime IN
-                        // list-of-all-dataTimes, a station could be retrieved
-                        // for more data times than its unique time-matched time
-                        // (for this frame) -- IF it happens to share another
-                        // data
-                        // time with another station legitimately time-matched
-                        // to
-                        // that other time. Here we check to make sure the time
-                        // we retrieved is the one we wanted for this station;
-                        // if not, ignore this obs. (An obs with the desired
-                        // time should appear elsewhere in the PDC).
-                        // Note that we exempt forecast (e.g., MOS) data times
-                        // from this check, since we don't retrieve forecast
-                        // hour from the DB for retrievedDataTime -- see above.
-                        if (!dataTime.getUtilityFlags().contains(FLAG.FCST_USED)
-                                && !dataTime.equals(retrievedDataTime)) {
-                            Tracer.print(Tracer.shortTimeString(time)
-                                    + " Retrieved dataTime for station "
-                                    + stationId + " is " + retrievedDataTime
-                                    + " but matched dataTime is " + dataTime
-                                    + " -- skipping");
-                            continue;
+                        if (!plugin.contains("nctaf")) {
+                            DataTime retrievedDataTime = new DataTime(new Date(
+                                    pdv.getLong(REFTIME_DB_NAME_LABEL)));
+
+                            // Since the constraints we use (if
+                            // plotProp.hasDistinctStationId) are "stationID" IN
+                            // list-of-all-stationIDs -AND- dataTime IN
+                            // list-of-all-dataTimes, a station could be retrieved
+                            // for more data times than its unique time-matched time
+                            // (for this frame) -- IF it happens to share another
+                            // data
+                            // time with another station legitimately time-matched
+                            // to
+                            // that other time. Here we check to make sure the time
+                            // we retrieved is the one we wanted for this station;
+                            // if not, ignore this obs. (An obs with the desired
+                            // time should appear elsewhere in the PDC).
+                            // Note that we exempt forecast (e.g., MOS) data times
+                            // from this check, since we don't retrieve forecast
+                            // hour from the DB for retrievedDataTime -- see above.
+                            if (!dataTime.getUtilityFlags()
+                                    .contains(FLAG.FCST_USED)
+                                    && !dataTime.equals(retrievedDataTime)) {
+                                Tracer.print(Tracer.shortTimeString(time)
+                                        + " Retrieved dataTime for station "
+                                        + stationId + " is " + retrievedDataTime
+                                        + " but matched dataTime is " + dataTime
+                                        + " -- skipping");
+                                continue;
+                            }
                         }
 
                         //
