@@ -86,6 +86,7 @@ import gov.noaa.nws.ncep.ui.pgen.palette.PgenPaletteWindow;
 import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductConfigureDialog;
 import gov.noaa.nws.ncep.ui.pgen.producttypes.PgenLayer;
 import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 import gov.noaa.nws.ncep.ui.pgen.tools.AbstractPgenTool;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenContoursTool;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenContoursTool.PgenContoursHandler;
@@ -164,7 +165,8 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSelectHandler;
  * 10/30/2020   84101       smanoj      Add "Snap Labels to ContourLine" option on the
  *                                      Contours Attributes dialog.
  * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
- * 
+ * 08/26/2021   86161       srussell    Updated  close()
+ *
  * </pre>
  *
  * @author J. Wu
@@ -368,6 +370,8 @@ public class ContoursAttrDlg extends AttrDlg
     private Button toggleSnapLblChkBox = null;
 
     private boolean toggleSnapLblChecked = true;
+
+    protected PgenResource pgenrsc = null;
 
     /**
      * Private constructor
@@ -1773,6 +1777,10 @@ public class ContoursAttrDlg extends AttrDlg
 
         // Release contours-specific key bindings.
         deactivatePGENContoursContext();
+
+        // Deselect points on a contour line upon closing the Contour Line Dlg
+        pgenrsc = PgenSession.getInstance().getPgenResource();
+        pgenrsc.removeSelected();
 
         return super.close();
 
@@ -4750,7 +4758,7 @@ public class ContoursAttrDlg extends AttrDlg
 
     /**
      * Get the Forecast Hours from ContoursInfoDlg.
-     * 
+     *
      * @return fcstHrs
      */
     public List<String> getContourFcstHrs(String param) {
