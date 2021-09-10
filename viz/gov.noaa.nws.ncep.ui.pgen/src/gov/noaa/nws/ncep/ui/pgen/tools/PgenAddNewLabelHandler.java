@@ -19,35 +19,28 @@
  **/
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
-import java.util.Iterator;
-import java.util.List;
 import java.awt.Color;
+import java.util.List;
 
 import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.ContoursAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.contours.ContourLine;
-import gov.noaa.nws.ncep.ui.pgen.contours.Contours;
-
-import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
-import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
-import gov.noaa.nws.ncep.ui.pgen.elements.Text;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
-
 import gov.noaa.nws.ncep.ui.pgen.display.IText.DisplayType;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.FontStyle;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.TextJustification;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.TextRotation;
+import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
+import gov.noaa.nws.ncep.ui.pgen.elements.Text;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 
 /**
-*
-* Mouse handler to add a new label to ContourLine.
-*
-* <pre>
+ *
+ * Mouse handler to add a new label to ContourLine.
+ *
+ * <pre>
 *
 * SOFTWARE HISTORY
 *
@@ -58,10 +51,11 @@ import gov.noaa.nws.ncep.ui.pgen.display.IText.TextRotation;
 *                                   more than one contour
 * Oct 30, 2020   84101    smanoj    Create a default contour label for the
 *                                   case of empty labels in the contour line.
-* </pre>
-*
-* @author smanoj
-*/
+* Aug 25, 2021   86161    srussell  Updated addNewLabel()
+ * </pre>
+ *
+ * @author smanoj
+ */
 public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
 
     protected AbstractEditor mapEditor;
@@ -77,6 +71,7 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
     }
 
     private void addNewLabel(Coordinate loc, Text lbl, ContourLine cline) {
+
         int nlabels = cline.getNumOfLabels() + 1;
         lbl.setText(lbl.getText());
         lbl.setLocation(loc);
@@ -86,29 +81,21 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
 
         PgenSession.getInstance().getPgenResource().issueRefresh();
         PgenSession.getInstance().getPgenResource().resetAllElements();
-        AbstractPgenTool thisTool = PgenSession.getInstance().getPgenTool();
-        if (thisTool instanceof AbstractPgenDrawingTool) {
-            AttrDlg thisDlg = ((AbstractPgenDrawingTool) thisTool).getAttrDlg();
-            if (thisDlg instanceof ContoursAttrDlg
-                    && thisTool instanceof PgenContoursTool) {
-                ContoursAttrDlg pgenDlg = (ContoursAttrDlg) thisDlg;
-                pgenDlg.close();
-                thisDlg.close();
-            }
-        }
 
     }
 
     @Override
     public boolean handleMouseDown(int anX, int aY, int button) {
 
-        if (!drawingLayer.isEditable())
+        if (!drawingLayer.isEditable()) {
             return false;
+        }
 
         // Check if mouse is in geographic extent
         Coordinate loc = mapEditor.translateClick(anX, aY);
-        if (loc == null || shiftDown)
+        if (loc == null || shiftDown) {
             return false;
+        }
 
         if (button == 1) {
 

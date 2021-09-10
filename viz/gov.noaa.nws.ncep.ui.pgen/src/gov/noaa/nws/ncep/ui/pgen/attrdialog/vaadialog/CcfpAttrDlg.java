@@ -66,11 +66,14 @@ import gov.noaa.nws.ncep.ui.pgen.tools.ILabeledLine;
  * Mar 2013      #928      B. Yin       Made the button bar smaller.
  * Mar 20, 2019  #7572     dgilling     Code cleanup.
  *
+ * Aug 26, 2021  #95470    omoncayo     Set default attributes consistent with NMAP PGEN,
+ *                                      updating initialization variables.
+ *
  * </pre>
  *
  * @author gzhang
  */
-public class CcfpAttrDlg extends AttrDlg implements ICcfp{
+public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
     private static final int APPLY_BUTTON_ID = IDialogConstants.CLIENT_ID + 1;
 
@@ -160,22 +163,22 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
     private String ccfpValidTime = "";
 
     // editableAttrPhenom;
-    private String ccfpCvrg = ITEMS_CVRG[0];// "";
+    private String ccfpCvrg = ITEMS_CVRG[2];
     // editableAttrPhenom2;
 
-    private String ccfpTops = ITEMS_TOPS[0];// "";
+    private String ccfpTops = ITEMS_TOPS[3];
     // editableAttrPhenomLat;
 
-    private String ccfpConf = ITEMS_CONF[0];// "";
+    private String ccfpConf = ITEMS_CONF[0];
     // editableAttrPhenomLon;
 
-    private String ccfpGrwt = ITEMS_GWTH[0];// "";
+    private String ccfpGrwt = ITEMS_GWTH[1];
     // editableAttrPhenomSpeed;
 
-    private String ccfpSpd = ITEMS_SPD[0];// "";
+    private String ccfpSpd = ITEMS_SPD[0];
     // editableAttrPhenomDirection;
 
-    private String ccfpDir = ITEMS_DIR[0];// "";
+    private String ccfpDir = ITEMS_DIR[0];
 
     protected CcfpAttrDlg(Shell parShell) {
         super(parShell);
@@ -189,7 +192,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
     }
 
     @Override
-    public String getCcfpLineType(){
+    public String getCcfpLineType() {
 
         if (CcfpAttrDlg.LINE_MED.equalsIgnoreCase(lineType)) {
             return "LINE_DASHED_4";
@@ -199,7 +202,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
     }
 
     @Override
-    public FillPattern getFillPattern(){
+    public FillPattern getFillPattern() {
         if (cmbCvrg == null || cmbCvrg.isDisposed()) {
             return FillPattern.FILL_PATTERN_1;
         }
@@ -212,7 +215,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
 
         if (ITEMS_CVRG[0].equals(ccfpCvrg)) {
             return FillPattern.FILL_PATTERN_5;
-        } else if(ITEMS_CVRG[1].equals(ccfpCvrg)) {
+        } else if (ITEMS_CVRG[1].equals(ccfpCvrg)) {
             return FillPattern.FILL_PATTERN_3;
         } else {
             return FillPattern.FILL_PATTERN_1;
@@ -231,13 +234,14 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
     }
 
     @Override
-    public Boolean isFilled(){
+    public Boolean isFilled() {
         return true;
     }
 
     @Override
     public void createButtonsForButtonBar(Composite parent) {
-        Button formatBtn = createButton(parent, FORMAT_BUTTON_ID, "Format...", false);
+        Button formatBtn = createButton(parent, FORMAT_BUTTON_ID, "Format...",
+                false);
         formatBtn.setEnabled(false);
 
         Button applyBtn = createButton(parent, APPLY_BUTTON_ID, "Apply", false);
@@ -298,7 +302,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
     }
 
     @Override
-    public void copyEditableAttrToAbstractSigmet(AbstractSigmet ba){
+    public void copyEditableAttrToAbstractSigmet(AbstractSigmet ba) {
 
         ba.setColors(CcfpAttrDlg.this.getColors());
 
@@ -315,9 +319,9 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
         sig.setEditableAttrPhenomSpeed(this.ccfpSpd);
         sig.setEditableAttrPhenomDirection(this.ccfpDir);
 
-        if(ITEMS_CVRG[0].equals(ccfpCvrg)) {
+        if (ITEMS_CVRG[0].equals(ccfpCvrg)) {
             sig.setFillPattern(FillPattern.FILL_PATTERN_5);
-        } else if(ITEMS_CVRG[1].equals(ccfpCvrg)) {
+        } else if (ITEMS_CVRG[1].equals(ccfpCvrg)) {
             sig.setFillPattern(FillPattern.FILL_PATTERN_3);
         } else {
             sig.setFillPattern(FillPattern.FILL_PATTERN_1);
@@ -325,7 +329,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
     }
 
     @Override
-    public Color[] getColors(){
+    public Color[] getColors() {
         if (!AREA.equalsIgnoreCase(lineType)) {
             // Line/LineMed ONLY use purple
             return new Color[] { PURPLE };
@@ -333,7 +337,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
 
             if (cmbConf == null || cmbConf.isDisposed()) {
                 return colors;
-            } else{
+            } else {
                 ccfpConf = cmbConf.getText().trim();
                 if (ccfpConf.contains(ITEMS_CONF[1])) {
                     return new Color[] { PURPLE };
@@ -342,7 +346,6 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
                 }
             }
         }
-        //return colors;
     }
 
     private void setColor(Color clr) {
@@ -403,7 +406,6 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
         attrButtonMap.put("lineType",
                 new Button[] { btnArea, btnLine, btnLineMed });
 
-
         addBtnListeners();
 
         if (this.asig == null
@@ -413,15 +415,13 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp{
 
         String lt = this.getLineType();
         if (lt != null && lt.equalsIgnoreCase(AREA)) {
-this.createAreaInfo(top);
+            this.createAreaInfo(top);
         }
 
         init();
-        // grayOutUnselectedBtns();
         setMouseHandlerName(null);
         return top;
     }
-
 
     public String getEditableAttrArea() {
         return editableAttrArea;
@@ -455,8 +455,6 @@ this.createAreaInfo(top);
         this.editableAttrSequence = editableAttrSequence;
     }
 
-    // private class SigmetCommAttrDlgSaveMsgDlg extends AttrDlg{ }
-
     public void saveApplyPressed() {
         ArrayList<AbstractDrawableComponent> adcList = null;
         ArrayList<AbstractDrawableComponent> newList = new ArrayList<>();
@@ -485,9 +483,6 @@ this.createAreaInfo(top);
                 }
             }
 
-            // if ( newEl != null ){ AttrSettings.getInstance().setSettings(
-            // newEl ); }
-
             ArrayList<AbstractDrawableComponent> oldList = new ArrayList<>(
                     adcList);
             drawingLayer.replaceElements(oldList, newList);
@@ -511,10 +506,8 @@ this.createAreaInfo(top);
         this.ccfpCvrg = this.cmbCvrg.getText().trim();
         this.ccfpDir = this.cmbDir.getText().trim();
         this.ccfpGrwt = this.cmbGwth.getText().trim();
-        // this.ccfpIssueTime = this.cmbIssTime.getText().trim();
         this.ccfpSpd = this.cmbSpd.getText().trim();
         this.ccfpTops = this.cmbTops.getText().trim();
-        // this.ccfpValidTime = this.cmbVaTime.getText().trim();
 
     }
 
@@ -698,7 +691,6 @@ this.createAreaInfo(top);
             }
         });
 
-
         btnLineMed.addSelectionListener(new SelectionAdapter() {
 
             @Override
@@ -732,7 +724,7 @@ this.createAreaInfo(top);
 
                 if (ITEMS_CVRG[0].equals(ccfpCvrg)) {
                     asig.setFillPattern(FillPattern.FILL_PATTERN_5);
-                } else if(ITEMS_CVRG[1].equals(ccfpCvrg)) {
+                } else if (ITEMS_CVRG[1].equals(ccfpCvrg)) {
                     asig.setFillPattern(FillPattern.FILL_PATTERN_3);
                 } else {
                     asig.setFillPattern(FillPattern.FILL_PATTERN_1);
@@ -816,14 +808,10 @@ this.createAreaInfo(top);
                 btns[1].setSelection(true);
                 btns[2].setSelection(false);
 
-                // attrControlMap.get("lineType").setEnabled(true);
-                // attrControlMap.get("width").setEnabled(true);
             } else if (lineType.equals(LINE_MED)) {
                 btns[0].setSelection(false);
                 btns[1].setSelection(false);
                 btns[2].setSelection(true);
-
-                // attrControlMap.get("width").setEnabled(true);
             }
         }
 
@@ -923,7 +911,7 @@ this.createAreaInfo(top);
             this.getShell().layout();
         }
 
-        NotFirstOpen = true;// toggleExFlag();
+        NotFirstOpen = true;
 
         initCombos();// 20101005
     }
@@ -945,7 +933,6 @@ this.createAreaInfo(top);
 
         this.getShell().pack();
         this.getShell().layout();
-        // */// toggleExFlag();
     }
 
     private void initCombos() {
@@ -978,30 +965,27 @@ this.createAreaInfo(top);
 
     @Override
     public Coordinate[] getLinePoints() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public String getPatternName() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public int getSmoothFactor() {
-        // TODO Auto-generated method stub
         return 0;
     }
 
     @Override
     public Boolean isClosedLine() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void copyEditableAttrToAbstractSigmet2(AbstractSigmet ba, LabeledLine ll){
+    public void copyEditableAttrToAbstractSigmet2(AbstractSigmet ba,
+            LabeledLine ll) {
 
         ba.setColors(CcfpAttrDlg.this.getColors());
 
@@ -1018,15 +1002,13 @@ this.createAreaInfo(top);
         sig.setEditableAttrPhenomSpeed(this.ccfpSpd);
         sig.setEditableAttrPhenomDirection(this.ccfpDir);
 
-        if(ITEMS_CVRG[0].equals(ccfpCvrg)) {
+        if (ITEMS_CVRG[0].equals(ccfpCvrg)) {
             sig.setFillPattern(FillPattern.FILL_PATTERN_5);
-        } else if(ITEMS_CVRG[1].equals(ccfpCvrg)) {
+        } else if (ITEMS_CVRG[1].equals(ccfpCvrg)) {
             sig.setFillPattern(FillPattern.FILL_PATTERN_3);
         } else {
             sig.setFillPattern(FillPattern.FILL_PATTERN_1);
         }
-
-       // copiedToSigmet = true;
 
         StringBuilder sb = new StringBuilder("CCFP_SIGMET");
 
@@ -1055,18 +1037,15 @@ this.createAreaInfo(top);
 
         if (ITEMS_CVRG[0].equals(ccfpCvrg)) {
             sig.setFillPattern(FillPattern.FILL_PATTERN_5);
-        } else if(ITEMS_CVRG[1].equals(ccfpCvrg)) {
+        } else if (ITEMS_CVRG[1].equals(ccfpCvrg)) {
             sig.setFillPattern(FillPattern.FILL_PATTERN_3);
         } else {
             sig.setFillPattern(FillPattern.FILL_PATTERN_1);
         }
-
-        // copiedToSigmet = true;
     }
 
     public void setText(Text txt) {
         txt.setColors(CcfpAttrDlg.this.getColors());
-        // copiedToSigmet = true;
     }
 
     public void setCcfpDrawingTool(ILabeledLine pgenTool) {
@@ -1138,7 +1117,7 @@ this.createAreaInfo(top);
 
             // make sure the arrow line won't go through the text box.
             if (newll instanceof Ccfp) {
-                ((Ccfp)newll).moveText2Last();
+                ((Ccfp) newll).moveText2Last();
             }
 
             mapEditor.refresh();
@@ -1154,7 +1133,7 @@ this.createAreaInfo(top);
     }
 
     @Override
-    public boolean isAreaType(){
+    public boolean isAreaType() {
         return AREA.equalsIgnoreCase(lineType);
     }
 
