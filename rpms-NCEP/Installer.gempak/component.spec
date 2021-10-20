@@ -3,6 +3,9 @@
 %global __jar_repack 0
 # Change the brp-python-bytecompile script to use the AWIPS2 version of Python
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's/\/usr\/bin\/python/\/awips2\/python\/bin\/python/g')
+# Disabling build ID links prevents conflicts with other packages that include
+# Eclipse binaries.
+%define _build_id_links none
 
 #
 # AWIPS II GEMPAK Spec File
