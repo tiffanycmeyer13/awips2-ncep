@@ -232,6 +232,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                         make fields invisible based on Level Information "BTN"
  *                                         adding new QC Check from NOAA Stakeholders.
  * Oct 18, 2021  93036      smanoj       Fixing some QC alerts issues.
+ * Nov 01, 2021  93036      smanoj       Additional QC validation for INTL SIGMET.
  * 
  * </pre>
  *
@@ -503,6 +504,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private Combo comboLevel;
 
     private Combo comboLevelInfo1;
+
+    private Text descText;
+
+    private boolean isRadialDescValid = true;
 
     /**
      * Constructor.
@@ -782,6 +787,140 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
     }
 
+    private String validateFlightLevelInfoBTN(String flightLevelVal1,
+            String flightLevelVal2, String flightLevelInfo2, String prefix) {
+
+        StringBuffer errors = new StringBuffer();
+        if (flightLevelVal1 == null || flightLevelVal1.isEmpty()
+                || flightLevelVal2 == null || flightLevelVal2.isEmpty()) {
+            errors.append(prefix)
+                    .append("Flight Level Values can not be empty\n\n");
+        } else {
+            errors.append(validateLevelInfoSigmetEntries(flightLevelVal1, 0,
+                    600, prefix));
+
+            if (PgenConstant.LEVEL_INFO2_AND.equals(flightLevelInfo2)) {
+                // validate level information (Max value is 600)
+                errors.append(validateLevelInfoSigmetEntries(flightLevelVal2,
+                        Integer.parseInt(flightLevelVal1 == null ? "0"
+                                : flightLevelVal1),
+                        600, prefix));
+            } else {
+                errors.append(prefix).append(
+                        "When BTN is selected in Level Information, Ensure 4th widget is set to AND\n\n");
+            }
+        }
+
+        return errors.toString();
+    }
+
+    private void validateRadialDescription() {
+        if (getEditableAttrFcstVADesc() != null) {
+            StringBuffer errors = new StringBuffer();
+            isRadialDescValid = true;
+
+            if (!StringUtils
+                    .isEmpty(SigmetAttrDlg.this.getEditableAttrFcstVADesc())
+                    && (SigmetAttrDlg.this.getEditableAttrFcstVADesc().trim()
+                            .length() > 0)) {
+                String[] locPair = SigmetAttrDlg.this
+                        .getEditableAttrFcstVADesc().split("-");
+                String ralSel = SigmetAttrDlg.this
+                        .getEditableAttrRALSelection();
+
+                switch (ralSel) {
+                case RADIUS:
+                    if (locPair.length > 1) {
+                        errors.append(
+                                "Should have only one pair of Lat/Lon values for the RADIUS Description .\n\n");
+                        isRadialDescValid = false;
+                    }
+                    break;
+                case AREA:
+                    if (locPair.length < 3) {
+                        errors.append(
+                                "Should have at least three pairs of Lat/Lon values for the AREA Description .\n\n");
+                        isRadialDescValid = false;
+                    }
+                    break;
+                case LINE:
+                    if (locPair.length != 2) {
+                        errors.append(
+                                "Should have two pairs of Lat/Lon values for the LINE Description .\n\n");
+                        isRadialDescValid = false;
+                    }
+                    break;
+                default:
+
+                }
+
+                for (String element : locPair) {
+                    String locTemp = element;
+                    locTemp = locTemp.trim();
+                    String[] latlonPair = locTemp.split(" ");
+                    if (latlonPair.length > 1) {
+                        String lat = latlonPair[0];
+                        String lon = latlonPair[1];
+
+                        if ((lat.length() != 5)
+                                || !validateLatLonRadialText(lat.trim(),
+                                        true)) {
+                            errors.append(
+                                    "Entered an Invalid Latitude value for the Radial/Area/Line Description :  "
+                                            + lat
+                                            + ". Example of Valid Latitude: N2330.\n\n");
+                            isRadialDescValid = false;
+                        }
+                        if (lon.length() != 6
+                                || !validateLatLonRadialText(lon.trim(),
+                                        false)) {
+                            errors.append(
+                                    "Entered an Invalid Longitude value for the Radial/Area/Line Description :  "
+                                            + lon
+                                            + ". Example of Valid Longitude: W07500.\n\n");
+                            isRadialDescValid = false;
+                        }
+
+                    } else {
+                        errors.append(
+                                "Both Latitude and Longitude coordinates need to be entered for the "
+                                        + "Radial/Area/Line Description. Example N2330 W07500. \n\n");
+                        isRadialDescValid = false;
+                    }
+                }
+            }
+
+            if (isRadialDescValid) {
+                if (descText != null) {
+                    setBackgroundColor(descText, rightFormatColor);
+                }
+            } else {
+                if (!StringUtils.isEmpty(errors.toString())) {
+                    (new SigmetAttrValidateDlg(getShell(), errors.toString()))
+                            .open();
+                }
+                if (descText != null) {
+                    setBackgroundColor(descText, wrongFormatColor);
+                }
+            }
+
+        }
+    }
+
+    private boolean validateLatLonRadialText(String coor, boolean isLat) {
+        String regexLat = "(-?[NS][0-8]?[0-9](\\.)?(\\d*)?)|-?90(\\.)?([0]*)?";
+        String regexLon = "(-?([WE][1]?[0-7][0-9]|[0]?[0-9]?[0-9])?(\\.)?(\\d*)?)|-?180(\\.)?([0]*)?";
+
+        java.util.regex.Matcher m;
+        if (isLat) {
+            m = java.util.regex.Pattern.compile(regexLat).matcher(coor);
+        } else {
+            m = java.util.regex.Pattern.compile(regexLon).matcher(coor);
+        }
+
+        return m.matches();
+    }
+
     private String validateSigmetEntries() {
         // Validation for NPE
         String phenomType = SigmetAttrDlg.this.getEditableAttrPhenom() == null
@@ -810,18 +949,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             switch (levelInfo1) {
             case PgenConstant.LEVEL_INFO_BTN:
-                errors.append(validateLevelInfoSigmetEntries(
-                        SigmetAttrDlg.this.getEditableAttrLevelText1(), 0, 600,
-                        ""));
-                if (PgenConstant.LEVEL_INFO2_AND
-                        .equals(getEditableAttrLevelInfo2())) {
-                    // validate level information (Max value is 600)
-                    errors.append(validateLevelInfoSigmetEntries(
-                            SigmetAttrDlg.this.getEditableAttrLevelText2(),
-                            Integer.parseInt(getEditableAttrLevelText1() == null
-                                    ? "0" : getEditableAttrLevelText1()),
-                            600, ""));
-                }
+                // validate both Flight level values in the case of BTN option
+                String flightLevelVal1 = SigmetAttrDlg.this
+                        .getEditableAttrLevelText1();
+                String flightLevelVal2 = SigmetAttrDlg.this
+                        .getEditableAttrLevelText2();
+                String flightLevelInfo = getEditableAttrLevelInfo2();
+                errors.append(validateFlightLevelInfoBTN(flightLevelVal1,
+                        flightLevelVal2, flightLevelInfo, ""));
                 break;
             case PgenConstant.LEVEL_INFO_TO:
             case PgenConstant.LEVEL_INFO_ABV:
@@ -852,22 +987,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         ""));
                 break;
             case PgenConstant.LEVEL_INFO_BTN:
-                // validate level information (Min 250, Max 350
-                errors.append(validateLevelInfoSigmetEntries(
-                        SigmetAttrDlg.this.getEditableAttrLevelText1(), 0, 600,
-                        ""));
-                if (PgenConstant.LEVEL_INFO2_AND
-                        .equals(getEditableAttrLevelInfo2())) {
-                    // validate level information (Max value is 600)
-                    errors.append(validateLevelInfoSigmetEntries(
-                            SigmetAttrDlg.this.getEditableAttrLevelText2(),
-                            Integer.parseInt(getEditableAttrLevelText1() == null
-                                    ? "0" : getEditableAttrLevelText1()),
-                            600, ""));
-                } else {
-                    errors.append(
-                            "Ensure the Level Info 4th widget is set to AND\n\n");
-                }
+                // validate both Flight level values in the case of BTN option
+                String flightLevelVal1 = SigmetAttrDlg.this
+                        .getEditableAttrLevelText1();
+                String flightLevelVal2 = SigmetAttrDlg.this
+                        .getEditableAttrLevelText2();
+                String flightLevelInfo = getEditableAttrLevelInfo2();
+                errors.append(validateFlightLevelInfoBTN(flightLevelVal1,
+                        flightLevelVal2, flightLevelInfo, ""));
                 break;
             default:
                 errors.append(
@@ -909,18 +1036,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             switch (levelInfo1) {
             case PgenConstant.LEVEL_INFO_BTN:
-                errors.append(validateLevelInfoSigmetEntries(
-                        SigmetAttrDlg.this.getEditableAttrLevelText1(), 0, 600,
-                        ""));
-                if (PgenConstant.LEVEL_INFO2_AND
-                        .equals(getEditableAttrLevelInfo2())) {
-                    // validate level information (Max value is 600)
-                    errors.append(validateLevelInfoSigmetEntries(
-                            SigmetAttrDlg.this.getEditableAttrLevelText2(),
-                            Integer.parseInt(getEditableAttrLevelText1() == null
-                                    ? "0" : getEditableAttrLevelText1()),
-                            600, ""));
-                }
+                // validate both Flight level values in the case of BTN option
+                String flightLevelVal1 = SigmetAttrDlg.this
+                        .getEditableAttrLevelText1();
+                String flightLevelVal2 = SigmetAttrDlg.this
+                        .getEditableAttrLevelText2();
+                String flightLevelInfo = getEditableAttrLevelInfo2();
+                errors.append(validateFlightLevelInfoBTN(flightLevelVal1,
+                        flightLevelVal2, flightLevelInfo, ""));
                 break;
             case PgenConstant.LEVEL_INFO_TO:
             case PgenConstant.LEVEL_INFO_ABV:
@@ -958,41 +1081,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 errors.append("Phenomenon longitude should be valid.\n\n");
             }
             // Validate Radical/Area/Line Description Lat/Lon
-            if (!StringUtils
-                    .isEmpty(SigmetAttrDlg.this.getEditableAttrFcstVADesc())
-                    && (SigmetAttrDlg.this.getEditableAttrFcstVADesc().trim()
-                            .length() > 0)) {
-                String[] locPair = SigmetAttrDlg.this
-                        .getEditableAttrFcstVADesc().split("-");
-                for (String element : locPair) {
-                    String locTemp = element;
-                    locTemp = locTemp.trim();
-                    String[] latlonPair = locTemp.split(" ");
-                    if (latlonPair.length > 1) {
-                        String lat = latlonPair[0];
-                        String lon = latlonPair[1];
-
-                        if (lat.length() < 5) {
-                            errors.append(
-                                    "Entered an Invalid Latitude value for the Radial/Area/Line Description :  "
-                                            + lat
-                                            + ". Example of Valid Latitude: N2330.\n\n");
-                        }
-                        if (lon.length() < 6) {
-                            errors.append(
-                                    "Entered an Invalid Longitude value for the Radial/Area/Line Description :  "
-                                            + lon
-                                            + ". Example of Valid Longitude: W07500.\n\n");
-                        }
-                    } else {
-                        errors.append(
-                                "Both Latitude and Longitude coordinates need to be entered for the "
-                                        + "Radial/Area/Line Description. Example N2330 W07500. \n\n");
-                    }
-
-                }
-            } // End Switch - Validation of Radial/Area/Line Description is on
-              // validateCommonSigmetEntries
+            validateRadialDescription();
+            if (!isRadialDescValid) {
+                errors.append(
+                        "Entered an Invalid Latitude value for the Radial/Area/Line Description ");
+            }
+            // End Switch - Validation of Radial/Area/Line Description is on
+            // validateCommonSigmetEntries
 
             switch (level) {
             case PgenConstant.LEVEL_FCST:
@@ -1004,22 +1099,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     errors.append(validateLevelInfoSigmetEntries(
                             SigmetAttrDlg.this.getEditableAttrLevelText1(), 0,
                             600, ""));
-
+                    break;
                 case PgenConstant.LEVEL_INFO_BTN:
-                    // validate level information (Max value is 600)
-                    errors.append(validateLevelInfoSigmetEntries(
-                            SigmetAttrDlg.this.getEditableAttrLevelText1(), 0,
-                            600, ""));
-
-                    if (PgenConstant.LEVEL_INFO2_AND
-                            .equals(getEditableAttrLevelInfo2())) {
-                        // validate level information (Max value is 600)
-                        errors.append(validateLevelInfoSigmetEntries(
-                                SigmetAttrDlg.this.getEditableAttrLevelText2(),
-                                Integer.parseInt(SigmetAttrDlg.this
-                                        .getEditableAttrLevelText1()),
-                                600, ""));
-                    }
+                    // validate both Flight level values in the case of BTN
+                    // option
+                    String flightLevelVal1 = SigmetAttrDlg.this
+                            .getEditableAttrLevelText1();
+                    String flightLevelVal2 = SigmetAttrDlg.this
+                            .getEditableAttrLevelText2();
+                    String flightLevelInfo = getEditableAttrLevelInfo2();
+                    errors.append(validateFlightLevelInfoBTN(flightLevelVal1,
+                            flightLevelVal2, flightLevelInfo, ""));
                     break;
 
                 default:
@@ -1034,21 +1124,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                 switch (levelInfo1) {
                 case PgenConstant.LEVEL_INFO_BTN:
-                    errors.append(validateLevelInfoSigmetEntries(
-                            SigmetAttrDlg.this.getEditableAttrLevelText1(), 0,
-                            600, ""));
-                    if (PgenConstant.LEVEL_INFO2_AND
-                            .equals(getEditableAttrLevelInfo2())) {
-                        // validate level information (Max value is 600)
-                        errors.append(validateLevelInfoSigmetEntries(
-                                SigmetAttrDlg.this.getEditableAttrLevelText2(),
-                                Integer.parseInt(
-                                        getEditableAttrLevelText1() == null
-                                                ? "0"
-                                                : getEditableAttrLevelText1()),
-                                600, ""));
-                    }
+                    // validate both Flight level values in the case of BTN
+                    // option
+                    String flightLevelVal1 = SigmetAttrDlg.this
+                            .getEditableAttrLevelText1();
+                    String flightLevelVal2 = SigmetAttrDlg.this
+                            .getEditableAttrLevelText2();
+                    String flightLevelInfo = getEditableAttrLevelInfo2();
+                    errors.append(validateFlightLevelInfoBTN(flightLevelVal1,
+                            flightLevelVal2, flightLevelInfo, ""));
                     break;
+
                 case PgenConstant.LEVEL_INFO_TO:
                 case PgenConstant.LEVEL_INFO_ABV:
                 case PgenConstant.LEVEL_INFO_BLW:
@@ -1178,23 +1264,27 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                 switch (level) {
                 case PgenConstant.LEVEL_FCST:
-                    // validate level information (Max value is 600)
-                    errors.append(validateLevelInfoSigmetEntries(
-                            SigmetAttrDlg.this.getEditableAttrLevelText1(), 0,
-                            600, "Altitude - "));
 
                     switch (levelInfo1) {
                     case PgenConstant.LEVEL_INFO_ABV:
                     case PgenConstant.LEVEL_INFO_BLW:
+                        errors.append(validateLevelInfoSigmetEntries(
+                                SigmetAttrDlg.this
+                                        .getEditableAttrAltLevelText1(),
+                                0, 600, "Altitude - "));
+                        break;
                     case PgenConstant.LEVEL_INFO_BTN:
-                        if (getEditableAttrAltLevelInfo2()
-                                .equals(PgenConstant.LEVEL_INFO2_AND)) {
-                            // validate level information (Max value is 600)
-                            errors.append(validateLevelInfoSigmetEntries(
-                                    SigmetAttrDlg.this
-                                            .getEditableAttrAltLevelText2(),
-                                    0, 600, "Altitudes - "));
-                        }
+                        // validate both Flight level values in the case of BTN
+                        // option
+                        String flightAltLevelVal1 = SigmetAttrDlg.this
+                                .getEditableAttrAltLevelText1();
+                        String flightAltLevelVal2 = SigmetAttrDlg.this
+                                .getEditableAttrAltLevelText2();
+                        String flightAltLevelInfo = SigmetAttrDlg.this
+                                .getEditableAttrAltLevelInfo2();
+                        errors.append(validateFlightLevelInfoBTN(
+                                flightAltLevelVal1, flightAltLevelVal2,
+                                flightAltLevelInfo, "Altitudes - "));
                         break;
 
                     default:
@@ -1209,14 +1299,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                     switch (levelInfo1) {
                     case PgenConstant.LEVEL_INFO_BTN:
-                        if (getEditableAttrAltLevelInfo2()
-                                .equals(PgenConstant.LEVEL_INFO2_AND)) {
-                            // validate level information (Max value is 600)
-                            errors.append(validateLevelInfoSigmetEntries(
-                                    SigmetAttrDlg.this
-                                            .getEditableAttrAltLevelText2(),
-                                    0, 600, "Altitudes - "));
-                        }
+                        // validate both Flight level values in the case of BTN
+                        // option
+                        String flightAltLevelVal1 = SigmetAttrDlg.this
+                                .getEditableAttrAltLevelText1();
+                        String flightAltLevelVal2 = SigmetAttrDlg.this
+                                .getEditableAttrAltLevelText2();
+                        String flightAltLevelInfo = SigmetAttrDlg.this
+                                .getEditableAttrAltLevelInfo2();
+                        errors.append(validateFlightLevelInfoBTN(
+                                flightAltLevelVal1, flightAltLevelVal2,
+                                flightAltLevelInfo, "Altitudes - "));
                         break;
                     case PgenConstant.LEVEL_INFO_TO:
                     case PgenConstant.LEVEL_INFO_ABV:
@@ -1736,8 +1829,22 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtPressure.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                if (validateNumInput(txtPressure.getText())) {
-                    setEditableAttrPhenomPressure(txtPressure.getText());
+                String pressHPA = txtPressure.getText().trim();
+                setEditableAttrPhenomPressure("");
+                if (pressHPA != null && !pressHPA.isEmpty()) {
+                    if (validateNumInput(pressHPA)) {
+                        if (pressHPA.length() > 4) {
+                            StringBuffer errors = new StringBuffer();
+                            errors.append("Entered Pressure HPA value :  "
+                                    + pressHPA + " is too high.\n\n");
+                            if (!StringUtils.isEmpty(errors.toString())) {
+                                (new SigmetAttrValidateDlg(getShell(),
+                                        errors.toString())).open();
+                            }
+                        } else {
+                            setEditableAttrPhenomPressure(pressHPA);
+                        }
+                    }
                 }
             }
         });
@@ -1754,8 +1861,22 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtMaxWinds.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                if (validateNumInput(txtMaxWinds.getText())) {
-                    setEditableAttrPhenomMaxWind(txtMaxWinds.getText());
+                String maxWind = txtMaxWinds.getText().trim();
+                setEditableAttrPhenomMaxWind("");
+                if (maxWind != null && !maxWind.isEmpty()) {
+                    if (validateNumInput(maxWind)) {
+                        if (maxWind.length() > 3) {
+                            StringBuffer errors = new StringBuffer();
+                            errors.append("Entered Wind value :  " + maxWind
+                                    + " in knots is too high.\n\n");
+                            if (!StringUtils.isEmpty(errors.toString())) {
+                                (new SigmetAttrValidateDlg(getShell(),
+                                        errors.toString())).open();
+                            }
+                        } else {
+                            setEditableAttrPhenomMaxWind(maxWind);
+                        }
+                    }
                 }
             }
         });
@@ -1929,8 +2050,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtPressure.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                if (validateNumInput(txtPressure.getText())) {
-                    setEditableAttrPhenomPressure(txtPressure.getText());
+                if (tropCycFlag) {
+                    if (validateNumInput(txtPressure.getText())) {
+                        setEditableAttrPhenomPressure(txtPressure.getText());
+                    }
                 }
             }
         });
@@ -1942,14 +2065,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         lblMaxWinds.setText("Max\nWinds: ");
         Text txtMaxWinds = new Text(topPhenom, SWT.LEFT | SWT.BORDER);
         txtMaxWinds.setEnabled(tropCycFlag);
-        this.setEditableAttrPhenomMaxWind(txtMaxWinds.getText());
 
         txtMaxWinds.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                if (validateNumInput(txtMaxWinds.getText())) {
-                    setEditableAttrPhenomMaxWind(txtMaxWinds.getText());
+                if (tropCycFlag) {
+                    if (validateNumInput(txtMaxWinds.getText())) {
+                        setEditableAttrPhenomMaxWind(txtMaxWinds.getText());
+                    }
                 }
+
             }
         });
         txtMaxWinds.setLayoutData(gdText);
@@ -2676,23 +2801,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 if (getEditableAttrFcstPhenomLat() != null) {
                     txtFcstPheLat.setText(getEditableAttrFcstPhenomLat());
                     setBackgroundColor(txtFcstPheLat, rightFormatColor);
-                    if (StringUtils.isEmpty(
-                            SigmetAttrDlg.this.getEditableAttrFcstCntr())) {
-                        SigmetAttrDlg.this
-                                .setEditableAttrFcstCntr(String.format("%s %s",
-                                        StringUtils.isEmpty(SigmetAttrDlg.this
-                                                .getEditableAttrFcstPhenomLat())
-                                                        ? ""
-                                                        : SigmetAttrDlg.this
-                                                                .getEditableAttrFcstPhenomLat(),
-                                        StringUtils.isEmpty(SigmetAttrDlg.this
-                                                .getEditableAttrFcstPhenomLon())
-                                                        ? ""
-                                                        : SigmetAttrDlg.this
-                                                                .getEditableAttrFcstPhenomLon()));
-                        fcstCenterText.setText(
-                                SigmetAttrDlg.this.getEditableAttrFcstCntr());
-                    }
+
                 } else {
                     /*
                      * "???" causes inconvenience for copy/paste. Instead, use
@@ -2739,25 +2848,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     txtFcstPheLon.setText(getEditableAttrFcstPhenomLon());
                     setBackgroundColor(txtFcstPheLon, rightFormatColor);
 
-                    SigmetAttrDlg.this
-                            .setEditableAttrFcstCntr(String.format("%s %s",
-                                    StringUtils.isEmpty(SigmetAttrDlg.this
-                                            .getEditableAttrFcstPhenomLat())
-                                                    ? ""
-                                                    : SigmetAttrDlg.this
-                                                            .getEditableAttrFcstPhenomLat(),
-                                    StringUtils.isEmpty(SigmetAttrDlg.this
-                                            .getEditableAttrFcstPhenomLon())
-                                                    ? ""
-                                                    : SigmetAttrDlg.this
-                                                            .getEditableAttrFcstPhenomLon()));
-                    if (SigmetAttrDlg.this.getEditableAttrFcstCntr().trim()
-                            .split(" ").length > 1) {
-                        fcstCenterText.setText(
-                                SigmetAttrDlg.this.getEditableAttrFcstCntr());
-                        setBackgroundColor(fcstCenterText, rightFormatColor);
-                    }
-
                 } else {
                     /*
                      * "???" causes inconvenience for copy/paste. Instead, use
@@ -2774,13 +2864,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             public void handleEvent(Event e) {
                 SigmetAttrDlg.this.setEditableAttrFcstCntr(
                         (fcstCenterText.getText()).trim());
-                for (String coord : SigmetAttrDlg.this.getEditableAttrFcstCntr()
-                        .split(" ")) {
-                    String valid = getPhenomLatLon(coord, false);
-                    if ("".equals(valid)) {
-                        SigmetAttrDlg.this.setEditableAttrFcstCntr(null);
-                    }
-                }
+
             }
         });
 
@@ -2792,49 +2876,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             @Override
             public void focusLost(FocusEvent e) {
-                if (getEditableAttrFcstCntr() != null) {
-                    fcstCenterText.setText(getEditableAttrFcstCntr());
-
-                    if (!StringUtils.isEmpty(
-                            SigmetAttrDlg.this.getEditableAttrFcstCntr())) {
-                        if (StringUtils.isEmpty(SigmetAttrDlg.this
-                                .getEditableAttrFcstPhenomLat())) {
-                            SigmetAttrDlg.this.setEditableAttrFcstPhenomLat(
-                                    SigmetAttrDlg.this.getEditableAttrFcstCntr()
-                                            .split(" ")[0]);
-                            txtFcstPheLat.setText(SigmetAttrDlg.this
-                                    .getEditableAttrFcstPhenomLat());
-                            setBackgroundColor(txtFcstPheLat, rightFormatColor);
-                        }
-                        if (StringUtils.isEmpty(SigmetAttrDlg.this
-                                .getEditableAttrFcstPhenomLon())) {
-                            if (SigmetAttrDlg.this.getEditableAttrFcstCntr()
-                                    .trim().split(" ").length > 1) {
-                                SigmetAttrDlg.this.setEditableAttrFcstPhenomLon(
-                                        SigmetAttrDlg.this
-                                                .getEditableAttrFcstCntr()
-                                                .split(" ")[1]);
-                                txtFcstPheLon.setText(SigmetAttrDlg.this
-                                        .getEditableAttrFcstPhenomLon());
-                                setBackgroundColor(txtFcstPheLon,
-                                        rightFormatColor);
-                            } else {
-                                txtFcstPheLon.setText("");
-                                SigmetAttrDlg.this
-                                        .setEditableAttrFcstPhenomLon("");
-
-                            }
-                        }
-                    }
-
-                } else {
-                    /*
-                     * "???" causes inconvenience for copy/paste. Instead, use
-                     * Color as hint.
-                     */
-                    fcstCenterText.setText("");
-                    setBackgroundColor(fcstCenterText, wrongFormatColor);
-                }
             }
         });
 
@@ -3030,11 +3071,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         final Button rbtn = new Button(ralGrp, SWT.RADIO);
         rbtn.setText(RADIUS);
+        rbtn.setSelection(true);
+        SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
 
         rbtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
-                SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
+                if (rbtn.getSelection()) {
+                    SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
+                    validateRadialDescription();
+                }
             }
         });
 
@@ -3043,7 +3089,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         abtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
-                SigmetAttrDlg.this.setEditableAttrRALSelection(AREA);
+                if (abtn.getSelection()) {
+                    SigmetAttrDlg.this.setEditableAttrRALSelection(AREA);
+                    validateRadialDescription();
+                }
             }
         });
 
@@ -3052,7 +3101,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         lbtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
-                SigmetAttrDlg.this.setEditableAttrRALSelection(LINE);
+                if (lbtn.getSelection()) {
+                    SigmetAttrDlg.this.setEditableAttrRALSelection(LINE);
+                    validateRadialDescription();
+                }
             }
         });
 
@@ -3097,13 +3149,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             public void handleEvent(Event e) {
                 SigmetAttrDlg.this
                         .setEditableAttrFcstVADesc(descText.getText().trim());
-                for (String coord : SigmetAttrDlg.this
-                        .getEditableAttrFcstVADesc().split(" ")) {
-                    String valid = getPhenomLatLon(coord, false);
-                    if ("".equals(valid)) {
-                        SigmetAttrDlg.this.setEditableAttrFcstVADesc(null);
-                    }
-                }
             }
         });
 
@@ -3115,15 +3160,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             @Override
             public void focusLost(FocusEvent e) {
-                if (getEditableAttrFcstVADesc() != null) {
+                validateRadialDescription();
+
+                if (isRadialDescValid) {
                     descText.setText(getEditableAttrFcstVADesc());
                     setBackgroundColor(descText, rightFormatColor);
                 } else {
-                    /*
-                     * "???" causes inconvenience for copy/paste. Instead, use
-                     * Color as hint.
-                     */
-                    descText.setText("");
                     setBackgroundColor(descText, wrongFormatColor);
                 }
             }
@@ -4022,8 +4064,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         return editableAttrRALSelection;
     }
 
-    public void setEditableAttrRALSelection(String ralButtonSelection) {
-        this.editableAttrRALSelection = ralButtonSelection;
+    public void setEditableAttrRALSelection(String editableRALSelection) {
+        this.editableAttrRALSelection = editableRALSelection;
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrRALSelection(editableRALSelection);
     }
 
     public String getEditableAttrPhenomSpeed() {
@@ -4702,9 +4746,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(".");
                 }
 
+                // --------------- HPA Pressure
+
                 String presHPA = SigmetAttrDlg.this
                         .getEditableAttrPhenomPressure();
-                if (presHPA != null) {
+                if (presHPA != null && !"".equals(presHPA.trim())) {
                     sb.append(" ").append(presHPA.trim())
                             .append(SigmetConstant.HPA).append(".");
                 }
@@ -4786,7 +4832,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
 
-            // ----------------tops
+            // ----------------tops/fcst
 
             String tops = getEditableAttrLevel();
             if (tops != null && tops.contains(SigmetConstant.FCST)) {
@@ -4989,13 +5035,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                                 .append(" ");
 
                         if (LINE.equals(ral)) {
-                            sb.append(SigmetConstant.EITHER_SIDE_OF_LINE)
-                                    .append(" ");
+                            sb.append(SigmetConstant.EITHER_SIDE_OF_LINE);
                         } else if (RADIUS.equals(ral)) {
-                            sb.append(SigmetConstant.OF).append(" ");
+                            sb.append(SigmetConstant.OF);
                         } else if (AREA.equals(ral)) {
-                            sb.append(SigmetConstant.AREA_BOUNDED_BY)
-                                    .append(" ");
+                            sb.append(SigmetConstant.AREA_BOUNDED_BY);
                         }
                     }
 
@@ -5599,7 +5643,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         try {
             Double.parseDouble(num);
         } catch (NumberFormatException e) {
-            statusHandler.debug(e.getLocalizedMessage(), e);
+            StringBuffer errors = new StringBuffer();
+            errors.append("Entered an Invalid value :  " + num
+                    + ". Valid value should be a number.\n\n");
+            if (!StringUtils.isEmpty(errors.toString())) {
+                (new SigmetAttrValidateDlg(getShell(), errors.toString()))
+                        .open();
+            }
             return false;
         }
         return true;
