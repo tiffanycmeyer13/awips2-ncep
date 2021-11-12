@@ -234,7 +234,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Oct 18, 2021  93036      smanoj       Fixing some QC alerts issues.
  * Nov 01, 2021  93036      smanoj       Additional QC validation for INTL SIGMET.
  * Nov 11, 2021  93036      smanoj       QC validation for Lat/Lon fields.
- * 
+ * Nov 11, 2021  97247      achalla      Int'l SigmetT GUI modified and Input validation for width value
+ *
  * </pre>
  *
  * @author gzhang
@@ -332,7 +333,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private String origLineType = lineType;
 
-    private static final String WIDTH = "10.00";
+    private static final String WIDTH = "10";
 
     // default, nautical miles
     private String widthStr = WIDTH;
@@ -3394,9 +3395,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         final Button btnArea = new Button(top, SWT.RADIO);
         btnArea.setSelection(true);
         btnArea.setText(AREA);
-
+        btnArea.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
         final Button btnLine = new Button(top, SWT.RADIO);
         btnLine.setText(LINE);
+        btnLine.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
 
         final Combo comboLine = new Combo(top, SWT.READ_ONLY);
         // sideOfLine
@@ -3406,9 +3410,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         // default: ESOL
         comboLine.select(0);
         comboLine.setEnabled(false);
+        comboLine.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
 
         final Button btnIsolated = new Button(top, SWT.RADIO);
         btnIsolated.setText("Isolated  ");
+        btnIsolated.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
 
         Label lblText = new Label(top, SWT.LEFT);
         lblText.setText("Width: ");
@@ -3416,6 +3424,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         attrControlMap.put("widthStr", txtWidth);
         txtWidth.setText(WIDTH);
         txtWidth.setEnabled(false);
+        txtWidth.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
+
         attrButtonMap.put(LINE_TYPE,
                 new Button[] { btnArea, btnLine, btnIsolated });
 
@@ -3460,7 +3471,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         });
 
-        txtWidth.addModifyListener(e -> setWidthStr(txtWidth.getText()));
+        txtWidth.addModifyListener(e -> validateWidth(txtWidth.getText()));
 
         Label colorLbl = new Label(top, SWT.LEFT);
         colorLbl.setText("Color:");
@@ -3483,6 +3494,19 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             comboLine.setEnabled(false);
             txtWidth.setEnabled(false);
         }
+    }
+
+    public void validateWidth(String entry) {
+        if ((entry == null) || (entry.length() == 0)) {
+            statusHandler
+                    .warn("Width value is empty: Enter a value for width.");
+            return;
+        }
+        if (!entry.matches("[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)")) {
+            statusHandler.warn("Enter a decimal or integer value for width.");
+            return;
+        }
+        setWidthStr(entry);
     }
 
     private void createDialogAreaSelect(Composite parent) {
@@ -3684,13 +3708,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         // Line Width Label
         lineWidthLabel = new Label(top, SWT.LEFT);
-        lineWidthLabel.setText("Line Width:");
+        lineWidthLabel.setText(" Line Thickness:");
 
         // Line Width Spinner and Slider
         lineWidthSpinSlide = new SpinnerSlider(top, SWT.HORIZONTAL, 1);
-        GridData gd = new GridData(150, 42);
-        gd.horizontalIndent = 6;
-        lineWidthSpinSlide.setLayoutData(gd);
+
         lineWidthSpinSlide.setMinimum(1);
         lineWidthSpinSlide.setMaximum(10);
         lineWidthSpinSlide.setIncrement(1);
