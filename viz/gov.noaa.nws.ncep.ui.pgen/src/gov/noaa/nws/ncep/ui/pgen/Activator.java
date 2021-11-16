@@ -1,13 +1,25 @@
 package gov.noaa.nws.ncep.ui.pgen;
 
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil.PgenMode;
-
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil.PgenMode;
+
 /**
- * The activator class controls the plug-in life cycle
+ * Activator - This class controls the plug-in life cycle
+ *
+ * <pre>
+ * SOFTWARE HISTORY
+ *
+ * Date         Ticket#    Engineer    Description
+ * ------------ ---------- ----------- --------------------------
+ * ???          ???        ???         Initial creation
+ * 11/12/2021   98328      thuggins    Changed getPreferenceStore() - Set the default state of
+ *                                     "Enable Auto Placement for CCFP Text Boxes"
+ *                                     (P_AUTOPLACE_TEXT) to true
+ * </pre>
+ *
  */
 public class Activator extends AbstractUIPlugin {
 
@@ -27,11 +39,11 @@ public class Activator extends AbstractUIPlugin {
 
     /*
      * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.BundleContext
-     * )
+     *
+     * @see org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.
+     * BundleContext )
      */
+    @Override
     public void start(BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
@@ -39,11 +51,11 @@ public class Activator extends AbstractUIPlugin {
 
     /*
      * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.ui.plugin.AbstractUIPlugin#stop(org.osgi.framework.BundleContext
-     * )
+     *
+     * @see org.eclipse.ui.plugin.AbstractUIPlugin#stop(org.osgi.framework.
+     * BundleContext )
      */
+    @Override
     public void stop(BundleContext context) throws Exception {
         plugin = null;
         super.stop(context);
@@ -51,7 +63,7 @@ public class Activator extends AbstractUIPlugin {
 
     /**
      * Returns the shared instance
-     * 
+     *
      * @return the shared instance
      */
     public static Activator getDefault() {
@@ -60,7 +72,7 @@ public class Activator extends AbstractUIPlugin {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.ui.plugin.AbstractUIPlugin#getPreferenceStore()
      */
     @Override
@@ -85,12 +97,13 @@ public class Activator extends AbstractUIPlugin {
             myprefs.setDefault(PgenPreferences.P_LAYER_LINK, false);
             myprefs.setDefault(PgenPreferences.P_COMP_COORD,
                     PgenPreferences.CED_COMP_COORD);
-            myprefs.setDefault(PgenPreferences.P_AUTOPLACE_TEXT, false);
-            myprefs.setDefault(PgenPreferences.P_AUTOPLACE_CONTOUR_LABEL, false);
-            myprefs.setDefault(
-                    PgenPreferences.P_CONTOUR_SYMBOL_LABEL_SPACING_X, 0);
-            myprefs.setDefault(
-                    PgenPreferences.P_CONTOUR_SYMBOL_LABEL_SPACING_Y, 5);
+            myprefs.setDefault(PgenPreferences.P_AUTOPLACE_TEXT, true);
+            myprefs.setDefault(PgenPreferences.P_AUTOPLACE_CONTOUR_LABEL,
+                    false);
+            myprefs.setDefault(PgenPreferences.P_CONTOUR_SYMBOL_LABEL_SPACING_X,
+                    0);
+            myprefs.setDefault(PgenPreferences.P_CONTOUR_SYMBOL_LABEL_SPACING_Y,
+                    5);
             myprefs.setDefault(PgenPreferences.P_ONE_CONTOUR_PER_LAYER, true);
             myprefs.setDefault(PgenPreferences.P_LAYER_MERGE, 4);
         }

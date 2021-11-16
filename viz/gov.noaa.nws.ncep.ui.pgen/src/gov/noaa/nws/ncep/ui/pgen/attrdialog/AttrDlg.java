@@ -78,9 +78,11 @@ import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
  * 01/23/2019   7716        K. Sunil    return true in createButtonBar call in case of PgenInterpDlg.
  * 03/20/2019   #7572       dgilling    Code cleanup.
  * 07/26/2019   66393       mapeters    Handle {@link AttrSettings#getSettings} change
- * 09/06/2019   64150       ksunil      add button bar if working with various ContourAttr dialogs while "ANY" 
+ * 09/06/2019   64150       ksunil      add button bar if working with various ContourAttr dialogs while "ANY"
  *                                           classes on UI is selected.
  * 06/18/2020   79252       pbutler     PGEN function fixes for null pointers when working w/ Airmets.
+ * 11/11/2020   98328       thuggins    Drawing Layer can be null when all polygons are removed. Check that it's
+ *                                          not null before calling removeSelected and removeGhostLine
  *
  *
  * </pre>
@@ -187,8 +189,10 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
      */
     @Override
     public void handleShellCloseEvent() {
-        drawingLayer.removeSelected();
-        drawingLayer.removeGhostLine();
+        if (drawingLayer != null) {
+            drawingLayer.removeSelected();
+            drawingLayer.removeGhostLine();
+        }
         mapEditor.refresh();
         super.handleShellCloseEvent();
         PgenUtil.setSelectingMode();
