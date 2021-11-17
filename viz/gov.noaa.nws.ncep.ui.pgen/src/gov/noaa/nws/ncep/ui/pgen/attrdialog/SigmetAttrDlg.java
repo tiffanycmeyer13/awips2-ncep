@@ -233,7 +233,9 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                         adding new QC Check from NOAA Stakeholders.
  * Oct 18, 2021  93036      smanoj       Fixing some QC alerts issues.
  * Nov 01, 2021  93036      smanoj       Additional QC validation for INTL SIGMET.
- * 
+ * Nov 11, 2021  93036      smanoj       QC validation for Lat/Lon fields.
+ * Nov 11, 2021  97247      achalla      Int'l SigmetT GUI modified and Input validation for width value
+ *
  * </pre>
  *
  * @author gzhang
@@ -331,7 +333,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private String origLineType = lineType;
 
-    private static final String WIDTH = "10.00";
+    private static final String WIDTH = "10";
 
     // default, nautical miles
     private String widthStr = WIDTH;
@@ -814,11 +816,54 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         return errors.toString();
     }
 
-    private void validateRadialDescription() {
-        if (getEditableAttrFcstVADesc() != null) {
-            StringBuffer errors = new StringBuffer();
-            isRadialDescValid = true;
+    private String validateFcstCenter() {
+        StringBuffer errors = new StringBuffer();
+        if (getEditableAttrFcstCntr() != null) {
+            boolean isFcstCtrValid = true;
 
+            if (!StringUtils
+                    .isEmpty(SigmetAttrDlg.this.getEditableAttrFcstCntr())
+                    && (SigmetAttrDlg.this.getEditableAttrFcstCntr().trim()
+                            .length() > 0)) {
+                String fcstCenter = getEditableAttrFcstCntr();
+                String[] latlonPair = fcstCenter.split(" ");
+
+                if (latlonPair.length > 1) {
+                    String lat = latlonPair[0];
+                    String lon = latlonPair[1];
+
+                    if ((lat.length() != 5)
+                            || !validateLatLonText(lat.trim(), true)) {
+                        isFcstCtrValid = false;
+                    }
+                    if (lon.length() != 6
+                            || !validateLatLonText(lon.trim(), false)) {
+                        isFcstCtrValid = false;
+                    }
+                } else {
+                    isFcstCtrValid = false;
+                }
+                if (!isFcstCtrValid) {
+                    errors.append(
+                            "Forecast Center should be in Latitude and Longitude coordinates format "
+                                    + "Example N2330 W07500. \n\n");
+                }
+            }
+        }
+        return errors.toString();
+    }
+
+    private void validateRadialDescription() {
+        StringBuffer errors = new StringBuffer();
+        if (getEditableAttrFcstVADesc() == null) {
+            if (SigmetConstant.TRUE
+                    .equals(SigmetAttrDlg.this.getEditableAttrFcstAvail())) {
+                isRadialDescValid = false;
+                errors.append(
+                        "Radial Lat/Lon Description can not be null. Example N2330 W07500\n\n");
+            }
+        } else {
+            isRadialDescValid = true;
             if (!StringUtils
                     .isEmpty(SigmetAttrDlg.this.getEditableAttrFcstVADesc())
                     && (SigmetAttrDlg.this.getEditableAttrFcstVADesc().trim()
@@ -832,21 +877,24 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 case RADIUS:
                     if (locPair.length > 1) {
                         errors.append(
-                                "Should have only one pair of Lat/Lon values for the RADIUS Description .\n\n");
+                                "Should have only one pair of Lat/Lon values for the RADIUS Description."
+                                        + "Example N2352 W08333.\n\n");
                         isRadialDescValid = false;
                     }
                     break;
                 case AREA:
                     if (locPair.length < 3) {
                         errors.append(
-                                "Should have at least three pairs of Lat/Lon values for the AREA Description .\n\n");
+                                "Should have at least three pairs of Lat/Lon values for the AREA Description."
+                                        + "Example N2352 W08333 - N2145 W08201 - N2227 W08116.\n\n");
                         isRadialDescValid = false;
                     }
                     break;
                 case LINE:
                     if (locPair.length != 2) {
                         errors.append(
-                                "Should have two pairs of Lat/Lon values for the LINE Description .\n\n");
+                                "Should have two pairs of Lat/Lon values for the LINE Description."
+                                        + "Example N2352 W08333 - N2145 W08201.\n\n");
                         isRadialDescValid = false;
                     }
                     break;
@@ -855,37 +903,36 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
 
                 for (String element : locPair) {
-                    String locTemp = element;
-                    locTemp = locTemp.trim();
-                    String[] latlonPair = locTemp.split(" ");
-                    if (latlonPair.length > 1) {
-                        String lat = latlonPair[0];
-                        String lon = latlonPair[1];
+                    if (isRadialDescValid) {
+                        String locTemp = element;
+                        locTemp = locTemp.trim();
+                        String[] latlonPair = locTemp.split(" ");
+                        if (latlonPair.length > 1) {
+                            String lat = latlonPair[0];
+                            String lon = latlonPair[1];
+                            if ((lat.length() != 5)
+                                    || !validateLatLonText(lat.trim(), true)) {
+                                errors.append(
+                                        "Entered an Invalid Latitude value for the Radial/Area/Line Description :  "
+                                                + lat
+                                                + ". Example of Valid Latitude: N2330.\n\n");
+                                isRadialDescValid = false;
+                            }
+                            if (lon.length() != 6
+                                    || !validateLatLonText(lon.trim(), false)) {
+                                errors.append(
+                                        "Entered an Invalid Longitude value for the Radial/Area/Line Description :  "
+                                                + lon
+                                                + ". Example of Valid Longitude: W07500.\n\n");
+                                isRadialDescValid = false;
+                            }
 
-                        if ((lat.length() != 5)
-                                || !validateLatLonRadialText(lat.trim(),
-                                        true)) {
+                        } else {
                             errors.append(
-                                    "Entered an Invalid Latitude value for the Radial/Area/Line Description :  "
-                                            + lat
-                                            + ". Example of Valid Latitude: N2330.\n\n");
+                                    "Both Latitude and Longitude coordinates need to be entered for the "
+                                            + "Radial/Area/Line Description. Example N2330 W07500. \n\n");
                             isRadialDescValid = false;
                         }
-                        if (lon.length() != 6
-                                || !validateLatLonRadialText(lon.trim(),
-                                        false)) {
-                            errors.append(
-                                    "Entered an Invalid Longitude value for the Radial/Area/Line Description :  "
-                                            + lon
-                                            + ". Example of Valid Longitude: W07500.\n\n");
-                            isRadialDescValid = false;
-                        }
-
-                    } else {
-                        errors.append(
-                                "Both Latitude and Longitude coordinates need to be entered for the "
-                                        + "Radial/Area/Line Description. Example N2330 W07500. \n\n");
-                        isRadialDescValid = false;
                     }
                 }
             }
@@ -907,7 +954,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
     }
 
-    private boolean validateLatLonRadialText(String coor, boolean isLat) {
+    private boolean validateLatLonText(String coor, boolean isLat) {
         String regexLat = "(-?[NS][0-8]?[0-9](\\.)?(\\d*)?)|-?90(\\.)?([0]*)?";
         String regexLon = "(-?([WE][1]?[0-7][0-9]|[0]?[0-9]?[0-9])?(\\.)?(\\d*)?)|-?180(\\.)?([0]*)?";
 
@@ -1023,11 +1070,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 errors.append(
                         "Observed phenomenon longitude should be valid.\n\n");
             }
-
-            if (StringUtils
-                    .isEmpty(SigmetAttrDlg.this.getEditableAttrFcstCntr())
-                    && ("true".equals(getEditableAttrFcstAvail()))) {
-                errors.append("Fcst Center can't be null or empty.\n\n");
+            if (SigmetConstant.TRUE.equals(getEditableAttrFcstAvail())) {
+                if (StringUtils.isEmpty(
+                        SigmetAttrDlg.this.getEditableAttrFcstCntr())) {
+                    errors.append("Fcst Center can't be null or empty.\n\n");
+                } else {
+                    String inValid = validateFcstCenter();
+                    if (!StringUtils.isEmpty(inValid)) {
+                        errors.append(inValid);
+                    }
+                }
             }
             if (!level.equals(PgenConstant.LEVEL_TOPS)) {
                 errors.append(
@@ -1081,10 +1133,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 errors.append("Phenomenon longitude should be valid.\n\n");
             }
             // Validate Radical/Area/Line Description Lat/Lon
-            validateRadialDescription();
-            if (!isRadialDescValid) {
-                errors.append(
-                        "Entered an Invalid Latitude value for the Radial/Area/Line Description ");
+            if ((SigmetConstant.TRUE
+                    .equals(SigmetAttrDlg.this.getEditableAttrFcstAvail()))) {
+                validateRadialDescription();
+                if (!isRadialDescValid) {
+                    errors.append(
+                            "Entered an Invalid Latitude value for the Radial/Area/Line Description ");
+                }
             }
             // End Switch - Validation of Radial/Area/Line Description is on
             // validateCommonSigmetEntries
@@ -1241,12 +1296,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 if (StringUtils.isEmpty(
                         SigmetAttrDlg.this.getEditableAttrFcstPhenomLat())) {
                     errors.append(
-                            "Forecast Phenomenon Latitude can't be null or empty. Please Enter valid Latitude.\n\n");
+                            "Forecast Phenomenon Latitude can't be null or empty. Please Enter valid Latitude. Example N1234.\n\n");
                 }
                 if (StringUtils.isEmpty(
                         SigmetAttrDlg.this.getEditableAttrFcstPhenomLon())) {
                     errors.append(
-                            "Forecast Phenomenon Longitude can't be null or empty. Please Enter valid Longitude.\n\n");
+                            "Forecast Phenomenon Longitude can't be null or empty. Please Enter valid Longitude. Example W12345.\n\n");
                 }
                 break;
             case PgenConstant.TYPE_VOLCANIC_ASH:
@@ -1756,7 +1811,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtPheLat.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                // No Op
+                setBackgroundColor(txtPheLat, Color.WHITE);
             }
 
             @Override
@@ -1801,7 +1856,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtPheLon.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                // No Op
+                setBackgroundColor(txtPheLon, Color.WHITE);
             }
 
             @Override
@@ -1979,7 +2034,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtPheLat.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                // No Op
+                setBackgroundColor(txtPheLat, Color.WHITE);
             }
 
             @Override
@@ -2020,7 +2075,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtPheLon.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                // No Op
+                setBackgroundColor(txtPheLon, Color.WHITE);
             }
 
             @Override
@@ -2779,12 +2834,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtFcstPheLat.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                String fcstPhenomLat = getPhenomLatLon(
-                        txtFcstPheLat.getText().trim(), true);
-                if (!"".equals(fcstPhenomLat)) {
-                    SigmetAttrDlg.this
-                            .setEditableAttrFcstPhenomLat(fcstPhenomLat);
-                } else {
+                String fcstLat = txtFcstPheLat.getText().trim();
+                SigmetAttrDlg.this.setEditableAttrFcstPhenomLat(fcstLat);
+                if ((fcstLat.length() != 5)
+                        || !validateLatLonText(fcstLat.trim(), true)) {
                     SigmetAttrDlg.this.setEditableAttrFcstPhenomLat(null);
                 }
             }
@@ -2793,22 +2846,40 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtFcstPheLat.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                // No Op
+                setBackgroundColor(txtFcstPheLat, Color.WHITE);
             }
 
             @Override
             public void focusLost(FocusEvent e) {
-                if (getEditableAttrFcstPhenomLat() != null) {
-                    txtFcstPheLat.setText(getEditableAttrFcstPhenomLat());
-                    setBackgroundColor(txtFcstPheLat, rightFormatColor);
+                if ((SigmetConstant.TRUE.equals(
+                        SigmetAttrDlg.this.getEditableAttrFcstAvail()))) {
+                    if (getEditableAttrFcstPhenomLat() != null) {
+                        txtFcstPheLat.setText(getEditableAttrFcstPhenomLat());
+                        setBackgroundColor(txtFcstPheLat, rightFormatColor);
 
-                } else {
-                    /*
-                     * "???" causes inconvenience for copy/paste. Instead, use
-                     * Color as hint.
-                     */
-                    txtFcstPheLat.setText("");
-                    setBackgroundColor(txtFcstPheLat, wrongFormatColor);
+                        SigmetAttrDlg.this
+                                .setEditableAttrFcstCntr(String.format("%s %s",
+                                        StringUtils.isEmpty(SigmetAttrDlg.this
+                                                .getEditableAttrFcstPhenomLat())
+                                                        ? ""
+                                                        : SigmetAttrDlg.this
+                                                                .getEditableAttrFcstPhenomLat(),
+                                        StringUtils.isEmpty(SigmetAttrDlg.this
+                                                .getEditableAttrFcstPhenomLon())
+                                                        ? ""
+                                                        : SigmetAttrDlg.this
+                                                                .getEditableAttrFcstPhenomLon()));
+                        fcstCenterText.setText(
+                                SigmetAttrDlg.this.getEditableAttrFcstCntr());
+
+                    } else {
+                        /*
+                         * "???" causes inconvenience for copy/paste. Instead,
+                         * use Color as hint.
+                         */
+                        txtFcstPheLat.setText("");
+                        setBackgroundColor(txtFcstPheLat, wrongFormatColor);
+                    }
                 }
             }
         });
@@ -2825,12 +2896,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtFcstPheLon.addListener(SWT.Modify, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                String fcstPhenomLon = getPhenomLatLon(
-                        txtFcstPheLon.getText().trim(), false);
-                if (!"".equals(fcstPhenomLon)) {
-                    SigmetAttrDlg.this
-                            .setEditableAttrFcstPhenomLon(fcstPhenomLon);
-                } else {
+                String fcstLon = txtFcstPheLon.getText().trim();
+                SigmetAttrDlg.this.setEditableAttrFcstPhenomLon(fcstLon);
+                if ((fcstLon.length() != 6)
+                        || !validateLatLonText(fcstLon.trim(), false)) {
                     SigmetAttrDlg.this.setEditableAttrFcstPhenomLon(null);
                 }
             }
@@ -2839,22 +2908,45 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         txtFcstPheLon.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                // No Op
+                setBackgroundColor(txtFcstPheLon, Color.WHITE);
             }
 
             @Override
             public void focusLost(FocusEvent e) {
-                if (getEditableAttrFcstPhenomLon() != null) {
-                    txtFcstPheLon.setText(getEditableAttrFcstPhenomLon());
-                    setBackgroundColor(txtFcstPheLon, rightFormatColor);
+                if ((SigmetConstant.TRUE.equals(
+                        SigmetAttrDlg.this.getEditableAttrFcstAvail()))) {
+                    if (getEditableAttrFcstPhenomLon() != null) {
+                        txtFcstPheLon.setText(getEditableAttrFcstPhenomLon());
+                        setBackgroundColor(txtFcstPheLon, rightFormatColor);
 
-                } else {
-                    /*
-                     * "???" causes inconvenience for copy/paste. Instead, use
-                     * Color as hint.
-                     */
-                    txtFcstPheLon.setText("");
-                    setBackgroundColor(txtFcstPheLon, wrongFormatColor);
+                        SigmetAttrDlg.this
+                                .setEditableAttrFcstCntr(String.format("%s %s",
+                                        StringUtils.isEmpty(SigmetAttrDlg.this
+                                                .getEditableAttrFcstPhenomLat())
+                                                        ? ""
+                                                        : SigmetAttrDlg.this
+                                                                .getEditableAttrFcstPhenomLat(),
+                                        StringUtils.isEmpty(SigmetAttrDlg.this
+                                                .getEditableAttrFcstPhenomLon())
+                                                        ? ""
+                                                        : SigmetAttrDlg.this
+                                                                .getEditableAttrFcstPhenomLon()));
+                        if (SigmetAttrDlg.this.getEditableAttrFcstCntr().trim()
+                                .split(" ").length > 1) {
+                            fcstCenterText.setText(SigmetAttrDlg.this
+                                    .getEditableAttrFcstCntr());
+                            setBackgroundColor(fcstCenterText,
+                                    rightFormatColor);
+                        }
+
+                    } else {
+                        /*
+                         * "???" causes inconvenience for copy/paste. Instead,
+                         * use Color as hint.
+                         */
+                        txtFcstPheLon.setText("");
+                        setBackgroundColor(txtFcstPheLon, wrongFormatColor);
+                    }
                 }
             }
         });
@@ -2871,11 +2963,15 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         fcstCenterText.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                // No Op
+                setBackgroundColor(fcstCenterText, Color.WHITE);
             }
 
             @Override
             public void focusLost(FocusEvent e) {
+                String inValid = validateFcstCenter();
+                if (!StringUtils.isEmpty(inValid)) {
+                    (new SigmetAttrValidateDlg(getShell(), inValid)).open();
+                }
             }
         });
 
@@ -3034,6 +3130,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 Button btn = (Button) event.getSource();
                 SigmetAttrDlg.this.setEditableAttrFcstAvail(
                         Boolean.toString(btn.getSelection()));
+                if ((SigmetConstant.TRUE.equals(
+                        SigmetAttrDlg.this.getEditableAttrFcstAvail()))) {
+                    if (descText != null) {
+                        setBackgroundColor(descText, Color.WHITE);
+                    }
+                }
             }
         });
 
@@ -3155,18 +3257,25 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         descText.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                // No Op
+                setBackgroundColor(descText, Color.WHITE);
             }
 
             @Override
             public void focusLost(FocusEvent e) {
-                validateRadialDescription();
+                if ((SigmetConstant.TRUE.equals(
+                        SigmetAttrDlg.this.getEditableAttrFcstAvail()))) {
 
-                if (isRadialDescValid) {
-                    descText.setText(getEditableAttrFcstVADesc());
-                    setBackgroundColor(descText, rightFormatColor);
+                    validateRadialDescription();
+
+                    if (isRadialDescValid) {
+                        descText.setText(getEditableAttrFcstVADesc());
+                        setBackgroundColor(descText, rightFormatColor);
+                    } else {
+                        setBackgroundColor(descText, wrongFormatColor);
+                    }
+
                 } else {
-                    setBackgroundColor(descText, wrongFormatColor);
+                    setBackgroundColor(descText, Color.WHITE);
                 }
             }
         });
@@ -3286,9 +3395,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         final Button btnArea = new Button(top, SWT.RADIO);
         btnArea.setSelection(true);
         btnArea.setText(AREA);
-
+        btnArea.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
         final Button btnLine = new Button(top, SWT.RADIO);
         btnLine.setText(LINE);
+        btnLine.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
 
         final Combo comboLine = new Combo(top, SWT.READ_ONLY);
         // sideOfLine
@@ -3298,9 +3410,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         // default: ESOL
         comboLine.select(0);
         comboLine.setEnabled(false);
+        comboLine.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
 
         final Button btnIsolated = new Button(top, SWT.RADIO);
         btnIsolated.setText("Isolated  ");
+        btnIsolated.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
 
         Label lblText = new Label(top, SWT.LEFT);
         lblText.setText("Width: ");
@@ -3308,6 +3424,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         attrControlMap.put("widthStr", txtWidth);
         txtWidth.setText(WIDTH);
         txtWidth.setEnabled(false);
+        txtWidth.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
+
         attrButtonMap.put(LINE_TYPE,
                 new Button[] { btnArea, btnLine, btnIsolated });
 
@@ -3352,7 +3471,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         });
 
-        txtWidth.addModifyListener(e -> setWidthStr(txtWidth.getText()));
+        txtWidth.addModifyListener(e -> validateWidth(txtWidth.getText()));
 
         Label colorLbl = new Label(top, SWT.LEFT);
         colorLbl.setText("Color:");
@@ -3375,6 +3494,19 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             comboLine.setEnabled(false);
             txtWidth.setEnabled(false);
         }
+    }
+
+    public void validateWidth(String entry) {
+        if ((entry == null) || (entry.length() == 0)) {
+            statusHandler
+                    .warn("Width value is empty: Enter a value for width.");
+            return;
+        }
+        if (!entry.matches("[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)")) {
+            statusHandler.warn("Enter a decimal or integer value for width.");
+            return;
+        }
+        setWidthStr(entry);
     }
 
     private void createDialogAreaSelect(Composite parent) {
@@ -3576,13 +3708,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         // Line Width Label
         lineWidthLabel = new Label(top, SWT.LEFT);
-        lineWidthLabel.setText("Line Width:");
+        lineWidthLabel.setText(" Line Thickness:");
 
         // Line Width Spinner and Slider
         lineWidthSpinSlide = new SpinnerSlider(top, SWT.HORIZONTAL, 1);
-        GridData gd = new GridData(150, 42);
-        gd.horizontalIndent = 6;
-        lineWidthSpinSlide.setLayoutData(gd);
+
         lineWidthSpinSlide.setMinimum(1);
         lineWidthSpinSlide.setMaximum(10);
         lineWidthSpinSlide.setIncrement(1);
@@ -4812,8 +4942,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         && !"".equals(phenLat.trim()) && phenLon != null
                         && !"".equals(phenLon.trim())) {
 
-                    int lat = getIntValueOfLat(phenLat);
-                    int lon = getIntValueOfLon(phenLon);
+                    int lat = getIntValueOfLat(phenLat.trim());
+                    int lon = getIntValueOfLon(phenLon.trim());
                     lat = getValRoundedToNearest15Min(lat);
                     lon = getValRoundedToNearest15Min(lon);
 
@@ -4871,8 +5001,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         String lat = latlonPair[0];
                         String lon = latlonPair[1];
 
-                        int latval = getIntValueOfLat(lat);
-                        int lonval = getIntValueOfLon(lon);
+                        int latval = getIntValueOfLat(lat.trim());
+                        int lonval = getIntValueOfLon(lon.trim());
                         latval = getValRoundedToNearest15Min(latval);
                         lonval = getValRoundedToNearest15Min(lonval);
                         latLonLocation.append((i > 0) ? " " : "")
@@ -5087,16 +5217,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(SigmetConstant.TC_CENTER);
                     sb.append(" " + SigmetAttrDlg.this.getEditableAttrFcstCntr()
                             .toUpperCase());
-                    if (!StringUtils.isEmpty(SigmetAttrDlg.this
-                            .getEditableAttrFcstPhenomLat())) {
-                        sb.append(" " + SigmetAttrDlg.this
-                                .getEditableAttrFcstPhenomLat().toUpperCase());
-                    }
-                    if (!StringUtils.isEmpty(SigmetAttrDlg.this
-                            .getEditableAttrFcstPhenomLon())) {
-                        sb.append(" " + SigmetAttrDlg.this
-                                .getEditableAttrFcstPhenomLon().toUpperCase());
-                    }
                     sb.append(".");
                 } else {
                     sb.append("NA").append(".");
@@ -5214,8 +5334,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     String lat = latlonPair[0];
                     String lon = latlonPair[1];
 
-                    int latval = getIntValueOfLat(lat);
-                    int lonval = getIntValueOfLon(lon);
+                    int latval = getIntValueOfLat(lat.trim());
+                    int lonval = getIntValueOfLon(lon.trim());
                     latval = getValRoundedToNearest15Min(latval);
                     lonval = getValRoundedToNearest15Min(lonval);
 
@@ -5242,15 +5362,19 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         private int getIntValueOfLat(String val) {
             int intVal = 0;
-            String tempVal = val.substring(val.length() - 4, val.length());
-            intVal = Integer.parseInt(tempVal);
+            if (val.length() == 5) {
+                String tempVal = val.substring(val.length() - 4, val.length());
+                intVal = Integer.parseInt(tempVal);
+            }
             return intVal;
         }
 
         private int getIntValueOfLon(String val) {
             int intVal = 0;
-            String tempVal = val.substring(val.length() - 5, val.length());
-            intVal = Integer.parseInt(tempVal);
+            if (val.length() == 6) {
+                String tempVal = val.substring(val.length() - 5, val.length());
+                intVal = Integer.parseInt(tempVal);
+            }
             return intVal;
         }
 
@@ -5839,6 +5963,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
      * Note: "N", "S", "E", "W" is not case-sensitive here.
      */
     private String getPhenomLatLon(String input, boolean isLat) {
+
+        if (input.length() > 8) {
+            return "";
+        }
 
         input = input.toUpperCase();
         if ((isLat && (input.startsWith("S") || input.endsWith("S")))
