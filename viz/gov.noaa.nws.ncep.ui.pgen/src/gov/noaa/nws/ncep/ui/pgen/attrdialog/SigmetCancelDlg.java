@@ -19,23 +19,21 @@
  **/
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
 
-import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
-import gov.noaa.nws.ncep.ui.pgen.sigmet.CarSamBackupWmoHeader;
-import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
-import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.TimeZone;
 
-import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.swt.widgets.Shell;
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -43,13 +41,15 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Spinner;
+import org.eclipse.swt.widgets.Text;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.text.DateFormat;
-import java.util.TimeZone;
+import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
+import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.CarSamBackupWmoHeader;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
 
 /**
  *
@@ -70,7 +70,8 @@ import java.util.TimeZone;
  * Apr 09, 2021  90325    smanoj   CARSAM Backup WMO headers update.
  * Jun 04, 2021  91845    smanoj   Fixing some issues with Backupmode and CANCEL.
  * Jun 15, 2021  91845    smanoj   Remove duplicate text from Cancellation Information Text.
- * 
+ * Nov 18, 2021  98546    achalla  Modified CAR/SAM SIGMET Id and Sequence number in GUI and xml file
+ *
  * </pre>
  *
  * @author smanoj
@@ -608,8 +609,8 @@ public class SigmetCancelDlg extends AttrDlg {
 
         sb.append(firID);
         sb.append(" ").append(SigmetConstant.SIGMET);
-        sb.append(" ").append(attrId);
-        sb.append(" ").append(seriesNumber);
+        sb.append(" ").append(attrId.substring(0, 1));
+        sb.append(seriesNumber);
         sb.append(" ").append(SigmetConstant.VALID).append(" ");
         sb.append(getTimeStringPlusHourInHMS(0)).append("/").append(endTime);
         sb.append(" ").append(area).append("-");
@@ -687,7 +688,7 @@ public class SigmetCancelDlg extends AttrDlg {
 
     @Override
     public void okPressed() {
-        //Invoke the same Save Dialog from the SigmetAttrDlg
+        // Invoke the same Save Dialog from the SigmetAttrDlg
         parentDlg.buttonPressed(PARENT_SAVE_ID);
         close();
     }

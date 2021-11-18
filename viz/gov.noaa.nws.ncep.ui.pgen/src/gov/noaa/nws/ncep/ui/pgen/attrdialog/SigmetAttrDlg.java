@@ -237,6 +237,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Nov 11, 2021  97247      achalla      Int'l SigmetT GUI modified and Input validation for width value
  * Nov 18, 2021  98495      smanoj       Additional QC validation for Tropical Cyclone Fcst Center
  *                                       and other fields in Int'l SigmetT GUI.
+ * Nov 18, 2021  98546      achalla      Modified CAR/SAM SIGMET  Id and Sequence number in GUI and xml file
  *
  * </pre>
  *
@@ -4871,7 +4872,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
 
             if (cnlSigmet) {
-                sb.append(" ").append(sigmetCnlDlg.getSeriesNumber());
+                sb.append(sigmetCnlDlg.getSeriesNumber());
             } else if (csIntlSigm) {
                 sb.append(SigmetAttrDlg.this.getEditableAttrSeqNum());
             } else {
