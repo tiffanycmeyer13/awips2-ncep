@@ -247,7 +247,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Dec 03, 2021  98544      achalla      Modified CAR/SAM Backup mode req:1-4
  * Dec 09, 2021  99344      smanoj       Fixed Fcst Radial/Area/Line description Round To
  *                                       functionality issue for Volcanic Ash.
- * 
+ *
  * </pre>
  *
  * @author gzhang
@@ -2943,6 +2943,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             firAllRegions.addAll(firIdRegulargions);
         }
 
+        // Set flag to true if regular and CarSam regions intersect
+        for (String region : firIdAWCBackup) {
+            if (firId.contains(region)) {
+                this.inBackupCarSamArea = true;
+                break;
+            } else {
+                this.inBackupCarSamArea = false;
+
+            }
+        }
         // By Default only pick regular regions unless BackupCarSam enabled
         boolean carSamEnabled = (SigmetAttrDlg.this
                 .getEditableAttrCarSamBackupMode() != null
@@ -2954,13 +2964,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         if (firIdArray != null && firIdArray.length >= 1) {
             for (String element : firIdArray) {
 
-                // Set flag to true if regular and CarSam regions intersect
-                for (String region : firIdAWCBackup) {
-                    if (element.equals(region)) {
-                        this.inBackupCarSamArea = true;
-                        break;
-                    }
-                }
                 // If BackupCarSam enabled pick up CarSam Regions
                 if (carSamEnabled) {
                     for (int i = 0; i < firIdAWCBackup.size(); i++) {
@@ -5674,10 +5677,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
          * RoundTo functionality For Volcanic Ash phenomenon type. Fcst
          * Radial/Area/Line Description Coordinates shall round to user selected
          * value.
-         * 
+         *
          * @param val-
          *            coordinate value
-         * 
+         *
          * @return adjVal - rounded value according to user selection
          */
         private int getNearestRoundedValForVolcAsh(int val) {
@@ -6577,7 +6580,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
          */
         setEditableAttrFir(newEditableFirID);
         Button[] firButt = null;
-
+        /*
+         * If a Sigmet Obj Crosses over into CAR/SAM region while on Sigmet edit
+         * mode enable btnCarSamBackUp Live so user don't have to re-open the
+         * Sigmet edit dialog
+         */
+        if (this.inBackupCarSamArea) {
+            SigmetAttrDlg.this.btnCarSamBackUp.setEnabled(true);
+        } else {
+            SigmetAttrDlg.this.btnCarSamBackUp.setEnabled(false);
+        }
         for (String str : loopFIR) {
 
             firButt = firButtonMap.get(str);
