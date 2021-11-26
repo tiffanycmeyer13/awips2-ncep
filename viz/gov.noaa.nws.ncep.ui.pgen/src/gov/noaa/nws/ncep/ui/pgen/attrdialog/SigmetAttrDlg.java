@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
@@ -243,6 +244,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       Updated SigmetAttrDlgSaveMsgDlg.getFileName(),
  *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine(),
  *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine()
+ * Dec 03, 2021  98544      achalla      Modified CAR/SAM Backup mode req:1-4
+ *
  * </pre>
  *
  * @author gzhang
@@ -524,6 +527,18 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private Text fcstCenterText;
 
+    // AWC Backup FIR Regions
+    List<String> firIdAWCBackup = new ArrayList<>();
+
+    // FIR Regions
+    List<String> firIdRegulargions = new ArrayList<>();
+
+    // FIR Regions
+    List<String> firAllRegions = new ArrayList<>();
+
+    // Flag if CarSam and Regular regions interest
+    private boolean inBackupCarSamArea = false;
+
     /**
      * Constructor.
      */
@@ -762,6 +777,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 (new SigmetAttrValidateDlg(getShell(), inValid)).open();
                 break;
             }
+            boolean carSamEnabled = (SigmetAttrDlg.this
+                    .getEditableAttrCarSamBackupMode() != null
+                    && SigmetAttrDlg.this.getEditableAttrCarSamBackupMode()
+                            .equals("true")) ? true : false;
+
+            if (inBackupCarSamArea && carSamEnabled == false) {
+
+                MessageDialog.openWarning(null,
+                        "CARSAM Backup Mode should be selected.",
+                        "CARSAM Backup Mode should be selected, otherwise malformed headers will result.");
+            }
 
             setEditableAttrId(comboID.getText());
             okPressed();
@@ -806,6 +832,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         default:
             break;
         }
+
     }
 
     private String validateTimePeriod() {
@@ -2644,9 +2671,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         backupGrp.setLayout(new GridLayout(8, false));
         btnCarSamBackUp = new Button(backupGrp, SWT.CHECK);
         btnCarSamBackUp.setText("CARSAM Backup Mode");
-        btnCarSamBackUp.setEnabled(false);
-        // CARSAM back mode only editable if Fir Region checked is
-        // one of the CARSAM sites
+        /*
+         * inBackupCarSamArea used as flag to see if a polygon cross over CARSAM
+         * regions
+         */
+        btnCarSamBackUp.setEnabled(this.inBackupCarSamArea);
+        /*
+         * CARSAM back mode only editable if Fir Region checked is one of the
+         * CARSAM sites Or if both regular or backup FIR regions covered by a
+         * polygon
+         */
+
         if (editableFirID != null) {
             for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
                     .getCarSamBackupWmoHeader()) {
@@ -2669,41 +2704,139 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
         }
+
         btnCarSamBackUp.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent event) {
+
                 Button btn = (Button) event.getSource();
                 isCarSamBackup = btn.getSelection();
                 SigmetAttrDlg.this.setEditableAttrCarSamBackupMode(
                         Boolean.toString(btn.getSelection()));
+                // CarSamBackup is enabled
                 if (isCarSamBackup) {
+
+                    /*
+                     * set if to null in-order to compute the locations of
+                     * polygon again and get the correct region
+                     */
+                    editableFirID = null;
                     editableFirID = getFirs();
                     String[] firValues = editableFirID.split(" ");
+
+                    // Unselect all buttons first
+                    unCheckFirButtons();
+
+                    // Select CarSam Fir regions
+                    carSamFirEnabled(firValues);
+
+                    // select MWO value corresponding to fir region
+                    carSamFirMWOSelection(firValues);
+
+                    // CarSamBackup is disabled, select the default regular
+                    // regions
+                } else {
+                    unCheckFirButtons();
+                    editableFirID = null;
+                    editableFirID = getFirs();
+                    String[] firValues = editableFirID.split(" ");
+
                     for (String firVal : firValues) {
-                        for (String other : SigmetInfo.FIR_OTHER) {
-                            if (other.contains(firVal)) {
-                                // Multiple FIRs not allowed in Backup Mode
-                                // uncheck FIR_MEXICO if FIR_OTHER selected.
-                                editableFirID = firVal;
-                                for (String str : SigmetInfo.FIR_MEXICO) {
-                                    Button[] firButt = firButtonMap.get(str);
-                                    for (int i = 0; firButt != null
-                                            && i < firButt.length; i++) {
-                                        if (firButt[i].getText()
-                                                .contains(str)) {
-                                            firButt[i].setSelection(false);
-                                        }
-                                    }
+
+                        for (String str : firAllRegions) {
+                            Button[] firButt = firButtonMap.get(str);
+                            for (int i = 0; firButt != null
+                                    && i < firButt.length; i++) {
+                                if (firButt[i].getText().contains(firVal)) {
+                                    firButt[i].setSelection(true);
                                 }
-                                break;
                             }
                         }
                     }
                 }
+
             }
 
         });
+    }
+
+    public void unCheckFirButtons() {
+
+        for (String buttonName : firButtonMap.keySet()) {
+            int i = 0;
+            Button[] firButt = firButtonMap.get(buttonName);
+            firButt[i].setSelection(false);
+            i++;
+        }
+    }
+
+    public void carSamFirEnabled(String[] firValues) {
+
+        for (String firVal : firValues) {
+
+            for (String buttonName : firButtonMap.keySet()) {
+                int i = 0;
+                Button[] firButt = firButtonMap.get(buttonName);
+
+                if (firVal.equalsIgnoreCase(buttonName)) {
+                    firButt[i].setSelection(true);
+                    break;
+                }
+                i++;
+            }
+        }
+        /*
+         * If FIR Mexico and Fir Other Selected and CarSamBackup mode enabled
+         * FIR_OTHER will be selected.
+         */
+        uncheckMultipleFir(firValues);
+
+    }
+
+    public void carSamFirMWOSelection(String[] firValues) {
+        String[] mwoItems = SigmetInfo.AREA_MAP
+                .get(SigmetInfo.getSigmetTypeString(pgenType));
+
+        if (firValues.length > 1) {
+            MessageDialog.openWarning(null, "MWO attribute should be selected.",
+                    "The sigmet object covers two or more areas,select a list item from the MWO drop-down.");
+        }
+
+        int i = 0;
+        for (String str : mwoItems) {
+            if (str.substring(0, 2).equals(firValues[0].substring(0, 2))) {
+                this.comboMWO.setItems(mwoItems);
+                this.comboMWO.select(i);
+                break;
+            }
+            i++;
+        }
+    }
+
+    public void uncheckMultipleFir(String[] firValues) {
+        for (String firVal : firValues) {
+            for (String other : SigmetInfo.FIR_OTHER) {
+                if (other.contains(firVal)) {
+                    /*
+                     * Multiple FIRs not allowed in Backup Mode uncheck
+                     * FIR_MEXICO if FIR_OTHER selected.
+                     */
+                    editableFirID = firVal;
+                    for (String str : SigmetInfo.FIR_MEXICO) {
+                        Button[] firButt = firButtonMap.get(str);
+                        for (int i = 0; firButt != null
+                                && i < firButt.length; i++) {
+                            if (firButt[i].getText().contains(str)) {
+                                firButt[i].setSelection(false);
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
     }
 
     public String getFirs() {
@@ -2792,24 +2925,54 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         String[] firIdArray = firId.split(" ");
 
-        // AWC Backup FIR Regions
-        List<String> firIdAWCBackup = new ArrayList<>();
+        if (!(firIdAWCBackup.size() > 0 && firIdRegulargions.size() > 0
+                && firAllRegions.size() > 0)) {
+            // Awc CarSam regions
+            firIdAWCBackup.addAll(Arrays.asList(SigmetInfo.FIR_MEXICO));
+            firIdAWCBackup.addAll(Arrays.asList(SigmetInfo.FIR_OTHER));
+            // Regular regions
+            firIdRegulargions.addAll(Arrays.asList(SigmetInfo.FIR_ATLANTIC));
+            firIdRegulargions.addAll(Arrays.asList(SigmetInfo.FIR_PACIFIC));
+            // All regions
+            firAllRegions.addAll(firIdAWCBackup);
+            firAllRegions.addAll(firIdRegulargions);
+        }
 
-        Collections.addAll(firIdAWCBackup, SigmetInfo.FIR_MEXICO);
-        Collections.addAll(firIdAWCBackup, SigmetInfo.FIR_OTHER);
+        // By Default only pick regular regions unless BackupCarSam enabled
+        boolean carSamEnabled = (SigmetAttrDlg.this
+                .getEditableAttrCarSamBackupMode() != null
+                && SigmetAttrDlg.this.getEditableAttrCarSamBackupMode()
+                        .equals("true")) ? true : false;
 
         List<String> newFirID = new ArrayList<>();
 
-        if (firIdArray != null && firIdArray.length > 1) {
-
+        if (firIdArray != null && firIdArray.length >= 1) {
             for (String element : firIdArray) {
 
-                for (int i = 0; i < firIdAWCBackup.size(); i++) {
-
-                    if (element.equals(firIdAWCBackup.get(i))) {
-                        newFirID.add(element);
+                // Set flag to true if regular and CarSam regions intersect
+                for (String region : firIdAWCBackup) {
+                    if (element.equals(region)) {
+                        this.inBackupCarSamArea = true;
+                        break;
                     }
+                }
+                // If BackupCarSam enabled pick up CarSam Regions
+                if (carSamEnabled) {
+                    for (int i = 0; i < firIdAWCBackup.size(); i++) {
 
+                        if (element.equals(firIdAWCBackup.get(i))) {
+                            newFirID.add(element);
+                        }
+
+                    }
+                } else {
+                    for (int i = 0; i < firIdRegulargions.size(); i++) {
+
+                        if (element.equals(firIdRegulargions.get(i))) {
+                            newFirID.add(element);
+                        }
+
+                    }
                 }
 
             }
@@ -2987,6 +3150,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
 
         txtFcstPheLon.addListener(SWT.Modify, new Listener() {
+
             @Override
             public void handleEvent(Event e) {
                 String fcstLon = txtFcstPheLon.getText().trim();
@@ -3655,6 +3819,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         attrControlMap.put("editableAttrArea", comboMWO);
         comboMWO.setItems(mwoItems);
         comboMWO.select(0);
+
         setEditableAttrArea(comboMWO.getText());
         comboMWO.setLayoutData(
                 new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
