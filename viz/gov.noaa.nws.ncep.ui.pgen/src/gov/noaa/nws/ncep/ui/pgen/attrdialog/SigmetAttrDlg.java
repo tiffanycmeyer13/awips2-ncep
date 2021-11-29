@@ -239,6 +239,10 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       and other fields in Int'l SigmetT GUI.
  * Nov 18, 2021  98546      achalla      Modified CAR/SAM SIGMET  Id and Sequence number in GUI and xml file
  *
+ * Nov 29, 2021  98547      srussell     Updated populateIdList(),
+ *                                       Updated SigmetAttrDlgSaveMsgDlg.getFileName(),
+ *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine(),
+ *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine()
  * </pre>
  *
  * @author gzhang
@@ -3851,6 +3855,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private void populateIdList(String issueOffice) {
 
+        boolean includeABlankSeriesId = SigmetInfo
+                .getIncludeBlankSeriesIdFlag(issueOffice);
+
         // IF "INTL", the ID values are different for different Issue.
         if (SigmetInfo.SIGMET_TYPES[0]
                 .equals(SigmetInfo.getSigmetTypeString(pgenType))) {
@@ -3859,6 +3866,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             comboID.setItems(SigmetInfo.ID_MAP
                     .get(SigmetInfo.getSigmetTypeString(pgenType)));
         }
+
+        // Offer a blank Series ID (aka editableAttrId ) choice at the
+        // top of the "ID" menu.
+        if (includeABlankSeriesId) {
+            // Blank, not empty,zero length
+            comboID.add(" ", 0);
+        }
+
         comboID.select(0);
     }
 
@@ -4775,7 +4790,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         private String getFileName() {
             StringBuilder sb = new StringBuilder();
             sb.append(SigmetAttrDlg.this.getEditableAttrArea());
-            sb.append("_").append(SigmetAttrDlg.this.getEditableAttrId());
+
+            String editableAttrId = SigmetAttrDlg.this.getEditableAttrId();
+            editableAttrId = editableAttrId.trim();
+            if (editableAttrId.length() > 0) {
+                sb.append("_").append(editableAttrId);
+            }
 
             if (cnlSigmet) {
                 sb.append("_").append(sigmetCnlDlg.getSeriesNumber());
@@ -4849,6 +4869,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             StringBuilder sb = new StringBuilder();
             String startTime = getTimeStringPlusHourInHMS(0);
             String endTime = getTimeStringPlusHourInHMS(4);
+            String editableAttrId = SigmetAttrDlg.this.getEditableAttrId();
+            editableAttrId = editableAttrId.trim();
 
             sb.append(SigmetAttrDlg.this.getFirs());
             sb.append(" ").append(SigmetConstant.SIGMET);
@@ -4859,16 +4881,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     break;
                 }
             }
-            if (csIntlSigm) {
-                if ((SigmetConstant.ZULU
-                        .contains(SigmetAttrDlg.this.getEditableAttrId()))) {
+            if (csIntlSigm && editableAttrId.length() > 0) {
+                if ((SigmetConstant.ZULU.contains(editableAttrId))) {
                     sb.append(" ");
                 } else {
-                    sb.append(" ").append(SigmetAttrDlg.this.getEditableAttrId()
-                            .substring(0, 1));
+                    sb.append(" ").append(editableAttrId.substring(0, 1));
                 }
             } else {
-                sb.append(" ").append(SigmetAttrDlg.this.getEditableAttrId());
+                sb.append(" ").append(editableAttrId);
             }
 
             if (cnlSigmet) {
@@ -4931,11 +4951,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             // ---------------------CANCEL
             if (cnlSigmet) {
+                String editableAttrId = SigmetAttrDlg.this.getEditableAttrId();
+                editableAttrId = editableAttrId.trim();
                 sb.append(SigmetConstant.CNL);
                 sb.append(" ").append(SigmetConstant.SIGMET);
-                sb.append(" ").append(SigmetAttrDlg.this.getEditableAttrId());
-                sb.append(" ")
-                        .append(SigmetAttrDlg.this.getEditableAttrSeqNum());
+
+                if (editableAttrId.length() > 0) {
+                    sb.append(" ").append(editableAttrId);
+                    sb.append(" ");
+                }
+
+                sb.append(SigmetAttrDlg.this.getEditableAttrSeqNum());
                 sb.append(" ")
                         .append(SigmetAttrDlg.this.getEditableAttrStartTime());
                 sb.append("/")
