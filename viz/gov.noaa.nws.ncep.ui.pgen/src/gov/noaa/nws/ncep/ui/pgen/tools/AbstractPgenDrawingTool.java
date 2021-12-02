@@ -1,19 +1,12 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.AbstractPgenDrawingTool
- * 
+ *
  * 21 May 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
-
-import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlgFactory;
-import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IEditorPart;
@@ -24,25 +17,35 @@ import com.raytheon.uf.viz.core.maps.display.VizMapEditor;
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
 import com.raytheon.viz.ui.EditorUtil;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
+import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlgFactory;
+import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
+
 /**
  * The abstract super class for all PGEN drawing tools.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer     Description
- * ------------ ---------- ----------- --------------------------
- * 05/09                    B. Yin      Initial Creation.
- * 06/09                    J. Wu       Pop up "action" dialog if existing, e.g.
- *                                      "Extrap", "Interp", etc.
- * 07/09                    B. Yin      Added several handler methods for Jet
- * 03/13        #972        G. Hull     call PgenUtil.isNatlCntrsEditor()
- * 03/13        #927        B. Yin      Added setHandler method.
- * 11/13        #1065       J. Wu       Added Kink Lines.
- * 02/20        #75024      smanoj      Fix to have correct default Text Attributes for 
- *                                      tropical TROF front label.
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 05/09                  B. Yin    Initial Creation.
+ * 06/09                  J. Wu     Pop up "action" dialog if existing, e.g.
+ *                                  "Extrap", "Interp", etc.
+ * 07/09                  B. Yin    Added several handler methods for Jet
+ * 03/13         972      G. Hull   call PgenUtil.isNatlCntrsEditor()
+ * 03/13         927      B. Yin    Added setHandler method.
+ * 11/13         1065     J. Wu     Added Kink Lines.
+ * 02/20         75024    smanoj    Fix to have correct default Text Attributes
+ *                                  for tropical TROF front label.
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
@@ -69,13 +72,12 @@ public abstract class AbstractPgenDrawingTool extends AbstractPgenTool {
      */
     protected String pgenCategory = null;
 
-
     @Override
     protected void activateTool() {
         IEditorPart ep = EditorUtil.getActiveEditor();
 
         if (!PgenUtil.isNatlCntrsEditor(ep) && !(ep instanceof VizMapEditor)) {
-             return;
+            return;
         }
 
         if (!super.isDelObj()) {
@@ -83,8 +85,8 @@ public abstract class AbstractPgenDrawingTool extends AbstractPgenTool {
              * Activate editor before tool is loaded, so that it is not loaded
              * twice.
              */
-            PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-                    .getActivePage().activate(EditorUtil.getActiveEditor());
+            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+                    .activate(EditorUtil.getActiveEditor());
         }
 
         super.activateTool();
@@ -115,7 +117,7 @@ public abstract class AbstractPgenDrawingTool extends AbstractPgenTool {
             /*
              * pop up the 'delete obj' confirm dialog
              */
-            int numEls = drawingLayer.selectObj(pgenType);
+            int numEls = drawingLayers.selectObj(pgenType);
 
             if (numEls > 0) {
 
@@ -126,18 +128,18 @@ public abstract class AbstractPgenDrawingTool extends AbstractPgenTool {
                         "Confirm Delete", null,
                         "Are you sure you want to delete all " + numEls
                                 + " selected element(s)?",
-                        MessageDialog.QUESTION,
-                        new String[] { "OK", "Cancel" }, 0);
+                        MessageDialog.QUESTION, new String[] { "OK", "Cancel" },
+                        0);
 
                 confirmDlg.open();
 
                 if (confirmDlg.getReturnCode() == MessageDialog.OK) {
 
-                    drawingLayer.deleteSelectedElements();
+                    drawingLayers.deleteSelectedElements();
 
                 } else {
 
-                    drawingLayer.removeSelected();
+                    drawingLayers.removeSelected();
 
                 }
 
@@ -164,11 +166,11 @@ public abstract class AbstractPgenDrawingTool extends AbstractPgenTool {
         if (attrDlg == null) {
             AbstractDrawableComponent triggerComponent = PgenUtil
                     .getTriggerComponent(event);
-            if (triggerComponent !=null) {
+            if (triggerComponent != null) {
                 if (PgenConstant.CATEGORY_FRONT
                         .equalsIgnoreCase(triggerComponent.getPgenCategory())
-                        && PgenConstant.TYPE_TROPICAL_TROF
-                        .equalsIgnoreCase(triggerComponent.getPgenType())) {
+                        && PgenConstant.TYPE_TROPICAL_TROF.equalsIgnoreCase(
+                                triggerComponent.getPgenType())) {
                     pgenType = PgenConstant.TROP_TROF_TEXT;
                 }
             }
@@ -182,8 +184,8 @@ public abstract class AbstractPgenDrawingTool extends AbstractPgenTool {
         if (attrDlg != null) {
 
             attrDlg.setType(event.getParameter("type"));
-            attrDlg.setMouseHandlerName(this.getMouseHandler().getClass()
-                    .getName());
+            attrDlg.setMouseHandlerName(
+                    this.getMouseHandler().getClass().getName());
             /*
              * Open the dialog and set the default attributes. Note: must call
              * "attrDlg.setBlockOnOpen(false)" first.
@@ -191,7 +193,7 @@ public abstract class AbstractPgenDrawingTool extends AbstractPgenTool {
             attrDlg.setBlockOnOpen(false);
             attrDlg.setPgenCategory(pgenCategory);
             attrDlg.setPgenType(pgenType);
-            attrDlg.setDrawingLayer(drawingLayer);
+            attrDlg.setDrawingLayers(drawingLayers);
             attrDlg.setMapEditor(mapEditor);
 
             if (attrDlg.getShell() == null) {
@@ -206,13 +208,14 @@ public abstract class AbstractPgenDrawingTool extends AbstractPgenTool {
 
     }
 
-
+    @Override
     public void deactivateTool() {
 
         super.deactivateTool();
 
-        if (editor != null)
+        if (editor != null) {
             editor.unregisterMouseHandler(this.mouseHandler);
+        }
         if (attrDlg != null) {
             attrDlg.close();
             attrDlg = null;
@@ -222,6 +225,7 @@ public abstract class AbstractPgenDrawingTool extends AbstractPgenTool {
     /**
      * Sets the mouse handler for the tool.
      */
+    @Override
     public void setHandler(IInputHandler handler) {
 
         if (mapEditor != null && handler != null) {

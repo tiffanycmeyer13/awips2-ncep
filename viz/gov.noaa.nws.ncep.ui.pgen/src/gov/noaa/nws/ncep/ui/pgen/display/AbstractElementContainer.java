@@ -1,12 +1,25 @@
 /*
  * AbstractElementContainer
- * 
+ *
  * Date created: 08 DECEMBER 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.display;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import com.raytheon.uf.viz.core.IGraphicsTarget;
+import com.raytheon.uf.viz.core.drawables.PaintProperties;
+import com.raytheon.uf.viz.core.map.IMapDescriptor;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Point;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenAutoPlacement;
 import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
@@ -23,40 +36,32 @@ import gov.noaa.nws.ncep.ui.pgen.gfa.IGfa;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.ISigmet;
 import gov.noaa.nws.ncep.ui.pgen.tca.ITca;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import com.raytheon.uf.viz.core.IGraphicsTarget;
-import com.raytheon.uf.viz.core.drawables.PaintProperties;
-import com.raytheon.uf.viz.core.map.IMapDescriptor;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
-
 /**
  * This Element Container is the base class for all Element Containers. It's
  * function is to hold a PGEN DrawableElement along with associated renderable
  * objects that depict the DrawableElement on the graphics target.
- * 
+ *
  * Subclasses' implementation of the draw method should determine when the
  * IDisplayables for the Drawable Element should be recreated. IDisplayables can
  * be created using the createDisplayables() method.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * 12/09        #160        G. Zhang    Added ISigmet for Sigmet support
- * 03/10        #223        M.Laryukhin Gfa added. 
- * 04/11         #?         B. Yin      Re-factor IAttribute
- * 09/12                    B. Hebbard  Merge RTS changes from OB12.9.1
- * 11/13        TTR 752     J. Wu       added methods to auto place CCFP text box.
- * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
+ *
+ * Date          Ticket#  Engineer     Description
+ * ------------- -------- ------------ -----------------------------------------
+ * 12/09         160      G. Zhang     Added ISigmet for Sigmet support
+ * 03/10         223      M.Laryukhin  Gfa added.
+ * 04/11         #?       B. Yin       Re-factor IAttribute
+ * 09/12                  B. Hebbard   Merge RTS changes from OB12.9.1
+ * 11/13         TTR 752  J. Wu        added methods to auto place CCFP text
+ *                                     box.
+ * Jan 07, 2020  71971    smanoj       Modified code to use PgenConstants
+ * Dec 01, 2021  95362    tjensen      Refactor PGEN Resource management to
+ *                                     support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author sgilbert
  */
 public abstract class AbstractElementContainer {
@@ -94,7 +99,7 @@ public abstract class AbstractElementContainer {
 
     /**
      * Sets a new mapDescriptor. All IDisplayables will be recreated.
-     * 
+     *
      * @param mapDescriptor
      *            the mapDescriptor to set
      */
@@ -108,7 +113,7 @@ public abstract class AbstractElementContainer {
     /**
      * Draws to the given graphics target. Recreates the IDisplayable objects,
      * if necessary.
-     * 
+     *
      * @param target
      * @param paintProps
      * @param dprops
@@ -120,7 +125,7 @@ public abstract class AbstractElementContainer {
     /**
      * Draws to the given graphics target. Recreates the IDisplayable objects,
      * if necessary.
-     * 
+     *
      * @param target
      * @param paintProps
      * @param dprops
@@ -134,7 +139,7 @@ public abstract class AbstractElementContainer {
     /**
      * Uses a DisplayElementFactory to create IDisplayable objects from the
      * Drawable Element
-     * 
+     *
      * @param paintProps
      */
     protected void createDisplayables(PaintProperties paintProps) {
@@ -165,8 +170,8 @@ public abstract class AbstractElementContainer {
             displayEls = def.createDisplayElements((IVector) element,
                     paintProps);
         } else if (element instanceof ICombo) {
-            displayEls = def
-                    .createDisplayElements((ICombo) element, paintProps);
+            displayEls = def.createDisplayElements((ICombo) element,
+                    paintProps);
         } else if (element instanceof ITca) {
             displayEls = def.createDisplayElements((ITca) element, paintProps);
         } else if (element instanceof ISigmet) {
@@ -176,8 +181,8 @@ public abstract class AbstractElementContainer {
             displayEls = def.createDisplayElements((ISymbol) element,
                     paintProps);
         } else if (element instanceof ITrack) {
-            displayEls = def
-                    .createDisplayElements((ITrack) element, paintProps);
+            displayEls = def.createDisplayElements((ITrack) element,
+                    paintProps);
         } else if (element instanceof IWatchBox) {
             displayEls = def.createDisplayElements((IWatchBox) element,
                     paintProps);
@@ -237,7 +242,7 @@ public abstract class AbstractElementContainer {
             float density;
             /*
              * Apply parametric smoothing on pixel coordinates, if required.
-             * 
+             *
              * Note: 1. NMAP2 range calculation does not do smoothing though. 2.
              * Tcm and WatchBox is IMultiPoint but not ILine.
              */
@@ -246,10 +251,11 @@ public abstract class AbstractElementContainer {
                     && ((ILine) elem).getSmoothFactor() > 0) {
                 if (((ILine) elem).getSmoothFactor() > 0) {
                     float devScale = 50.0f;
-                    if (((ILine) elem).getSmoothFactor() == 1)
+                    if (((ILine) elem).getSmoothFactor() == 1) {
                         density = devScale / 1.0f;
-                    else
+                    } else {
                         density = devScale / 5.0f;
+                    }
 
                     smoothpts = CurveFitter.fitParametricCurve(pixels, density);
                 }
@@ -269,8 +275,8 @@ public abstract class AbstractElementContainer {
             elem.createRange(pts, closed);
 
         } else {
-            System.out
-                    .println("Invalid DrawableElement type. No range record is set!");
+            System.out.println(
+                    "Invalid DrawableElement type. No range record is set!");
         }
     }
 
@@ -284,8 +290,9 @@ public abstract class AbstractElementContainer {
      */
     public void dispose() {
 
-        if (displayEls == null)
+        if (displayEls == null) {
             return;
+        }
 
         for (IDisplayable each : displayEls) {
             each.dispose();
@@ -303,8 +310,9 @@ public abstract class AbstractElementContainer {
     private void adjustRange(DrawableElement elem,
             IMapDescriptor mapDescriptor2, PaintProperties paintProps) {
 
-        if (!isCCFPText(elem))
+        if (!isCCFPText(elem)) {
             return;
+        }
 
         // find the extent of the screen view.
         PgenRangeRecord screenExtent = def.findScreenRange(paintProps);
@@ -315,15 +323,16 @@ public abstract class AbstractElementContainer {
 
         PgenRangeRecord ccfpRange = ccfpLine.getRange();
         PgenRangeRecord arrowRange = new PgenRangeRecord();
-        if (ccfpArrow != null)
+        if (ccfpArrow != null) {
             arrowRange = ccfpArrow.getRange();
+        }
 
         // check if the polygon is within the screen, if not, no need to adjust.
         GeometryFactory gf = new GeometryFactory();
-        Geometry ccfpPolygon = PgenAutoPlacement.pointsToGeometry(
-                ccfpRange.getPoints(), true, gf);
-        Geometry scnPoly = PgenAutoPlacement.pointsToGeometry(
-                screenExtent.getExtent(), true, gf);
+        Geometry ccfpPolygon = PgenAutoPlacement
+                .pointsToGeometry(ccfpRange.getPoints(), true, gf);
+        Geometry scnPoly = PgenAutoPlacement
+                .pointsToGeometry(screenExtent.getExtent(), true, gf);
 
         if (!ccfpPolygon.intersects(scnPoly)) {
             return;
@@ -332,12 +341,12 @@ public abstract class AbstractElementContainer {
         // Now start the text box from the centroid of the CCFP polygon.
         Point ccfpCenter = ccfpPolygon.getCentroid();
 
-        double[] nloc = mapDescriptor2.pixelToWorld(new double[] {
-                ccfpCenter.getX(), ccfpCenter.getY(), 0.0 });
+        double[] nloc = mapDescriptor2.pixelToWorld(
+                new double[] { ccfpCenter.getX(), ccfpCenter.getY(), 0.0 });
         ((Text) elem).setLocationOnly(new Coordinate(nloc[0], nloc[1]));
 
-        PgenRangeRecord textBox = def
-                .findTextBoxRange((IText) elem, paintProps);
+        PgenRangeRecord textBox = def.findTextBoxRange((IText) elem,
+                paintProps);
 
         elem.setRange(textBox);
 
@@ -347,9 +356,9 @@ public abstract class AbstractElementContainer {
          * that belongs to this text's (associated polygon and arrow).
          */
         List<DrawableElement> delist = PgenSession.getInstance()
-                .getPgenResource().getActiveDrawableElements();
+                .getCurrentResource().getActiveDrawableElements();
 
-        List<PgenRangeRecord> rrlist = new ArrayList<PgenRangeRecord>();
+        List<PgenRangeRecord> rrlist = new ArrayList<>();
 
         for (DrawableElement de : delist) {
             if (de == elem || de == ccfpLine
@@ -366,9 +375,9 @@ public abstract class AbstractElementContainer {
         PgenRangeRecord[] newLoc = pgenAuto.placeTextBox();
 
         // Reset the text location to the location found.
-        double[] autoloc = mapDescriptor2.pixelToWorld(new double[] {
-                newLoc[0].getPoints().get(0).x, newLoc[0].getPoints().get(0).y,
-                0.0 });
+        double[] autoloc = mapDescriptor2
+                .pixelToWorld(new double[] { newLoc[0].getPoints().get(0).x,
+                        newLoc[0].getPoints().get(0).y, 0.0 });
         ((Text) elem).setLocationOnly(new Coordinate(autoloc[0], autoloc[1]));
 
         // adjust the arrow.
@@ -377,24 +386,25 @@ public abstract class AbstractElementContainer {
                 ((Label) element.getParent()).removeElement(ccfpArrow);
             }
         } else { // add an arrow or adjust the location
-            ArrayList<Coordinate> apts = new ArrayList<Coordinate>();
+            ArrayList<Coordinate> apts = new ArrayList<>();
 
             // Reset the test location to the location found.
-            double[] aloc = mapDescriptor2.pixelToWorld(new double[] {
-                    newLoc[1].getPoints().get(0).x,
-                    newLoc[1].getPoints().get(0).y, 0.0 });
+            double[] aloc = mapDescriptor2
+                    .pixelToWorld(new double[] { newLoc[1].getPoints().get(0).x,
+                            newLoc[1].getPoints().get(0).y, 0.0 });
             apts.add(new Coordinate(aloc[0], aloc[1]));
-            aloc = mapDescriptor2.pixelToWorld(new double[] {
-                    newLoc[1].getPoints().get(1).x,
-                    newLoc[1].getPoints().get(1).y, 0.0 });
+            aloc = mapDescriptor2
+                    .pixelToWorld(new double[] { newLoc[1].getPoints().get(1).x,
+                            newLoc[1].getPoints().get(1).y, 0.0 });
             apts.add(new Coordinate(aloc[0], aloc[1]));
 
             if (ccfpArrow != null) {
                 ((Line) ccfpArrow).setPointsOnly(apts);
             } else {
-                Line arrowLn = new Line(null, new Color[] { new Color(255, 255,
-                        255) }, 2.0F, 1.0, false, false, apts, 0,
-                        FillPattern.FILL_PATTERN_2, "Lines", "POINTED_ARROW");
+                Line arrowLn = new Line(null,
+                        new Color[] { new Color(255, 255, 255) }, 2.0F, 1.0,
+                        false, false, apts, 0, FillPattern.FILL_PATTERN_2,
+                        "Lines", "POINTED_ARROW");
                 ((Label) element.getParent()).addArrow(arrowLn);
             }
         }
@@ -406,19 +416,20 @@ public abstract class AbstractElementContainer {
     private boolean isCCFPText(DrawableElement de) {
         return (de instanceof IText && de.getParent() != null
                 && de.getParent().getParent() != null
-                && de.getParent().getParent().getPgenType() != null 
+                && de.getParent().getParent().getPgenType() != null
                 && de.getParent().getParent().getPgenType()
-                    .equalsIgnoreCase(PgenConstant.TYPE_CCFP_SIGMET));
+                        .equalsIgnoreCase(PgenConstant.TYPE_CCFP_SIGMET));
     }
 
     /*
      * Find the main CCFP polygon if a Text belongs to this CCFP sigmet
      */
     private DrawableElement getCCFPLine(DrawableElement de) {
-        if (isCCFPText(de))
+        if (isCCFPText(de)) {
             return de.getParent().getParent().getPrimaryDE();
-        else
+        } else {
             return null;
+        }
     }
 
     /*

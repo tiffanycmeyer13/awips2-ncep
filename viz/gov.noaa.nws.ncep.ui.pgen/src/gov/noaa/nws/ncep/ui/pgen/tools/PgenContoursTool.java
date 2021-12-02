@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.PgenContoursTool
- * 
+ *
  * October 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -29,7 +29,6 @@ import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
 import gov.noaa.nws.ncep.ui.pgen.display.ILine;
 import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.Arc;
-import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElementFactory;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableType;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
@@ -38,36 +37,49 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 
 /**
  * Implements a modal map tool for PGEN Contours drawing.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ----------------------------------------------------------------------------
- * 10/09        #167        J. Wu       Initial creation
- * 12/09         ?          B. Yin      check if the attrDlg is the contours dialog
- * 12/09        #167        J. Wu       Allow editing line and label attributes.
- * 06/10        #215        J. Wu       Added support for Contours Min/Max
- * 11/10        #345        J. Wu       Added support for Contours Circle
- * 02/11                    J. Wu       Preserve auto/hide flags for text
- * 04/11        #?          B. Yin      Re-factor IAttribute
- * 11/11        #?          J. Wu       Add check for the existing Contours of the same type.
- * 03/13        #927        B. Yin       Added right mouse click context menu
- * 08/13        TTR778      J. Wu       Move loading libg2g to GraphToGridParamDialog.
- * 04/14        #1117       J. Wu       Set focus to label/use line color for label.
- * 05/14        TTR1008     J. Wu       Remove confirmation dialog when adding to an existing contour.
- * 01/15        R5200/T1059 J. Wu       Use setSettings(de) to save last-used attributes.
- * 01/14/2016   R13168      J. Wu       Add "One Contours per Layer" rule.
- * 01/27/2016   R13166      J. Wu       Add symbol only & label only capability.
- * 04/11/2016   R17056      J. Wu       Match contour line/symbol color with settings.
- * May 16, 2016 5640        bsteffen    Access triggering component using PgenUtil.
- * 05/25/2016   R17940      J. Wu       Re-work on mouseDown & mouseUp actions.
- * 06/01/2016   R18387      B. Yin      Open line dialog in activateTool().
- * 06/13/2016   R10233      J. Wu       Retain flags from previous PgenSelectHandler.
- * 07/01/2016   R17377      J. Wu       Return control to panning when "SHIFT" is down.
- * 12/20/2019   71072       smanoj      Fix some NullPointerException.
- * 
+ *
+ * Date          Ticket#      Engineer  Description
+ * ------------- ------------ --------- ----------------------------------------
+ * 10/09         167          J. Wu     Initial creation
+ * 12/09         ?            B. Yin    check if the attrDlg is the contours
+ *                                      dialog
+ * 12/09         167          J. Wu     Allow editing line and label attributes.
+ * 06/10         215          J. Wu     Added support for Contours Min/Max
+ * 11/10         345          J. Wu     Added support for Contours Circle
+ * 02/11                      J. Wu     Preserve auto/hide flags for text
+ * 04/11         #?           B. Yin    Re-factor IAttribute
+ * 11/11         #?           J. Wu     Add check for the existing Contours of
+ *                                      the same type.
+ * 03/13         927          B. Yin    Added right mouse click context menu
+ * 08/13         TTR778       J. Wu     Move loading libg2g to
+ *                                      GraphToGridParamDialog.
+ * 04/14         1117         J. Wu     Set focus to label/use line color for
+ *                                      label.
+ * 05/14         TTR1008      J. Wu     Remove confirmation dialog when adding
+ *                                      to an existing contour.
+ * 01/15         R5200/T1059  J. Wu     Use setSettings(de) to save last-used
+ *                                      attributes.
+ * Jan 14, 2016  13168        J. Wu     Add "One Contours per Layer" rule.
+ * Jan 27, 2016  13166        J. Wu     Add symbol only & label only capability.
+ * Apr 11, 2016  17056        J. Wu     Match contour line/symbol color with
+ *                                      settings.
+ * May 16, 2016  5640         bsteffen  Access triggering component using
+ *                                      PgenUtil.
+ * May 25, 2016  17940        J. Wu     Re-work on mouseDown & mouseUp actions.
+ * Jun 01, 2016  18387        B. Yin    Open line dialog in activateTool().
+ * Jun 13, 2016  10233        J. Wu     Retain flags from previous
+ *                                      PgenSelectHandler.
+ * Jul 01, 2016  17377        J. Wu     Return control to panning when "SHIFT"
+ *                                      is down.
+ * Dec 20, 2019  71072        smanoj    Fix some NullPointerException.
+ * Dec 02, 2021  95362        tjensen   Refactor PGEN Resource management to
+ *                                      support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
  */
 
@@ -77,13 +89,13 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
     /**
      * Points of the new element.
      */
-    private ArrayList<Coordinate> points = new ArrayList<Coordinate>();
+    private final ArrayList<Coordinate> points = new ArrayList<>();
 
     /**
      * An instance of DrawableElementFactory, which is used to create new
      * elements.
      */
-    private DrawableElementFactory def = new DrawableElementFactory();
+    private final DrawableElementFactory def = new DrawableElementFactory();
 
     /**
      * Current Contours element.
@@ -158,9 +170,10 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
@@ -177,12 +190,6 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
      */
     public class PgenContoursHandler extends InputHandlerDefaultImpl {
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
 
@@ -219,8 +226,9 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                     if (points.size() == 0) {
                         points.add(0, loc);
                     } else {
-                        if (points.size() > 1)
+                        if (points.size() > 1) {
                             points.remove(1);
+                        }
 
                         points.add(1, loc);
                         drawContourCircle();
@@ -240,16 +248,11 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
 
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseUp(int anX, int aY, int button) {
-            if (!isResourceEditable() || shiftDown)
+            if (!isResourceEditable() || shiftDown) {
                 return false;
+            }
 
             if (button == 3) {
                 // End drawing symbol or circle
@@ -258,7 +261,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                     points.clear();
                     ((ContoursAttrDlg) attrDlg)
                             .setDrawingStatus(ContourDrawingStatus.SELECT);
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
                 } else { // Handling line drawing
                     if (points.size() == 0) {
                         ((ContoursAttrDlg) attrDlg).setDrawingStatus(
@@ -268,7 +271,6 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                         setDrawingMode();
                         drawContours();
                     }
-
                 }
 
                 return true;
@@ -279,12 +281,6 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
 
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseMove(int,
-         * int)
-         */
         @Override
         public boolean handleMouseMove(int x, int y) {
             if (!isResourceEditable() || shiftDown) {
@@ -350,7 +346,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                     }
                 }
 
-                drawingLayer.setGhostLine(ghost);
+                drawingLayers.setGhostLine(ghost);
                 mapEditor.refresh();
 
                 return false;
@@ -393,7 +389,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                         ghost.getLabel().setColors(circleTemp.getColors());
                     }
 
-                    drawingLayer.setGhostLine(ghost);
+                    drawingLayers.setGhostLine(ghost);
                     mapEditor.refresh();
                 }
 
@@ -404,8 +400,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
             // Draw a ghost ContourLine
             if (points != null && points.size() >= 1) {
 
-                ArrayList<Coordinate> ghostPts = new ArrayList<Coordinate>(
-                        points);
+                ArrayList<Coordinate> ghostPts = new ArrayList<>(points);
                 ghostPts.add(loc);
 
                 ContourLine cline = new ContourLine(ghostPts,
@@ -450,7 +445,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
 
                 Contours el = (Contours) (def.create(DrawableType.CONTOURS,
                         null, "MET", PgenConstant.CONTOURS, points,
-                        drawingLayer.getActiveLayer()));
+                        drawingLayers.getActiveLayer()));
 
                 cline.setParent(el);
                 cline.getLine().setPgenType(
@@ -459,7 +454,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                 el.update((ContoursAttrDlg) attrDlg);
                 el.add(cline);
 
-                drawingLayer.setGhostLine(el);
+                drawingLayers.setGhostLine(el);
                 mapEditor.refresh();
 
             }
@@ -472,17 +467,15 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
         public boolean handleMouseDownMove(int x, int y, int mouseButton) {
             if (!isResourceEditable() || shiftDown) {
                 return false;
-            } else {
-                if (attrDlg != null) {
-                    ((ContoursAttrDlg) attrDlg).setLabelFocus();
-                    if (((ContoursAttrDlg) attrDlg)
-                            .isShiftDownInContourDialog()) {
-                        return false;
-                    }
-                }
-
-                return true;
             }
+            if (attrDlg != null) {
+                ((ContoursAttrDlg) attrDlg).setLabelFocus();
+                if (((ContoursAttrDlg) attrDlg).isShiftDownInContourDialog()) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /*
@@ -549,30 +542,26 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                      */
                     elem = (Contours) (def.create(DrawableType.CONTOURS, null,
                             "MET", PgenConstant.CONTOURS, points,
-                            drawingLayer.getActiveLayer()));
+                            drawingLayers.getActiveLayer()));
 
                     cline.setParent(elem);
                     elem.update((ContoursAttrDlg) attrDlg);
                     elem.add(cline);
-                    drawingLayer.addElement(elem);
+                    drawingLayers.addElement(elem);
 
                 } else {
-
                     /*
                      * Make a copy of the existing element; update its
                      * attributes from those in the Attr Dialog; replace the
                      * existing element with the new one in the pgen resource -
                      * (This allows Undo/Redo)
                      */
-                    Contours newElem = (Contours) elem.copy();
-
+                    Contours newElem = elem.copy();
                     cline.setParent(newElem);
-
                     newElem.update((ContoursAttrDlg) attrDlg);
-
                     newElem.add(cline);
 
-                    drawingLayer.replaceElement(elem, newElem);
+                    drawingLayers.replaceElement(elem, newElem);
                     elem = newElem;
 
                 }
@@ -585,7 +574,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
             points.clear();
 
             // Update the display.
-            drawingLayer.removeGhostLine();
+            drawingLayers.removeGhostLine();
             mapEditor.refresh();
 
         }
@@ -655,13 +644,13 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                      */
                     elem = (Contours) (def.create(DrawableType.CONTOURS, null,
                             "MET", PgenConstant.CONTOURS, points,
-                            drawingLayer.getActiveLayer()));
+                            drawingLayers.getActiveLayer()));
 
                     cmm.setParent(elem);
                     elem.update((ContoursAttrDlg) attrDlg);
                     elem.add(cmm);
 
-                    drawingLayer.addElement(elem);
+                    drawingLayers.addElement(elem);
 
                 } else {
 
@@ -671,30 +660,25 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                      * existing element with the new one in the pgen resource -
                      * (This allows Undo/Redo)
                      */
-                    Contours newElem = (Contours) elem.copy();
-
+                    Contours newElem = elem.copy();
                     cmm.setParent(newElem);
-
                     newElem.update(contoursDlg);
-
                     newElem.add(cmm);
 
-                    drawingLayer.replaceElement(elem, newElem);
+                    drawingLayers.replaceElement(elem, newElem);
 
                     lastElem = elem;
                     elem = newElem;
-
                 }
 
                 contoursDlg.setCurrentContours(elem);
-
             }
 
             // Always clear the points for the next drawing.
             points.clear();
 
             // Update the display.
-            drawingLayer.removeGhostLine();
+            drawingLayers.removeGhostLine();
             mapEditor.refresh();
 
         }
@@ -713,7 +697,6 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                     }
 
                     attrDlg = null;
-
                     addContourLine = false;
 
                     PgenUtil.setSelectingMode();
@@ -727,9 +710,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                         PgenUtil.setSelectingMode();
                     }
                 }
-
             }
-
         }
 
         /*
@@ -750,8 +731,8 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                     cmm.getCircle().setColors(circleTemp.getColors());
                     ((Arc) cmm.getCircle())
                             .setLineWidth(circleTemp.getLineWidth());
-                    ((ContoursAttrDlg) attrDlg).setSettings(
-                            (DrawableElement) cmm.getCircle().copy());
+                    ((ContoursAttrDlg) attrDlg)
+                            .setSettings(cmm.getCircle().copy());
                 }
 
                 IAttribute lblTemp = ((ContoursAttrDlg) attrDlg)
@@ -784,13 +765,13 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                      */
                     elem = (Contours) (def.create(DrawableType.CONTOURS, null,
                             "MET", PgenConstant.CONTOURS, points,
-                            drawingLayer.getActiveLayer()));
+                            drawingLayers.getActiveLayer()));
 
                     cmm.setParent(elem);
                     elem.update((ContoursAttrDlg) attrDlg);
                     elem.add(cmm);
 
-                    drawingLayer.addElement(elem);
+                    drawingLayers.addElement(elem);
 
                 } else {
 
@@ -800,7 +781,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
                      * existing element with the new one in the pgen resource -
                      * (This allows Undo/Redo)
                      */
-                    Contours newElem = (Contours) elem.copy();
+                    Contours newElem = elem.copy();
 
                     cmm.setParent(newElem);
 
@@ -808,7 +789,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
 
                     newElem.add(cmm);
 
-                    drawingLayer.replaceElement(elem, newElem);
+                    drawingLayers.replaceElement(elem, newElem);
 
                     elem = newElem;
 
@@ -822,7 +803,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
             points.clear();
 
             // Update the display.
-            drawingLayer.removeGhostLine();
+            drawingLayers.removeGhostLine();
             mapEditor.refresh();
 
         }
@@ -831,7 +812,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
          * Loop through current layer and see if there is an same type of
          * Contours. If yes, add to the existing contours. If not, draw a new
          * Contours.
-         * 
+         *
          * If "one contour per layer" rule is forced and cannot find the same
          * type of Contours, the first Contours in the layer is used.
          */
@@ -872,7 +853,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
 
     /**
      * Gets the current working contour.
-     * 
+     *
      * @return
      */
     public Contours getCurrentContour() {
@@ -881,7 +862,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
 
     /**
      * Sets the current working contour
-     * 
+     *
      * @param con
      */
     public void setCurrentContour(Contours con) {
@@ -899,7 +880,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
     public void setPgenSelectHandler() {
 
         setHandler(
-                new PgenSelectHandler(this, mapEditor, drawingLayer, attrDlg));
+                new PgenSelectHandler(this, mapEditor, drawingLayers, attrDlg));
     }
 
     /**
@@ -915,7 +896,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
      * Clears selected elements.
      */
     public void clearSelected() {
-        drawingLayer.removeSelected();
+        drawingLayers.removeSelected();
         points.clear();
         mapEditor.refresh();
     }
@@ -925,7 +906,7 @@ public class PgenContoursTool extends AbstractPgenDrawingTool
      */
     @Override
     protected IInputHandler getDefaultMouseHandler() {
-        return new PgenSelectHandler(this, mapEditor, drawingLayer, attrDlg);
+        return new PgenSelectHandler(this, mapEditor, drawingLayers, attrDlg);
     }
 
     /**

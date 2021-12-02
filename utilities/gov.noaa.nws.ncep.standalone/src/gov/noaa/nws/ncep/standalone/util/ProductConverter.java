@@ -97,7 +97,7 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * <pre>
  * SOFTWARE HISTORY
  * Date         Ticket#     Engineer    Description
- * ----------- ------------ ----------- ------------------------------
+ * ------------ ----------- ----------- ------------------------------
  * 02/17/09     #63         J. Wu       Initial Creation.
  * 04/20/09     #88         J. Wu       Added Text.
  * 04/30/09     #89         J. Wu       Added Arc.
@@ -151,6 +151,7 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * May 14, 2021 91961       tjensen     Resync with gov.noaa.nws.ncep.ui.pgen.file.ProductConverter
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
+ * Dec 01, 2021 95362       tjensen     Refactor PGEN Resource management to support multi-panel displays
  *
  *
  * </pre>
@@ -1723,8 +1724,8 @@ public class ProductConverter {
 
         // Snap jet
         if (PgenSession.getInstance() != null) {
-            PgenSnapJet st = new PgenSnapJet(
-                    PgenSession.getInstance().getPgenResource().getDescriptor(),
+            PgenSnapJet st = new PgenSnapJet(PgenSession.getInstance()
+                    .getCurrentResource().getDescriptor(),
                     PgenUtil.getActiveEditor(), null);
             jet.setSnapTool(st);
             st.snapJet(jet);

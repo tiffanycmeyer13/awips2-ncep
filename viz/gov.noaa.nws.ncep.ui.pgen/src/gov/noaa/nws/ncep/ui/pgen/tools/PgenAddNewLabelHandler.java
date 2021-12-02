@@ -35,23 +35,26 @@ import gov.noaa.nws.ncep.ui.pgen.display.IText.TextRotation;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 
 /**
  *
  * Mouse handler to add a new label to ContourLine.
  *
  * <pre>
-*
-* SOFTWARE HISTORY
-*
-* Date          Ticket#  Engineer  Description
-* ------------- -------- --------- -----------------
-* Sep 01, 2020   81798    smanoj    Initial creation
-* Sep 17, 2020   81798    smanoj    Fixed label count issue when drawing
-*                                   more than one contour
-* Oct 30, 2020   84101    smanoj    Create a default contour label for the
-*                                   case of empty labels in the contour line.
-* Aug 25, 2021   86161    srussell  Updated addNewLabel()
+ * SOFTWARE HISTORY
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * Sep 01, 2020  81798    smanoj    Initial creation
+ * Sep 17, 2020  81798    smanoj    Fixed label count issue when drawing more
+ *                                  than one contour
+ * Oct 30, 2020  84101    smanoj    Create a default contour label for the case
+ *                                  of empty labels in the contour line.
+ * Aug 25, 2021  86161    srussell  Updated addNewLabel()
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
  *
  * @author smanoj
@@ -60,13 +63,13 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
 
     protected AbstractEditor mapEditor;
 
-    protected PgenResource drawingLayer;
+    protected PgenResourceList drawingLayers;
 
     protected AbstractPgenTool tool;
 
     public PgenAddNewLabelHandler(AbstractPgenTool tool) {
         this.mapEditor = tool.mapEditor;
-        this.drawingLayer = tool.getDrawingLayer();
+        this.drawingLayers = tool.getDrawingLayers();
         this.tool = tool;
     }
 
@@ -79,15 +82,17 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
         cline.setNumOfLabels(nlabels);
         cline.add(lbl);
 
-        PgenSession.getInstance().getPgenResource().issueRefresh();
-        PgenSession.getInstance().getPgenResource().resetAllElements();
+        PgenResource currentResource = PgenSession.getInstance()
+                .getCurrentResource();
+        currentResource.issueRefresh();
+        currentResource.resetAllElements();
 
     }
 
     @Override
     public boolean handleMouseDown(int anX, int aY, int button) {
 
-        if (!drawingLayer.isEditable()) {
+        if (!drawingLayers.isEditable()) {
             return false;
         }
 
@@ -100,7 +105,7 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
         if (button == 1) {
 
             // Find selected element
-            DrawableElement de = drawingLayer.getSelectedDE();
+            DrawableElement de = drawingLayers.getSelectedDE();
             if (de != null) {
 
                 // if selected element is ContourLine add new label
@@ -128,7 +133,7 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
             return true;
 
         } else if (button == 3) {
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             return true;
 
         } else {
@@ -156,7 +161,7 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
         return mapEditor;
     }
 
-    public PgenResource getPgenrsc() {
-        return drawingLayer;
+    public PgenResourceList getPgenrsc() {
+        return drawingLayers;
     }
 }

@@ -222,28 +222,39 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jul 06, 2021  93039      mroos        Removed extraneous spaces from
  *                                       VOLCANIC_ASH save text.
  * Jul 21, 2021  93981      tjensen      Make SaveDlg block.
- * Jul 26, 2021  93964      omoncayo     Eliminate gosh volcanos menu for Cyclone
- *                                       populate Observed Phenom Lat and Lon
+ * Jul 26, 2021  93964      omoncayo     Eliminate gosh volcanos menu for
+ *                                       Cyclone populate Observed Phenom Lat
+ *                                       and Lon
  * Aug 20, 2021  93036      omoncayo     PGEN INTL SIGMET:QC Check Attributes
- * Sep 21, 2021  93036      omoncayo     More QC check:
- *                                         Adding validations for Alternative flight level input fields
- *                                         Validation empty coordinates
- *                                         Validate TO option
- * Oct 04, 2021 93036       omoncayo       Correcting a pre-existing bug when prepopulating Phenom type
- *                                         make fields invisible based on Level Information "BTN"
- *                                         adding new QC Check from NOAA Stakeholders.
+ * Sep 21, 2021  93036      omoncayo     More QC check: Adding validations for
+ *                                       Alternative flight level input fields
+ *                                       Validation empty coordinates Validate
+ *                                       TO option
+ * Oct 04, 2021  93036      omoncayo     Correcting a pre-existing bug when
+ *                                       prepopulating Phenom type make fields
+ *                                       invisible based on Level Information
+ *                                       "BTN" adding new QC Check from NOAA
+ *                                       Stakeholders.
  * Oct 18, 2021  93036      smanoj       Fixing some QC alerts issues.
- * Nov 01, 2021  93036      smanoj       Additional QC validation for INTL SIGMET.
+ * Nov 01, 2021  93036      smanoj       Additional QC validation for INTL
+ *                                       SIGMET.
  * Nov 11, 2021  93036      smanoj       QC validation for Lat/Lon fields.
- * Nov 11, 2021  97247      achalla      Int'l SigmetT GUI modified and Input validation for width value
- * Nov 18, 2021  98495      smanoj       Additional QC validation for Tropical Cyclone Fcst Center
- *                                       and other fields in Int'l SigmetT GUI.
- * Nov 18, 2021  98546      achalla      Modified CAR/SAM SIGMET  Id and Sequence number in GUI and xml file
+ * Nov 11, 2021  97247      achalla      Int'l SigmetT GUI modified and Input
+ *                                       validation for width value
+ * Nov 18, 2021  98495      smanoj       Additional QC validation for Tropical
+ *                                       Cyclone Fcst Center and other fields in
+ *                                       Int'l SigmetT GUI.
+ * Nov 18, 2021  98546      achalla      Modified CAR/SAM SIGMET  Id and
+ *                                       Sequence number in GUI and xml file
+ * Nov 29, 2021  98547      srussell     Updated populateIdList(), Updated
+ *                                       SigmetAttrDlgSaveMsgDlg.getFileName(),
+ *                                       Updated
+ *                                       SigmetAttrDlgSaveMsgDlg.getFirstLine(),
+ *                                       Updated
+ *                                       SigmetAttrDlgSaveMsgDlg.getFirstLine()
+ * Dec 01, 2021  95362      tjensen      Refactor PGEN Resource management to
+ *                                       support multi-panel displays
  *
- * Nov 29, 2021  98547      srussell     Updated populateIdList(),
- *                                       Updated SigmetAttrDlgSaveMsgDlg.getFileName(),
- *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine(),
- *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine()
  * Dec 03, 2021  98544      achalla      Modified CAR/SAM Backup mode req:1-4
  * Dec 09, 2021  99344      smanoj       Fixed Fcst Radial/Area/Line description Round To
  *                                       functionality issue for Volcanic Ash.
@@ -581,8 +592,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         List<AbstractDrawableComponent> newList = new ArrayList<>();
 
         // get the list of selected tracks
-        if (drawingLayer != null) {
-            adcList = drawingLayer.getAllSelected();
+        if (drawingLayers != null) {
+            adcList = drawingLayers.getAllSelected();
 
             if (adcList != null && !adcList.isEmpty()) {
 
@@ -610,13 +621,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                 List<AbstractDrawableComponent> oldList = new ArrayList<>(
                         adcList);
-                drawingLayer.replaceElements(oldList, newList);
+                drawingLayers.replaceElements(oldList, newList);
             }
 
             // set the new elements as selected.
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             for (AbstractDrawableComponent adc : newList) {
-                drawingLayer.addSelected(adc);
+                drawingLayers.addSelected(adc);
             }
         }
 
@@ -1636,7 +1647,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 setEditableAttrStatus(STATUS_CANCEL);
 
                 if (btnCancel.getSelection()) {
-                    if (SigmetAttrDlg.this.drawingLayer.getActiveProduct()
+                    if (SigmetAttrDlg.this.drawingLayers.getActiveProduct()
                             .getInputFile() != null) {
                         Sigmet sigmet = (Sigmet) getSigmet();
                         // User can CANCEL a SIGMET if it is active
@@ -2853,20 +2864,20 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             editableFirID = editableAttrFir;
         }
 
-        if (SigmetAttrDlg.this.drawingLayer == null) {
+        if (SigmetAttrDlg.this.drawingLayers == null) {
             return editableFirID;
         }
 
         StringBuilder fir = new StringBuilder();
 
-        AbstractDrawableComponent elSelected = SigmetAttrDlg.this.drawingLayer
+        AbstractDrawableComponent elSelected = SigmetAttrDlg.this.drawingLayers
                 .getSelectedComp();
         Coordinate[] coors = (elSelected == null) ? null
                 : elSelected.getPoints().toArray(new Coordinate[] {});
 
         String lineType = null;
-        if (SigmetAttrDlg.this.drawingLayer.getSelectedDE() != null) {
-            lineType = ((Sigmet) SigmetAttrDlg.this.drawingLayer
+        if (SigmetAttrDlg.this.drawingLayers.getSelectedDE() != null) {
+            lineType = ((Sigmet) SigmetAttrDlg.this.drawingLayers
                     .getSelectedDE()).getType();
         }
 
@@ -2875,7 +2886,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
 
         if (coors != null && lineType != null) {
-            IMapDescriptor mapDescriptor = SigmetAttrDlg.this.drawingLayer
+            IMapDescriptor mapDescriptor = SigmetAttrDlg.this.drawingLayers
                     .getDescriptor();
 
             double width = Double.parseDouble(this.widthStr);
@@ -3912,7 +3923,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         final StringBuilder coorsLatLon = new StringBuilder();
         final AbstractDrawableComponent elSelected = PgenSession.getInstance()
-                .getPgenResource().getSelectedComp();
+                .getCurrentResource().getSelectedComp();
         final Coordinate[] coors = (elSelected == null) ? null
                 : elSelected.getPoints().toArray(new Coordinate[] {});
 
@@ -4866,7 +4877,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             setReturnCode(OK);
             close();
-            SigmetAttrDlg.this.drawingLayer.removeSelected();
+            SigmetAttrDlg.this.drawingLayers.removeSelected();
             SigmetAttrDlg.this.close();
             PgenUtil.setSelectingMode();
 
@@ -4877,7 +4888,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
             Layer defaultLayer = new Layer();
             defaultLayer.addElement(
-                    SigmetAttrDlg.this.drawingLayer.getSelectedDE());
+                    SigmetAttrDlg.this.drawingLayers.getSelectedDE());
             ArrayList<Layer> layerList = new ArrayList<>();
             layerList.add(defaultLayer);
 
@@ -4889,10 +4900,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     SigmetAttrDlg.this.pgenType, forecaster, null, refTime,
                     layerList);
 
-            String plabel = SigmetAttrDlg.this.drawingLayer.getActiveProduct()
+            String plabel = SigmetAttrDlg.this.drawingLayers.getActiveProduct()
                     .getOutputFile();
             if (plabel == null) {
-                plabel = SigmetAttrDlg.this.drawingLayer
+                plabel = SigmetAttrDlg.this.drawingLayers
                         .buildActivityLabel(defaultProduct);
             }
 
@@ -5283,7 +5294,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
 
-            String lineType = ((Sigmet) SigmetAttrDlg.this.drawingLayer
+            String lineType = ((Sigmet) SigmetAttrDlg.this.drawingLayers
                     .getSelectedDE()).getType();
             // from_line without format in C
             String fromLineWithFormat = SigmetAttrDlg.this

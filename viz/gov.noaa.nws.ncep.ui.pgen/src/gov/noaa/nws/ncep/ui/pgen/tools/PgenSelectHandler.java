@@ -61,7 +61,7 @@ import gov.noaa.nws.ncep.ui.pgen.filter.AcceptFilter;
 import gov.noaa.nws.ncep.ui.pgen.gfa.Gfa;
 import gov.noaa.nws.ncep.ui.pgen.gfa.GfaReducePoint;
 import gov.noaa.nws.ncep.ui.pgen.gfa.IGfa;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 import gov.noaa.nws.ncep.ui.pgen.tca.TCAElement;
 import gov.noaa.nws.ncep.viz.common.SnapUtil;
 
@@ -70,41 +70,58 @@ import gov.noaa.nws.ncep.viz.common.SnapUtil;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 04/13        #927        B. Yin      Moved from the PgenSelectingTool class
- * 05/13        #994        J. Wu       Removed "DEL" - make it same as "Ctrl+X"
- * 07/13        ?           J. Wu       Set the "otherTextLastUsed for GFA.
- * 09/13        ?           J. Wu       Call buildVortext for GFA when mouse is
- *                                      down since GFA converted from VGF does not
- *                                      have vorText set.
- * 04/14        #1117       J. Wu       Set focus to label/update line type for Contours.
- * 04/2014      TTR867      pswamy      Select-tool-on-center-vertex of circle does not
- *                                      move circle (as in NMAP)
- * 04/21/2014   TTR992      D. Sushon   Contour tool's Label >> Edit option should not close
- *                                      main Contour tool window on Cancel, changing a
- *                                      symbol's label should not change the symbol;
- *                                      Both issues fixed.
- * 05/14        TTR1008     J. Wu       Set "adc" to current contour for PgenContoursTool.
- * 12/14     R5198/TTR1057  J. Wu       Select a label over a line for Contours.
- * 01/15     R5201/TTR1060  J. Wu       Update settings when an element is selected.
- * 05/15     Redmine 7804   S. Russell  Updated handleMouseDownMove()
- * 07/15        R8352       J. Wu       update hide flag for contour symbol.
- * 01/27/2016   R13166      J. Wu       Add symbol only & label only capability.
- * 03/15/2016   R15959      E. Brown    Fixed issue where right click was launching the resource manager
- *                                      while a PGEN attribute dialog was open and/or selecting/editing a
- *                                      PGEN object
- * 06/01/2016   R18387      B. Yin      Open attribute dialog when a sub-object in contour is selected.
- * 06/15/2016   R13559      bkowal      File cleanup. No longer simulate mouse clicks.
- * 06/28/2016   R10233      J. Wu       Pass calling handler to PgenContoursTool.
- * 07/01/2016   R17377      J. Wu       Return control to panning when "SHIFT" is down.
- * 09/23/2019   68970       KSunil      Make sure the symbol text moves with the symbol.
- * 12/19/2019   71072       smanoj      Fixed some run time errors.
- * 02/27/2020   75479       smanoj      Fixed an issue with moving Contour line with multiple labels.
- * 10/30/2020   84101       smanoj      Add "Snap Labels to ContourLine" option on the 
- *                                      Contours Attributes dialog.
- * 12/03/2021   98784       smanoj      Users should be able to move Symbol label.
- * 
+ *
+ * Date          Ticket#     Engineer    Description
+ * ------------- ----------- ----------- ---------------------------------------
+ * 04/13         927         B. Yin      Moved from the PgenSelectingTool class
+ * 05/13         994         J. Wu       Removed "DEL" - make it same as
+ *                                       "Ctrl+X"
+ * 07/13         ?           J. Wu       Set the "otherTextLastUsed for GFA.
+ * 09/13         ?           J. Wu       Call buildVortext for GFA when mouse is
+ *                                       down since GFA converted from VGF does
+ *                                       not have vorText set.
+ * 04/14         1117        J. Wu       Set focus to label/update line type for
+ *                                       Contours.
+ * 04/2014       TTR867      pswamy      Select-tool-on-center-vertex of circle
+ *                                       does not move circle (as in NMAP)
+ * Apr 21, 2014  TTR992      D. Sushon   Contour tool's Label >> Edit option
+ *                                       should not close main Contour tool
+ *                                       window on Cancel, changing a symbol's
+ *                                       label should not change the symbol;
+ *                                       Both issues fixed.
+ * 05/14         TTR1008     J. Wu       Set "adc" to current contour for
+ *                                       PgenContoursTool.
+ * 12/14     R5  98/TTR1057  J. Wu       Select a label over a line for
+ *                                       Contours.
+ * 01/15     R5  01/TTR1060  J. Wu       Update settings when an element is
+ *                                       selected.
+ * 05/15     Re  mine 7804   S. Russell  Updated handleMouseDownMove()
+ * 07/15         8352        J. Wu       update hide flag for contour symbol.
+ * Jan 27, 2016  13166       J. Wu       Add symbol only & label only
+ *                                       capability.
+ * Mar 15, 2016  15959       E. Brown    Fixed issue where right click was
+ *                                       launching the resource manager while a
+ *                                       PGEN attribute dialog was open and/or
+ *                                       selecting/editing a PGEN object
+ * Jun 01, 2016  18387       B. Yin      Open attribute dialog when a sub-object
+ *                                       in contour is selected.
+ * Jun 15, 2016  13559       bkowal      File cleanup. No longer simulate mouse
+ *                                       clicks.
+ * Jun 28, 2016  10233       J. Wu       Pass calling handler to
+ *                                       PgenContoursTool.
+ * Jul 01, 2016  17377       J. Wu       Return control to panning when "SHIFT"
+ *                                       is down.
+ * Sep 23, 2019  68970       KSunil      Make sure the symbol text moves with
+ *                                       the symbol.
+ * Dec 19, 2019  71072       smanoj      Fixed some run time errors.
+ * Feb 27, 2020  75479       smanoj      Fixed an issue with moving Contour line
+ *                                       with multiple labels.
+ * Oct 30, 2020  84101       smanoj      Add "Snap Labels to ContourLine" option
+ *                                       on the Contours Attributes dialog.
+ * Dec 02, 2021  95362       tjensen     Refactor PGEN Resource management to
+ *                                       support multi-panel displays
+ * Dec 03, 2021  98784       smanoj      Users should be able to move Symbol label.
+ *
  * </pre>
  *
  * @author sgilbert
@@ -114,7 +131,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
     protected AbstractEditor mapEditor;
 
-    protected PgenResource pgenrsc;
+    protected PgenResourceList pgenrscs;
 
     protected AttrDlg attrDlg;
 
@@ -174,9 +191,9 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
     protected int inOut = 1;
 
     public PgenSelectHandler(AbstractPgenTool tool, AbstractEditor mapEditor,
-            PgenResource resource, AttrDlg attrDlg) {
+            PgenResourceList resources, AttrDlg attrDlg) {
         this.mapEditor = mapEditor;
-        this.pgenrsc = resource;
+        this.pgenrscs = resources;
         this.attrDlg = attrDlg;
         this.tool = tool;
     }
@@ -207,18 +224,17 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
              * reset ptSelected flag in case the dialog is closed without
              * right-mouse click.
              */
-            if (pgenrsc.getSelectedDE() == null) {
                 ptSelected = false;
             }
 
             // Return if an element or a point has been selected
-            if (ptSelected || pgenrsc.getSelectedDE() != null) {
+            if (ptSelected || pgenrscs.getSelectedDE() != null) {
                 dontMove = false;
                 preempt = true;
 
-                if (pgenrsc.getSelectedDE() instanceof SinglePointElement
-                        && pgenrsc.getDistance(pgenrsc.getSelectedDE(),
-                                loc) > pgenrsc.getMaxDistToSelect()) {
+                if (pgenrscs.getSelectedDE() instanceof SinglePointElement
+                        && pgenrscs.getDistance(pgenrscs.getSelectedDE(),
+                                loc) > pgenrscs.getMaxDistToSelect()) {
                     /*
                      * prevent SPE from moving when selecting it and then click
                      * far away and hold to move.
@@ -226,7 +242,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                     ptSelected = false;
                 }
 
-                if (!(pgenrsc.getSelectedDE() instanceof SinglePointElement)
+                if (!(pgenrscs.getSelectedDE() instanceof SinglePointElement)
                         && !ptSelected) {
                     firstDown = loc;
                 }
@@ -240,7 +256,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
              * click point (the difference is within MaxDistToSelect/5), the
              * label will be selected first.
              */
-            DrawableElement elSelected = pgenrsc.getNearestElement(loc);
+            DrawableElement elSelected = pgenrscs.getNearestElement(loc);
 
             if (elSelected instanceof SinglePointElement) {
                 // prevent map from moving when holding and dragging too fast.
@@ -251,7 +267,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
             if (elSelected != null && elSelected.getParent() != null
                     && !elSelected.getParent().getName().equals("Default")) {
 
-                adc = pgenrsc.getNearestComponent(loc, new AcceptFilter(),
+                adc = pgenrscs.getNearestComponent(loc, new AcceptFilter(),
                         true);
             }
 
@@ -285,7 +301,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                 DECollection dec = ((PgenContoursTool) tool)
                         .getCurrentContour();
                 if (dec != null) {
-                    elSelected = pgenrsc.getNearestElement(loc, (Contours) dec);
+                    elSelected = pgenrscs.getNearestElement(loc, dec);
 
                     /*
                      * If a contour line is selected, check if a label is also
@@ -294,7 +310,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                     if (elSelected instanceof Line
                             && elSelected.getParent() != null
                             && elSelected.getParent() instanceof ContourLine) {
-                        elSelected = pgenrsc.getNearestElement(loc,
+                        elSelected = pgenrscs.getNearestElement(loc,
                                 (ContourLine) elSelected.getParent(),
                                 elSelected);
                     }
@@ -329,18 +345,18 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                         pgenType = elSelected.getPgenType();
                         if (((Jet) adc).getSnapTool() == null) {
                             ((Jet) adc).setSnapTool(new PgenSnapJet(
-                                    pgenrsc.getDescriptor(), mapEditor, null));
+                                    pgenrscs.getDescriptor(), mapEditor, null));
                         }
                     }
                 } else if (adc != null && adc instanceof LabeledLine
                         && (elSelected.getParent() == adc
                                 || elSelected.getParent().getParent() == adc)) {
                     PgenUtil.loadLabeledLineModifyTool((LabeledLine) adc);
-                    pgenrsc.removeSelected();
+                    pgenrscs.removeSelected();
 
                     Iterator<DrawableElement> it = adc.createDEIterator();
                     while (it.hasNext()) {
-                        pgenrsc.addSelected(it.next());
+                        pgenrscs.addSelected(it.next());
                     }
 
                     elSelected = null;
@@ -370,7 +386,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
             }
 
             if (elSelected != null) {
-                pgenrsc.setSelected(elSelected);
+                pgenrscs.setSelected(elSelected);
                 dontMove = true;
             }
 
@@ -404,7 +420,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                         ((AbstractPgenDrawingTool) tool).setAttrDlg(attrDlg);
                     }
                 }
-                mapEditor.setFocus(); // archana
+                mapEditor.setFocus();
 
                 if (adc != null && adc.getName().equalsIgnoreCase("Contours")) {
 
@@ -471,7 +487,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                     attrDlg.setPgenType(elSelected.getPgenType());
                 }
 
-                attrDlg.setDrawingLayer(pgenrsc);
+                attrDlg.setDrawingLayers(pgenrscs);
                 attrDlg.setMapEditor(mapEditor);
                 if (attrDlg instanceof JetAttrDlg
                         && tool instanceof PgenSelectingTool) {
@@ -482,7 +498,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                             .getSnapTool() == null) {
                         ((PgenSelectingTool) tool).getJet()
                                 .setSnapTool(new PgenSnapJet(
-                                        pgenrsc.getDescriptor(), mapEditor,
+                                        pgenrscs.getDescriptor(), mapEditor,
                                         (JetAttrDlg) attrDlg));
                     }
                 } else if (adc != null && attrDlg instanceof OutlookAttrDlg) {
@@ -525,13 +541,8 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
             return preempt;
 
-        } else {
-            // Mousedown that's not button 1
-
-            return false;
-
         }
-
+        return false;
     }
 
     @Override
@@ -544,7 +555,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
         if (shiftDown) {
             return false;
         }
-        if (dontMove && pgenrsc.getSelectedDE() != null) {
+        if (dontMove && pgenrscs.getSelectedDE() != null) {
             return true;
         }
 
@@ -558,7 +569,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
         // Check if mouse is in geographic extent
         Coordinate loc = mapEditor.translateClick(x, y);
 
-        DrawableElement tmpEl = pgenrsc.getSelectedDE();
+        DrawableElement tmpEl = pgenrscs.getSelectedDE();
         if (PgenUtil.isUnmovable(tmpEl)) {
             return false;
         }
@@ -582,15 +593,15 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
              * drawable element
              */
             if (tmpEl instanceof SinglePointElement) {
-                if (pgenrsc.getDistance(tmpEl, firstDown) > pgenrsc
+                if (pgenrscs.getDistance(tmpEl, firstDown) > pgenrscs
                         .getMaxDistToSelect()) {
                     return false;
-                } else if (pgenrsc.getDistance(tmpEl, firstDown) < pgenrsc
+                } else if (pgenrscs.getDistance(tmpEl, firstDown) < pgenrscs
                         .getMaxDistToSelect()) {
                     firstDown = loc;
                 }
             } else { // Multipoint Element
-                if (pgenrsc.getDistance(tmpEl, firstDown) < pgenrsc
+                if (pgenrscs.getDistance(tmpEl, firstDown) < pgenrscs
                         .getMaxDistToSelect()) {
                     drawElmSelected = true;
                 }
@@ -628,15 +639,15 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                     ((Jet.JetBarb) tmpEl).setLocationOnly(loc);
                     Jet.JetText jt = ((Jet.JetBarb) tmpEl).getFlightLvl();
                     if (jt != null) {
-                        pgenrsc.resetElement(jt);
+                        pgenrscs.resetElement(jt);
                     }
                 } else if (tmpEl.getParent() != null
                         && tmpEl.getParent().getParent() != null
                         && tmpEl.getParent().getParent().getName()
                                 .equalsIgnoreCase("Contours")) {
 
-                    // reset display of the DECollecion
-                    pgenrsc.resetADC(tmpEl.getParent());
+                    // reset display of the DECollecion.
+                    pgenrscs.resetADC(tmpEl.getParent());
 
                     ((SinglePointElement) tmpEl).setLocationOnly(loc);
                     ContoursAttrDlg cdlg = (ContoursAttrDlg) attrDlg;
@@ -722,14 +733,11 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
                     ((Text) tmpEl).setText(((TextAttrDlg) attrDlg).getString());
                     ((SinglePointElement) tmpEl).setLocationOnly(loc);
-                }
-
-                else {
+                } else {
                     ((SinglePointElement) tmpEl).setLocationOnly(loc);
                 }
 
-                pgenrsc.resetElement(tmpEl); // reset display of this element
-
+                pgenrscs.resetElement(tmpEl); // reset display of this element
                 mapEditor.refresh();
 
             } else {
@@ -763,7 +771,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                             && !((Gfa) ghostEl).isSnapshot()) {
                         ((GfaAttrDlg) attrDlg).setEnableStatesButton(true);
                     }
-                    pgenrsc.setGhostLine(ghostEl);
+                    pgenrscs.setGhostLine(ghostEl);
                     mapEditor.refresh();
 
                 } else if (tmpEl != null
@@ -776,7 +784,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                         ghostEl.setColors(new Color[] { ghostColor,
                                 new java.awt.Color(255, 255, 255) });
 
-                        ArrayList<Coordinate> points = new ArrayList<Coordinate>();
+                        ArrayList<Coordinate> points = new ArrayList<>();
                         points.addAll(tmpEl.getPoints());
 
                         ghostEl.setPoints(points);
@@ -797,14 +805,12 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                 .createPoint(new Coordinate(locScreen[0],
                                         locScreen[1])));
                         dist = 0;
-                        if (dist <= pgenrsc.getMaxDistToSelect()) {
+                        if (dist <= pgenrscs.getMaxDistToSelect()) {
                             ghostEl.setPoints(points);
 
                             setGhostLineColorForTrack(ghostEl, ptIndex);
-
                             ptSelected = true;
                         }
-
                     }
                 }
 
@@ -842,10 +848,10 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
         }
 
         // Finish the editing
-        if (button == 1 && pgenrsc != null) {
+        if (button == 1 && pgenrscs != null) {
 
             // Create a copy of the currently selected element
-            DrawableElement el = pgenrsc.getSelectedDE();
+            DrawableElement el = pgenrscs.getSelectedDE();
 
             if (el != null) {
 
@@ -856,7 +862,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                     if (oldLoc != null) {
 
                         // reset display of this element
-                        pgenrsc.resetElement(el);
+                        pgenrscs.resetElement(el);
 
                         if (el instanceof Jet.JetBarb) {
                             DECollection dec = (DECollection) el.getParent();
@@ -879,7 +885,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                                     ((SinglePointElement) el)
                                                             .getLocation()),
                                             newWind);
-                                    pgenrsc.replaceElement(oldJet, newJet);
+                                    pgenrscs.replaceElement(oldJet, newJet);
 
                                     newWind.replace(
                                             newWind.getNearestComponent(
@@ -909,7 +915,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                 && !(el.getParent()
                                         .getParent() instanceof Outlook)) {
 
-                            pgenrsc.resetADC(el.getParent());
+                            pgenrscs.resetADC(el.getParent());
 
                             AbstractDrawableComponent oldAdc = el.getParent();
                             Contours oldContours = (Contours) oldAdc
@@ -937,7 +943,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                     ((Text) newEl).setAuto(false);
                                 }
 
-                                pgenrsc.replaceElement(oldContours,
+                                pgenrscs.replaceElement(oldContours,
                                         newContours);
 
                                 if (tool instanceof PgenContoursTool) {
@@ -954,14 +960,11 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                                 .setLocationOnly(oldLoc);
                                     }
                                 }
-
                                 oldLoc = null;
-
                             }
-
                         } else {
 
-                            pgenrsc.replaceElement(el, newEl);
+                            pgenrscs.replaceElement(el, newEl);
                             ((SinglePointElement) el).setLocationOnly(oldLoc);
 
                             oldLoc = null;
@@ -974,7 +977,6 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                 ((SymbolAttrDlg) attrDlg).setLongitude(
                                         ((SinglePointElement) newEl)
                                                 .getLocation().x);
-
                             }
                         }
 
@@ -984,7 +986,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                         } else {
                             ((SinglePointElement) newEl).setLocation(tempLoc);
                         }
-                        pgenrsc.setSelected(newEl);
+                        pgenrscs.setSelected(newEl);
                     }
 
                 } else if (ptSelected) {
@@ -996,11 +998,11 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                             && ((PgenSelectingTool) tool).getJet()
                                     .getPrimaryDE() == el) {
                         Jet newJet = ((PgenSelectingTool) tool).getJet().copy();
-                        pgenrsc.replaceElement(
+                        pgenrscs.replaceElement(
                                 ((PgenSelectingTool) tool).getJet(), newJet);
                         newJet.getPrimaryDE().setPoints(ghostEl.getPoints());
                         ((PgenSelectingTool) tool).setJet(newJet);
-                        pgenrsc.setSelected(newJet.getPrimaryDE());
+                        pgenrscs.setSelected(newJet.getPrimaryDE());
 
                     } else if (el.getParent() instanceof ContourLine
                             || el.getParent() instanceof ContourCircle) {
@@ -1017,7 +1019,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                         if (!(newEl instanceof Gfa) || (newEl instanceof Gfa
                                 && ((Gfa) ghostEl).isValid())) {
 
-                            pgenrsc.replaceElement(el, newEl);
+                            pgenrscs.replaceElement(el, newEl);
 
                             // Update the new Element with the new points
                             if ("GFA".equalsIgnoreCase(newEl.getPgenType())
@@ -1029,7 +1031,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                         mapEditor.translateClick(x, y));
                                 Coordinate toSnap = ghostEl.getPoints()
                                         .get(nearest);
-                                List<Coordinate> tempList = new ArrayList<Coordinate>();
+                                List<Coordinate> tempList = new ArrayList<>();
                                 tempList.add(toSnap);
                                 tempList = SnapUtil.getSnapWithStation(tempList,
                                         SnapUtil.VOR_STATION_LIST, 10, 16);
@@ -1062,9 +1064,9 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                              * Set this new element as the currently selected
                              * element Collections do not need to reset.
                              */
-                            if (!(pgenrsc
+                            if (!(pgenrscs
                                     .getSelectedComp() instanceof DECollection)) {
-                                pgenrsc.setSelected(newEl);
+                                pgenrscs.setSelected(newEl);
                             }
 
                         }
@@ -1081,7 +1083,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                         attrDlg.setAttrForDlg(newEl);
                     }
 
-                    pgenrsc.removeGhostLine();
+                    pgenrscs.removeGhostLine();
 
                 }
 
@@ -1094,7 +1096,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
             if (attrDlg != null) {
 
                 if (attrDlg instanceof ContoursAttrDlg) {
-                    if (pgenrsc.getSelectedDE() == null) {
+                    if (pgenrscs.getSelectedDE() == null) {
                         closeAttrDlg(attrDlg, pgenType);
                         attrDlg = null;
                         PgenUtil.setSelectingMode();
@@ -1123,9 +1125,9 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
             }
             trackExtrapPointInfoDlg = null;
 
-            pgenrsc.removeGhostLine();
+            pgenrscs.removeGhostLine();
             ptSelected = false;
-            pgenrsc.removeSelected();
+            pgenrscs.removeSelected();
             mapEditor.refresh();
 
         }
@@ -1193,7 +1195,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
     /**
      * Gets the nearest point of an selected element to the input point
-     * 
+     *
      * @param el
      *            element
      * @param pt
@@ -1205,7 +1207,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
         int ptId = 0;
         double minDistance = -1;
         GeodeticCalculator gc;
-        gc = new GeodeticCalculator(pgenrsc.getCoordinateReferenceSystem());
+        gc = new GeodeticCalculator(pgenrscs.getCoordinateReferenceSystem());
         gc.setStartingGeographicPoint(pt.x, pt.y);
 
         int index = 0;
@@ -1394,7 +1396,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                              * For circles, the circumference text point can be
                              * any of the points except 0
                              */
-                            ((Text) ((ContourCircle) newAdc).getLabel())
+                            ((ContourCircle) newAdc).getLabel()
                                     .setLocation(points.get(1));
                             selElem = ((ContourCircle) newAdc).getCircle();
                         }
@@ -1405,8 +1407,8 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                 }
 
                 newContours.update(oldContours);
-                pgenrsc.replaceElement(oldContours, newContours);
-                pgenrsc.setSelected(selElem);
+                pgenrscs.replaceElement(oldContours, newContours);
+                pgenrscs.setSelected(selElem);
                 if (attrDlg != null) {
                     ((ContoursAttrDlg) attrDlg).setCurrentContours(newContours);
                 }
@@ -1423,7 +1425,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
     /**
      * Update the ContoursAttrDlg if the selected DE is within a Contours.
-     * 
+     *
      * @param DrawableElement
      *            : the selected DE.
      * @return
@@ -1496,8 +1498,8 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
         return mapEditor;
     }
 
-    public PgenResource getPgenrsc() {
-        return pgenrsc;
+    public PgenResourceList getPgenrsc() {
+        return pgenrscs;
     }
 
     /**

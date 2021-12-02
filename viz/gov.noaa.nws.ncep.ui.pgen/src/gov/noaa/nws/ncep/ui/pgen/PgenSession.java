@@ -1,6 +1,6 @@
 /*
  * PgenSession
- * 
+ *
  * Date created: 14 APRIL 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -41,34 +41,40 @@ import gov.noaa.nws.ncep.ui.pgen.filter.CategoryFilter;
 import gov.noaa.nws.ncep.ui.pgen.palette.PgenPaletteWindow;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceData;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 import gov.noaa.nws.ncep.ui.pgen.tools.AbstractPgenTool;
 
 /**
  * This singleton is intended to couple a PGEN Palette with a PGgenResource, so
  * that a palette can be updated and used to modify a specific PgenResource
- * 
+ *
  * @author sgilbert
- * 
+ *
  */
 
 /**
  * Implements a drawing layer for PGEN products.
- * 
+ *
  * <pre>
- * SOFTWARE HISTORY 
- * Date       Ticket#    Engineer    Description
- * ------------------------------------------------------------------------
- * 12/14      R5413      B. Yin         Added IPartListener2 and IRenderableDisplayChangedListener
- *                                        to make the swapping in D2D work
- * 12/14      R5413      B. Yin         Added exception handling, perspective id, and endSession.
- * 01/15      R5413      B. Yin         Added closePalette method.
- * 05/16/2016 R18388     J. Wu          Use PgenConstant.
- * 11/30/2016 R17954     K. Bugenhagen  Added numberOfSessionResources attribute
- *                                      to keep track of total number of pgen
- *                                      resources for entire session.
- * 
+ * SOFTWARE HISTORY
+ *
+ * Date          Ticket#  Engineer       Description
+ * ------------- -------- -------------- ---------------------------------------
+ * 12/14         5413     B. Yin         Added IPartListener2 and
+ *                                       IRenderableDisplayChangedListener to
+ *                                       make the swapping in D2D work
+ * 12/14         5413     B. Yin         Added exception handling, perspective
+ *                                       id, and endSession.
+ * 01/15         5413     B. Yin         Added closePalette method.
+ * May 16, 2016  18388    J. Wu          Use PgenConstant.
+ * Nov 30, 2016  17954    K. Bugenhagen  Added numberOfSessionResources
+ *                                       attribute to keep track of total number
+ *                                       of pgen resources for entire session.
+ * Dec 01, 2021  95362    tjensen        Refactor PGEN Resource management to
+ *                                       support multi-panel displays
+ *
  * </pre>
- * 
+ *
  */
 
 @SuppressWarnings("restriction")
@@ -83,14 +89,14 @@ public class PgenSession
     /*
      * the current PGEN resource
      */
-    private PgenResource pgenResource = null;
+    private PgenResourceList pgenResources;
 
     /*
      * the current PGEN palette
      */
     private PgenPaletteWindow palette = null;
 
-    private List<AbstractEditor> editors = new ArrayList<>();
+    private final List<AbstractEditor> editors = new ArrayList<>();
 
     /*
      * The total number of resources for this session
@@ -116,27 +122,29 @@ public class PgenSession
         if (pMngr != null) {
             setPerspectiveId(pMngr.getPerspectiveId());
         }
+        pgenResources = null;
     }
 
     /**
      * Static method to get THE PgenSession instance
-     * 
+     *
      * @return PgenSession reference
      */
     public static synchronized PgenSession getInstance() {
 
-        if (instance == null)
+        if (instance == null) {
             instance = new PgenSession();
+        }
         return instance;
     }
 
     /**
      * Sets a PgenResource for the current session
-     * 
+     *
      * @param rsc
      *            a Pgen Resource
      */
-    public void setResource(PgenResource rsc) {
+    public void setResource(PgenResourceList rsc) {
 
         /*
          * Remove the current PGEN Resource from the Session
@@ -144,10 +152,10 @@ public class PgenSession
         removeResource();
 
         // set new PGEN resource
-        pgenResource = rsc;
+        pgenResources = rsc;
         // add the palette's stack listener to new resource's command Manager
-        if (pgenResource != null && palette != null) {
-            pgenResource.getCommandMgr().addStackListener(palette);
+        if (pgenResources != null && palette != null) {
+            pgenResources.getCommandMgr().addStackListener(palette);
         }
 
     }
@@ -156,18 +164,19 @@ public class PgenSession
      * Removes the current PGEN resource from the Session
      */
     public void removeResource() {
-        if (pgenResource != null) {
+        if (pgenResources != null) {
             // Remove the Palette's stack listener from the Resource's
             // CommandManager
-            pgenResource.getCommandMgr().removeStackListener(palette);
+            pgenResources.getCommandMgr().removeStackListener(palette);
         }
-        pgenResource = null;
+        pgenResources = null;
 
         /*
          * disable the palette's Undo and redo buttons.
          */
-        if (palette != null)
+        if (palette != null) {
             palette.disableUndoRedo();
+        }
     }
 
     /**
@@ -175,53 +184,56 @@ public class PgenSession
      * registered with this PGEN Session if there is one. If not, it will look
      * for an existing resource in the current editor. If one is not found, a
      * new PgenResource will be created.
-     * 
+     *
      * @return the rsc
      */
-    public PgenResource getPgenResource() {
+    public PgenResourceList getPgenResources() {
 
-        if (pgenResource == null) {
-            PgenResource rsc = PgenUtil
-                    .findPgenResource(PgenUtil.getActiveEditor());
-            if (rsc != null) {
-                pgenResource = rsc;
+        if (pgenResources == null || pgenResources.isEmpty()) {
+            PgenResourceList rscs = PgenUtil
+                    .findPgenResources(PgenUtil.getActiveEditor());
+            if (rscs != null) {
+                pgenResources = rscs;
             } else {
-                pgenResource = PgenUtil.createNewResource();
+                pgenResources = new PgenResourceList();
+                pgenResources.add(PgenUtil.createNewResource());
             }
         }
 
-        return pgenResource;
+        return pgenResources;
     }
 
     /**
      * Get the PGEN Resource currently registered with the session
-     * 
+     *
      * @return
      */
     public PgenResource getCurrentResource() {
-        return pgenResource;
+        return (PgenResource) PgenUtil.findResource(PgenResource.class,
+                PgenUtil.getActiveEditor());
     }
 
     /**
      * Gets the Resource's Command Manager
-     * 
+     *
      * @return the commandMgr
      */
     public PgenCommandManager getCommandManager() {
-        return pgenResource.getCommandMgr();
+        return getPgenResources().getCommandMgr();
     }
 
     /**
      * Register the given palette with the Session
-     * 
+     *
      * @param pal
      */
     public void setPalette(PgenPaletteWindow pal) {
         palette = pal;
         // Register this palette's stack listener with the CommandManager, if
         // able
-        if (pgenResource != null) {
-            pgenResource.getCommandMgr().addStackListener(palette);
+        PgenCommandManager cmdMgr = getCommandManager();
+        if (cmdMgr != null) {
+            cmdMgr.addStackListener(palette);
         }
     }
 
@@ -230,8 +242,10 @@ public class PgenSession
      */
     public void removePalette() {
         // Remove this palette's stack listener from the CommandManager, if able
-        if (pgenResource != null)
-            pgenResource.getCommandMgr().removeStackListener(palette);
+        PgenCommandManager cmdMgr = getCommandManager();
+        if (cmdMgr != null) {
+            cmdMgr.removeStackListener(palette);
+        }
         palette = null;
     }
 
@@ -240,8 +254,10 @@ public class PgenSession
      */
     public void disableUndoRedo() {
 
-        if (pgenResource != null)
-            getCommandManager().clearStacks();
+        PgenCommandManager cmdMgr = getCommandManager();
+        if (cmdMgr != null) {
+            cmdMgr.clearStacks();
+        }
 
         if (palette != null) {
             palette.disableUndoRedo();
@@ -250,8 +266,8 @@ public class PgenSession
     }
 
     public PgenResourceData getPgenResourceData() {
-        if (pgenResource != null) {
-            return pgenResource.getResourceData();
+        if (pgenResources != null) {
+            return pgenResources.getResourceData();
         } else {
             return null;
         }
@@ -279,14 +295,6 @@ public class PgenSession
     /*
      * Remove PGEN handler when swapping to side view. Also open PGEN palette if
      * there is a PGEN resource when swapping to main editor.
-     * 
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.uf.viz.core.IRenderableDisplayChangedListener#
-     * renderableDisplayChanged(com.raytheon.uf.viz.core.IDisplayPane,
-     * com.raytheon.uf.viz.core.drawables.IRenderableDisplay,
-     * com.raytheon.uf.viz
-     * .core.IRenderableDisplayChangedListener.DisplayChangeType)
      */
     @Override
     public void renderableDisplayChanged(IDisplayPane pane,
@@ -300,12 +308,13 @@ public class PgenSession
 
             if (PgenUtil.getPgenMode() == PgenMode.SINGLE) {
                 // for D2d swapping, single pane mode
-                if (pgenResource != null) {
-                    pgenResource.removeGhostLine();
-                    pgenResource.removeSelected();
+                if (pgenResources != null) {
+                    pgenResources.removeGhostLine();
+                    pgenResources.removeSelected();
 
                     // Make sure PGEN resource repaint in the new editor.
-                    PgenResource rsc = PgenUtil.findPgenResource(editorChanged);
+                    PgenResourceList rsc = PgenUtil
+                            .findPgenResources(editorChanged);
                     if (rsc != null) {
                         rsc.resetAllElements();
                     }
@@ -317,14 +326,14 @@ public class PgenSession
             else { // for D2d swapping, multi-pane mode
 
                 // clean up current pgen resource
-                if (pgenResource != null) {
-                    pgenResource.closeDialogs();
-                    pgenResource.deactivatePgenTools();
-                    pgenResource.getCommandMgr().removeStackListener(palette);
+                if (pgenResources != null) {
+                    pgenResources.closeDialogs();
+                    pgenResources.deactivatePgenTools();
+                    pgenResources.getCommandMgr().removeStackListener(palette);
                 }
 
                 if (palette != null) {
-                    if (PgenUtil.findPgenResource(editorChanged) == null) {
+                    if (PgenUtil.findPgenResources(editorChanged) == null) {
                         // editor does not have PGEN, close the palette
 
                         PlatformUI.getWorkbench().getActiveWorkbenchWindow()
@@ -332,14 +341,15 @@ public class PgenSession
                         palette = null;
                     } else {
                         // editor has PGEN resource, reset to selecting mode
-                        pgenResource = PgenUtil.findPgenResource(editorChanged);
-                        pgenResource.setCatFilter(new CategoryFilter());
+                        pgenResources = PgenUtil
+                                .findPgenResources(editorChanged);
+                        pgenResources.setCatFilter(new CategoryFilter());
                         palette.setCurrentCategory(PgenConstant.CATEGORY_ANY);
                         PgenUtil.setSelectingMode();
                     }
                 } else {
                     // palette is closed
-                    if (PgenUtil.findPgenResource(editorChanged) != null) {
+                    if (PgenUtil.findPgenResources(editorChanged) != null) {
                         // editor has PGEN, open the palette
                         IWorkbenchPage wpage = PlatformUI.getWorkbench()
                                 .getActiveWorkbenchWindow().getActivePage();
@@ -372,9 +382,9 @@ public class PgenSession
                                     }
                                 }
                             }
-                            this.pgenResource = PgenUtil
-                                    .findPgenResource(editorChanged);
-                            this.pgenResource
+                            this.pgenResources = PgenUtil
+                                    .findPgenResources(editorChanged);
+                            this.pgenResources
                                     .setCatFilter(new CategoryFilter());
                             this.palette.setCurrentCategory(
                                     PgenConstant.CATEGORY_ANY);
@@ -433,7 +443,7 @@ public class PgenSession
     public void partClosed(IWorkbenchPartReference partRef) {
         IWorkbenchPart part = partRef.getPart(false);
         if (part instanceof VizMapEditor) { // for D2D
-            if (PgenUtil.findPgenResource((VizMapEditor) part) != null) {
+            if (PgenUtil.findPgenResources((VizMapEditor) part) != null) {
                 ((VizMapEditor) part)
                         .removeRenderableDisplayChangedListener(this);
             }
@@ -506,6 +516,13 @@ public class PgenSession
 
     public void setNumberOfSessionResources(int numberOfResources) {
         numberOfSessionResources = numberOfResources;
+    }
+
+    /**
+     * @param pgenResource
+     */
+    public void addResource(PgenResource pgenResource) {
+        pgenResources.add(pgenResource);
     }
 
 }

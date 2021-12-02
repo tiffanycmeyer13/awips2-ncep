@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.PgenWatchBoxModifyTool
- * 
+ *
  * 29 October 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -28,28 +28,34 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.WatchBox;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 
 /**
  * Implements a modal map tool to modify PGEN watch boxes.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 10/09					B. Yin   	Initial Creation.
- * 04/11		?			B. Yin		Bring up the WatchBox spec dialog
- * 12/11		565			B. Yin		Modify watch box onlly when the curse is close enough
- * 02/12		TTR 525		B. Yin		Make sure points don't move when selecting.
- * 05/12		TTR 534		B. Yin		Re-set the watch dialog attributes
- * 03/13		#927		B. Yin		Added constructor for the handler class.
- * 12/13		TTR 800		B. Yin		Add a flag when opening the specification dialog.
- * 01/14		TTR 800		B. Yin		Fixed the county lock issue.
- * May 16, 2016 5640        bsteffen    Access triggering component using PgenUtil.
- * 06/15/2016   R13559      bkowal      File cleanup. No longer simulate mouse clicks.
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 10/09                  B. Yin    Initial Creation.
+ * 04/11         ?        B. Yin    Bring up the WatchBox spec dialog
+ * 12/11         565      B. Yin    Modify watch box onlly when the curse is
+ *                                  close enough
+ * 02/12         TTR 525  B. Yin    Make sure points don't move when selecting.
+ * 05/12         TTR 534  B. Yin    Re-set the watch dialog attributes
+ * 03/13         927      B. Yin    Added constructor for the handler class.
+ * 12/13         TTR 800  B. Yin    Add a flag when opening the specification
+ *                                  dialog.
+ * 01/14         TTR 800  B. Yin    Fixed the county lock issue.
+ * May 16, 2016  5640     bsteffen  Access triggering component using PgenUtil.
+ * Jun 15, 2016  13559    bkowal    File cleanup. No longer simulate mouse
+ *                                  clicks.
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 public class PgenWatchBoxModifyTool extends PgenSelectingTool {
@@ -69,8 +75,8 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
              * set wb as selected and open spec dialog this is for ending of the
              * wb drawing.
              */
-            if (drawingLayer.getSelectedDE() == null) {
-                drawingLayer.setSelected(watchBoxAttrDlg.getWatchBox());
+            if (drawingLayers.getSelectedDE() == null) {
+                drawingLayers.setSelected(watchBoxAttrDlg.getWatchBox());
                 watchBoxAttrDlg.setAttrForDlg(watchBoxAttrDlg.getWatchBox());
                 watchBoxAttrDlg.enableButtons();
                 watchBoxAttrDlg.openSpecDlg(false);
@@ -81,15 +87,16 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
 
             this.mouseHandler = new PgenWatchBoxModifyHandler(this, mapEditor,
-                    drawingLayer, attrDlg);
+                    drawingLayers, attrDlg);
 
         }
 
@@ -99,9 +106,9 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
 
     /**
      * A mouse handler for the watch box modify tool
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
     private class PgenWatchBoxModifyHandler extends PgenSelectHandler {
 
@@ -111,17 +118,11 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
         private boolean dontMove = true;
 
         public PgenWatchBoxModifyHandler(AbstractPgenTool tool,
-                AbstractEditor mapEditor, PgenResource resource,
+                AbstractEditor mapEditor, PgenResourceList resources,
                 AttrDlg attrDlg) {
-            super(tool, mapEditor, resource, attrDlg);
+            super(tool, mapEditor, resources, attrDlg);
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
             if (!isResourceEditable()) {
@@ -147,29 +148,26 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDownMove(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDownMove(int x, int y, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
-            if (dontMove)
+            }
+            if (dontMove) {
                 return true;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(x, y);
-            if (loc == null || shiftDown)
+            if (loc == null || shiftDown) {
                 return false;
+            }
 
-            DrawableElement tmpEl = drawingLayer.getSelectedDE();
+            DrawableElement tmpEl = drawingLayers.getSelectedDE();
             // make sure the click is close enough to the element
-            if (drawingLayer.getDistance(tmpEl, loc) > 30 && !ptSelected) {
+            if (drawingLayers.getDistance(tmpEl, loc) > 30 && !ptSelected) {
                 if (firstDown != null
-                        && drawingLayer.getDistance(tmpEl, firstDown) < 30) {
+                        && drawingLayers.getDistance(tmpEl, firstDown) < 30) {
                     firstDown = null;
                 } else {
                     return false;
@@ -186,7 +184,7 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
                         ghostEl.setColors(new Color[] { ghostColor,
                                 new java.awt.Color(255, 255, 255) });
 
-                        ArrayList<Coordinate> points = new ArrayList<Coordinate>();
+                        ArrayList<Coordinate> points = new ArrayList<>();
                         points.addAll(tmpEl.getPoints());
 
                         ghostEl.setPoints(points);
@@ -204,7 +202,7 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
                             ((WatchBox) tmpEl).createNewWatchBox(ptIndex, loc,
                                     ((IWatchBox) PgenWatchBoxModifyTool.this.attrDlg)
                                             .getWatchBoxShape()));
-                    drawingLayer.setGhostLine(ghostEl);
+                    drawingLayers.setGhostLine(ghostEl);
                     mapEditor.refresh();
 
                 }
@@ -213,23 +211,18 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
             return true;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseUp(int, int,
-         * int)
-         */
         @Override
         public boolean handleMouseUp(int x, int y, int button) {
             firstDown = null;
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Finish the editing
-            if (button == 1 && drawingLayer != null) {
+            if (button == 1 && drawingLayers != null) {
 
                 // Create a copy of the currently editing watch box
-                WatchBox el = (WatchBox) drawingLayer.getSelectedDE();
+                WatchBox el = (WatchBox) drawingLayers.getSelectedDE();
 
                 if (el != null) {
 
@@ -255,17 +248,17 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
 
                         // Replace the selected watch box with this new watch
                         // box
-                        drawingLayer.replaceElement(el, newEl);
+                        drawingLayers.replaceElement(el, newEl);
 
                         // Set this new element as the currently selected
                         // element
                         // Collections do not need to reset.
-                        if (!(drawingLayer
+                        if (!(drawingLayers
                                 .getSelectedComp() instanceof DECollection)) {
-                            drawingLayer.setSelected(newEl);
+                            drawingLayers.setSelected(newEl);
                         }
 
-                        drawingLayer.removeGhostLine();
+                        drawingLayers.removeGhostLine();
 
                     }
 
@@ -282,9 +275,9 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
 
                 PgenWatchBoxModifyTool.this.attrDlg = null;
 
-                drawingLayer.removeGhostLine();
+                drawingLayers.removeGhostLine();
                 ptSelected = false;
-                drawingLayer.removeSelected();
+                drawingLayers.removeSelected();
                 mapEditor.refresh();
                 PgenUtil.setSelectingMode();
 
@@ -301,7 +294,7 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
 
     /**
      * Re-snap the input watch box on the nearest anchor points
-     * 
+     *
      * @param editor
      *            - map editor
      * @param oldBox
@@ -358,12 +351,13 @@ public class PgenWatchBoxModifyTool extends PgenSelectingTool {
 
     public void setAddDelCntyHandler() {
 
-        setHandler(new PgenWatchBoxAddDelCntyHandler(mapEditor, drawingLayer,
+        setHandler(new PgenWatchBoxAddDelCntyHandler(mapEditor, drawingLayers,
                 ((WatchBoxAttrDlg) attrDlg).getWatchBox(), this));
     }
 
+    @Override
     public void resetMouseHandler() {
-        setHandler(new PgenWatchBoxModifyHandler(this, mapEditor, drawingLayer,
+        setHandler(new PgenWatchBoxModifyHandler(this, mapEditor, drawingLayers,
                 attrDlg));
     }
 }

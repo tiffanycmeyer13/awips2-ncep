@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.productManage.LaunchPgenProduct
- * 
+ *
  * Sept 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -27,6 +27,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.ProductInfo;
 import gov.noaa.nws.ncep.ui.pgen.elements.ProductTime;
 import gov.noaa.nws.ncep.ui.pgen.producttypes.PgenLayer;
 import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 
 /**
  *
@@ -38,20 +39,23 @@ import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
  *
  * SOFTWARE HISTORY
  *
- * Date    Ticket    #Engineer    Description
- * ----    ------    ---------    -----------------------------
- * 09/2010 #151     J. Wu        Initial Creation
- * 09/2011 #335     J. Wu        Added type/subtype/alias for
- * 								              PGEN activities.
- * 09/2011 #335     J. Wu        made cascading menu for activity type/subtype.
- * 08/2012 #?       J. Wu        Add the activity to the existing ones instead of "Replace"
- * 11/13   #1049    B. Yin       Handle outlook type defined in layer.
- * 09/2019 #64146   K. sunil     Product on by default.
- * 
+ * Date          Ticket  #Engineer  Description
+ * ------------- ------- ---------- --------------------------------------------
+ * 09/2010       #151    J. Wu      Initial Creation
+ * 09/2011       #335    J. Wu      Added type/subtype/alias for PGEN
+ *                                  activities.
+ * 09/2011       #335    J. Wu      made cascading menu for activity
+ *                                  type/subtype.
+ * 08/2012       #?      J. Wu      Add the activity to the existing ones
+ *                                  instead of "Replace"
+ * 11/13         #1049   B. Yin     Handle outlook type defined in layer.
+ * 09/2019       #64146  K. sunil   Product on by default.
+ * Dec 01, 2021  95362   tjensen    Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
- * @version 1
  */
 public class ProductLauncher extends ContributionItem {
 
@@ -72,7 +76,7 @@ public class ProductLauncher extends ContributionItem {
 
         // Load the product types in "productTypes.xml".
         prdTypeMap = ProductConfigureDialog.getProductTypes();
-        ArrayList<String> typeUsed = new ArrayList<String>();
+        ArrayList<String> typeUsed = new ArrayList<>();
 
         // Create the menu item with all types
         int ii = 0;
@@ -90,6 +94,7 @@ public class ProductLauncher extends ContributionItem {
 
                 typeItem.setText(ptyp);
                 typeItem.addSelectionListener(new SelectionAdapter() {
+                    @Override
                     public void widgetSelected(SelectionEvent e) {
                         /*
                          * Create an active product with an active layer and add
@@ -103,9 +108,8 @@ public class ProductLauncher extends ContributionItem {
 
                 if (typeUsed.contains(prdType.getType())) {
                     continue;
-                } else {
-                    typeUsed.add(prdType.getType());
                 }
+                typeUsed.add(prdType.getType());
 
                 MenuItem typeItem = new MenuItem(menu, SWT.CASCADE, ii);
 
@@ -120,6 +124,7 @@ public class ProductLauncher extends ContributionItem {
                     subtypeItem.setData(styp);
 
                     subtypeItem.addSelectionListener(new SelectionAdapter() {
+                        @Override
                         public void widgetSelected(SelectionEvent e) {
                             /*
                              * Create an active product with an active layer and
@@ -147,7 +152,7 @@ public class ProductLauncher extends ContributionItem {
          * created. The names of the product and the default layer are set to
          * the product type's name.
          */
-        List<Product> productList = new ArrayList<Product>();
+        List<Product> productList = new ArrayList<>();
 
         Product prd = new Product(prdtype, "Default", "Default",
                 new ProductInfo(), new ProductTime(), new ArrayList<Layer>());
@@ -187,10 +192,11 @@ public class ProductLauncher extends ContributionItem {
          * Add this product list to the PgenResource to launch the product
          * template
          */
-        List<Product> curPrdList = PgenSession.getInstance().getPgenResource()
-                .getProducts();
+        PgenResource currentResource = PgenSession.getInstance()
+                .getCurrentResource();
+        List<Product> curPrdList = currentResource.getProducts();
         prd.setName(findUniqueActivityName(curPrdList, prd.getName()));
-        PgenSession.getInstance().getPgenResource().addProduct(productList);
+        currentResource.addProduct(productList);
 
     }
 
@@ -221,7 +227,7 @@ public class ProductLauncher extends ContributionItem {
     private LinkedHashMap<String, String> getSubtypes(String ptype,
             boolean noAlias) {
 
-        LinkedHashMap<String, String> stypes = new LinkedHashMap<String, String>();
+        LinkedHashMap<String, String> stypes = new LinkedHashMap<>();
 
         for (String typeID : prdTypeMap.keySet()) {
             ProductType prdType = prdTypeMap.get(typeID);

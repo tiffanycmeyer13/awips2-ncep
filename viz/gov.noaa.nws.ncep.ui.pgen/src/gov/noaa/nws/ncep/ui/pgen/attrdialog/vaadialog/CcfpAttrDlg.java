@@ -55,22 +55,25 @@ import gov.noaa.nws.ncep.ui.pgen.tools.ILabeledLine;
  *
  * SOFTWARE HISTORY
  *
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * Sep 2010      #322      G. Zhang     Initial creation
- * Apr 2011                B. Yin       Re-factor IAttribute
- * Mar 2012      #625,#611 S. Gurung    Change default CCFP polygon colors: Purple for Hi
- *                                      confidence Area, Line and Line(Med)
- *                                      Added ability to change SIGMET type (from Area to
- *                                      Line/LineMed and back and forth)
- * Mar 2013      #928      B. Yin       Made the button bar smaller.
- * Mar 20, 2019  #7572     dgilling     Code cleanup.
- *
- * Aug 26, 2021  #95470    omoncayo     Set default attributes consistent with NMAP PGEN,
- *                                      updating initialization variables.
- * Dec 09, 2021  #99347    smanoj       Remove Line(Med) radio button and 75-100% option
- *                                      from coverage for Area Type in the Collaborative
- *                                      Convective GUI.
+ * Date          Ticket#    Engineer   Description
+ * ------------- ---------- ---------- -----------------------------------------
+ * Sep 2010      322        G. Zhang   Initial creation
+ * Apr 2011                 B. Yin     Re-factor IAttribute
+ * Mar 2012      #625,#611  S. Gurung  Change default CCFP polygon colors:
+ *                                     Purple for Hi confidence Area, Line and
+ *                                     Line(Med) Added ability to change SIGMET
+ *                                     type (from Area to Line/LineMed and back
+ *                                     and forth)
+ * Mar 2013      928        B. Yin     Made the button bar smaller.
+ * Mar 20, 2019  7572       dgilling   Code cleanup.
+ * Aug 26, 2021  95470      omoncayo   Set default attributes consistent with
+ *                                     NMAP PGEN, updating initialization
+ *                                     variables.
+ * Dec 01, 2021  95362      tjensen    Refactor PGEN Resource management to
+ *                                     support multi-panel displays
+ * Dec 09, 2021  99347      smanoj     Remove Line(Med) radio button and 75-100% option
+ *                                     from coverage for Area Type in the Collaborative
+ *                                     Convective GUI.
  *
  * </pre>
  *
@@ -120,7 +123,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
     private static final String[] ITEMS_DIR = SigmetInfo.DIRECT_ARRAY;
 
-    private Color[] colors = new Color[] { LIGHT_BLUE, PURPLE };
+    private final Color[] colors = new Color[] { LIGHT_BLUE, PURPLE };
 
     private Group top_3;
 
@@ -146,7 +149,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
     private static boolean NotFirstOpen = false;
 
-    private HashMap<String, Button[]> attrButtonMap = new HashMap<>();
+    private final HashMap<String, Button[]> attrButtonMap = new HashMap<>();
 
     private String editableAttrArea = "";
 
@@ -451,8 +454,8 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
         ArrayList<AbstractDrawableComponent> adcList = null;
         ArrayList<AbstractDrawableComponent> newList = new ArrayList<>();
 
-        if (drawingLayer != null) {
-            adcList = (ArrayList<AbstractDrawableComponent>) drawingLayer
+        if (drawingLayers != null) {
+            adcList = (ArrayList<AbstractDrawableComponent>) drawingLayers
                     .getAllSelected();
         }
 
@@ -477,12 +480,12 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
             ArrayList<AbstractDrawableComponent> oldList = new ArrayList<>(
                     adcList);
-            drawingLayer.replaceElements(oldList, newList);
+            drawingLayers.replaceElements(oldList, newList);
         }
 
-        drawingLayer.removeSelected();
+        drawingLayers.removeSelected();
         for (AbstractDrawableComponent adc : newList) {
-            drawingLayer.addSelected(adc);
+            drawingLayers.addSelected(adc);
         }
 
         if (mapEditor != null) {
@@ -1075,14 +1078,14 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
                 }
             }
 
-            drawingLayer.replaceElement(ll, newll);
+            drawingLayers.replaceElement(ll, newll);
             ccfpTool.setLabeledLine(newll);
 
             // reset handle bar
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             Iterator<DrawableElement> iterator = newll.createDEIterator();
             while (iterator.hasNext()) {
-                drawingLayer.addSelected(iterator.next());
+                drawingLayers.addSelected(iterator.next());
             }
 
             // make sure the arrow line won't go through the text box.
@@ -1138,14 +1141,14 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
             newll = createLabeledLine(newll);
 
-            drawingLayer.replaceElement(ll, newll);
+            drawingLayers.replaceElement(ll, newll);
             ccfpTool.setLabeledLine(newll);
 
             // reset handle bar
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             Iterator<DrawableElement> iterator = newll.createDEIterator();
             while (iterator.hasNext()) {
-                drawingLayer.addSelected(iterator.next());
+                drawingLayers.addSelected(iterator.next());
             }
             mapEditor.refresh();
         }

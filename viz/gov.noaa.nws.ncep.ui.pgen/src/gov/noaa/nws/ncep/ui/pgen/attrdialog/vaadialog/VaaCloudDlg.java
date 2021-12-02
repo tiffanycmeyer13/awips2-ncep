@@ -55,14 +55,16 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *
  * SOFTWARE HISTORY
  *
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * Jan 2010      #165      G. Zhang     Initial creation
- * Apr 2011                B. Yin       Re-factor IAttribute
- * Oct 2011                J. Wu        Link color/FHR with layer.
- * Feb 2012      #481      B. Yin       Fixed VAA text output issues.
- * Mar 2013      #928      B. Yin       Made the button bar smaller.
- * Mar 20, 2019  #7572     dgilling     Code cleanup.
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * Jan 2010      165      G. Zhang  Initial creation
+ * Apr 2011               B. Yin    Re-factor IAttribute
+ * Oct 2011               J. Wu     Link color/FHR with layer.
+ * Feb 2012      481      B. Yin    Fixed VAA text output issues.
+ * Mar 2013      928      B. Yin    Made the button bar smaller.
+ * Mar 20, 2019  7572     dgilling  Code cleanup.
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
  *
@@ -204,7 +206,7 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
      *            element this dialog represents for.
      */
     @Override
-    public void setAttrForDlg(IAttribute ia){
+    public void setAttrForDlg(IAttribute ia) {
         if (AttrDlg.mouseHandlerName == null) {
             return;
         }
@@ -230,14 +232,18 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
                 new Button[] { btnArea, btnLine, btnNotSeen, btnFcst });
 
         if (type.contains("Area")) {
-            rBtnGrp.enableBtn(btnArea, null, new Control[]{ txtWidth, comboFcst});
-        } else if(type.contains("Line")) {
-            rBtnGrp.enableBtn(btnLine, new Control[]{txtWidth}, new Control[]{comboFcst});
-        } else if(type.contains("Text")){
+            rBtnGrp.enableBtn(btnArea, null,
+                    new Control[] { txtWidth, comboFcst });
+        } else if (type.contains("Line")) {
+            rBtnGrp.enableBtn(btnLine, new Control[] { txtWidth },
+                    new Control[] { comboFcst });
+        } else if (type.contains("Text")) {
             if (type.contains("WINDS")) {
-                rBtnGrp.enableBtn(btnNotSeen, null, new Control[]{txtWidth,comboFcst});
+                rBtnGrp.enableBtn(btnNotSeen, null,
+                        new Control[] { txtWidth, comboFcst });
             } else {
-                rBtnGrp.enableBtn(btnFcst, new Control[]{comboFcst}, new Control[]{txtWidth});
+                rBtnGrp.enableBtn(btnFcst, new Control[] { comboFcst },
+                        new Control[] { txtWidth });
             }
         }
 
@@ -246,9 +252,9 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
 
         // Associate the color and forecast hour with the active layer.
         if ("Volcano"
-                .equalsIgnoreCase(drawingLayer.getActiveProduct().getType())) {
+                .equalsIgnoreCase(drawingLayers.getActiveProduct().getType())) {
             cs.setColorValue(getLayerColor());
-            comboFHR.setText(drawingLayer.getActiveLayer().getName());
+            comboFHR.setText(drawingLayers.getActiveLayer().getName());
         }
 
     }
@@ -299,14 +305,16 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
         mainLayout.marginWidth = 3;
         top.setLayout(mainLayout);
 
-        Group top1 = new Group(top,SWT.LEFT);
-        top1.setLayoutData(new GridData(SWT.FILL,SWT.CENTER,true,true,8,1));
-        top1.setLayout(new GridLayout(10,false));
+        Group top1 = new Group(top, SWT.LEFT);
+        top1.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
+        top1.setLayout(new GridLayout(10, false));
         createArea1(top1);
 
         Group top2 = new Group(top, SWT.LEFT);
-        top2.setLayoutData(new GridData(SWT.FILL,SWT.CENTER,true,true,11,1));
-        top2.setLayout(new GridLayout(12,false));
+        top2.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, true, 11, 1));
+        top2.setLayout(new GridLayout(12, false));
         createArea2(top2);
 
         init();// setBtnObservers();
@@ -337,7 +345,6 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
 
         btnNotSeen = new Button(top, SWT.RADIO);
         btnNotSeen.setText("NotSeen");
-
 
         btnFcst = new Button(top, SWT.RADIO);
         btnFcst.setText("others-FCST");
@@ -407,11 +414,11 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
         lblFHR.setText("FHR ");
 
         comboFHR = new Combo(top, SWT.READ_ONLY);
-        comboFHR.setItems(new String[]{"F00","F06","F12","F18"});
-        comboFHR.select(VaaInfo.getLayerIdx()-1);//0);
-        comboFHR.addListener(SWT.Selection, new Listener(){
+        comboFHR.setItems(new String[] { "F00", "F06", "F12", "F18" });
+        comboFHR.select(VaaInfo.getLayerIdx() - 1);// 0);
+        comboFHR.addListener(SWT.Selection, new Listener() {
             @Override
-            public void handleEvent(Event e){
+            public void handleEvent(Event e) {
                 if (isTxtType()) {
                     type = getNotSeenTxt();
                 }
@@ -421,14 +428,14 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
         Label lblDummy = new Label(top, SWT.LEFT);
         lblDummy.setText("   ");
 
-        Label lblFL = new Label(top,SWT.LEFT);
+        Label lblFL = new Label(top, SWT.LEFT);
         lblFL.setText("FL      ");
 
         txtFL = new Text(top, SWT.BORDER);
         txtFL.setText("SFC          ");
-        txtFL.addListener(SWT.Modify, new Listener(){
+        txtFL.addListener(SWT.Modify, new Listener() {
             @Override
-            public void handleEvent(Event e){
+            public void handleEvent(Event e) {
                 if (isTxtType()) {
                     type = getDisplayTxt();
                 }
@@ -439,9 +446,9 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
         lblFLHyphen.setText("-");
 
         txtFL2 = new Text(top, SWT.BORDER);
-        txtFL2.addListener(SWT.Modify, new Listener(){
+        txtFL2.addListener(SWT.Modify, new Listener() {
             @Override
-            public void handleEvent(Event e){
+            public void handleEvent(Event e) {
                 if (isTxtType()) {
                     type = getDisplayTxt();
                 }
@@ -452,9 +459,9 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
         lblDir.setText("DIR ");
 
         txtDir = new Text(top, SWT.BORDER);
-        txtDir.addListener(SWT.Modify, new Listener(){
+        txtDir.addListener(SWT.Modify, new Listener() {
             @Override
-            public void handleEvent(Event e){
+            public void handleEvent(Event e) {
                 if (isTxtType()) {
                     type = getDisplayTxt();
                 }
@@ -465,10 +472,10 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
         lblSpd.setText("SPD ");
 
         txtSpd = new Text(top, SWT.BORDER);
-        //txtSpd.setText("0");
-        txtSpd.addListener(SWT.Modify, new Listener(){
+        // txtSpd.setText("0");
+        txtSpd.addListener(SWT.Modify, new Listener() {
             @Override
-            public void handleEvent(Event e){
+            public void handleEvent(Event e) {
                 if (isTxtType()) {
                     type = getDisplayTxt();
                 }
@@ -480,7 +487,7 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
     }
 
     @Override
-    public String getLineType(){
+    public String getLineType() {
         return type;
     }
 
@@ -513,10 +520,10 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
      * colors of the cloud.
      */
     @Override
-    public Color[] getColors(){
+    public Color[] getColors() {
 
         Color[] colors = new Color[2];
-        colors[0] =new java.awt.Color( cs.getColorValue().red,
+        colors[0] = new java.awt.Color(cs.getColorValue().red,
                 cs.getColorValue().green, cs.getColorValue().blue);
         colors[1] = Color.green;
 
@@ -535,7 +542,7 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
     private String getDisplayTxt() {
         if (btnNotSeen.getSelection()) {
             return getNotSeenTxt();
-        } else if(btnFcst.getSelection()) {
+        } else if (btnFcst.getSelection()) {
             return getFcstTxt();
         } else {
             return "";
@@ -615,21 +622,19 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
 
     }
 
-
     public void setSigmet(DrawableElement sigmet) {
         vaCloud = (AbstractSigmet) sigmet;
     }
 
     /**
      * helper method for "Apply" button. it creates a new element as the copy of
-     * the old one and replace the old one in drawingLayer
+     * the old one and replace the old one in drawingLayers
      */
     private void applyPressed() {
         List<AbstractDrawableComponent> adcList = null;
         List<AbstractDrawableComponent> newList = new ArrayList<>();
-        if (drawingLayer != null) {
-            adcList = drawingLayer
-                    .getAllSelected();
+        if (drawingLayers != null) {
+            adcList = drawingLayers.getAllSelected();
         }
         if (adcList != null && !adcList.isEmpty()) {
             for (AbstractDrawableComponent adc : adcList) {
@@ -640,17 +645,17 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
                     attrUpdate();// neccesary?
 
                     copyEditableAttrToAbstractSigmet(newEl);
-                    // this.setAbstractSigmet(newEl);
                     newList.add(newEl);
                 }
             }
-            List<AbstractDrawableComponent> oldList = new ArrayList<>(
-                    adcList);
-            drawingLayer.replaceElements(oldList, newList);
+            List<AbstractDrawableComponent> oldList = new ArrayList<>(adcList);
+            drawingLayers.replaceElements(oldList, newList);
         }
-        drawingLayer.removeSelected();
-        for (AbstractDrawableComponent adc : newList) {
-            drawingLayer.addSelected(adc);
+        if (drawingLayers != null) {
+            drawingLayers.removeSelected();
+            for (AbstractDrawableComponent adc : newList) {
+                drawingLayers.addSelected(adc);
+            }
         }
         if (mapEditor != null) {
             mapEditor.refresh();
@@ -700,7 +705,7 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
      * use editableAttrFromLine for FHR,FL,DIR,and SPD info
      */
     @Override
-    public String getFhrFlDirSpdTxt(){
+    public String getFhrFlDirSpdTxt() {
         StringBuilder sb = new StringBuilder();
 
         if (!comboFHR.isDisposed()) {
@@ -782,8 +787,8 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
      * @return RGB: color for current active Layer.
      */
     public RGB getLayerColor() {
-        Color c = PgenSession.getInstance().getPgenResource().getActiveLayer()
-                .getColor();
+        Color c = PgenSession.getInstance().getCurrentResource()
+                .getActiveLayer().getColor();
         return new RGB(c.getRed(), c.getGreen(), c.getBlue());
     }
 
@@ -835,4 +840,3 @@ public class VaaCloudDlg extends AttrDlg implements IVaaCloud {
     }
 
 }
-

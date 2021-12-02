@@ -1,26 +1,12 @@
 /*
  * WatchFormatMsgDlg
- * 
+ *
  * Date created: 22 February 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
-
-import gov.noaa.nws.ncep.common.dataplugin.pgen.DerivedProduct;
-import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
-import gov.noaa.nws.ncep.ui.pgen.elements.Product;
-import gov.noaa.nws.ncep.ui.pgen.elements.WatchBox;
-import gov.noaa.nws.ncep.ui.pgen.file.FileTools;
-import gov.noaa.nws.ncep.ui.pgen.file.ProductConverter;
-import gov.noaa.nws.ncep.ui.pgen.file.Products;
-import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductConfigureDialog;
-import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
-import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
-import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -53,20 +39,37 @@ import com.raytheon.uf.common.localization.LocalizationFile;
 import com.raytheon.uf.common.serialization.SerializationUtil;
 import com.raytheon.viz.ui.dialogs.CaveJFACEDialog;
 
+import gov.noaa.nws.ncep.common.dataplugin.pgen.DerivedProduct;
+import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
+import gov.noaa.nws.ncep.ui.pgen.elements.Product;
+import gov.noaa.nws.ncep.ui.pgen.elements.WatchBox;
+import gov.noaa.nws.ncep.ui.pgen.file.ProductConverter;
+import gov.noaa.nws.ncep.ui.pgen.file.Products;
+import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductConfigureDialog;
+import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
+import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
+import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
+
 /**
  * Implementation of a dialog to display information of an issued watch.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 02/10		#159		B. Yin   	Initial Creation.
- * 03/12		#703		B. Yin		Create SEL, SAW, WOU, etc.
- * 05/12		#772		B. Yin		Close dialog after done format.
- * 04/13        #977        S. Gilbert  PGEN Database support
- * 12/13		TTR 800		B. Yin		Added original county list
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 02/10         159      B. Yin      Initial Creation.
+ * 03/12         703      B. Yin      Create SEL, SAW, WOU, etc.
+ * 05/12         772      B. Yin      Close dialog after done format.
+ * 04/13         977      S. Gilbert  PGEN Database support
+ * 12/13         TTR 800  B. Yin      Added original county list
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
@@ -81,7 +84,7 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
     private String watchMsg;
 
     // instance of watch format dialog
-    private WatchFormatDlg wfd;
+    private final WatchFormatDlg wfd;
 
     // dialog size
     private final int NUM_LINES = 25;
@@ -118,10 +121,10 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
         /*
          * Create a text box for the message
          */
-        Text messageBox = new Text(top, SWT.MULTI | SWT.BORDER | SWT.READ_ONLY
-                | SWT.V_SCROLL);
-        messageBox.setFont(new Font(messageBox.getDisplay(), "Courier", 12,
-                SWT.NORMAL));
+        Text messageBox = new Text(top,
+                SWT.MULTI | SWT.BORDER | SWT.READ_ONLY | SWT.V_SCROLL);
+        messageBox.setFont(
+                new Font(messageBox.getDisplay(), "Courier", 12, SWT.NORMAL));
         GridData gd = new GridData(GridData.FILL_HORIZONTAL);
 
         // Calculate approximate size of text box to display 25 lines at 80
@@ -150,12 +153,6 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
         return top;
     }
 
-    /*
-     * 
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.dialogs.Dialog#buttonPressed(int)
-     */
     @Override
     protected void okPressed() {
 
@@ -164,53 +161,36 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
          */
         String watchNumber = String.format("%1$04d", wfd.getWatchNumber());
 
-        String pdName = wfd.getWbDlg().drawingLayer.getActiveProduct()
+        String pdName = wfd.getWbDlg().drawingLayers.getActiveProduct()
                 .getType();
         ProductType pt = ProductConfigureDialog.getProductTypes().get(pdName);
-        if (pt != null)
+        if (pt != null) {
             pdName = pt.getType();
+        }
 
         String pd1 = pdName.replaceAll(" ", "_");
 
-        String dirPath = PgenUtil.getPgenOprDirectory() + File.separator + pd1
-                + File.separator + "prod" + File.separator + "text"
-                + File.separator;
-
         String fname = "WW" + watchNumber + ".xml";
 
-        // if ( PgenUtil.checkFileStatus(fname) ){
-
-        //set issue flag
+        // set issue flag
         wfd.getWatchBox().setIssueFlag(1);
-        
-        //Make a copy of original county list
-    	wfd.getWatchBox().makeOriginalCountyList( wfd.getWatchBox().getCountyList() );
-    	
-        // re-draw watch
-        wfd.getWbDlg().drawingLayer.resetElement(wfd.getWatchBox());
-        wfd.getWbDlg().mapEditor.refresh();
 
-        // wfd.getWatchBox().saveToFile(fname);
+        // Make a copy of original county list
+        wfd.getWatchBox()
+                .makeOriginalCountyList(wfd.getWatchBox().getCountyList());
+
+        // re-draw watch
+        wfd.getWbDlg().drawingLayers.resetElement(wfd.getWatchBox());
+        wfd.getWbDlg().mapEditor.refresh();
         wfd.getWatchBox().storeProduct(fname);
         String dataURI = wfd.getWatchBox().getDataURI();
 
-        // saveWatchText("ww"+watchNumber+".txt");
-
         Products pd = this.putWatcInProduct(wfd.getWatchBox());
-        // saveProducts(watchMsg, dirPath + "ww" + watchNumber + ".txt");
-        // saveProducts(generateProducts(pd, "SAW.xlt"), dirPath + "WW"
-        // + watchNumber + ".SAW");
-        // saveProducts(generateProducts(pd, "SEL.xlt"), dirPath + "WW"
-        // + watchNumber + ".SEL");
-        // saveProducts(generateProducts(pd, "SEV.xlt"), dirPath + "WW"
-        // + watchNumber + ".SEV");
-        // saveProducts(generateProducts(pd, "WOU.xlt"), dirPath + "WW"
-        // + watchNumber + ".WOU");
 
         /*
          * Save Derived products to EDEX
          */
-        List<DerivedProduct> prodList = new ArrayList<DerivedProduct>();
+        List<DerivedProduct> prodList = new ArrayList<>();
         prodList.add(new DerivedProduct("ww" + watchNumber + ".txt", PROD_TYPE,
                 watchMsg));
         prodList.add(new DerivedProduct("WW" + watchNumber + ".SAW", PROD_TYPE,
@@ -232,15 +212,8 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
         WatchBoxAttrDlg.getInstance(null).close();
         PgenUtil.setSelectingMode();
         super.okPressed();
-        // }
     }
 
-    /*
-     * 
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.dialogs.Dialog#buttonPressed(int)
-     */
     @Override
     protected void cancelPressed() {
 
@@ -249,16 +222,6 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
         WatchBoxAttrDlg.getInstance(null).close();
         PgenUtil.setSelectingMode();
         super.cancelPressed();
-
-    }
-
-    private void saveProducts(String outStr, String outFile) {
-
-        if (outStr != null && !outStr.isEmpty()) {
-
-            FileTools.writeFile(outFile, outStr);
-
-        }
     }
 
     private String generateProducts(Products pd, String xslt) {
@@ -281,9 +244,7 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
 
         // get style sheet file path
         String xsltPath = PgenStaticDataProvider.getProvider()
-                .getPgenLocalizationRoot()
-                + "xslt"
-                + File.separator
+                .getPgenLocalizationRoot() + "xslt" + File.separator
                 + "watchbox" + File.separator + xslt;
 
         LocalizationFile lFile = PgenStaticDataProvider.getProvider()
@@ -291,8 +252,8 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
 
         String outStr = "";
         if (lFile != null) {
-            outStr = PgenUtil.applyStyleSheet(ds, lFile.getFile()
-                    .getAbsolutePath());
+            outStr = PgenUtil.applyStyleSheet(ds,
+                    lFile.getFile().getAbsolutePath());
         }
 
         return outStr;
@@ -301,7 +262,7 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
 
     /**
      * Set watch text
-     * 
+     *
      * @param str
      *            The issued watch text
      */
@@ -311,8 +272,7 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
 
     @Override
     /**
-     * Set the location of the dialog
-     * Set the OK button to Save
+     * Set the location of the dialog Set the OK button to Save
      */
     public int open() {
 
@@ -320,7 +280,6 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
             this.create();
         }
 
-        // this.getShell().setLocation(this.getShell().getParent().getLocation());
         this.getButton(IDialogConstants.OK_ID).setText("Save");
         this.getButtonBar().pack();
 
@@ -343,8 +302,8 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
 
         // add re-edit button
         editBtn.setText("Re-edit");
-        editBtn.setLayoutData(getButton(IDialogConstants.CANCEL_ID)
-                .getLayoutData());
+        editBtn.setLayoutData(
+                getButton(IDialogConstants.CANCEL_ID).getLayoutData());
         editBtn.addSelectionListener(new SelectionListener() {
 
             @Override
@@ -370,10 +329,10 @@ public class WatchFormatMsgDlg extends CaveJFACEDialog {
 
         Product defaultProduct = new Product();
         defaultProduct.addLayer(defaultLayer);
-        defaultProduct.setName( "WatchBox" );
+        defaultProduct.setName("WatchBox");
         defaultProduct.setType("WatchBox");
-        
-        ArrayList<Product> prds = new ArrayList<Product>();
+
+        ArrayList<Product> prds = new ArrayList<>();
         prds.add(defaultProduct);
         Products fileProduct = ProductConverter.convert(prds);
 

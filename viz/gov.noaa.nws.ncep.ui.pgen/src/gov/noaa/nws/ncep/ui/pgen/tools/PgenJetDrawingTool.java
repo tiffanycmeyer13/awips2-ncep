@@ -27,13 +27,15 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Line;
  * <pre>
  * SOFTWARE HISTORY
  *
- * Date         Ticket#  Engineer  Description
- * ------------ -------- --------- ------------------------------
- * 07/09        135      B. Yin    Initial Creation.
- * 08/09        135      B. Yin    Implement IJetBarb interface.
- * 12/10        366      B. Yin    Handle hash adding/deleting
- * Jul 26, 2019 66393    mapeters  Handle {@link AttrSettings#getSettings} change
- *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 07/09         135      B. Yin    Initial Creation.
+ * 08/09         135      B. Yin    Implement IJetBarb interface.
+ * 12/10         366      B. Yin    Handle hash adding/deleting
+ * Jul 26, 2019  66393    mapeters  Handle {@link AttrSettings#getSettings}
+ *                                  change
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
  *
@@ -49,9 +51,7 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
      * Constructor
      */
     public PgenJetDrawingTool() {
-
         super();
-
     }
 
     @Override
@@ -72,15 +72,14 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
 
     /**
      * Returns the current mouse handler.
+     * 
      * @return
      */
     @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
-
             this.mouseHandler = new PgenJetDrawingHandler();
-
         }
 
         return this.mouseHandler;
@@ -89,29 +88,29 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
     @Override
     public void setAddingBarbHandler() {
 
-        setHandler(new PgenJetBarbAddingHandler(mapEditor, drawingLayer, this,
+        setHandler(new PgenJetBarbAddingHandler(mapEditor, drawingLayers, this,
                 ((JetAttrDlg) attrDlg)));
     }
 
     @Override
     public void setDeletingBarbHandler() {
 
-        setHandler(new PgenJetBarbDeletingHandler(mapEditor, drawingLayer, this,
-                ((JetAttrDlg) attrDlg)));
+        setHandler(new PgenJetBarbDeletingHandler(mapEditor, drawingLayers,
+                this, ((JetAttrDlg) attrDlg)));
     }
 
     @Override
     public void setAddingHashHandler() {
 
-        setHandler(new PgenJetHashAddingHandler(mapEditor, drawingLayer, this,
+        setHandler(new PgenJetHashAddingHandler(mapEditor, drawingLayers, this,
                 ((JetAttrDlg) attrDlg)));
     }
 
     @Override
     public void setDeletingHashHandler() {
 
-        setHandler(new PgenJetHashDeletingHandler(mapEditor, drawingLayer, this,
-                ((JetAttrDlg) attrDlg)));
+        setHandler(new PgenJetHashDeletingHandler(mapEditor, drawingLayers,
+                this, ((JetAttrDlg) attrDlg)));
     }
 
     @Override
@@ -123,7 +122,7 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
      * Set jet as selected when adding barbs
      */
     public void setSelected() {
-        drawingLayer.setSelected(jet);
+        drawingLayers.setSelected(jet);
         mapEditor.refresh();
     }
 
@@ -148,12 +147,13 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
      * De-select everything
      */
     public void deSelect() {
-        drawingLayer.removeSelected();
+        drawingLayers.removeSelected();
         mapEditor.refresh();
     }
 
     /**
      * Implements input handler for mouse events.
+     * 
      * @author bingfan
      *
      */
@@ -183,11 +183,8 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
 
             } else if (button == 3) {
                 return true;
-
             } else {
-
                 return true;
-
             }
 
         }
@@ -207,7 +204,7 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
             // create the ghost element and put it in the drawing layer
             AbstractDrawableComponent ghost = def.create(DrawableType.LINE,
                     attrDlg, "Lines", "FILLED_ARROW", points,
-                    drawingLayer.getActiveLayer());
+                    drawingLayers.getActiveLayer());
 
             if (points != null && points.size() >= 1) {
 
@@ -215,11 +212,7 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
                 ghostPts.add(loc);
                 ((Line) ghost).setLinePoints(new ArrayList<>(ghostPts));
 
-                // jet line attribute should be obtained from the setting table
-                // ((Line)ghost).setLineWidth(4.0f);
-                // ((Line)ghost).setSizeScale(2.5);
-
-                drawingLayer.setGhostLine(ghost);
+                drawingLayers.setGhostLine(ghost);
                 mapEditor.refresh();
 
             }
@@ -242,7 +235,7 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
          */
         @Override
         public boolean handleMouseUp(int x, int y, int button) {
-            if (!drawingLayer.isEditable() || shiftDown) {
+            if (!drawingLayers.isEditable() || shiftDown) {
                 return false;
             }
 
@@ -250,7 +243,7 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
 
                 if (points.size() == 0) {
 
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
                     mapEditor.refresh();
                     attrDlg.close();
                     attrDlg = null;
@@ -258,7 +251,7 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
 
                 } else if (points.size() < 2) {
 
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
                     points.clear();
 
                     mapEditor.refresh();
@@ -267,16 +260,16 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
 
                     // create a new Jet.
                     elem = def.create(DrawableType.JET, attrDlg, pgenCategory,
-                            pgenType, points, drawingLayer.getActiveLayer());
+                            pgenType, points, drawingLayers.getActiveLayer());
 
                     jet = (Jet) elem;
 
                     jet.setSnapTool(
-                            new PgenSnapJet(drawingLayer.getDescriptor(),
+                            new PgenSnapJet(drawingLayers.getDescriptor(),
                                     mapEditor, (JetAttrDlg) attrDlg));
 
                     // add the jet to PGEN resource
-                    drawingLayer.addElement(jet);
+                    drawingLayers.addElement(jet);
 
                     // reset the jet line attributes
                     AbstractDrawableComponent adc = AttrSettings.getInstance()
@@ -285,7 +278,7 @@ public class PgenJetDrawingTool extends PgenMultiPointDrawingTool
                         ((Jet) adc).getJetLine().update(attrDlg);
                     }
 
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
                     points.clear();
 
                     mapEditor.refresh();

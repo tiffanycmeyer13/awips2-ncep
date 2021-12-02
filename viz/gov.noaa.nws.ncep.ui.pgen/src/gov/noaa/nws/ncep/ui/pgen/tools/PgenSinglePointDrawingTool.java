@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenSinglePointDrawingTool
- * 
+ *
  * 2 February 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -20,7 +20,6 @@ import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrSettings;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.LabeledSymbolAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.SymbolAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.VolcanoAttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
 import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
@@ -30,25 +29,32 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Outlook;
 
 /**
  * Implements a modal map tool for PGEN single point drawing.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 02/09                    B. Yin      Initial Creation.
- * 04/09            72      S. Gilbert  Modified to use PgenSession and PgenCommands
- * 04/09            88      J. Wu       Added Text drawing
- * 04/24            99      G. Hull     Use NmapUiUtils
- * 04/09           103      B. Yin      Extends from AbstractPgenTool
- * 05/09           #42      S. Gilbert  Added pgenType and pgenCategory
- * 05/09            79      B. Yin      Extends from AbstractPgenDrawingTool
- * 06/09           116      B. Yin      Use AbstractDrawableComponent
- * May 16, 2016   5640      bsteffen    Access triggering component using PgenUtil.
- * 06/15/2016       R13559  bkowal      File cleanup. No longer simulate mouse clicks.
- * Jan 30, 2019   7553      bhurley     Fixed panning issue when PGEN symbols/markers are selected
- * 
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 02/09                  B. Yin      Initial Creation.
+ * 04/09         72       S. Gilbert  Modified to use PgenSession and
+ *                                    PgenCommands
+ * 04/09         88       J. Wu       Added Text drawing
+ * 04/24         99       G. Hull     Use NmapUiUtils
+ * 04/09         103      B. Yin      Extends from AbstractPgenTool
+ * 05/09         42       S. Gilbert  Added pgenType and pgenCategory
+ * 05/09         79       B. Yin      Extends from AbstractPgenDrawingTool
+ * 06/09         116      B. Yin      Use AbstractDrawableComponent
+ * May 16, 2016  5640     bsteffen    Access triggering component using
+ *                                    PgenUtil.
+ * Jun 15, 2016  13559    bkowal      File cleanup. No longer simulate mouse
+ *                                    clicks.
+ * Jan 30, 2019  7553     bhurley     Fixed panning issue when PGEN
+ *                                    symbols/markers are selected
+ * Dec 02, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
@@ -94,9 +100,10 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
@@ -110,9 +117,9 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
 
     public class PgenSinglePointDrawingHandler extends InputAdapter {
@@ -121,7 +128,7 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
          * An instance of DrawableElementFactory, which is used to create new
          * elements.
          */
-        private DrawableElementFactory def = new DrawableElementFactory();
+        private final DrawableElementFactory def = new DrawableElementFactory();
 
         /**
          * Current element.
@@ -142,9 +149,9 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
 
             if (event.button == 1) {
                 // create an element.
-                elem = (DrawableElement) def.create(getDrawableType(),
-                        (IAttribute) attrDlg, pgenCategory, pgenType, loc,
-                        drawingLayer.getActiveLayer());
+                elem = (DrawableElement) def.create(getDrawableType(), attrDlg,
+                        pgenCategory, pgenType, loc,
+                        drawingLayers.getActiveLayer());
 
                 ((SymbolAttrDlg) attrDlg).setLatitude(loc.y);
                 ((SymbolAttrDlg) attrDlg).setLongitude(loc.x);
@@ -160,9 +167,9 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
                         dec.setPgenCategory(pgenCategory);
                         dec.setPgenType(pgenType);
                         dec.addElement(elem);
-                        drawingLayer.addElement(dec);
+                        drawingLayers.addElement(dec);
                     } else {
-                        drawingLayer.addElement(elem);
+                        drawingLayers.addElement(elem);
                     }
 
                     attrDlg.setDrawableElement(elem);
@@ -182,15 +189,10 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
                 return true;
 
             } else if (event.button == 3) {
-
                 return true;
-
             } else {
-
                 return false;
-
             }
-
         }
 
         @Override
@@ -209,10 +211,9 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
 
                 AbstractDrawableComponent ghost = null;
 
-                ghost = def.create(getDrawableType(), (IAttribute) attrDlg,
-                        pgenCategory, pgenType, loc,
-                        drawingLayer.getActiveLayer());
-                drawingLayer.setGhostLine(ghost);
+                ghost = def.create(getDrawableType(), attrDlg, pgenCategory,
+                        pgenType, loc, drawingLayers.getActiveLayer());
+                drawingLayers.setGhostLine(ghost);
                 mapEditor.refresh();
                 mapEditor.setFocus();
 
@@ -243,7 +244,7 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
                 // prevent the click going through to other handlers
                 // in case adding labels to symbols or fronts.
                 if (elem != null && ((SymbolAttrDlg) attrDlg).labelEnabled()) {
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
                     mapEditor.refresh();
 
                     String defaultTxt = "";
@@ -259,7 +260,7 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
                         dec.setPgenCategory(pgenCategory);
                         dec.setPgenType(pgenType);
                         dec.addElement(elem);
-                        drawingLayer.replaceElement(elem, dec);
+                        drawingLayers.replaceElement(elem, dec);
                     }
 
                     PgenUtil.setDrawingTextMode(true,
@@ -288,7 +289,7 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
 
         /**
          * Tests if the shift key was pressed when the event was generated.
-         * 
+         *
          * @param event
          *            the generated event
          * @return true if the shift key was pressed when the event was
@@ -302,7 +303,7 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
     /**
      * Determine the proper DrawableType from the value of the pgenCategory
      * attribute.
-     * 
+     *
      * @return
      */
     private DrawableType getDrawableType() {
@@ -316,7 +317,7 @@ public class PgenSinglePointDrawingTool extends AbstractPgenDrawingTool {
     /**
      * Get the collection that contains the symbol. When add the label, add it
      * to the same collection
-     * 
+     *
      * @return
      */
     public static DECollection getCollection() {

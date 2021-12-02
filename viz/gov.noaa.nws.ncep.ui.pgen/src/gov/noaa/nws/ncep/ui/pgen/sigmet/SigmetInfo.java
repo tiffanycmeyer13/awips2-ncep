@@ -57,39 +57,51 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 09/09        160         G. Zhang    Initial Creation.
- * 12/09        182         G. Zhang    Added Snapping for ConvSigmet
- * 05/11        ?           J. Wu       Correct VOR text format for GFA
- * 07/11        ?           J. Wu       Comment out the message box in
- *                                         SnapVor.getSnapWithStation()
- * 08/11        ?           B. Yin      Fixed part of TTR 239.
- * 07/11        450         G. Hull     NcPathManager for station tables
- * 10/11        ?           J. Wu       Fixed non-snappable points for outlook.
- * 01/12        597         S. Gurung   Removed Snapping for ConvSigmet
- * 02/2012      #676        Q.Zhou      Fixed spellings in TREND_ARRAY and SIGMET_TYPES[0].
- * 02/2012      #675        Q.Zhou      Modified PHEN_MAP.
- * 02/2012      #597        S. Gurung   Moved snap functionalities to SnapUtil. Removed GUI snapping for Non ConvSigmet.
- * 02/2012                  S. Gurung   Moved back isSnapADC() and getNumOfCompassPts() to SigmetInfo from SnapUtil
- * 11/12        #893        J. Wu       TTR635 - Fix volcano in alphabetical breakdown order.
- * Mar 11, 2014 #2718       randerso    Changes for GeoTools 10.5
- * Apr 21, 2020 76155       ksunil      ID values for INTL is dependent on WMO value selected
- * May 10, 2020 78441       ksunil      Removed reference to KNHC
- * Apr 28, 2020 77667       smanoj      Flight Information Region (FIR) update.
- * May 22, 2020 78000       ksunil      New Tropical Cyclone UI components for Fcst
- * Jun 4,  2020 79256       ksunil      Series ID is now a function of Issuing Office
- * Jun 11, 2020 79243       smanoj      Added Caribbean and South American FIRs.
- * Feb 24, 2021 86827       srussell    Updated getIsolated() to use consistent
- *                                      units when making an ellipsoid
- * Mar 15, 2021 86159       srussell    Added isValidLatLonArray method and 1
- *                                      call to it.
- * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
- * Jun 29, 2021 93036       smanoj      Changes for QC alerts for Int'l SIGMETS.
- * Jul 01, 2021 93750       mroos       Extend time options for VOLCANIC_ASH products
- * Oct 04, 2021 93036       omoncayo    Remove --none- as a option in combo
- * Nov 18, 2021 98495       smanoj      Remove --none- from LEVEL_ARRAY.
- * Nov 29, 2021 98547       srussell    Added getIncludeBlankSeriesIdFlag()
+ *
+ * Date          Ticket#  Engineer   Description
+ * ------------- -------- ---------- -------------------------------------------
+ * 09/09         160      G. Zhang   Initial Creation.
+ * 12/09         182      G. Zhang   Added Snapping for ConvSigmet
+ * 05/11         ?        J. Wu      Correct VOR text format for GFA
+ * 07/11         ?        J. Wu      Comment out the message box in
+ *                                   SnapVor.getSnapWithStation()
+ * 08/11         ?        B. Yin     Fixed part of TTR 239.
+ * 07/11         450      G. Hull    NcPathManager for station tables
+ * 10/11         ?        J. Wu      Fixed non-snappable points for outlook.
+ * 01/12         597      S. Gurung  Removed Snapping for ConvSigmet
+ * 02/2012       676      Q.Zhou     Fixed spellings in TREND_ARRAY and
+ *                                   SIGMET_TYPES[0].
+ * 02/2012       675      Q.Zhou     Modified PHEN_MAP.
+ * 02/2012       597      S. Gurung  Moved snap functionalities to SnapUtil.
+ *                                   Removed GUI snapping for Non ConvSigmet.
+ * 02/2012                S. Gurung  Moved back isSnapADC() and
+ *                                   getNumOfCompassPts() to SigmetInfo from
+ *                                   SnapUtil
+ * 11/12         893      J. Wu      TTR635 - Fix volcano in alphabetical
+ *                                   breakdown order.
+ * Mar 11, 2014  2718     randerso   Changes for GeoTools 10.5
+ * Apr 21, 2020  76155    ksunil     ID values for INTL is dependent on WMO
+ *                                   value selected
+ * May 10, 2020  78441    ksunil     Removed reference to KNHC
+ * Apr 28, 2020  77667    smanoj     Flight Information Region (FIR) update.
+ * May 22, 2020  78000    ksunil     New Tropical Cyclone UI components for Fcst
+ * Jun 04, 2020  79256    ksunil     Series ID is now a function of Issuing
+ *                                   Office
+ * Jun 11, 2020  79243    smanoj     Added Caribbean and South American FIRs.
+ * Feb 24, 2021  86827    srussell   Updated getIsolated() to use consistent
+ *                                   units when making an ellipsoid
+ * Mar 15, 2021  86159    srussell   Added isValidLatLonArray method and 1 call
+ *                                   to it.
+ * Apr 08, 2021  90325    smanoj     CARSAM Backup WMO headers update.
+ * Jun 29, 2021  93036    smanoj     Changes for QC alerts for Int'l SIGMETS.
+ * Jul 01, 2021  93750    mroos      Extend time options for VOLCANIC_ASH
+ *                                   products
+ * Oct 04, 2021  93036    omoncayo   Remove --none- as a option in combo
+ * Nov 18, 2021  98495    smanoj     Remove --none- from LEVEL_ARRAY.
+ * Nov 29, 2021  98547    srussell   Added getIncludeBlankSeriesIdFlag()
+ * Dec 01, 2021  95362    tjensen    Refactor PGEN Resource management to
+ *                                   support multi-panel displays
+ *
  * </pre>
  *
  * @author gzhang
@@ -358,8 +370,6 @@ public class SigmetInfo {
     }
 
     public static boolean isVolcanoNameEntered(String name) {
-        // if( name == null || "".equals(name.trim())) return false;
-
         Collection<List<String>> lists = VOLCANO_BUCKET_MAP.values();
         for (List<String> list : lists) {
             if (list != null && list.contains(name)) {
@@ -376,9 +386,7 @@ public class SigmetInfo {
         for (int i = 0, j = 0; i < latlonArray.length - 1
                 && j < coorArray.length; i += 2, j++) {
             point = mapDescriptor.worldToPixel(
-                    new double[] { latlonArray[i + 1], latlonArray[i], 0.0 });// lon
-                                                                              // ,
-                                                                              // lat
+                    new double[] { latlonArray[i + 1], latlonArray[i], 0.0 });
             coorArray[j] = new Coordinate(point[0], point[1]);
         }
 
@@ -753,7 +761,7 @@ public class SigmetInfo {
     public static Map<String, Polygon> initFirPolygonMapFromShapfile() {
         Map<String, Polygon> result = new HashMap<>();
         IMapDescriptor mapDescriptor = PgenSession.getInstance()
-                .getPgenResource().getDescriptor();
+                .getCurrentResource().getDescriptor();
 
         HashMap<String, Coordinate[]> firGeoMap = getGeometriesFromShapefile();
 

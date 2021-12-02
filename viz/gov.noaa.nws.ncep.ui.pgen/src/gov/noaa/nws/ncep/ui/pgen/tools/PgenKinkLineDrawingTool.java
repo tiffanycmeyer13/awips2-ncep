@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenDualPointDrawingTool
- * 
+ *
  * 29 April 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -8,52 +8,50 @@
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrSettings;
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
-import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
-import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
-import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElementFactory;
-import gov.noaa.nws.ncep.ui.pgen.elements.DrawableType;
-
 import java.util.ArrayList;
 
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
 import com.vividsolutions.jts.geom.Coordinate;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrSettings;
+import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
+import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElementFactory;
+import gov.noaa.nws.ncep.ui.pgen.elements.DrawableType;
+
 /**
  * Implements a modal map tool for PGEN kink line drawing.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 11/13        TTR 850     J. Wu       Initial Creation
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 11/13         TTR 850  J. Wu     Initial Creation
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
  */
 
 public class PgenKinkLineDrawingTool extends AbstractPgenDrawingTool {
 
     public PgenKinkLineDrawingTool() {
-
         super();
-
     }
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
-
             this.mouseHandler = new PgenKinkLineDrawingHandler();
-
         }
 
         return this.mouseHandler;
@@ -61,17 +59,16 @@ public class PgenKinkLineDrawingTool extends AbstractPgenDrawingTool {
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author jun
-     * 
+     *
      */
-
     public class PgenKinkLineDrawingHandler extends InputHandlerDefaultImpl {
 
         /**
          * Points of the new element.
          */
-        private ArrayList<Coordinate> points = new ArrayList<Coordinate>();
+        private final ArrayList<Coordinate> points = new ArrayList<>();
 
         /**
          * Current element.
@@ -82,23 +79,19 @@ public class PgenKinkLineDrawingTool extends AbstractPgenDrawingTool {
          * An instance of DrawableElementFactory, which is used to create new
          * elements.
          */
-        private DrawableElementFactory def = new DrawableElementFactory();
+        private final DrawableElementFactory def = new DrawableElementFactory();
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(anX, aY);
-            if (loc == null || shiftDown)
+            if (loc == null || shiftDown) {
                 return false;
+            }
 
             if (button == 1) {
 
@@ -109,19 +102,18 @@ public class PgenKinkLineDrawingTool extends AbstractPgenDrawingTool {
                 } else {
 
                     // create a new DrawableElement.
-                    elem = def.create(DrawableType.KINKLINE,
-                            (IAttribute) attrDlg, pgenCategory, pgenType,
-                            points, drawingLayer.getActiveLayer());
+                    elem = def.create(DrawableType.KINKLINE, attrDlg,
+                            pgenCategory, pgenType, points,
+                            drawingLayers.getActiveLayer());
 
                     // add the product to PGEN resource
-                    drawingLayer.addElement(elem);
+                    drawingLayers.addElement(elem);
 
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
                     points.clear();
 
                     mapEditor.refresh();
-                    AttrSettings.getInstance().setSettings(
-                            (DrawableElement) elem);
+                    AttrSettings.getInstance().setSettings(elem);
                 }
 
                 return true;
@@ -141,17 +133,19 @@ public class PgenKinkLineDrawingTool extends AbstractPgenDrawingTool {
             }
 
         }
-        
+
         /*
          * overrides the function in selecting tool
          */
         @Override
-        public boolean handleMouseUp(int x, int y, int button){
-            if ( !drawingLayer.isEditable() || shiftDown ) return false;
+        public boolean handleMouseUp(int x, int y, int button) {
+            if (!drawingLayers.isEditable() || shiftDown) {
+                return false;
+            }
 
             if (button == 3) {
 
-                drawingLayer.removeGhostLine();
+                drawingLayers.removeGhostLine();
                 mapEditor.refresh();
 
                 if (points.size() == 0) {
@@ -159,46 +153,40 @@ public class PgenKinkLineDrawingTool extends AbstractPgenDrawingTool {
                 } else {
                     points.clear();
                 }
-                   
+
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
-        
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseMove(int,
-         * int)
-         */
+
         @Override
         public boolean handleMouseMove(int x, int y) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(x, y);
-            if (loc == null)
+            if (loc == null) {
                 return false;
+            }
 
             // create the ghost element and put it in the drawing layer
             AbstractDrawableComponent ghost = null;
 
             if (points != null && points.size() > 0) {
 
-                if (points.size() > 1)
+                if (points.size() > 1) {
                     points.set(1, loc);
-                else {
+                } else {
                     points.add(1, loc);
                 }
 
-                ghost = def.create(DrawableType.KINKLINE, (IAttribute) attrDlg,
-                        pgenCategory, pgenType, points,
-                        drawingLayer.getActiveLayer());
+                ghost = def.create(DrawableType.KINKLINE, attrDlg, pgenCategory,
+                        pgenType, points, drawingLayers.getActiveLayer());
 
-                drawingLayer.setGhostLine(ghost);
+                drawingLayers.setGhostLine(ghost);
 
                 mapEditor.refresh();
 
@@ -210,10 +198,11 @@ public class PgenKinkLineDrawingTool extends AbstractPgenDrawingTool {
 
         @Override
         public boolean handleMouseDownMove(int x, int y, int mouseButton) {
-            if (!isResourceEditable() || shiftDown)
+            if (!isResourceEditable() || shiftDown) {
                 return false;
-            else
+            } else {
                 return true;
+            }
         }
     }
 

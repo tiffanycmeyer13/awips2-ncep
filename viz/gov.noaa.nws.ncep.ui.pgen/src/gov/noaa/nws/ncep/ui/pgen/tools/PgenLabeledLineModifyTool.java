@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.PgenLabeledLineModifyTool
- * 
+ *
  * 08 September 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -21,7 +21,6 @@ import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.CloudAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.TurbAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.vaadialog.CcfpAttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
 import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElementFactory;
@@ -32,25 +31,29 @@ import gov.noaa.nws.ncep.ui.pgen.elements.labeledlines.Cloud;
 import gov.noaa.nws.ncep.ui.pgen.elements.labeledlines.Label;
 import gov.noaa.nws.ncep.ui.pgen.elements.labeledlines.LabeledLine;
 import gov.noaa.nws.ncep.ui.pgen.elements.labeledlines.Turbulence;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.Ccfp;
 
 /**
  * Implements a modal map tool to modify PGEN labeled lines.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 09/10        305         B. Yin      Initial Creation.
- * 12/11        ?           B. Yin      Added open/close line functions
- * 03/12        #697        Q. Zhou     Fixed line arrow head size
- * 03/13		#927		B. Yin		Added constructor for the handler. 
- * May 16, 2016 5640        bsteffen    Access triggering component using PgenUtil.
- * 06/15/2016   R13559      bkowal      File cleanup. No longer simulate mouse clicks.
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 09/10         305      B. Yin    Initial Creation.
+ * 12/11         ?        B. Yin    Added open/close line functions
+ * 03/12         697      Q. Zhou   Fixed line arrow head size
+ * 03/13         927      B. Yin    Added constructor for the handler.
+ * May 16, 2016  5640     bsteffen  Access triggering component using PgenUtil.
+ * Jun 15, 2016  13559    bkowal    File cleanup. No longer simulate mouse
+ *                                  clicks.
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 public class PgenLabeledLineModifyTool extends PgenSelectingTool
@@ -73,8 +76,9 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
         elSelected = null;
         click = null;
 
-        if (attrDlg == null)
+        if (attrDlg == null) {
             return;
+        }
 
         AbstractDrawableComponent triggerComponent = PgenUtil
                 .getTriggerComponent(event);
@@ -104,22 +108,21 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
             ccfp.setAttributes(attrDlg);
         }
         this.setHandler(new PgenLabeledLineModifyHandler(this, mapEditor,
-                drawingLayer, attrDlg));
+                drawingLayers, attrDlg));
 
     }
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
-
             this.mouseHandler = new PgenLabeledLineModifyHandler(this,
-                    mapEditor, drawingLayer, attrDlg);
-
+                    mapEditor, drawingLayers, attrDlg);
         }
 
         return this.mouseHandler;
@@ -128,12 +131,12 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
 
     /**
      * A mouse handler for the watch box modify tool
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
     private class PgenLabeledLineModifyHandler extends PgenSelectHandler {
-        private ArrayList<Coordinate> points = new ArrayList<Coordinate>();
+        private final ArrayList<Coordinate> points = new ArrayList<>();
 
         private boolean simulate;
 
@@ -147,33 +150,29 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
 
         /**
          * Constructor.
-         * 
+         *
          * @param tool
          * @param mapEditor
          * @param resource
          * @param attrDlg
          */
         public PgenLabeledLineModifyHandler(AbstractPgenTool tool,
-                AbstractEditor mapEditor, PgenResource resource,
+                AbstractEditor mapEditor, PgenResourceList resources,
                 AttrDlg attrDlg) {
-            super(tool, mapEditor, resource, attrDlg);
+            super(tool, mapEditor, resources, attrDlg);
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(anX, aY);
-            if (loc == null || shiftDown || simulate)
+            if (loc == null || shiftDown || simulate) {
                 return false;
+            }
 
             click = loc;
             ptSelected2 = false;
@@ -182,7 +181,7 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                 if (attrDlg.isAddLineMode()) {
                     points.add(click);
                 } else {
-                    elSelected = drawingLayer.getNearestElement(click,
+                    elSelected = drawingLayers.getNearestElement(click,
                             labeledLine);
                     firstDown = loc;
                 }
@@ -190,30 +189,22 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                 return false;
             } else if (button == 3) {
                 return true;
-
             } else {
-
                 return false;
-
             }
-
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseMove(int,
-         * int)
-         */
         @Override
         public boolean handleMouseMove(int x, int y) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(x, y);
-            if (loc == null || simulate)
+            if (loc == null || simulate) {
                 return false;
+            }
 
             if (attrDlg.isAddLineMode()) {
                 // create the ghost line and put it in the group
@@ -225,18 +216,17 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                     lineType = "LINE_DASHED_4";
                 }
                 AbstractDrawableComponent ghost = def.create(DrawableType.LINE,
-                        (IAttribute) attrDlg, "Lines", lineType, points,
-                        drawingLayer.getActiveLayer());
+                        attrDlg, "Lines", lineType, points,
+                        drawingLayers.getActiveLayer());
 
                 if (points != null && points.size() >= 1) {
 
-                    ArrayList<Coordinate> ghostPts = new ArrayList<Coordinate>(
-                            points);
+                    ArrayList<Coordinate> ghostPts = new ArrayList<>(points);
                     ghostPts.add(loc);
                     Line ln = (Line) ghost;
-                    ln.setLinePoints(new ArrayList<Coordinate>(ghostPts));
+                    ln.setLinePoints(new ArrayList<>(ghostPts));
 
-                    drawingLayer.setGhostLine(ghost);
+                    drawingLayers.setGhostLine(ghost);
                     mapEditor.refresh();
 
                 }
@@ -244,28 +234,24 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
             return false;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDownMove(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDownMove(int x, int y, int button) {
-            if (!isResourceEditable() || shiftDown || simulate)
+            if (!isResourceEditable() || shiftDown || simulate) {
                 return false;
+            }
 
             if (button == 1) {
                 // Check if mouse is in geographic extent
                 Coordinate loc = mapEditor.translateClick(x, y);
-                if (loc == null || elSelected == null)
+                if (loc == null || elSelected == null) {
                     return true;
+                }
 
                 // make sure the click is close enough to the element
-                if (drawingLayer.getDistance(elSelected, loc) > 30
+                if (drawingLayers.getDistance(elSelected, loc) > 30
                         && !ptSelected2) {
 
-                    if (firstDown != null && drawingLayer
+                    if (firstDown != null && drawingLayers
                             .getDistance(elSelected, firstDown) < 30) {
                         firstDown = null;
                     } else {
@@ -298,7 +284,7 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                                 ghostEl.removePoint(idx);
                                 ghostEl.addPoint(idx, loc);
 
-                                drawingLayer.setGhostLine(ghostEl);
+                                drawingLayers.setGhostLine(ghostEl);
                                 mapEditor.refresh();
 
                             }
@@ -307,10 +293,8 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                         if (elSelected instanceof SinglePointElement) {
                             // text label selected
                             ((SinglePointElement) elSelected).setLocation(loc);
-                            drawingLayer.resetElement(elSelected); // reset
-                                                                   // display of
-                                                                   // this
-                                                                   // element
+                            // reset display of this element
+                            drawingLayers.resetElement(elSelected);
 
                             // arrows
                             Label lbl = (Label) elSelected.getParent();
@@ -318,26 +302,29 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                             for (Line ln : lbl.getArrows()) {
                                 ln.removePoint(0);
                                 ln.addPoint(0, loc);
-                                drawingLayer.resetElement(ln);
+                                drawingLayers.resetElement(ln);
                             }
 
                             if (ccfp != null && PgenAddLabelHandler
                                     .isPtsInArea(ccfp.getAreaLine(), loc)) {
-                                for (Line ln : lbl.getArrows())
+                                for (Line ln : lbl.getArrows()) {
                                     lbl.remove(ln);
+                                }
                             }
 
                             if (ccfp != null
                                     && !PgenAddLabelHandler.isPtsInArea(
                                             ccfp.getAreaLine(), loc)
-                                    && lbl.getArrows().size() == 0)
+                                    && lbl.getArrows().size() == 0) {
                                 addArrow(loc, lbl);
+                            }
 
                             mapEditor.refresh();
-                            if (oldLoc == null)
+                            if (oldLoc == null) {
                                 oldLoc = new Coordinate(
                                         ((SinglePointElement) elSelected)
                                                 .getLocation());
+                            }
                         }
                     } else if (elSelected instanceof Line) {
                         Line ln = (Line) elSelected;
@@ -353,9 +340,8 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                         ghostEl.removePoint(ptIndex);
                         ghostEl.addPoint(ptIndex, loc);
 
-                        drawingLayer.setGhostLine(ghostEl);
+                        drawingLayers.setGhostLine(ghostEl);
                         mapEditor.refresh();
-
                     }
                 }
             }
@@ -364,19 +350,14 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
 
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseUp(int, int,
-         * int)
-         */
         @Override
         public boolean handleMouseUp(int x, int y, int button) {
             firstDown = null;
-            if (!isResourceEditable() || shiftDown || simulate)
+            if (!isResourceEditable() || shiftDown || simulate) {
                 return false;
+            }
             // Finish the editing
-            if (button == 1 && drawingLayer != null) {
+            if (button == 1 && drawingLayers != null) {
 
                 LabeledLine mergedLine = null;
 
@@ -394,7 +375,7 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                                                     .getLocation()),
                                     ((SinglePointElement) elSelected)
                                             .getLocation(),
-                                    mapEditor, drawingLayer);
+                                    mapEditor, drawingLayers);
                         }
                     }
 
@@ -405,13 +386,13 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                                 && ptSelected2) {
                             ptSelected2 = false;
                             // arrow line
-                            DrawableElement el = drawingLayer
+                            DrawableElement el = drawingLayers
                                     .getNearestElement(click, newll);
 
                             // el should be a line
                             if (el instanceof Line) {
                                 ((Line) el).setPoints(ghostEl.getPoints());
-                                drawingLayer.removeGhostLine();
+                                drawingLayers.removeGhostLine();
                             }
                         } else if (elSelected instanceof SinglePointElement) {
                             // text
@@ -434,29 +415,28 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                             && ptSelected2) {
                         ptSelected2 = false;
                         // modify line
-                        DrawableElement el = drawingLayer
+                        DrawableElement el = drawingLayers
                                 .getNearestElement(click, newll);
                         // el should be a line
                         if (el instanceof Line) {
                             ((Line) el).setPoints(ghostEl.getPoints());
-                            drawingLayer.removeGhostLine();
+                            drawingLayers.removeGhostLine();
                             ghostEl = null;
                         }
 
                     }
 
                     if (mergedLine != null) {
-
-                        ArrayList<AbstractDrawableComponent> old = new ArrayList<AbstractDrawableComponent>();
+                        ArrayList<AbstractDrawableComponent> old = new ArrayList<>();
                         old.add(mergedLine);
                         old.add(labeledLine);
 
-                        ArrayList<AbstractDrawableComponent> newLines = new ArrayList<AbstractDrawableComponent>();
+                        ArrayList<AbstractDrawableComponent> newLines = new ArrayList<>();
                         newLines.add(newll);
 
-                        drawingLayer.replaceElements(old, newLines);
+                        drawingLayers.replaceElements(old, newLines);
                     } else {
-                        drawingLayer.replaceElement(labeledLine, newll);
+                        drawingLayers.replaceElement(labeledLine, newll);
                     }
 
                     labeledLine = newll;
@@ -470,22 +450,22 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
 
                         if (!PgenAddLabelHandler.isPtsInArea(
                                 (Line) labeledLine.getPrimaryDE(), loc)
-                                && lbl.getArrows().size() == 0)
+                                && lbl.getArrows().size() == 0) {
                             addArrow(loc, lbl);
+                        }
 
                         if (PgenAddLabelHandler.isPtsInArea(
                                 (Line) labeledLine.getPrimaryDE(), loc)
                                 && lbl.getArrows().size() > 0) {
-                            for (Line ln : lbl.getArrows())
+                            for (Line ln : lbl.getArrows()) {
                                 lbl.remove(ln);
+                            }
                         }
                     }
 
                     // re-select
                     resetSelected();
-
                     elSelected = null;
-
                 }
 
             } else if (button == 3) {
@@ -494,7 +474,7 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                     if (points.size() == 0) {
                         attrDlg.resetLabeledLineBtns();
                     } else if (points.size() < 2) {
-                        drawingLayer.removeGhostLine();
+                        drawingLayers.removeGhostLine();
                         points.clear();
                         mapEditor.refresh();
 
@@ -502,16 +482,16 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
                         // add line to labeled line collection
                         LabeledLine newll = def.createLabeledLine(pgenCategory,
                                 PgenLabeledLineModifyTool.this.pgenType,
-                                (IAttribute) attrDlg, points, null,
-                                drawingLayer.getActiveLayer());
+                                attrDlg, points, null,
+                                drawingLayers.getActiveLayer());
 
-                        drawingLayer.addElement(newll);
+                        drawingLayers.addElement(newll);
                         labeledLine = newll;
 
-                        drawingLayer.removeGhostLine();
+                        drawingLayers.removeGhostLine();
                         points.clear();
 
-                        drawingLayer.setSelected(newll);
+                        drawingLayers.setSelected(newll);
 
                         mapEditor.refresh();
 
@@ -524,10 +504,10 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
 
                     attrDlg = null;
 
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
                     ptSelected2 = false;
                     ptSelected = false;
-                    drawingLayer.removeSelected();
+                    drawingLayers.removeSelected();
                     mapEditor.refresh();
                     PgenUtil.setSelectingMode();
                 }
@@ -535,8 +515,9 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
             }
 
             // make sure the arrow line won't go through the text box.
-            if (labeledLine instanceof Ccfp)
+            if (labeledLine instanceof Ccfp) {
                 ((Ccfp) labeledLine).moveText2Last();
+            }
 
             mapEditor.refresh();
             return true;
@@ -544,7 +525,7 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
         }
 
         private void addArrow(Coordinate loc, Label lbl) {
-            ArrayList<Coordinate> locs = new ArrayList<Coordinate>();
+            ArrayList<Coordinate> locs = new ArrayList<>();
             locs.add(loc);
             locs.add(ccfp.getAreaLine().getCentroid());
 
@@ -560,7 +541,7 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
     @Override
     public void setAddingLabelHandler() {
 
-        setHandler(new PgenAddLabelHandler(mapEditor, drawingLayer, this,
+        setHandler(new PgenAddLabelHandler(mapEditor, drawingLayers, this,
                 attrDlg));
     }
 
@@ -569,7 +550,7 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
         click = null;
         elSelected = null;
         setHandler(new PgenLabeledLineModifyHandler(this, mapEditor,
-                drawingLayer, attrDlg));
+                drawingLayers, attrDlg));
     }
 
     @Override
@@ -584,10 +565,10 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
 
     private void resetSelected() {
         if (labeledLine != null) {
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             Iterator<DrawableElement> it = labeledLine.createDEIterator();
             while (it.hasNext()) {
-                drawingLayer.addSelected(it.next());
+                drawingLayers.addSelected(it.next());
             }
         }
     }
@@ -595,7 +576,7 @@ public class PgenLabeledLineModifyTool extends PgenSelectingTool
     @Override
     public void setDeleteHandler(boolean delLine, boolean flip,
             boolean openClose) {
-        setHandler(new PgenLabeledLineDelHandler(mapEditor, drawingLayer, this,
+        setHandler(new PgenLabeledLineDelHandler(mapEditor, drawingLayers, this,
                 attrDlg, delLine, flip, openClose));
     }
 

@@ -1,24 +1,12 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.attrDialog.vaaDialog.CcfpTimeDlg
- * 
+ *
  * 20 September 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.sigmet;
-
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
-import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
-import gov.noaa.nws.ncep.ui.pgen.elements.Product;
-import gov.noaa.nws.ncep.ui.pgen.file.FileTools;
-import gov.noaa.nws.ncep.ui.pgen.file.ProductConverter;
-import gov.noaa.nws.ncep.ui.pgen.file.Products;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
-import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
-import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
 
 import java.awt.geom.Point2D;
 import java.io.ByteArrayOutputStream;
@@ -49,18 +37,34 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
+import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
+import gov.noaa.nws.ncep.ui.pgen.elements.Product;
+import gov.noaa.nws.ncep.ui.pgen.file.FileTools;
+import gov.noaa.nws.ncep.ui.pgen.file.ProductConverter;
+import gov.noaa.nws.ncep.ui.pgen.file.Products;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
+import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
+
 /**
  * CCFP utility and storage class
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ---------	--------	----------	--------------------------
- * 09/10		322			G. Zhang 	Initial Creation.
- * 04/13        #977        S. Gilbert  PGEN Database support
- * 12/13        TTR751      J. Wu       Update getCcfpTxt2().
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 09/10         322      G. Zhang    Initial Creation.
+ * 04/13         977      S. Gilbert  PGEN Database support
+ * 12/13         TTR751   J. Wu       Update getCcfpTxt2().
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author gzhang
  */
 
@@ -79,7 +83,7 @@ public class CcfpInfo {
     /**
      * elements to be used for text product
      */
-    private static final ArrayList<AbstractDrawableComponent> sigs = new ArrayList<AbstractDrawableComponent>();
+    private static final ArrayList<AbstractDrawableComponent> sigs = new ArrayList<>();
 
     /**
      * 16-points compass direction to degree map
@@ -88,11 +92,11 @@ public class CcfpInfo {
 
     /*
      * initializer of DIR_AZI_MAP
-     * 
+     *
      * @return
      */
     private static Map<String, Double> getDirAziMap() {
-        Map<String, Double> map = new HashMap<String, Double>();
+        Map<String, Double> map = new HashMap<>();
 
         map.put("N", 0.0);
         map.put("NNE", 22.5);
@@ -120,7 +124,7 @@ public class CcfpInfo {
     /**
      * Creates a formatted string comprising of the contents of the XML file, to
      * which formatting information is applied from the style-sheet.
-     * 
+     *
      * @param xmlFileName
      *            - Name of the XML file
      * @param xltFileName
@@ -150,7 +154,7 @@ public class CcfpInfo {
 
     /**
      * save CCFP Products to an xml file
-     * 
+     *
      * @param it
      *            : Issue time String
      * @param vt
@@ -174,7 +178,7 @@ public class CcfpInfo {
 
     /**
      * save CCFP Products to EDEX
-     * 
+     *
      * @param it
      *            : Issue time String
      * @param vt
@@ -187,7 +191,6 @@ public class CcfpInfo {
         String label = getCcfpFileName();
         prod.setOutputFile(label);
 
-        // FileTools.write(fileName, filePrds);
         try {
             dataURI = StorageUtils.storeProduct(prod);
         } catch (PgenStorageException e) {
@@ -203,7 +206,7 @@ public class CcfpInfo {
 
     /**
      * return all CCFP Products.
-     * 
+     *
      * @param it
      *            : Issue time String
      * @param vt
@@ -212,7 +215,7 @@ public class CcfpInfo {
      */
     public static Products getCcfpFilePrds(String it, String vt) {
 
-        PgenResource rsc = PgenSession.getInstance().getPgenResource();
+        PgenResource rsc = PgenSession.getInstance().getCurrentResource();
         ArrayList<Product> prds = (ArrayList<Product>) rsc.getProducts();
 
         Products filePrds = ProductConverter.convert(getCcfpPrds(prds, it, vt));
@@ -222,7 +225,7 @@ public class CcfpInfo {
 
     /**
      * filter out non CCFP Products
-     * 
+     *
      * @param prds
      *            : Product list to be filtered
      * @param it
@@ -233,7 +236,7 @@ public class CcfpInfo {
      */
     public static ArrayList<Product> getCcfpPrds(ArrayList<Product> prds,
             String it, String vt) {
-        ArrayList<Product> list = new ArrayList<Product>();
+        ArrayList<Product> list = new ArrayList<>();
 
         for (Product p : prds) {
             for (Layer l : p.getLayers()) {
@@ -244,8 +247,8 @@ public class CcfpInfo {
                         s.setEditableAttrStartTime(it);
                         s.setEditableAttrEndTime(vt);
                         c.setCollectionNameWithSigmet(s);
-                        sigs.add((Sigmet) ((Ccfp) adc).getSigmet().copy());
-                    } // sigs.add(((Sigmet)adc).copy());
+                        sigs.add(((Ccfp) adc).getSigmet().copy());
+                    }
                 }
             }
         }
@@ -263,7 +266,7 @@ public class CcfpInfo {
 
     /**
      * filter out non CCFP Products from current resource
-     * 
+     *
      * @param it
      *            : Issue time String
      * @param vt
@@ -272,9 +275,9 @@ public class CcfpInfo {
      */
     public static Product getCcfpPrds(String it, String vt) {
 
-        PgenResource rsc = PgenSession.getInstance().getPgenResource();
+        PgenResource rsc = PgenSession.getInstance().getCurrentResource();
         List<Product> prds = rsc.getProducts();
-        ArrayList<AbstractDrawableComponent> sigmets = new ArrayList<AbstractDrawableComponent>();
+        ArrayList<AbstractDrawableComponent> sigmets = new ArrayList<>();
 
         for (Product p : prds) {
             for (Layer l : p.getLayers()) {
@@ -285,8 +288,8 @@ public class CcfpInfo {
                         s.setEditableAttrStartTime(it);
                         s.setEditableAttrEndTime(vt);
                         c.setCollectionNameWithSigmet(s);
-                        sigmets.add((Sigmet) ((Ccfp) adc).getSigmet().copy());
-                    } // sigs.add(((Sigmet)adc).copy());
+                        sigmets.add(((Ccfp) adc).getSigmet().copy());
+                    }
                 }
             }
         }
@@ -304,7 +307,7 @@ public class CcfpInfo {
 
     /**
      * set Issue and Valid times for a list of Sigmets
-     * 
+     *
      * @param sigs
      *            : a list of Sigmet
      * @param it
@@ -314,8 +317,9 @@ public class CcfpInfo {
      */
     private static void setIssueValidTimes(
             ArrayList<AbstractDrawableComponent> sigs, String it, String vt) {
-        if (sigs == null)
+        if (sigs == null) {
             return;
+        }
 
         for (AbstractDrawableComponent adc : sigs) {
 
@@ -327,7 +331,7 @@ public class CcfpInfo {
 
     /**
      * return the CCFP xml file name
-     * 
+     *
      * @return xml file name
      */
     public static String getCcfpFileName() {
@@ -341,20 +345,13 @@ public class CcfpInfo {
 
     /**
      * return the CCFP Text for Area type
-     * 
+     *
      * @param sig
      *            : the Sigmet with text
      * @return: String[] containing the text
      */
     public static String[] getCcftTxt(Sigmet sig) {
-        // String tops = "TOPS "+sig.getEditableAttrPhenom2();
-        // String gwth = "GWTH "+sig.getEditableAttrPhenomLon();
-        // String sigConf = sig.getEditableAttrPhenomLat();
-        // String conf = "CONF "+ ( sigConf==null ? "LOW" :
-        // sigConf.contains("49")? "LOW":"HIGH") ;
-        // String cvrg = "CVRG "+sig.getEditableAttrPhenom();
         return getCcfpTxt2(sig);
-        // return new String[]{tops,gwth,conf,cvrg};//sb.toString();
     }
 
     public static double getDirPts2(String dir, double x, double y) {
@@ -362,8 +359,9 @@ public class CcfpInfo {
 
         double r2d = 57.2957795;
 
-        if (deg == null)
+        if (deg == null) {
             return y;
+        }
 
         double d = deg.doubleValue() / r2d;
 
@@ -372,17 +370,16 @@ public class CcfpInfo {
 
     public static Coordinate getDirMostCoor(String dir, Coordinate[] coors,
             IMapDescriptor md) {
-        if (coors == null)
+        if (coors == null) {
             return null;
+        }
 
-        TreeMap<Double, Coordinate> tm = new TreeMap<Double, Coordinate>();
+        TreeMap<Double, Coordinate> tm = new TreeMap<>();
 
         for (Coordinate c : coors) {
 
             tm.put(getDirPts2(dir, c.x, c.y), c);
         }
-
-        // double d = DIR_AZI_MAP.get(dir);
 
         return tm.get(tm.lastKey());
     }
@@ -402,9 +399,10 @@ public class CcfpInfo {
         } catch (Exception e) {
         }
 
-        ArrayList<Coordinate> list = new ArrayList<Coordinate>();
-        if (pts == null)
+        ArrayList<Coordinate> list = new ArrayList<>();
+        if (pts == null) {
             return list;
+        }
 
         list.add(c1);
         list.add(new Coordinate(pts.getX(), pts.getY()));
@@ -415,7 +413,7 @@ public class CcfpInfo {
 
     /**
      * get the CCFP with speed direction Text's Coordinate
-     * 
+     *
      * @param dir
      *            : the direction of the speed
      * @param coors
@@ -439,13 +437,13 @@ public class CcfpInfo {
 
     /**
      * get the Centroid of the Sigmet Area
-     * 
+     *
      * @param sig
      *            : the Sigmet of which the Centroid to be calculated
      * @return: the Coordinate for the Centroid
      */
     public static Coordinate getSigCentroid(Sigmet sig) {
-        if (sig.getLinePoints().length < 2) {// .getPoints().size() < 2){
+        if (sig.getLinePoints().length < 2) {
             return null;
         }
 
@@ -458,13 +456,13 @@ public class CcfpInfo {
 
     /**
      * check if the Sigmet is crossing the line of Longitude 180/-180
-     * 
+     *
      * @param sig
      *            : the Sigmet for which the check to be performed
      * @return: true: the Sigmet crosses the Lon 180/-180, false otherwise
      */
     public static boolean isCrossingLon180(Sigmet sig) {
-        if (sig.getLinePoints().length < 2) {// .getPoints().size() < 2){
+        if (sig.getLinePoints().length < 2) {
             return false;
         }
 
@@ -484,7 +482,7 @@ public class CcfpInfo {
 
     /**
      * get the CCFP Text's distance and direction from the Centroid
-     * 
+     *
      * @param ctxt
      *            : the Coordinate of the Text
      * @param sig
@@ -493,18 +491,20 @@ public class CcfpInfo {
      */
     public static double[] getCcfpTxtAziDir(Coordinate ctxt, Sigmet sig) {
 
-        if (ctxt == null)
+        if (ctxt == null) {
             return null;
+        }
 
         Coordinate c = getSigCentroid(sig);
 
-        if (c == null)
+        if (c == null) {
             return null;
+        }
 
         double[] d = new double[2];
 
-        GeodeticCalculator gc = new GeodeticCalculator(PgenSession
-                .getInstance().getPgenResource().getCoordinateReferenceSystem());// DefaultEllipsoid.WGS84);
+        GeodeticCalculator gc = new GeodeticCalculator(PgenSession.getInstance()
+                .getCurrentResource().getCoordinateReferenceSystem());
 
         try {
             gc.setStartingGeographicPoint(c.x, c.y);
@@ -519,12 +519,12 @@ public class CcfpInfo {
         // converter
         saveArrwTxtPts(ctxt, c, sig);
 
-        return d;// new double[]{gc.getAzimuth(), gc.getOrthodromicDistance()};
+        return d;
     }
 
     /**
      * check if a given point is inside the Area of the given Sigmet
-     * 
+     *
      * @param sig
      *            : the Sigmet with Area
      * @param pts
@@ -543,12 +543,12 @@ public class CcfpInfo {
 
         GeometryFactory f = new GeometryFactory();
 
-        return f.createPolygon(f.createLinearRing(c), null).contains(
-                new GeometryFactory().createPoint(pts));
+        return f.createPolygon(f.createLinearRing(c), null)
+                .contains(new GeometryFactory().createPoint(pts));
     }
 
     /**
-     * 
+     *
      * @param sig
      * @param md
      * @return
@@ -556,8 +556,9 @@ public class CcfpInfo {
     public static Coordinate getSigCentroid2(Sigmet sig, IMapDescriptor md) {
 
         if (sig == null || sig.getLinePoints() == null
-                || sig.getLinePoints().length < 2)
+                || sig.getLinePoints().length < 2) {
             return null;
+        }
 
         Coordinate[] sigCoors = sig.getLinePoints();
         double[][] list = PgenUtil.latlonToPixel(sigCoors, md);
@@ -579,7 +580,7 @@ public class CcfpInfo {
 
     /**
      * check if a given point is inside the Area of the given Sigmet
-     * 
+     *
      * @param sig
      *            : the Sigmet with Area
      * @param pts
@@ -597,7 +598,7 @@ public class CcfpInfo {
         Coordinate[] sigCoors = sig.getLinePoints();
         double[][] list = PgenUtil.latlonToPixel(sigCoors, md);
 
-        TreeSet<Double> xset = new TreeSet<Double>(), yset = new TreeSet<Double>();
+        TreeSet<Double> xset = new TreeSet<>(), yset = new TreeSet<>();
 
         for (double[] dd : list) {
             xset.add(dd[0]);
@@ -612,7 +613,7 @@ public class CcfpInfo {
 
     /**
      * Save the CCFP Text and Arrow End Points to the Sigmet
-     * 
+     *
      * @param ctxt
      *            : Text Coordinate;
      * @param cArrw
@@ -642,18 +643,20 @@ public class CcfpInfo {
     /**
      * calculate Text Arrow Azimuth and distance; for the convenience of CCFP
      * vgf-xml converter.
-     * 
+     *
      * @param sigmet
      */
     public static void calAziDist4TxtArrw(Sigmet sigmet) {
 
-        if (sigmet == null)
+        if (sigmet == null) {
             return;
+        }
 
         String tLon = sigmet.getEditableAttrLevelText2();
         String tLat = sigmet.getEditableAttrLevelText1();
-        if (tLon == null || tLat == null || tLon.isEmpty() || tLat.isEmpty())
+        if (tLon == null || tLat == null || tLon.isEmpty() || tLat.isEmpty()) {
             return;
+        }
 
         double[] ad = null;
 
@@ -668,8 +671,9 @@ public class CcfpInfo {
             System.out.println("___________ Error: " + t.getMessage());
         }
 
-        if (ad == null)
+        if (ad == null) {
             return;
+        }
 
         sigmet.setEditableAttrFreeText("" + ad[0] + TEXT_SEPERATOR + ad[1]);// ":::"+ad[1]);
         sigmet.setEditableAttrFromLine(PGEN_TYPE_CCFP);
@@ -678,14 +682,15 @@ public class CcfpInfo {
 
     /**
      * check if the CCFP is with Text Arrow fields
-     * 
+     *
      * @param sigmet
      * @return
      */
     public static boolean isTxtArrwExst(Sigmet sigmet) {
 
-        if (sigmet == null)
+        if (sigmet == null) {
             return false;
+        }
 
         String fline = sigmet.getEditableAttrFromLine();
         String ftext = sigmet.getEditableAttrFreeText();
@@ -694,8 +699,9 @@ public class CcfpInfo {
                 && (!ftext.isEmpty())) {
 
             if (PGEN_TYPE_CCFP.equalsIgnoreCase(fline.trim())
-                    && ftext.contains(TEXT_SEPERATOR))
+                    && ftext.contains(TEXT_SEPERATOR)) {
                 return true;
+            }
         }
 
         return false;
@@ -709,15 +715,11 @@ public class CcfpInfo {
         String tops = sig.getEditableAttrPhenom2();
         String gwth = sig.getEditableAttrPhenomLon();
 
-        if (tops.contains("-"))
+        if (tops.contains("-")) {
             tops = "" + tops.substring(tops.indexOf("-") + 1);
-        else if (tops.contains("+"))
+        } else if (tops.contains("+")) {
             tops = ">" + tops.replace("+", "");
-
-        // if (gwth.contains("+"))
-        // tops = tops + " " + gwth;
-        // else
-        // tops = tops + "   ";
+        }
 
         tops = tops + " " + gwth;
 
