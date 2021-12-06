@@ -40,6 +40,8 @@ import gov.noaa.nws.ncep.edex.util.UtilN;
  * May 14, 2014  2536     bclement     moved WMO Header to common, removed
  *                                     TimeTools usage
  * Aug 10, 2020  81343    tjensen      Add missing hazard types
+ * Dec 06, 2021  86820    thuggins     Adding regexp for WiDeSPRead Dust/Sand
+ *                                     Storm hazards
  *
  * </pre>
  *
@@ -194,9 +196,9 @@ public class NonConvSigmetParser {
 
         final String FL_EXP2 = "BLW (FL)?([0-9]{3})";
 
-        final String HAZARDTYPE_EXP = " (TURB|ICGICIP|ICE|ICGIC|ICGIP|VA|DU) ";
+        final String HAZARDTYPE_EXP = " (TURB|ICGICIP|ICE|ICGIC|ICGIP|VA|DU|WDSPR DS|WDSPR SS) ";
 
-        final String HAZARDINTS_EXP = "(OCNL [A-Z0-9]{2,})(BLW (FL)?([0-9]{3}).|BTN|TURB|ICGICIP|ICE|ICGIC|VA|DU)?";
+        final String HAZARDINTS_EXP = "(OCNL [A-Z0-9]{2,})(BLW (FL)?([0-9]{3}).|BTN|TURB|ICGICIP|ICE|ICGIC|VA|DU|WDSPR DS|WDSPR SS)?";
 
         final String HAZARDCAUS_EXP = "OCNL ([\\w| ])*(.|DUE TO)?([\\w| ]*). CONDS";
 
