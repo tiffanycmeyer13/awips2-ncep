@@ -103,6 +103,8 @@ import gov.noaa.nws.ncep.viz.common.SnapUtil;
  * 02/27/2020   75479       smanoj      Fixed an issue with moving Contour line with multiple labels.
  * 10/30/2020   84101       smanoj      Add "Snap Labels to ContourLine" option on the 
  *                                      Contours Attributes dialog.
+ * 12/03/2021   98784       smanoj      Users should be able to move Symbol label.
+ * 
  * </pre>
  *
  * @author sgilbert
@@ -201,8 +203,10 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
         if (button == 1) {
 
-            // reset ptSelected flag in case the dialog is closed without
-            // right-mouse click.
+            /*
+             * reset ptSelected flag in case the dialog is closed without
+             * right-mouse click.
+             */
             if (pgenrsc.getSelectedDE() == null) {
                 ptSelected = false;
             }
@@ -215,9 +219,11 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                 if (pgenrsc.getSelectedDE() instanceof SinglePointElement
                         && pgenrsc.getDistance(pgenrsc.getSelectedDE(),
                                 loc) > pgenrsc.getMaxDistToSelect()) {
-                    ptSelected = false; // prevent SPE from moving when
-                                        // selecting it and then click far away
-                                        // and hold to move.
+                    /*
+                     * prevent SPE from moving when selecting it and then click
+                     * far away and hold to move.
+                     */
+                    ptSelected = false;
                 }
 
                 if (!(pgenrsc.getSelectedDE() instanceof SinglePointElement)
@@ -237,8 +243,8 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
             DrawableElement elSelected = pgenrsc.getNearestElement(loc);
 
             if (elSelected instanceof SinglePointElement) {
-                ptSelected = true; // prevent map from moving when holding and
-                                   // dragging too fast.
+                // prevent map from moving when holding and dragging too fast.
+                ptSelected = true;
             }
 
             AbstractDrawableComponent adc = null;
@@ -270,6 +276,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
             } else if (elSelected instanceof Tcm) {
                 PgenUtil.loadTcmTool(elSelected);
             }
+
             /*
              * Select from within a given Contours or within the PgenResource
              */
@@ -293,9 +300,11 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                     }
 
                     if (elSelected instanceof MultiPointElement) {
-                        // ptSelected could be set to true if there is a
-                        // SiglePointElement near the click, which is not part
-                        // of the contour.
+                        /*
+                         * ptSelected could be set to true if there is a
+                         * SiglePointElement near the click, which is not part
+                         * of the contour.
+                         */
                         ptSelected = false;
                     }
 
@@ -341,9 +350,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                     pgCategory = adc.getPgenCategory();
                     pgenType = adc.getPgenType();
 
-                    /*
-                     * set "dontMove" flag to be retrieved in contour tool.
-                     */
+                    // set "dontMove" flag to be retrieved in contour tool.
                     if (elSelected != null) {
                         dontMove = true;
                     }
@@ -568,10 +575,12 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
         if (loc != null && inOut == 1) {
 
-            // Redmine 7804 - is user's intent selection or panning?
-            // return false to send control to the panning handlers, if user's
-            // actions indicate they are panning and not trying to manipulate
-            // a selected drawable element
+            /*
+             * Redmine 7804 - is user's intent selection or panning? return
+             * false to send control to the panning handlers, if user's actions
+             * indicate they are panning and not trying to manipulate a selected
+             * drawable element
+             */
             if (tmpEl instanceof SinglePointElement) {
                 if (pgenrsc.getDistance(tmpEl, firstDown) > pgenrsc
                         .getMaxDistToSelect()) {
@@ -603,8 +612,11 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
         if (tmpEl != null) {
             if (tmpEl instanceof SinglePointElement) {
 
-                ptSelected = true; // to prevent map shifting when cursor moving
-                                   // too fast for single point elements.
+                /*
+                 * to prevent map shifting when cursor moving too fast for
+                 * single point elements.
+                 */
+                ptSelected = true;
 
                 if (oldLoc == null) {
                     oldLoc = new Coordinate(
@@ -623,8 +635,8 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                         && tmpEl.getParent().getParent().getName()
                                 .equalsIgnoreCase("Contours")) {
 
-                    pgenrsc.resetADC(tmpEl.getParent()); // reset display of the
-                                                         // DECollecion.
+                    // reset display of the DECollecion
+                    pgenrsc.resetADC(tmpEl.getParent());
 
                     ((SinglePointElement) tmpEl).setLocationOnly(loc);
                     ContoursAttrDlg cdlg = (ContoursAttrDlg) attrDlg;
@@ -633,18 +645,29 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                      * We need the following (While "moving" a Symbol), to get
                      * the label to move along with the Symbol.
                      */
-
+                    boolean isTextStayOnSymbol = true;
                     if (tmpEl.getParent() instanceof ContourMinmax) {
 
                         ContourMinmax cntrMinMax = (ContourMinmax) tmpEl
                                 .getParent();
                         if (cntrMinMax.getLabel() != null) {
-                            Coordinate symbolPos = ((SinglePointElement) tmpEl)
-                                    .getLocation();
-                            Coordinate labelTextpos = new Coordinate(
-                                    symbolPos.x, symbolPos.y
-                                            + ContourMinmax.LABEL_TEXT_YOFFSET);
-                            cntrMinMax.getLabel().setLocation(labelTextpos);
+                            if (tmpEl instanceof Text) {
+                                /*
+                                 * When moving a Text/Label on a Symbol; allow
+                                 * users to move Text associated with a Symbol
+                                 * anywhere on the mapEditor.
+                                 */
+                                isTextStayOnSymbol = false;
+                            }
+
+                            if (isTextStayOnSymbol) {
+                                Coordinate symbolPos = ((SinglePointElement) tmpEl)
+                                        .getLocation();
+                                Coordinate labelTextpos = new Coordinate(
+                                        symbolPos.x, symbolPos.y
+                                                + ContourMinmax.LABEL_TEXT_YOFFSET);
+                                cntrMinMax.getLabel().setLocation(labelTextpos);
+                            }
                         }
                     }
 
@@ -662,8 +685,10 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
                     String[] text = ((IText) attrDlg).getString();
 
-                    // add "[" or "]" to front labels. The rule: If the label is
-                    // only number and in one line, will be surrounded by [,].
+                    /*
+                     * add "[" or "]" to front labels. The rule: If the label is
+                     * only number and in one line, will be surrounded by [,].
+                     */
                     if (text.length == 1) {
                         StringBuffer lbl = new StringBuffer(
                                 ((TextAttrDlg) attrDlg).getString()[0]);
@@ -677,8 +702,10 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                             }
                             try {
                                 Integer.parseInt(lbl.toString());
-                                // check if the text is right or left of the
-                                // front
+                                /*
+                                 * check if the text is right or left of the
+                                 * front
+                                 */
                                 if (PgenTextDrawingTool.rightOfLine(mapEditor,
                                         loc, (Line) tmpEl.getParent()
                                                 .getPrimaryDE()) >= 0) {
@@ -793,12 +820,14 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
     public boolean handleMouseUp(int x, int y, int button) {
         firstDown = null;
 
-        // This variable, returnValue, is used to make sure that the right mouse
-        // button event stops in this handler instead of continuing on to
-        // NCPerspective's handleMouseUp and opening the resource manager. Near
-        // the bottom of the this method, if the attribute dialog is being
-        // closed by the right mouse button click returnValue is set to true so
-        // that the mouse button click never reaches the NCPer handler
+        /*
+         * This variable, returnValue, is used to make sure that the right mouse
+         * button event stops in this handler instead of continuing on to
+         * NCPerspective's handleMouseUp and opening the resource manager. Near
+         * the bottom of the this method, if the attribute dialog is being
+         * closed by the right mouse button click returnValue is set to true so
+         * that the mouse button click never reaches the NCPer handler
+         */
         boolean preempt = false;
 
         if (!tool.isResourceEditable() || !tool.isResourceVisible()) {
@@ -826,8 +855,8 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
                     if (oldLoc != null) {
 
-                        pgenrsc.resetElement(el); // reset display of this
-                                                  // element
+                        // reset display of this element
+                        pgenrsc.resetElement(el);
 
                         if (el instanceof Jet.JetBarb) {
                             DECollection dec = (DECollection) el.getParent();
@@ -840,8 +869,10 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                     Jet oldJet = (Jet) parent;
                                     Jet newJet = oldJet.copy();
 
-                                    // to make undo work, replace the whole jet
-                                    // and replace the barb in the collection
+                                    /*
+                                     * to make undo work, replace the whole jet
+                                     * and replace the barb in the collection
+                                     */
                                     DECollection newWind = dec.copy();
                                     newJet.replace(
                                             newJet.getNearestComponent(
@@ -856,8 +887,10 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                                             .getLocation()),
                                             newEl);
 
-                                    // set the old windinfo to the original
-                                    // location
+                                    /*
+                                     * set the old wind info to the original
+                                     * location
+                                     */
                                     Iterator<DrawableElement> it = dec
                                             .createDEIterator();
                                     while (it.hasNext()) {
@@ -971,7 +1004,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
                     } else if (el.getParent() instanceof ContourLine
                             || el.getParent() instanceof ContourCircle) {
-                        if (ghostEl !=null) {
+                        if (ghostEl != null) {
                             editContoursLineNCircle(el, ghostEl.getPoints());
                         }
                     } else {
@@ -1008,7 +1041,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                 newEl.setPoints(ghostEl.getPoints());
                             }
 
-                            // /update Gfa vor text
+                            // update Gfa vor text
                             if (newEl instanceof Gfa) {
                                 GfaReducePoint
                                         .WarningForOverThreeLines((Gfa) newEl);
@@ -1025,8 +1058,10 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                 attrDlg.setDrawableElement(newEl);
                             }
 
-                            // Set this new element as the currently selected
-                            // element Collections do not need to reset.
+                            /*
+                             * Set this new element as the currently selected
+                             * element Collections do not need to reset.
+                             */
                             if (!(pgenrsc
                                     .getSelectedComp() instanceof DECollection)) {
                                 pgenrsc.setSelected(newEl);
@@ -1075,9 +1110,11 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                     attrDlg = null;
                 }
 
-                // Mouseup event on button 3, the attribute dialog just got
-                // closed, and the PGEN object was just deselected, so
-                // preempt the event so the resource manager doesn't open
+                /*
+                 * Mouseup event on button 3, the attribute dialog just got
+                 * closed, and the PGEN object was just deselected, so preempt
+                 * the event so the resource manager doesn't open
+                 */
                 preempt = true;
             }
 
@@ -1093,9 +1130,11 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
         }
 
-        // Use returnValue to either preempt the event or not. If this button 3
-        // up event just closed the attribute dialog and/or deselected the PGEN
-        // object, the returnValue will be true, preempting the event
+        /*
+         * Use returnValue to either preempt the event or not. If this button 3
+         * up event just closed the attribute dialog and/or deselected the PGEN
+         * object, the returnValue will be true, preempting the event
+         */
         return preempt;
     }
 
@@ -1321,8 +1360,9 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                             int nlabels = texts.size();
                             selElem = ((ContourLine) newAdc).getLine();
 
-                            //Update labels in the contour line.
-                            ContourLine cline = (ContourLine) selElem.getParent();
+                            // Update labels in the contour line.
+                            ContourLine cline = (ContourLine) selElem
+                                    .getParent();
                             if (nlabels > 0) {
 
                                 if (moveContourLbls) {
@@ -1350,8 +1390,10 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                         } else {
                             ((ContourCircle) newAdc).getCircle()
                                     .setPoints(points);
-                            // For circles, the circumference text point can be
-                            // any of the points except 0
+                            /*
+                             * For circles, the circumference text point can be
+                             * any of the points except 0
+                             */
                             ((Text) ((ContourCircle) newAdc).getLabel())
                                     .setLocation(points.get(1));
                             selElem = ((ContourCircle) newAdc).getCircle();
@@ -1370,7 +1412,8 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                 }
                 if (newContours != null) {
                     if (tool instanceof PgenContoursTool) {
-                        ((PgenContoursTool) tool).setCurrentContour(newContours);
+                        ((PgenContoursTool) tool)
+                                .setCurrentContour(newContours);
                     }
                 }
             }
