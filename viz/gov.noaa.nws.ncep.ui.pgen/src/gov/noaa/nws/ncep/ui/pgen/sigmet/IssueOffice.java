@@ -6,15 +6,17 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * 
+ *
  * Implementation of IssueOffice xml element
  *
  * <pre>
  * SOFTWARE HISTORY
  * Date         Ticket#    Engineer    Description
  * ------------ ---------- ----------- --------------------------
- * Jun 4,  2020 79256      ksunil      Series IDs now configurable
- * 
+ * Jun  4, 2020 79256      ksunil      Series IDs now configurable
+ * Nov 29, 2021 98547      srussell    Added member includeABlankSeriesId to
+ *                                     support blank Series IDs ( editableAttrId)
+ *
  * </pre>
  *
  * @author ksunil
@@ -28,6 +30,9 @@ public class IssueOffice {
 
     @XmlAttribute(name = "seriesIDs")
     private String seriesIDs;
+
+    @XmlAttribute(name = "includeABlankSeriesId")
+    private boolean includeABlankSeriesId;
 
     public IssueOffice() {
 
@@ -46,6 +51,10 @@ public class IssueOffice {
         return seriesIDs;
     }
 
+    public boolean getIncludeABlankSeriesId() {
+        return includeABlankSeriesId;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -54,9 +63,14 @@ public class IssueOffice {
         this.seriesIDs = seriesIDs;
     }
 
+    public void setIncludeABlankSeriesId(boolean includeABlankSeriesId) {
+        this.includeABlankSeriesId = includeABlankSeriesId;
+    }
+
     @Override
     public String toString() {
-        return "IssueOffice [name=" + name + ", seriesIDs=" + seriesIDs + "]";
+        return "IssueOffice [name=" + name + "," + ", includeABlankSeriesId="
+                + includeABlankSeriesId + ", seriesIDs=" + seriesIDs + "]";
     }
 
 }
