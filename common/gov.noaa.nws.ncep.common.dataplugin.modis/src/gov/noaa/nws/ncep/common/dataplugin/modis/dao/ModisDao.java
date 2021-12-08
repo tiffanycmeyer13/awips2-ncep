@@ -16,8 +16,10 @@ import com.raytheon.uf.common.datastorage.IDataStore;
 import com.raytheon.uf.common.datastorage.StorageException;
 import com.raytheon.uf.common.datastorage.StorageProperties;
 import com.raytheon.uf.common.datastorage.records.AbstractStorageRecord;
+import com.raytheon.uf.common.datastorage.records.DataUriMetadataIdentifier;
 import com.raytheon.uf.common.datastorage.records.FloatDataRecord;
 import com.raytheon.uf.common.datastorage.records.IDataRecord;
+import com.raytheon.uf.common.datastorage.records.IMetadataIdentifier;
 import com.raytheon.uf.common.geospatial.interpolation.GridDownscaler;
 import com.raytheon.uf.common.numeric.buffer.BufferWrapper;
 import com.raytheon.uf.common.numeric.buffer.ShortBufferWrapper;
@@ -47,12 +49,13 @@ import gov.noaa.nws.ncep.common.dataplugin.modis.ModisSpatialCoverage;
  * Oct 01, 2014  5116     kbugenhagen  Initial creation
  * Mar 29, 2021  8374     randerso     Renamed IDataRecord.get/setProperties to
  *                                     get/setProps
+ * Sep 23, 2021 8608       mapeters     Pass metadata ids to datastore
+ *
  *
  * </pre>
  *
  * @author kbugenhagen
  */
-
 public class ModisDao extends PluginDao {
 
     public static final String LATITUDE_DATASET_NAME = "latitudes";
@@ -70,10 +73,6 @@ public class ModisDao extends PluginDao {
     /**
      * Stores the image, latitude and longitude arrays in the HDF file. All
      * levels for the image are stored to support down-scaling.
-     *
-     * @see com.raytheon.uf.edex.database.plugin.PluginDao#populateDataStore(com.
-     *      raytheon.uf.common.datastorage.IDataStore,
-     *      com.raytheon.uf.common.dataplugin.persist.IPersistable)
      */
     @Override
     protected IDataStore populateDataStore(IDataStore dataStore,
@@ -136,10 +135,11 @@ public class ModisDao extends PluginDao {
 
         // create raw image dataset
 
+        IMetadataIdentifier metaId = new DataUriMetadataIdentifier(record);
         // first, add the full image array (level 0)
         IDataRecord fullSize = creator.create(rawData, 0,
                 new Rectangle(nx, ny));
-        dataStore.addDataRecord(fullSize);
+        dataStore.addDataRecord(fullSize, metaId);
 
         // Data sources are create anonymously here to avoid having the
         // fillValue/validMin/validMax even checked when getting values but
@@ -169,15 +169,15 @@ public class ModisDao extends PluginDao {
                 spatialRecord.getGridGeometry(latitudes, longitudes));
 
         DownscaleStoreUtil.storeInterpolated(dataStore, downscaler, ds, creator,
-                false);
+                metaId, false);
 
         // add latitude and longitude datasets
         dataset = new FloatDataRecord(LATITUDE_DATASET_NAME,
                 record.getDataURI(), (float[]) latitudes, 2, sizes);
-        dataStore.addDataRecord(dataset);
+        dataStore.addDataRecord(dataset, metaId);
         dataset = new FloatDataRecord(LONGITUDE_DATASET_NAME,
                 record.getDataURI(), (float[]) longitudes, 2, sizes);
-        dataStore.addDataRecord(dataset);
+        dataStore.addDataRecord(dataset, metaId);
 
         dataStore.store();
 
