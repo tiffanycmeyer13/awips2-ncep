@@ -245,7 +245,9 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine(),
  *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine()
  * Dec 03, 2021  98544      achalla      Modified CAR/SAM Backup mode req:1-4
- *
+ * Dec 09, 2021  99344      smanoj       Fixed Fcst Radial/Area/Line description Round To
+ *                                       functionality issue for Volcanic Ash.
+ * 
  * </pre>
  *
  * @author gzhang
@@ -538,6 +540,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     // Flag if CarSam and Regular regions interest
     private boolean inBackupCarSamArea = false;
+
+    // Default roundTo value for Volcanic Ash
+    private int volcAshRoundToVal = 15;
 
     /**
      * Constructor.
@@ -3555,6 +3560,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         final Combo comboRound = new Combo(coordGrp, SWT.READ_ONLY);
         comboRound.setItems(SigmetInfo.ROUND_TO_ARRAY);
         comboRound.select(2);
+        comboRound.addListener(SWT.Selection, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                volcAshRoundToVal = Integer.parseInt(comboRound.getText());
+            }
+        });
 
     }
 
@@ -5634,21 +5645,22 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                     int latval = getIntValueOfLat(lat.trim());
                     int lonval = getIntValueOfLon(lon.trim());
-                    latval = getValRoundedToNearest15Min(latval);
-                    lonval = getValRoundedToNearest15Min(lonval);
+
+                    latval = getNearestRoundedValForVolcAsh(latval);
+                    lonval = getNearestRoundedValForVolcAsh(lonval);
 
                     if (i != 0) {
                         fcstLatLonLoc.append(" ");
                     }
+
                     fcstLatLonLoc.append(lat.substring(0, lat.length() - 4));
-                    fcstLatLonLoc.append(Integer.toString(latval)).append(" ");
+                    String strLat = getValidLatString(latval);
+                    fcstLatLonLoc.append(strLat);
+                    fcstLatLonLoc.append(" ");
+
                     fcstLatLonLoc.append(lon.substring(0, lon.length() - 5));
-                    String strLon = Integer.toString(lonval);
-                    if ((strLon.length()) < 5) {
-                        fcstLatLonLoc.append("0").append(strLon);
-                    } else {
-                        fcstLatLonLoc.append(strLon);
-                    }
+                    String strLon = getValidLonString(lonval);
+                    fcstLatLonLoc.append(strLon);
 
                     if (i < locPair.length - 1) {
                         fcstLatLonLoc.append(" ").append("-");
@@ -5656,6 +5668,64 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
             return fcstLatLonLoc;
+        }
+
+        /**
+         * RoundTo functionality For Volcanic Ash phenomenon type. Fcst
+         * Radial/Area/Line Description Coordinates shall round to user selected
+         * value.
+         * 
+         * @param val-
+         *            coordinate value
+         * 
+         * @return adjVal - rounded value according to user selection
+         */
+        private int getNearestRoundedValForVolcAsh(int val) {
+            int adjVal = val;
+
+            if (volcAshRoundToVal > 0) {
+                int hour = val / 100;
+                int min = val % 100;
+                int mod = min % volcAshRoundToVal;
+                int res = 0;
+
+                int adjMid = (volcAshRoundToVal / 2) + 1;
+                if (mod >= adjMid) {
+                    res = min + (volcAshRoundToVal - mod);
+                } else {
+                    res = min - mod;
+                }
+
+                if (res > 59) {
+                    adjVal = (hour + 1) * 100;
+                } else {
+                    adjVal = hour * 100 + res;
+                }
+            }
+
+            return adjVal;
+        }
+
+        private String getValidLatString(int latVal) {
+            StringBuilder latString = new StringBuilder();
+            String strLat = Integer.toString(latVal);
+            if ((strLat.length()) < 4) {
+                latString.append("0").append(strLat);
+            } else {
+                latString.append(strLat);
+            }
+            return latString.toString();
+        }
+
+        private String getValidLonString(int lonVal) {
+            StringBuilder lonString = new StringBuilder();
+            String strLon = Integer.toString(lonVal);
+            if ((strLon.length()) < 5) {
+                lonString.append("0").append(strLon);
+            } else {
+                lonString.append(strLon);
+            }
+            return lonString.toString();
         }
 
         private int getIntValueOfLat(String val) {
