@@ -166,6 +166,7 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSelectHandler;
  *                                      Contours Attributes dialog.
  * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
  * 08/26/2021   86161       srussell    Updated  close()
+ * 12/09/2021   98783       srussell    Updated ContoursAttrDlg.close()
  *
  * </pre>
  *
@@ -1348,8 +1349,8 @@ public class ContoursAttrDlg extends AttrDlg
         } else {
             Control[] wids = labelGrp.getChildren();
             if (wids != null) {
-                for (int jj = 0; jj < wids.length; jj++) {
-                    wids[jj].dispose();
+                for (Control wid : wids) {
+                    wid.dispose();
                 }
             }
         }
@@ -1774,13 +1775,6 @@ public class ContoursAttrDlg extends AttrDlg
         }
 
         currentContours = null;
-
-        // Release contours-specific key bindings.
-        deactivatePGENContoursContext();
-
-        // Deselect points on a contour line upon closing the Contour Line Dlg
-        pgenrsc = PgenSession.getInstance().getPgenResource();
-        pgenrsc.removeSelected();
 
         return super.close();
 
@@ -2968,8 +2962,8 @@ public class ContoursAttrDlg extends AttrDlg
                         Control[] wids = top.getChildren();
 
                         if (wids != null) {
-                            for (int kk = 0; kk < wids.length; kk++) {
-                                setButtonColor((Button) wids[kk],
+                            for (Control wid : wids) {
+                                setButtonColor((Button) wid,
                                         defaultButtonColor);
                             }
                         }
@@ -3113,8 +3107,8 @@ public class ContoursAttrDlg extends AttrDlg
                         Control[] wids = top.getChildren();
 
                         if (wids != null) {
-                            for (int kk = 0; kk < wids.length; kk++) {
-                                setButtonColor((Button) wids[kk],
+                            for (Control wid : wids) {
+                                setButtonColor((Button) wid,
                                         defaultButtonColor);
                             }
                         }
