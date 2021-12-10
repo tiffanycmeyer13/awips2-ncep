@@ -143,6 +143,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jun 4,  2020  79256      ksunil       Series ID is now a function of Issuing Office
  * Jun 03, 2020  78215      smanoj       INTL Sigmet Cancel functionality changes.
  * Jun 11, 2020  79243      smanoj       Added Caribbean and South American FIRs.
+ * Dec 7,  2021  8653       tjensen      Fix ClassCastExceptions during init()
  * 
  * </pre>
  *
@@ -3791,7 +3792,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             String attr = f.getName();
             String typeValue = "";
             try {
-                typeValue = (String) f.get(this);
+                typeValue = String.valueOf(f.get(this));
             } catch (Exception e) {
                 statusHandler.debug(e.getLocalizedMessage(), e);
             }
