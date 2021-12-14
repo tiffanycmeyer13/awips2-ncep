@@ -16,7 +16,9 @@ import com.raytheon.uf.common.datastorage.StorageException;
 import com.raytheon.uf.common.datastorage.StorageProperties;
 import com.raytheon.uf.common.datastorage.records.AbstractStorageRecord;
 import com.raytheon.uf.common.datastorage.records.ByteDataRecord;
+import com.raytheon.uf.common.datastorage.records.DataUriMetadataIdentifier;
 import com.raytheon.uf.common.datastorage.records.IDataRecord;
+import com.raytheon.uf.common.datastorage.records.IMetadataIdentifier;
 import com.raytheon.uf.common.geospatial.interpolation.GridDownscaler;
 import com.raytheon.uf.common.numeric.buffer.BufferWrapper;
 import com.raytheon.uf.edex.database.plugin.DownscaleStoreUtil;
@@ -46,12 +48,12 @@ import gov.noaa.nws.ncep.common.dataplugin.mcidas.McidasRecord;
  *                                     metadata.
  * Mar 29, 2021  8374     randerso     Renamed IDataRecord.get/setProperties to
  *                                     get/setProps
+ * Sep 23, 2021  8608     mapeters     Pass metadata ids to datastore
  *
  * </pre>
  *
  * @author tlee
  */
-
 public class McidasDao extends PluginDao {
 
     public McidasDao(String pluginName) throws PluginException {
@@ -66,12 +68,13 @@ public class McidasDao extends PluginDao {
         /*
          * Write McIDAS Area file header block.
          */
+        IMetadataIdentifier metaId = new DataUriMetadataIdentifier(satRecord);
         if (satRecord.getHeaderBlock() != null) {
             AbstractStorageRecord storageRecord = new ByteDataRecord("Header",
                     satRecord.getDataURI(), satRecord.getHeaderBlock(), 1,
                     new long[] { satRecord.getHeaderBlock().length });
             storageRecord.setCorrelationObject(satRecord);
-            dataStore.addDataRecord(storageRecord);
+            dataStore.addDataRecord(storageRecord, metaId);
         }
 
         /*
@@ -102,7 +105,7 @@ public class McidasDao extends PluginDao {
             storageRecord.setProps(props);
             storageRecord.setCorrelationObject(satRecord);
             // Store the base record.
-            dataStore.addDataRecord(storageRecord);
+            dataStore.addDataRecord(storageRecord, metaId);
 
             BufferWrapper dataSource = BufferWrapper
                     .wrapArray(storageRecord.getDataObject(), xdim, ydim);
@@ -140,7 +143,7 @@ public class McidasDao extends PluginDao {
                             return false;
                         }
 
-                    });
+                    }, metaId);
         }
         return dataStore;
     }

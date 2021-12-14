@@ -9,8 +9,8 @@ import com.raytheon.uf.common.dataplugin.persist.IPersistable;
 import com.raytheon.uf.common.datastorage.IDataStore;
 import com.raytheon.uf.common.datastorage.StorageException;
 import com.raytheon.uf.common.datastorage.StorageProperties;
-import com.raytheon.uf.common.datastorage.records.AbstractStorageRecord;
 import com.raytheon.uf.common.datastorage.records.ByteDataRecord;
+import com.raytheon.uf.common.datastorage.records.DataUriMetadataIdentifier;
 import com.raytheon.uf.common.datastorage.records.IDataRecord;
 import com.raytheon.uf.edex.database.plugin.PluginDao;
 
@@ -32,12 +32,14 @@ import gov.noaa.nws.ncep.common.dataplugin.ntrans.NtransRecord;
  * Dec 14, 2016  5934     njensen      Moved to edex ntrans plugin
  * Mar 29, 2021  8374     randerso     Renamed IDataRecord.get/setProperties to
  *                                     get/setProps
+ * Sep 23, 2021  8608     mapeters     Pass metadata ids to datastore
  *
  * </pre>
  *
  * This code has been developed by the SIB for use in the AWIPS2 system.
  */
 public class NtransDao extends PluginDao {
+
     public NtransDao(String pluginName) throws PluginException {
         super(pluginName);
     }
@@ -47,16 +49,15 @@ public class NtransDao extends PluginDao {
             IPersistable record) throws StorageException {
 
         NtransRecord ntransRecord = (NtransRecord) record;
-        AbstractStorageRecord imageDataRecord = null;
-
-        /* IDataRecord */ imageDataRecord = new ByteDataRecord("NTRANS",
+        IDataRecord imageDataRecord = new ByteDataRecord("NTRANS",
                 ntransRecord.getDataURI(), ntransRecord.getImageData());
 
         StorageProperties props = new StorageProperties();
 
         imageDataRecord.setProps(props);
         imageDataRecord.setCorrelationObject(ntransRecord);
-        dataStore.addDataRecord(imageDataRecord);
+        dataStore.addDataRecord(imageDataRecord,
+                new DataUriMetadataIdentifier(ntransRecord));
 
         return dataStore;
     }
