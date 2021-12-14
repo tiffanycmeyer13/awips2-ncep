@@ -94,8 +94,12 @@ import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
  * 12/13         TTR800      B. Yin    Use UTC time class.
  * Aug 07, 2019  66169       mapeters  Fix product text ordering for EXCE_RAIN
  * Mar 23, 2020  76034       tjensen   Change day calculation to add to DATE
- * Aug 20, 2020  80844       pbutler   Update for changing default Days/Prods activity and days from outlooktimes.xml config file.
+ * Aug 20, 2020  80844       pbutler   Update for changing default Days/Prods
+ *                                     activity and days from outlooktimes.xml
+ *                                     config file.
  * Nov 30, 2020  85416       tjensen   Improve OutlookTimeProduct lookup
+ * Dec 01, 2021  95362       tjensen   Refactor PGEN Resource management to
+ *                                     support multi-panel displays
  *
  * </pre>
  *
@@ -314,7 +318,7 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
      * @return OutlookTimeProduct
      */
     private OutlookTimeProduct getProductType() {
-        Product pd = otlkDlg.drawingLayer.getActiveProduct();
+        Product pd = otlkDlg.drawingLayers.getActiveProduct();
 
         // - get products and populate products map
         OutlookTimeProductLookup otpl = new OutlookTimeProductLookup()
@@ -360,7 +364,7 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                Layer layer = otlkDlg.drawingLayer.getActiveLayer();
+                Layer layer = otlkDlg.drawingLayers.getActiveLayer();
                 String fmtFlag = layer.getMetaInfoFromKey(
                         OutlookAttrDlg.OTLK_FORMAT_FLAG_IN_LAYER_META);
                 if ("false".equalsIgnoreCase(fmtFlag)) {
@@ -404,10 +408,10 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
                     msgDlg = new OutlookFormatMsgDlg(
                             OutlookFormatDlg.this.getParentShell(),
                             OutlookFormatDlg.this, otlk,
-                            otlkDlg.drawingLayer.getActiveLayer());
+                            otlkDlg.drawingLayers.getActiveLayer());
                     msgDlg.setBlockOnOpen(true);
                     msgDlg.setMessage(formatOtlk(otlk,
-                            otlkDlg.drawingLayer.getActiveLayer()));
+                            otlkDlg.drawingLayers.getActiveLayer()));
                     int rt = msgDlg.open();
                     if (rt == Dialog.OK) {
                         cleanup();
@@ -456,9 +460,9 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
          * only format active product format order: from current layer goes down
          * then goes to the top if necessary
          */
-        Product pd = otlkDlg.drawingLayer.getActiveProduct();
+        Product pd = otlkDlg.drawingLayers.getActiveProduct();
         int currentLayerIdx = pd.getLayers()
-                .indexOf(otlkDlg.drawingLayer.getActiveLayer());
+                .indexOf(otlkDlg.drawingLayers.getActiveLayer());
 
         for (int ii = 0; ii < pd.getLayers().size(); ii++) {
             Layer fmtLayer = pd.getLayers()
@@ -531,13 +535,13 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
             msg += String.format("%1$td%1$tH%1$tMZ", getInitTime()) + " - "
                     + String.format("%1$td%1$tH%1$tMZ", getExpTime()) + "\n";
         } else {
-            Layer defaultLayer = otlkDlg.drawingLayer.getActiveLayer().copy();
+            Layer defaultLayer = otlkDlg.drawingLayers.getActiveLayer().copy();
             defaultLayer.clear();
 
             Product defaultProduct = new Product();
             defaultProduct.addLayer(defaultLayer);
 
-            String pdName = otlkDlg.drawingLayer.getActiveProduct().getType();
+            String pdName = otlkDlg.drawingLayers.getActiveProduct().getType();
             ProductType pt = ProductConfigureDialog.getProductTypes()
                     .get(pdName);
 
@@ -822,7 +826,7 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
      */
     private void cleanup() {
         this.close();
-        this.getOtlkDlg().drawingLayer.removeSelected();
+        this.getOtlkDlg().drawingLayers.removeSelected();
         this.getOtlkDlg().mapEditor.refresh();
         this.getOtlkDlg().close();
         PgenUtil.setSelectingMode();
@@ -846,21 +850,21 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
         this.issueOutlook(clipped);
 
         // /Put it in the map editor.
-        otlkDlg.drawingLayer.replaceElement(ol, clipped);
+        otlkDlg.drawingLayers.replaceElement(ol, clipped);
         otlk = clipped;
 
         // Clean up. Remove ghost. Re-set selected element.
         if (!clipped.isEmpty() && clipped.getPrimaryDE() instanceof Line) {
             otlkDlg.setDrawableElement(clipped.getPrimaryDE());
-            if (otlkDlg.drawingLayer.getSelectedComp() != null
+            if (otlkDlg.drawingLayers.getSelectedComp() != null
                     && !clipped.isEmpty()) {
-                otlkDlg.drawingLayer.setSelected(clipped.getPrimaryDE());
+                otlkDlg.drawingLayers.setSelected(clipped.getPrimaryDE());
             }
-            otlkDlg.drawingLayer.removeGhostLine();
+            otlkDlg.drawingLayers.removeGhostLine();
             otlkDlg.mapEditor.refresh();
         } else if (clipped.isEmpty()) {
-            otlkDlg.drawingLayer.removeSelected();
-            otlkDlg.drawingLayer.removeGhostLine();
+            otlkDlg.drawingLayers.removeSelected();
+            otlkDlg.drawingLayers.removeGhostLine();
             otlkDlg.mapEditor.refresh();
         }
 

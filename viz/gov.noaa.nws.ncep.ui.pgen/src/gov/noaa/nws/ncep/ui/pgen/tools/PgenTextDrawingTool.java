@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenTextDrawingTool
- * 
+ *
  * 22 May 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -18,13 +18,11 @@ import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrSettings;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.TextAttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
 import gov.noaa.nws.ncep.ui.pgen.display.IText;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.DisplayType;
 import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.ComboSymbol;
 import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
-import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElementFactory;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableType;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
@@ -33,27 +31,36 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Symbol;
 
 /**
  * Implements a modal map tool for PGEN text drawing.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 05/09            79      B. Yin      Moved from PgenSinglePointDrawingTool
- * 06/09            116     B. Yin      Handle the labeled symbol case
- * 07/10            ?       B. Yin      Added '[' or ']' for front labels 
- * 02/11            ?       B. Yin      Fixed Outlook type problem.
- * 04/11            ?       B. Yin      Re-factor IAttribute
- * 08/12         #802       Q. Zhou     Fixed Front text of 2 lines. Modified handleMouseMove.
- * 12/12         #591       J. Wu       TTR343 - added default label value for some fronts.
- * 10/13         TTR768     J. Wu       Set default attributes for outlook labels (Text).
- * 12/15         R12989     P. Moyer    Prior text attribute tracking via pgenTypeLabels HashMap
- * 05/16/2016    R18388     J. Wu       Move some constants to PgenConstant.
- * May 16, 2016 5640        bsteffen    Access triggering component using PgenUtil.
- * Feb 14, 2020  74902      smanoj      Remove leading empty lines from Text Attributes.
- * Feb 26, 2020  75024      smanoj      Fix to have correct default Text Attributes for 
- *                                      tropical TROF front label.
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 05/09         79       B. Yin    Moved from PgenSinglePointDrawingTool
+ * 06/09         116      B. Yin    Handle the labeled symbol case
+ * 07/10         ?        B. Yin    Added '[' or ']' for front labels
+ * 02/11         ?        B. Yin    Fixed Outlook type problem.
+ * 04/11         ?        B. Yin    Re-factor IAttribute
+ * 08/12         802      Q. Zhou   Fixed Front text of 2 lines. Modified
+ *                                  handleMouseMove.
+ * 12/12         591      J. Wu     TTR343 - added default label value for some
+ *                                  fronts.
+ * 10/13         TTR768   J. Wu     Set default attributes for outlook labels
+ *                                  (Text).
+ * 12/15         12989    P. Moyer  Prior text attribute tracking via
+ *                                  pgenTypeLabels HashMap
+ * May 16, 2016  18388    J. Wu     Move some constants to PgenConstant.
+ * May 16, 2016  5640     bsteffen  Access triggering component using PgenUtil.
+ * Feb 14, 2020  74902    smanoj    Remove leading empty lines from Text
+ *                                  Attributes.
+ * Feb 26, 2020  75024    smanoj    Fix to have correct default Text Attributes
+ *                                  for tropical TROF front label.
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
@@ -128,8 +135,9 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
                                     .getOutlookLabelSettings().keySet()) {
                                 dfltText = AttrSettings.getInstance()
                                         .getOutlookLabelSettings().get(skey);
-                                if (dfltText != null)
+                                if (dfltText != null) {
                                     break;
+                                }
                             }
                         }
 
@@ -142,8 +150,9 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
                 if ((param = event
                         .getParameter(PgenConstant.EVENT_PREV_COLOR)) != null) {
 
-                    if (param.equalsIgnoreCase(PgenConstant.TRUE))
+                    if (param.equalsIgnoreCase(PgenConstant.TRUE)) {
                         usePrevColor = true;
+                    }
 
                     if (usePrevColor) {
                         ((TextAttrDlg) attrDlg).setColor(
@@ -233,9 +242,10 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
@@ -249,9 +259,9 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
 
     public class PgenTextDrawingHandler extends InputHandlerDefaultImpl {
@@ -260,23 +270,24 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
          * An instance of DrawableElementFactory, which is used to create new
          * elements.
          */
-        private DrawableElementFactory def = new DrawableElementFactory();
+        private final DrawableElementFactory def = new DrawableElementFactory();
 
         /**
          * Current element.
          */
         private AbstractDrawableComponent elem = null;
 
-        
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(anX, aY);
-            if (loc == null || shiftDown)
+            if (loc == null || shiftDown) {
                 return false;
+            }
             if (button == 1) {
 
                 // variables for current type tracking for label array
@@ -289,9 +300,8 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
 
                     pgenLabelArray = ((IText) attrDlg).getString();
 
-                    elem = def.create(DrawableType.TEXT, (IAttribute) attrDlg,
-                            pgenCategory, pgenType, loc,
-                            drawingLayer.getActiveLayer());
+                    elem = def.create(DrawableType.TEXT, attrDlg, pgenCategory,
+                            pgenType, loc, drawingLayers.getActiveLayer());
                 }
 
                 // add the product to the PGEN resource and repaint.
@@ -300,8 +310,8 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
                     if (addLabelToSymbol && prevElem != null
                             && (prevElem.getName().equalsIgnoreCase(
                                     PgenConstant.LABELED_SYMBOL)
-                            || prevElem.getName().equalsIgnoreCase(
-                                    PgenConstant.TYPE_VOLCANO))) {
+                                    || prevElem.getName().equalsIgnoreCase(
+                                            PgenConstant.TYPE_VOLCANO))) {
                         ((DECollection) prevElem).add(elem);
                     } else if (prevElem != null && prevElem.getName()
                             .equalsIgnoreCase(Outlook.OUTLOOK_LABELED_LINE)) {
@@ -311,10 +321,9 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
                                     PgenConstant.CATEGORY_FRONT)) {
                         ((DECollection) prevElem).add(elem);
                     } else {
-                        drawingLayer.addElement(elem);
+                        drawingLayers.addElement(elem);
                     }
-                    AttrSettings.getInstance()
-                            .setSettings((DrawableElement) elem);
+                    AttrSettings.getInstance().setSettings(elem);
                     mapEditor.refresh();
 
                     attrDlg.getShell().setActive();
@@ -361,27 +370,24 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
                 return true;
 
             } else if (button == 3) {
-
                 return true;
-
             } else {
-
                 return false;
-
             }
 
         }
 
-       
         @Override
         public boolean handleMouseMove(int x, int y) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(x, y);
-            if (loc == null)
+            if (loc == null) {
                 return false;
+            }
 
             if (attrDlg != null) {
 
@@ -400,10 +406,12 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
                                     ((TextAttrDlg) attrDlg).getString()[0]);
 
                             if (lbl.length() > 0) {
-                                if (lbl.charAt(0) == '[')
+                                if (lbl.charAt(0) == '[') {
                                     lbl.deleteCharAt(0);
-                                if (lbl.charAt(lbl.length() - 1) == ']')
+                                }
+                                if (lbl.charAt(lbl.length() - 1) == ']') {
                                     lbl.deleteCharAt(lbl.length() - 1);
+                                }
 
                                 try {
                                     Integer.parseInt(lbl.toString());
@@ -424,26 +432,26 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
                             }
                         }
 
-                        ghost = def.create(DrawableType.TEXT,
-                                (IAttribute) attrDlg, pgenCategory, pgenType,
-                                loc, drawingLayer.getActiveLayer());
+                        ghost = def.create(DrawableType.TEXT, attrDlg,
+                                pgenCategory, pgenType, loc,
+                                drawingLayers.getActiveLayer());
 
                     } else {
 
                         // Remove the leading empty lines from text.
-                        String[] textArray =((IText) attrDlg).getString();
-                        String textStr = String.join("\n",textArray);
+                        String[] textArray = ((IText) attrDlg).getString();
+                        String textStr = String.join("\n", textArray);
                         textStr = textStr.trim();
-                        textArray= textStr.split("\n");
+                        textArray = textStr.split("\n");
                         ((TextAttrDlg) attrDlg).setText(textArray);
 
-                        ghost = def.create(DrawableType.TEXT, (IText) attrDlg,
+                        ghost = def.create(DrawableType.TEXT, attrDlg,
                                 pgenCategory, pgenType, loc,
-                                drawingLayer.getActiveLayer());
+                                drawingLayers.getActiveLayer());
                     }
                 }
 
-                drawingLayer.setGhostLine(ghost);
+                drawingLayers.setGhostLine(ghost);
                 mapEditor.refresh();
 
             }
@@ -454,23 +462,24 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
 
         @Override
         public boolean handleMouseDownMove(int x, int y, int mouseButton) {
-            if (!isResourceEditable() || shiftDown)
+            if (!isResourceEditable() || shiftDown) {
                 return false;
-            else
+            } else {
                 return true;
+            }
         }
 
-       
         @Override
         public boolean handleMouseUp(int x, int y, int mouseButton) {
-            if (!isResourceEditable() || shiftDown)
+            if (!isResourceEditable() || shiftDown) {
                 return false;
+            }
 
             // prevent the click going through to other handlers
             // in case adding labels to symbols or fronts.
             if (mouseButton == 3) {
 
-                drawingLayer.removeGhostLine();
+                drawingLayers.removeGhostLine();
                 mapEditor.refresh();
 
                 if (addLabelToSymbol) {
@@ -501,13 +510,9 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
                 } else {
                     PgenUtil.setSelectingMode();
                 }
-
                 return true;
-
             } else {
-
                 return false;
-
             }
         }
 
@@ -544,12 +549,12 @@ public class PgenTextDrawingTool extends AbstractPgenDrawingTool {
             }
         }
 
-        if (minDist == 0)
+        if (minDist == 0) {
             return 0;
-
-        else
+        } else {
             return Line2D.relativeCCW(screenPt[0], screenPt[1], startPt[0],
                     startPt[1], endPt[0], endPt[1]);
+        }
 
     }
 

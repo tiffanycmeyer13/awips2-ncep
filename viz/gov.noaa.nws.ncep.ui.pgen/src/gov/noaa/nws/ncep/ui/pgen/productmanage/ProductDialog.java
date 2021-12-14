@@ -1,19 +1,11 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.products.ProductControlDialog
- * 
+ *
  * August 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.productmanage;
-
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
-import gov.noaa.nws.ncep.ui.pgen.elements.Product;
-import gov.noaa.nws.ncep.ui.pgen.producttypes.PgenClass;
-import gov.noaa.nws.ncep.ui.pgen.producttypes.PgenLayer;
-import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -30,26 +22,36 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
+import gov.noaa.nws.ncep.ui.pgen.elements.Product;
+import gov.noaa.nws.ncep.ui.pgen.producttypes.PgenClass;
+import gov.noaa.nws.ncep.ui.pgen.producttypes.PgenLayer;
+import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+
 /**
  * This class is the common dialog for PGEN product management in PGEN.
- * 
+ *
  * Note: This might be consolidated with PgenLayeringDialog.java in the future.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * 08/09  		#151		J. Wu		Initial creation. 
- * 02/12  		#656		J. Wu		Retain the last location of the dialog. 
- * 07/12  		#822		J. Wu		Add createShell() so it can be overrided 
- *                                      to create shell with different styles.
- * 06/15        R8189        J. Wu      Set Pgen palette per layer.
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 08/09         151      J. Wu     Initial creation.
+ * 02/12         656      J. Wu     Retain the last location of the dialog.
+ * 07/12         822      J. Wu     Add createShell() so it can be overrided to
+ *                                  create shell with different styles.
+ * 06/15         8189     J. Wu     Set Pgen palette per layer.
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author jwu
- * @version 1.0
- * 
+ *
  */
 
 public class ProductDialog extends Dialog {
@@ -88,13 +90,13 @@ public class ProductDialog extends Dialog {
 
     /**
      * Open method used to display the product control dialog.
-     * 
+     *
      * @return Return object (can be null).
      */
     public Object open() {
 
         // Link to the drawing layer's active product & active layer;
-        drawingLayer = PgenSession.getInstance().getPgenResource();
+        drawingLayer = PgenSession.getInstance().getCurrentResource();
         currentProduct = drawingLayer.getActiveProduct();
         currentLayer = drawingLayer.getActiveLayer();
 
@@ -161,7 +163,7 @@ public class ProductDialog extends Dialog {
 
     /**
      * Create a new modeless hell by default.
-     * 
+     *
      * @return Return shell.
      */
     protected Shell createShell(Shell parent) {
@@ -193,7 +195,7 @@ public class ProductDialog extends Dialog {
 
     /**
      * Set the default location.
-     * 
+     *
      * @param parent
      */
     public void setDefaultLocation(Shell parent) {
@@ -231,8 +233,8 @@ public class ProductDialog extends Dialog {
      */
     public void setButtonColor(Button btn, Color clr) {
 
-        btn.setBackground(new org.eclipse.swt.graphics.Color(display, clr
-                .getRed(), clr.getGreen(), clr.getBlue()));
+        btn.setBackground(new org.eclipse.swt.graphics.Color(display,
+                clr.getRed(), clr.getGreen(), clr.getBlue()));
 
     }
 
@@ -259,7 +261,7 @@ public class ProductDialog extends Dialog {
 
         if (ptyp != null) {
 
-            btnList = new ArrayList<String>();
+            btnList = new ArrayList<>();
 
             if (ptyp.getPgenControls() != null) {
                 btnList.addAll(ptyp.getPgenControls().getName());
@@ -291,7 +293,7 @@ public class ProductDialog extends Dialog {
 
         if (plyr != null) {
 
-            btnList = new ArrayList<String>();
+            btnList = new ArrayList<>();
 
             if (plyr.getPgenControls() != null) {
                 btnList.addAll(plyr.getPgenControls().getName());
@@ -317,9 +319,10 @@ public class ProductDialog extends Dialog {
      * Reset the PGEN palette based on the settings of a product type.
      */
     public void refreshPgenPalette(ProductType ptyp) {
-        if (PgenSession.getInstance().getPgenPalette() != null)
+        if (PgenSession.getInstance().getPgenPalette() != null) {
             PgenSession.getInstance().getPgenPalette()
                     .resetPalette(getButtonList(ptyp));
+        }
     }
 
     /**
@@ -352,8 +355,9 @@ public class ProductDialog extends Dialog {
         }
 
         // Reset palette.
-        if (PgenSession.getInstance().getPgenPalette() != null)
+        if (PgenSession.getInstance().getPgenPalette() != null) {
             PgenSession.getInstance().getPgenPalette().resetPalette(btnList);
+        }
     }
 
     /*
@@ -361,6 +365,7 @@ public class ProductDialog extends Dialog {
      * dialog.
      */
     private class shellCloseListener implements Listener {
+        @Override
         public void handleEvent(Event e) {
             switch (e.type) {
             case SWT.Close:
@@ -381,7 +386,7 @@ public class ProductDialog extends Dialog {
      * Check if need to save changes.
      */
     protected boolean needSaving() {
-        return PgenSession.getInstance().getPgenResource().getResourceData()
+        return PgenSession.getInstance().getCurrentResource().getResourceData()
                 .isNeedsSaving();
     }
 
@@ -401,8 +406,9 @@ public class ProductDialog extends Dialog {
                 kk++;
             }
 
-            if (indx >= 0)
+            if (indx >= 0) {
                 tlayer = ptyp.getPgenLayer().get(indx);
+            }
         }
 
         return tlayer;

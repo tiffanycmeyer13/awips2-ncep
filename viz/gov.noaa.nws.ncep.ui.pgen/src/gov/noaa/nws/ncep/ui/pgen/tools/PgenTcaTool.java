@@ -1,12 +1,29 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.PgenTcaTool
- * 
+ *
  * 2 June 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.raytheon.uf.common.dataquery.requests.DbQueryRequest;
+import com.raytheon.uf.common.dataquery.requests.RequestConstraint;
+import com.raytheon.uf.common.dataquery.requests.RequestConstraint.ConstraintType;
+import com.raytheon.uf.common.dataquery.responses.DbQueryResponse;
+import com.raytheon.uf.viz.core.requests.ThriftClient;
+import com.raytheon.uf.viz.core.rsc.IInputHandler;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Point;
 
 import gov.noaa.nws.ncep.common.dataplugin.pgen.PgenRecord;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
@@ -37,36 +54,26 @@ import gov.noaa.nws.ncep.ui.pgen.tca.TCAElement;
 import gov.noaa.nws.ncep.ui.pgen.tca.TCVMessage;
 import gov.noaa.nws.ncep.ui.pgen.tca.TropicalCycloneAdvisory;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.raytheon.uf.common.dataquery.requests.DbQueryRequest;
-import com.raytheon.uf.common.dataquery.requests.RequestConstraint;
-import com.raytheon.uf.common.dataquery.requests.RequestConstraint.ConstraintType;
-import com.raytheon.uf.common.dataquery.responses.DbQueryResponse;
-import com.raytheon.uf.viz.core.requests.ThriftClient;
-import com.raytheon.uf.viz.core.rsc.IInputHandler;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-
 /**
  * Implements a modal map tool for PGEN TCA .
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 09/09					S. Gilbert   	Initial Creation.
- * 04/13        #977        S. Gilbert  PGEN Database support
- * May 16, 2016 5640        bsteffen    Access triggering component using PgenUtil.
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 09/09                  S. Gilbert  Initial Creation.
+ * 04/13         977      S. Gilbert  PGEN Database support
+ * May 16, 2016  5640     bsteffen    Access triggering component using
+ *                                    PgenUtil.
+ * Dec 02, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
  *
  * </pre>
- * 
+ *
  * @author S. Gilbert
  */
 public class PgenTcaTool extends AbstractPgenDrawingTool {
@@ -90,9 +97,6 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
 
     private BreakpointManager bmgr = null;
 
-    // private final Symbol CIRCLE = new Symbol(null, new Color[]{Color.CYAN},
-    // 2.0f, 1.0, false, null, "Marker", "OCTAGON");
-
     /*
      * Attribute Dialog with all storm/advisory info
      */
@@ -110,7 +114,7 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
 
     /*
      * Invoked by the CommandService when starting this tool
-     * 
+     *
      * @see com.raytheon.viz.ui.tools.AbstractTool#runTool()
      */
     @Override
@@ -137,8 +141,9 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
         if (attrDlg instanceof TcaAttrDlg) {
             tcaDlg = (TcaAttrDlg) attrDlg;
             tcaDlg.setTcaTool(this);
-            if (elem != null)
+            if (elem != null) {
                 attrDlg.setAttrForDlg(elem);
+            }
         }
 
         // Initial drawing mode
@@ -151,16 +156,18 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
     public void deactivateTool() {
 
         super.deactivateTool();
-        if (drawingLayer != null)
-            drawingLayer.setDefaultPtsSelectedColor();
+        if (drawingLayers != null) {
+            drawingLayers.setDefaultPtsSelectedColor();
+        }
 
     }
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
@@ -179,9 +186,9 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
     /**
      * Contains the mouse handlers need to create and modify breakpoint
      * segments/advisories for a tropical cyclone
-     * 
+     *
      * @author sgilbert
-     * 
+     *
      */
     public class PgenTcaHandler extends InputHandlerDefaultImpl {
 
@@ -189,9 +196,9 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
          * An instance of DrawableElementFactory, which is used to create new
          * elements.
          */
-        private DrawableElementFactory def = new DrawableElementFactory();
+        private final DrawableElementFactory def = new DrawableElementFactory();
 
-        private Symbol DOT = new Symbol(null, new Color[] { Color.WHITE },
+        private final Symbol DOT = new Symbol(null, new Color[] { Color.WHITE },
                 1.0f, 7.5, false, null, "Marker", "DOT");
 
         private Symbol firstPt = null;
@@ -202,20 +209,15 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
 
         private boolean keepFirst;
 
-        private DECollection ghost = new DECollection();
+        private final DECollection ghost = new DECollection();
 
         private final String BKPT_TYPE_OFFICIAL = "Official";
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             String coast;
             boolean isIsland;
@@ -224,8 +226,9 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
              * convert mouse click to geographic location
              */
             Coordinate loc = mapEditor.translateClick(anX, aY);
-            if (loc == null || shiftDown)
+            if (loc == null || shiftDown) {
                 return false;
+            }
 
             // get current geography type selection from the attr dialog
             String geog = tcaDlg.getGeogType();
@@ -236,8 +239,9 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
              * only, if selected.
              */
             BreakpointFilter filter = new BreakpointFilter();
-            if (tcaDlg.getBreakpointType().equals(BKPT_TYPE_OFFICIAL))
+            if (tcaDlg.getBreakpointType().equals(BKPT_TYPE_OFFICIAL)) {
                 filter.setOfficialOnly();
+            }
 
             // left mouse button clicked
             if (button == 1) {
@@ -255,8 +259,8 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                                 .findClosestAdvisory(loc);
                         if (adv != null) {
                             selectAdvisory(adv);
-                            tcaDlg.selectAdvisory(elem.getAdvisories().indexOf(
-                                    adv));
+                            tcaDlg.selectAdvisory(
+                                    elem.getAdvisories().indexOf(adv));
                             mode = DrawingMode.HIGHLIGHT;
                         }
                     }
@@ -272,18 +276,16 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                      * set Drawing mode to MODIFY. this will allow us to select
                      * a new breakpoint for segment.
                      */
-                    if (selectedAdvisory.getSegment() instanceof BreakpointPair) {
+                    if (selectedAdvisory
+                            .getSegment() instanceof BreakpointPair) {
                         GeometryFactory gf = new GeometryFactory();
-                        Point pt1 = gf.createPoint(selectedAdvisory
-                                .getSegment().getBreakpoints().get(0)
-                                .getLocation());
-                        Point pt2 = gf.createPoint(selectedAdvisory
-                                .getSegment().getBreakpoints().get(1)
-                                .getLocation());
+                        Point pt1 = gf.createPoint(selectedAdvisory.getSegment()
+                                .getBreakpoints().get(0).getLocation());
+                        Point pt2 = gf.createPoint(selectedAdvisory.getSegment()
+                                .getBreakpoints().get(1).getLocation());
                         Point mouse = gf.createPoint(loc);
                         double dist1 = mouse.distance(pt1);
                         double dist2 = mouse.distance(pt2);
-                        // System.out.println(dist1+" OR "+dist2);
                         if (dist1 < dist2) {
                             if (dist1 < TOL) {
                                 bkpt1 = selectedAdvisory.getSegment()
@@ -338,8 +340,9 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                      * mode to SELECT_2ND
                      */
                     bkpt1 = bmgr.getNearestBreakpoint(loc, filter);
-                    if (bkpt1 == null)
+                    if (bkpt1 == null) {
                         break;
+                    }
                     firstPt = DOT;
                     firstPt.setLocation(bkpt1.getLocation());
                     mode = DrawingMode.SELECT_2ND;
@@ -358,10 +361,12 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                     isIsland = bmgr.isCoastIsland(coast);
                     filter.filterCoastName(coast);
                     bkpt2 = bmgr.getNearestBreakpoint(loc, filter);
-                    if (bkpt2 == null)
+                    if (bkpt2 == null) {
                         break;
-                    if (bkpt1.equals(bkpt2) && !isIsland)
+                    }
+                    if (bkpt1.equals(bkpt2) && !isIsland) {
                         break;
+                    }
                     BreakpointPair bkptPair = bmgr.getBreakpointPair(bkpt1,
                             bkpt2);
                     if (bkptPair != null) {
@@ -387,15 +392,18 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                     isIsland = bmgr.isCoastIsland(coast);
                     filter.filterCoastName(coast);
                     bkpt2 = bmgr.getNearestBreakpoint(loc, filter);
-                    if (bkpt2 == null)
+                    if (bkpt2 == null) {
                         break;
-                    if (bkpt1.equals(bkpt2) && !isIsland)
+                    }
+                    if (bkpt1.equals(bkpt2) && !isIsland) {
                         break;
+                    }
                     BreakpointPair bkptmodPair = null;
-                    if (keepFirst)
+                    if (keepFirst) {
                         bkptmodPair = bmgr.getBreakpointPair(bkpt1, bkpt2);
-                    else
+                    } else {
                         bkptmodPair = bmgr.getBreakpointPair(bkpt2, bkpt1);
+                    }
                     if (bkptmodPair != null) {
                         TropicalCycloneAdvisory adv = new TropicalCycloneAdvisory(
                                 tcaDlg.getSeverity(), tcaDlg.getAdvisoryType(),
@@ -421,17 +429,20 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
 
                 return true;
 
-            } else
+            } else {
                 return false;
+            }
 
         }
-        
+
         /*
          * overrides the function in selecting tool
          */
         @Override
-        public boolean handleMouseUp(int x, int y, int button){
-            if ( !drawingLayer.isEditable() || shiftDown ) return false;
+        public boolean handleMouseUp(int x, int y, int button) {
+            if (!drawingLayers.isEditable() || shiftDown) {
+                return false;
+            }
 
             if (button == 3) {
 
@@ -441,7 +452,7 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                     /*
                      * Load PGEN Select tool
                      */
-                    drawingLayer.removeSelected();
+                    drawingLayers.removeSelected();
                     PgenUtil.setSelectingMode();
                     break;
 
@@ -478,30 +489,24 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                 }
 
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
-        
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseMove(int,
-         * int)
-         */
+
         @Override
         public boolean handleMouseMove(int x, int y) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             String coast;
             boolean isIsland;
-            // System.out.println(" IN MODE : "+mode);
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(x, y);
-            if (loc == null)
+            if (loc == null) {
                 return false;
+            }
 
             if (attrDlg != null) {
 
@@ -516,8 +521,9 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                  * breakpoints only, if selected.
                  */
                 BreakpointFilter filter = new BreakpointFilter();
-                if (tcaDlg.getBreakpointType().equals(BKPT_TYPE_OFFICIAL))
+                if (tcaDlg.getBreakpointType().equals(BKPT_TYPE_OFFICIAL)) {
                     filter.setOfficialOnly();
+                }
 
                 switch (mode) {
 
@@ -527,10 +533,11 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                      * name
                      */
                     BPGeography bkptinfo = null;
-                    if (geog.equals("Islands"))
+                    if (geog.equals("Islands")) {
                         bkptinfo = bmgr.getNearestIsland(loc);
-                    else if (geog.equals("Water"))
+                    } else if (geog.equals("Water")) {
                         bkptinfo = bmgr.getNearestWaterway(loc);
+                    }
                     if (bkptinfo != null) {
                         String name = bkptinfo.getBreakpoints().get(0)
                                 .getName();
@@ -573,8 +580,9 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                     isIsland = bmgr.isCoastIsland(coast);
                     filter.filterCoastName(coast);
                     Breakpoint bkpttmp = bmgr.getNearestBreakpoint(loc, filter);
-                    if (bkpt1.equals(bkpttmp) && !isIsland)
+                    if (bkpt1.equals(bkpttmp) && !isIsland) {
                         break;
+                    }
                     if (bkpttmp != null) {
                         String name = bkpttmp.getName();
                         ghost.add(new Text(null, "Courier", 16.f,
@@ -585,7 +593,7 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                                 "TEXT", "General Text"));
                         TCAElement tcaTemp = (TCAElement) def.create(
                                 DrawableType.TCA, tcaDlg, pgenCategory,
-                                pgenType, loc, drawingLayer.getActiveLayer());
+                                pgenType, loc, drawingLayers.getActiveLayer());
                         BreakpointPair bp = bmgr.getBreakpointPair(bkpt1,
                                 bkpttmp);
                         TropicalCycloneAdvisory adv = new TropicalCycloneAdvisory(
@@ -610,8 +618,9 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                     isIsland = bmgr.isCoastIsland(coast);
                     filter.filterCoastName(coast);
                     Breakpoint bkptmod = bmgr.getNearestBreakpoint(loc, filter);
-                    if (bkpt1.equals(bkptmod) && !isIsland)
+                    if (bkpt1.equals(bkptmod) && !isIsland) {
                         break;
+                    }
                     if (bkptmod != null) {
                         String name = bkptmod.getName();
                         ghost.add(new Text(null, "Courier", 16.f,
@@ -622,12 +631,13 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                                 "TEXT", "General Text"));
                         TCAElement tcaTemp = (TCAElement) def.create(
                                 DrawableType.TCA, tcaDlg, pgenCategory,
-                                pgenType, loc, drawingLayer.getActiveLayer());
+                                pgenType, loc, drawingLayers.getActiveLayer());
                         BreakpointPair bp = null;
-                        if (keepFirst)
+                        if (keepFirst) {
                             bp = bmgr.getBreakpointPair(bkpt1, bkptmod);
-                        else
+                        } else {
                             bp = bmgr.getBreakpointPair(bkptmod, bkpt1);
+                        }
                         TropicalCycloneAdvisory adv = new TropicalCycloneAdvisory(
                                 tcaDlg.getSeverity(), tcaDlg.getAdvisoryType(),
                                 geog, bp);
@@ -641,9 +651,10 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
                 }
 
                 // Set ghost elements and refresh editor
-                if (firstPt != null)
+                if (firstPt != null) {
                     ghost.add(firstPt);
-                drawingLayer.setGhostLine(ghost);
+                }
+                drawingLayers.setGhostLine(ghost);
                 mapEditor.refresh();
 
             }
@@ -682,8 +693,8 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
 
             elem = (TCAElement) def.create(DrawableType.TCA, tcaDlg,
                     pgenCategory, pgenType, dummy,
-                    drawingLayer.getActiveLayer());
-            drawingLayer.addElement(elem);
+                    drawingLayers.getActiveLayer());
+            drawingLayers.addElement(elem);
         } else {
             /*
              * Make acopy of the existing element; update its attributes from
@@ -692,11 +703,10 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
              */
             TCAElement newElem = (TCAElement) elem.copy();
             newElem.update(tcaDlg);
-            drawingLayer.replaceElement(elem, newElem);
+            drawingLayers.replaceElement(elem, newElem);
             elem = newElem;
         }
-        drawingLayer.setSelected(elem);
-        // drawingLayer.registerSelectedSymbol(elem, CIRCLE);
+        drawingLayers.setSelected(elem);
         mapEditor.refresh();
 
     }
@@ -725,13 +735,14 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
      */
     public void selectAdvisory(TropicalCycloneAdvisory adv) {
         selectedAdvisory = adv;
-        drawingLayer.removePtsSelected();
-        drawingLayer.setPtsSelectedColor(Color.WHITE);
+        drawingLayers.removePtsSelected();
+        drawingLayers.setPtsSelectedColor(Color.WHITE);
         List<Coordinate> plist = elem.getPoints();
         for (Breakpoint bp : adv.getSegment().getBreakpoints()) {
             for (Coordinate c : plist) {
-                if (bp.getLocation().equals2D(c))
-                    drawingLayer.addPtSelected(plist.indexOf(c));
+                if (bp.getLocation().equals2D(c)) {
+                    drawingLayers.addPtSelected(plist.indexOf(c));
+                }
             }
         }
     }
@@ -742,15 +753,15 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
      */
     public void deselectAdvisory() {
         selectedAdvisory = null;
-        drawingLayer.removePtsSelected();
-        drawingLayer.setDefaultPtsSelectedColor();
+        drawingLayers.removePtsSelected();
+        drawingLayers.setDefaultPtsSelectedColor();
         mode = DrawingMode.IDLE;
     }
 
     /**
      * SAves the current advisory to EDEX. The activity label is based on the
      * storm information.
-     * 
+     *
      * @return true, if advisory was saved successfully.
      */
     public String saveAdvisory() {
@@ -763,12 +774,10 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
 
         Layer defaultLayer = new Layer();
         defaultLayer.addElement(elem);
-        ArrayList<Layer> layerList = new ArrayList<Layer>();
+        ArrayList<Layer> layerList = new ArrayList<>();
         layerList.add(defaultLayer);
 
         String forecaster = System.getProperty("user.name");
-        // String forecaster = UserController.getUserObject().uniqueId()
-        // .toString();
         ProductTime refTime = new ProductTime(elem.getAdvisoryTime());
 
         Product defaultProduct = new Product(elem.getStormName(), TCA_TYPE,
@@ -787,27 +796,6 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
         return dataURI;
     }
 
-    /*
-     * Checks to see if a file exists. If so, pop up a dialog asking for
-     * permission to overwrite the file.
-     */
-    /*
-     * private boolean checkFileStatus(String filename) {
-     * 
-     * boolean canWrite = false; File f = new File(filename);
-     * 
-     * if ( f.exists() ) { // display confirmation dialog String msg =
-     * "VG XML file " + filename + " already exists. Overwrite?"; MessageDialog
-     * confirmDlg = new MessageDialog(
-     * PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
-     * "Confirm", null, msg, MessageDialog.QUESTION, new String[]{"OK",
-     * "Cancel"}, 0); confirmDlg.open();
-     * 
-     * if ( confirmDlg.getReturnCode() == MessageDialog.OK ) { canWrite = true;
-     * } } else { canWrite = true; }
-     * 
-     * return canWrite; }
-     */
     /*
      * Generates the name of the file used to store the TCA Element. The
      * filename is based on storm information.
@@ -837,7 +825,7 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
     /**
      * Creates a TCV message for the watch/warnings in the current TCA Element
      * advisory
-     * 
+     *
      * @return
      */
     public String createTCV() {
@@ -849,10 +837,11 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
         String office = PgenUtil.getCurrentOffice();
 
         // Create the message
-        if (prev == null)
+        if (prev == null) {
             tcv = new TCVMessage(office, elem);
-        else
+        } else {
             tcv = new TCVMessage(office, prev, elem);
+        }
 
         // return the message TEXT.
         return tcv.createText();
@@ -867,11 +856,10 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
 
         TCAElement previous = null;
         String dataURI = findPreviousActivity();
-        if (dataURI == null)
+        if (dataURI == null) {
             return null;
+        }
 
-        // Products prods = FileTools.read(filename);
-        // List<Product> prds = ProductConverter.convert(prods);
         List<Product> prds = null;
         try {
             prds = StorageUtils.retrieveProduct(dataURI);
@@ -894,14 +882,14 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
 
     private Map<String, String> getTcaActivityMap() {
 
-        Map<String, String> tcaMap = new HashMap<String, String>();
+        Map<String, String> tcaMap = new HashMap<>();
 
         DbQueryRequest request = new DbQueryRequest();
         request.setEntityClass(PgenRecord.class.getName());
         request.addRequestField(PgenRecord.ACTIVITY_LABEL);
         request.addRequestField(PgenRecord.DATAURI);
-        request.addConstraint(PgenRecord.ACTIVITY_TYPE, new RequestConstraint(
-                TCA_TYPE, ConstraintType.EQUALS));
+        request.addConstraint(PgenRecord.ACTIVITY_TYPE,
+                new RequestConstraint(TCA_TYPE, ConstraintType.EQUALS));
 
         DbQueryResponse response;
         try {
@@ -938,35 +926,41 @@ public class PgenTcaTool extends AbstractPgenDrawingTool {
 
             label = String.format(intTcaFileFormat, basin, stormNum, year,
                     regnum - 1, "b");
-            if (tcaMap.containsKey(label))
+            if (tcaMap.containsKey(label)) {
                 return tcaMap.get(label);
+            }
 
             label = String.format(intTcaFileFormat, basin, stormNum, year,
                     regnum - 1, "a");
-            if (tcaMap.containsKey(label))
+            if (tcaMap.containsKey(label)) {
                 return tcaMap.get(label);
+            }
 
             label = String.format(tcaFileFormat, basin, stormNum, year,
                     regnum - 1);
-            if (tcaMap.containsKey(label))
+            if (tcaMap.containsKey(label)) {
                 return tcaMap.get(label);
+            }
 
         } else if (advno.endsWith("a")) {
 
             label = String.format(tcaFileFormat, basin, stormNum, year, regnum);
-            if (tcaMap.containsKey(label))
+            if (tcaMap.containsKey(label)) {
                 return tcaMap.get(label);
+            }
 
         } else if (advno.endsWith("b")) {
 
             label = String.format(intTcaFileFormat, basin, stormNum, year,
                     regnum, "a");
-            if (tcaMap.containsKey(label))
+            if (tcaMap.containsKey(label)) {
                 return tcaMap.get(label);
+            }
 
             label = String.format(tcaFileFormat, basin, stormNum, year, regnum);
-            if (tcaMap.containsKey(label))
+            if (tcaMap.containsKey(label)) {
                 return tcaMap.get(label);
+            }
 
         }
 

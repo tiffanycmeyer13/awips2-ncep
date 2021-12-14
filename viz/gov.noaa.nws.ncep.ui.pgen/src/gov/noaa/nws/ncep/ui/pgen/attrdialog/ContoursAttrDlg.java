@@ -87,6 +87,7 @@ import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductConfigureDialog;
 import gov.noaa.nws.ncep.ui.pgen.producttypes.PgenLayer;
 import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 import gov.noaa.nws.ncep.ui.pgen.tools.AbstractPgenTool;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenContoursTool;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenContoursTool.PgenContoursHandler;
@@ -97,75 +98,112 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSelectHandler;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * --------------------------------------------------------------------------------------
- * 10/09        #167        J. Wu       Initial Creation.
- * 12/09        #167        J. Wu       Allow editing line and label attributes.
- * 03/10        #215        J. Wu       Make grid from contours.
- * 06/10        #215        J. Wu       Added capability to draw mix/max symbols.
- * 11/10        #345        J. Wu       Added capability to draw circle.
- * 12/10        #321        J. Wu       Added capability to move labels.
- * 12/10        #167        J. Wu       Added a second symbol.
- * 12/10        #312        J. Wu       track the last-status of "Closed" button.
- * 01/11        #203        J. Wu       Allow user to define more quick access symbols.
- * 02/11        #?          J. Wu       Implemented default "settings".
- * 04/11        #?          B. Yin      Re-factor IAttribute
- * 07/11        #?          J. Wu       Updated symbol selection panel and allowed closed
- * 08/11        #?          J. Wu       TTR78: keep line/symbol/label attr window open.
- * 01/12        #?          J. Wu       Fixed exceptions when closing the dialog.
- * 05/12        756         B. Yin      Fixed the place symbol exception
- * 12/13        1084        J. Wu       Add table-control for Cint in contoursInfo.xml
- * 04/14        #1117       J. Wu       Add quick-access line types, set label focus,
- *                                      up/down arrow hotkeys to change label.
- * 04/21/2014   TTR992      D. Sushon   Contour tool's Label >> Edit option should not close
- *                                      main Contour tool window on Cancel, changing a
- *                                      symbol's label should not change the symbol;
- * 04/21/2014   TTR992      D. Sushon   Contour tool's Label >> Edit option should not close
- *                                      main Contour tool window on Cancel, changing a
- *                                      symbol's label should not change the symbol;
- * 04/25/2014   TTR868      D. Sushon   Editing/moving contour text attribute causes contour
- *                                      to disappear.
- * 04/29/2014   trac 1132   D. Sushon   In testing solution for TTR 868, it was found that
- *                                      similar changes to labels for other contour objects
- *                                      caused a similar error (label or object or both
- *                                      would disappear), this should now be fixed.
- * 05/02/2014   ?           D. Sushon   In testing solution for trac 1132, it was found that
- *                                      multiple instances of the contour dialog's Edit
- *                                      windows could be created with no way to remove,
- *                                      should now be fixed.
- * 05/14        TTR1008     J. Wu       Set default contour parameters through settings_tbl.xml.
- * 05/14        TTR990      J. Wu       Set default attributes for different contour labels.
- * 08/14        ?           J. Wu       "Edit" line color should go to contoursAttrSettings to take effect..
- * 01/15        R5199/T1058 J. Wu       Load/Save settings for different settings tables.
- * 01/15        R5200/T1059 J. Wu       Add setSettings(de) to remember last-used attributes.
- * 01/15        R5201/T1060 J. Wu       Add getLabelTempKey(adc).
- * 01/15        R5413       B. Yin      Added open methods for circle and line dialogs.
- * 07/15        R8352       J. Wu       Make label list collapsible and remove select/delete buttons.
- * 08/01/2015   R8213       P.          CAVE>PGEN
- *                          Chowdhuri    - Refinements to contoursInfo.xml
- * 08/15        R8552       J. Wu       Limit contours' hotkeys within its own context.
- * 09/29/2015   R8163       J. Wu       Prevent exception when contour type changes.
- * 11/18/2015   R12829      J. Wu       Link "Contours Parameter" to the one defined on layer.
- * 01/14/2016   R13168      J. Wu       Add "One Contours per Layer" rule.
- * 01/27/2016   R13166      J. Wu       Add symbol only & label only capability.
- * 03/30/2016   R16622      J. Wu       Use current date/time as default.
- * 03/23/2016   R16613      J. Huber    Change "Hide Labels" to "Collapse Levels".
- * 04/11/2016   R17056      J. Wu       Match contour line/symbol color with settings.
- * 05/07/2016   R17379      J. Wu       Overwrite contour level when user types in new value.
- * 05/16/2016   R18388      J. Wu       Use some contants in PgenConstant.
- * 05/17/2016   5641        njensen     Don't activate context outside of NCP
- * 06/01/2016   R18387      B. Yin      Removed "Edit" and "All" buttons.
- * 07/01/2016   R17377      J. Wu       Add "shiftDownInContourDialog" flag.
- * 07/21/2016   R16077      J. Wu       Allow number of labels to be 0 for contour lines.
- * 07/26/2019   66393       mapeters    Handle parm-specific contours settings
- * 08/07/2019   66393       mapeters    Only get available symbol/line types for the current parm
- * 09/06/2019   64150       ksunil      Change private class visibility to protected
- * 09/06/2019   64970       ksunil      Call changeMinmaxType when label/symbol only checkbox is pressed.
- * 02/10/2020   74136       smanoj      Fixed NullPointerException when drawingLayer is null
- * 10/30/2020   84101       smanoj      Add "Snap Labels to ContourLine" option on the
- *                                      Contours Attributes dialog.
- * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
- * 08/26/2021   86161       srussell    Updated  close()
+ *
+ * Date          Ticket#      Engineer   Description
+ * ------------- ------------ ---------- ---------------------------------------
+ * 10/09         167          J. Wu      Initial Creation.
+ * 12/09         167          J. Wu      Allow editing line and label
+ *                                       attributes.
+ * 03/10         215          J. Wu      Make grid from contours.
+ * 06/10         215          J. Wu      Added capability to draw mix/max
+ *                                       symbols.
+ * 11/10         345          J. Wu      Added capability to draw circle.
+ * 12/10         321          J. Wu      Added capability to move labels.
+ * 12/10         167          J. Wu      Added a second symbol.
+ * 12/10         312          J. Wu      track the last-status of "Closed"
+ *                                       button.
+ * 01/11         203          J. Wu      Allow user to define more quick access
+ *                                       symbols.
+ * 02/11         #?           J. Wu      Implemented default "settings".
+ * 04/11         #?           B. Yin     Re-factor IAttribute
+ * 07/11         #?           J. Wu      Updated symbol selection panel and
+ *                                       allowed closed
+ * 08/11         #?           J. Wu      TTR78: keep line/symbol/label attr
+ *                                       window open.
+ * 01/12         #?           J. Wu      Fixed exceptions when closing the
+ *                                       dialog.
+ * 05/12         756          B. Yin     Fixed the place symbol exception
+ * 12/13         1084         J. Wu      Add table-control for Cint in
+ *                                       contoursInfo.xml
+ * 04/14         1117         J. Wu      Add quick-access line types, set label
+ *                                       focus, up/down arrow hotkeys to change
+ *                                       label.
+ * Apr 21, 2014  TTR992       D. Sushon  Contour tool's Label >> Edit option
+ *                                       should not close main Contour tool
+ *                                       window on Cancel, changing a symbol's
+ *                                       label should not change the symbol;
+ * Apr 21, 2014  TTR992       D. Sushon  Contour tool's Label >> Edit option
+ *                                       should not close main Contour tool
+ *                                       window on Cancel, changing a symbol's
+ *                                       label should not change the symbol;
+ * Apr 25, 2014  TTR868       D. Sushon  Editing/moving contour text attribute
+ *                                       causes contour to disappear.
+ * Apr 29, 2014  trac 1132    D. Sushon  In testing solution for TTR 868, it was
+ *                                       found that similar changes to labels
+ *                                       for other contour objects caused a
+ *                                       similar error (label or object or both
+ *                                       would disappear), this should now be
+ *                                       fixed.
+ * May 02, 2014  ?            D. Sushon  In testing solution for trac 1132, it
+ *                                       was found that multiple instances of
+ *                                       the contour dialog's Edit windows could
+ *                                       be created with no way to remove,
+ *                                       should now be fixed.
+ * 05/14         TTR1008      J. Wu      Set default contour parameters through
+ *                                       settings_tbl.xml.
+ * 05/14         TTR990       J. Wu      Set default attributes for different
+ *                                       contour labels.
+ * 08/14         ?            J. Wu      "Edit" line color should go to
+ *                                       contoursAttrSettings to take effect..
+ * 01/15         R5199/T1058  J. Wu      Load/Save settings for different
+ *                                       settings tables.
+ * 01/15         R5200/T1059  J. Wu      Add setSettings(de) to remember
+ *                                       last-used attributes.
+ * 01/15         R5201/T1060  J. Wu      Add getLabelTempKey(adc).
+ * 01/15         5413         B. Yin     Added open methods for circle and line
+ *                                       dialogs.
+ * 07/15         8352         J. Wu      Make label list collapsible and remove
+ *                                       select/delete buttons.
+ * Aug 01, 2015  8213         P.         CAVE>PGEN
+ *                            Chowdhuri  - Refinements to contoursInfo.xml
+ * 08/15         8552         J. Wu      Limit contours' hotkeys within its own
+ *                                       context.
+ * Sep 29, 2015  8163         J. Wu      Prevent exception when contour type
+ *                                       changes.
+ * Nov 18, 2015  12829        J. Wu      Link "Contours Parameter" to the one
+ *                                       defined on layer.
+ * Jan 14, 2016  13168        J. Wu      Add "One Contours per Layer" rule.
+ * Jan 27, 2016  13166        J. Wu      Add symbol only & label only
+ *                                       capability.
+ * Mar 30, 2016  16622        J. Wu      Use current date/time as default.
+ * Mar 23, 2016  16613        J. Huber   Change "Hide Labels" to "Collapse
+ *                                       Levels".
+ * Apr 11, 2016  17056        J. Wu      Match contour line/symbol color with
+ *                                       settings.
+ * May 07, 2016  17379        J. Wu      Overwrite contour level when user types
+ *                                       in new value.
+ * May 16, 2016  18388        J. Wu      Use some contants in PgenConstant.
+ * May 17, 2016  5641         njensen    Don't activate context outside of NCP
+ * Jun 01, 2016  18387        B. Yin     Removed "Edit" and "All" buttons.
+ * Jul 01, 2016  17377        J. Wu      Add "shiftDownInContourDialog" flag.
+ * Jul 21, 2016  16077        J. Wu      Allow number of labels to be 0 for
+ *                                       contour lines.
+ * Jul 26, 2019  66393        mapeters   Handle parm-specific contours settings
+ * Aug 07, 2019  66393        mapeters   Only get available symbol/line types
+ *                                       for the current parm
+ * Sep 06, 2019  64150        ksunil     Change private class visibility to
+ *                                       protected
+ * Sep 06, 2019  64970        ksunil     Call changeMinmaxType when label/symbol
+ *                                       only checkbox is pressed.
+ * Feb 10, 2020  74136        smanoj     Fixed NullPointerException when
+ *                                       drawingLayers is null
+ * Oct 30, 2020  84101        smanoj     Add "Snap Labels to ContourLine" option
+ *                                       on the Contours Attributes dialog.
+ * Apr 23, 2021  89949        smanoj     Fixed Graph to Grid Issues.
+ * Aug 26, 2021  86161        srussell   Updated  close()
+ * Dec 01, 2021  95362        tjensen    Refactor PGEN Resource management to
+ *                                       support multi-panel displays
+ * Dec 09, 2021   98783       srussell   Updated ContoursAttrDlg.close()
  *
  * </pre>
  *
@@ -205,7 +243,7 @@ public class ContoursAttrDlg extends AttrDlg
 
     private Calendar contourTime2 = Calendar.getInstance();
 
-    private String defCint = ContoursInfoDlg.getCints()
+    private final String defCint = ContoursInfoDlg.getCints()
             .get(contourParm + "-" + contourLevel);
 
     private String contourCint = (defCint != null
@@ -371,7 +409,7 @@ public class ContoursAttrDlg extends AttrDlg
 
     private boolean toggleSnapLblChecked = true;
 
-    protected PgenResource pgenrsc = null;
+    protected PgenResourceList pgenrscs = null;
 
     /**
      * Private constructor
@@ -1348,8 +1386,8 @@ public class ContoursAttrDlg extends AttrDlg
         } else {
             Control[] wids = labelGrp.getChildren();
             if (wids != null) {
-                for (int jj = 0; jj < wids.length; jj++) {
-                    wids[jj].dispose();
+                for (Control wid : wids) {
+                    wid.dispose();
                 }
             }
         }
@@ -1425,7 +1463,7 @@ public class ContoursAttrDlg extends AttrDlg
         if (e.widget instanceof Button) {
 
             Button b = (Button) e.widget;
-            DrawableElement de = drawingLayer.getSelectedDE();
+            DrawableElement de = drawingLayers.getSelectedDE();
 
             if (de != null) {
                 currentContours = (Contours) de.getParent().getParent();
@@ -1451,7 +1489,7 @@ public class ContoursAttrDlg extends AttrDlg
              */
             if (btnName.equals(SELECT_CONTOURLINE)) {
 
-                drawingLayer.removeSelected();
+                drawingLayers.removeSelected();
 
                 this.setDrawingStatus(ContourDrawingStatus.SELECT);
                 tool.setPgenSelectHandler();
@@ -1492,7 +1530,7 @@ public class ContoursAttrDlg extends AttrDlg
 
                     if (((DECollection) oldContours).size() <= 1) {
                         // If no ContourLine left, start a new Contours.
-                        drawingLayer.removeElement(oldContours);
+                        drawingLayers.removeElement(oldContours);
                         newContours = null;
                     } else {
 
@@ -1520,7 +1558,7 @@ public class ContoursAttrDlg extends AttrDlg
                          * one with the new Contours.
                          */
                         newContours.update(this);
-                        drawingLayer.replaceElement(oldContours, newContours);
+                        drawingLayers.replaceElement(oldContours, newContours);
 
                     }
 
@@ -1528,7 +1566,7 @@ public class ContoursAttrDlg extends AttrDlg
                      * Reset the current contours
                      */
                     currentContours = newContours;
-                    drawingLayer.removeSelected();
+                    drawingLayers.removeSelected();
 
                     if (tool != null) {
                         tool.setCurrentContour(newContours);
@@ -1575,7 +1613,7 @@ public class ContoursAttrDlg extends AttrDlg
         /*
          * Create a new Contours as well as a new contour component
          */
-        DrawableElement de = drawingLayer.getSelectedDE();
+        DrawableElement de = drawingLayers.getSelectedDE();
         if (de != null && de.getParent() != null
                 && de.getParent().getParent() instanceof Contours) {
 
@@ -1660,7 +1698,7 @@ public class ContoursAttrDlg extends AttrDlg
                                     newEl = ((ContourLine) newAdc).getLabels()
                                             .get(0);
                                 } else {
-                                    drawingLayer.removeSelected();
+                                    drawingLayers.removeSelected();
                                     newEl = null;
                                 }
                             }
@@ -1711,7 +1749,7 @@ public class ContoursAttrDlg extends AttrDlg
              * new Contours.
              */
             newContours.update(this);
-            drawingLayer.replaceElement(oldContours, newContours);
+            drawingLayers.replaceElement(oldContours, newContours);
             if (tool != null) {
                 tool.setCurrentContour(newContours);
             }
@@ -1720,9 +1758,9 @@ public class ContoursAttrDlg extends AttrDlg
              * Reset the selected contours and DE to the updated ones.
              */
             currentContours = newContours;
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             if (newEl != null) {
-                drawingLayer.setSelected(newEl);
+                drawingLayers.setSelected(newEl);
             }
 
         } else if (currentContours != null) {
@@ -1737,7 +1775,7 @@ public class ContoursAttrDlg extends AttrDlg
                 Contours newContours = oldContours.copy();
 
                 newContours.update(this);
-                drawingLayer.replaceElement(oldContours, newContours);
+                drawingLayers.replaceElement(oldContours, newContours);
                 if (tool != null) {
                     tool.setCurrentContour(newContours);
                 }
@@ -1774,13 +1812,6 @@ public class ContoursAttrDlg extends AttrDlg
         }
 
         currentContours = null;
-
-        // Release contours-specific key bindings.
-        deactivatePGENContoursContext();
-
-        // Deselect points on a contour line upon closing the Contour Line Dlg
-        pgenrsc = PgenSession.getInstance().getPgenResource();
-        pgenrsc.removeSelected();
 
         return super.close();
 
@@ -1961,7 +1992,7 @@ public class ContoursAttrDlg extends AttrDlg
      */
     private void openAttrDlg(AttrDlg dlg) {
         dlg.setBlockOnOpen(false);
-        dlg.setDrawingLayer(drawingLayer);
+        dlg.setDrawingLayers(drawingLayers);
         dlg.setMapEditor(mapEditor);
         dlg.open();
         dlg.enableButtons();
@@ -2064,7 +2095,7 @@ public class ContoursAttrDlg extends AttrDlg
         /*
          * If no element is selected and "All" is not checked, do nothing.
          */
-        DrawableElement de = drawingLayer.getSelectedDE();
+        DrawableElement de = drawingLayers.getSelectedDE();
 
         if (de == null) {
             return;
@@ -2196,7 +2227,7 @@ public class ContoursAttrDlg extends AttrDlg
              * new Contours.
              */
             newContours.update(oldContours);
-            drawingLayer.replaceElement(oldContours, newContours);
+            drawingLayers.replaceElement(oldContours, newContours);
 
             /*
              * Reset the selected Contours and DE to the updated ones.
@@ -2207,8 +2238,8 @@ public class ContoursAttrDlg extends AttrDlg
             }
 
             if (newEl != null) {
-                drawingLayer.removeSelected();
-                drawingLayer.setSelected(newEl);
+                drawingLayers.removeSelected();
+                drawingLayers.setSelected(newEl);
             }
 
         }
@@ -2321,7 +2352,7 @@ public class ContoursAttrDlg extends AttrDlg
         /*
          * If no ContourLine is selected and "All" is not checked, do nothing.
          */
-        DrawableElement de = drawingLayer.getSelectedDE();
+        DrawableElement de = drawingLayers.getSelectedDE();
 
         /*
          * Create a new Contours with all components in the old Contours and
@@ -2379,7 +2410,7 @@ public class ContoursAttrDlg extends AttrDlg
              * new Contours.
              */
             newContours.update(oldContours);
-            drawingLayer.replaceElement(oldContours, newContours);
+            drawingLayers.replaceElement(oldContours, newContours);
 
             /*
              * Reset the selected contours and DE to the updated ones.
@@ -2390,8 +2421,8 @@ public class ContoursAttrDlg extends AttrDlg
             }
 
             if (newEl != null) {
-                drawingLayer.removeSelected();
-                drawingLayer.setSelected(newEl);
+                drawingLayers.removeSelected();
+                drawingLayers.setSelected(newEl);
             }
 
         }
@@ -2511,7 +2542,7 @@ public class ContoursAttrDlg extends AttrDlg
         /*
          * If no Contourcircle is selected and "All" is not checked, do nothing.
          */
-        DrawableElement de = drawingLayer.getSelectedDE();
+        DrawableElement de = drawingLayers.getSelectedDE();
 
         /*
          * Create a new Contours with all components in the old Contours and
@@ -2569,7 +2600,7 @@ public class ContoursAttrDlg extends AttrDlg
              * new Contours.
              */
             newContours.update(oldContours);
-            drawingLayer.replaceElement(oldContours, newContours);
+            drawingLayers.replaceElement(oldContours, newContours);
 
             /*
              * Reset the selected contours and DE to the updated ones.
@@ -2580,8 +2611,8 @@ public class ContoursAttrDlg extends AttrDlg
             }
 
             if (newEl != null) {
-                drawingLayer.removeSelected();
-                drawingLayer.setSelected(newEl);
+                drawingLayers.removeSelected();
+                drawingLayers.setSelected(newEl);
             }
 
         }
@@ -2883,13 +2914,13 @@ public class ContoursAttrDlg extends AttrDlg
      */
     public class LineTypeSelectionDlg extends Dialog {
 
-        private List<String> objNames;
+        private final List<String> objNames;
 
         private String selectedType;
 
         private Button activator;
 
-        private String title;
+        private final String title;
 
         private Composite top;
 
@@ -2968,8 +2999,8 @@ public class ContoursAttrDlg extends AttrDlg
                         Control[] wids = top.getChildren();
 
                         if (wids != null) {
-                            for (int kk = 0; kk < wids.length; kk++) {
-                                setButtonColor((Button) wids[kk],
+                            for (Control wid : wids) {
+                                setButtonColor((Button) wid,
                                         defaultButtonColor);
                             }
                         }
@@ -3028,13 +3059,13 @@ public class ContoursAttrDlg extends AttrDlg
 
         private Composite top;
 
-        private List<String> objNames;
+        private final List<String> objNames;
 
         private String selectedType;
 
         private Button activator;
 
-        private String title;
+        private final String title;
 
         /**
          * constructor
@@ -3113,8 +3144,8 @@ public class ContoursAttrDlg extends AttrDlg
                         Control[] wids = top.getChildren();
 
                         if (wids != null) {
-                            for (int kk = 0; kk < wids.length; kk++) {
-                                setButtonColor((Button) wids[kk],
+                            for (Control wid : wids) {
+                                setButtonColor((Button) wid,
                                         defaultButtonColor);
                             }
                         }
@@ -3305,7 +3336,7 @@ public class ContoursAttrDlg extends AttrDlg
             }
 
             // set the lat/lon from the current symbol.
-            DrawableElement de = drawingLayer.getSelectedDE();
+            DrawableElement de = drawingLayers.getSelectedDE();
             if (de != null && de.getParent() instanceof ContourMinmax
                     && de instanceof Symbol) {
                 super.setLatitude(((Symbol) de).getLocation().y);
@@ -3326,12 +3357,12 @@ public class ContoursAttrDlg extends AttrDlg
 
                     if (undoBtn.getText().equalsIgnoreCase(UNDO_SYMBOL)) {
                         undoBtn.setText(REDO_SYMBOL);
-                        drawingLayer.getCommandMgr().undo();
+                        drawingLayers.getCommandMgr().undo();
 
                     } else if (undoBtn.getText()
                             .equalsIgnoreCase(REDO_SYMBOL)) {
                         undoBtn.setText(UNDO_SYMBOL);
-                        drawingLayer.getCommandMgr().redo();
+                        drawingLayers.getCommandMgr().redo();
                     }
 
                     /*
@@ -3412,7 +3443,7 @@ public class ContoursAttrDlg extends AttrDlg
         /*
          * If no ContourLine is selected and "All" is not checked, do nothing.
          */
-        DrawableElement de = drawingLayer.getSelectedDE();
+        DrawableElement de = drawingLayers.getSelectedDE();
 
         /*
          * Create a new Contours with all components in the old Contours and
@@ -3503,7 +3534,7 @@ public class ContoursAttrDlg extends AttrDlg
              * new Contours.
              */
             newContours.update(oldContours);
-            drawingLayer.replaceElement(oldContours, newContours);
+            drawingLayers.replaceElement(oldContours, newContours);
 
             /*
              * Reset the selected contours and DE to the updated ones.
@@ -3514,8 +3545,8 @@ public class ContoursAttrDlg extends AttrDlg
             }
 
             if (newEl != null) {
-                drawingLayer.removeSelected();
-                drawingLayer.setSelected(newEl);
+                drawingLayers.removeSelected();
+                drawingLayers.setSelected(newEl);
             }
 
         }
@@ -4007,7 +4038,7 @@ public class ContoursAttrDlg extends AttrDlg
          * and a label.
          */
         boolean typeChanged = false;
-        DrawableElement de = drawingLayer.getSelectedDE();
+        DrawableElement de = drawingLayers.getSelectedDE();
         if (de != null && de instanceof Line && de.getParent() != null
                 && de.getParent().getParent() instanceof Contours) {
 
@@ -4069,7 +4100,7 @@ public class ContoursAttrDlg extends AttrDlg
              * new Contours.
              */
             newContours.update(this);
-            drawingLayer.replaceElement(oldContours, newContours);
+            drawingLayers.replaceElement(oldContours, newContours);
             if (tool != null) {
                 tool.setCurrentContour(newContours);
             }
@@ -4078,9 +4109,9 @@ public class ContoursAttrDlg extends AttrDlg
              * Reset the selected contours and DE to the updated ones.
              */
             currentContours = newContours;
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             if (newEl != null) {
-                drawingLayer.setSelected(newEl);
+                drawingLayers.setSelected(newEl);
             }
 
             if (mapEditor != null) {
@@ -4106,7 +4137,7 @@ public class ContoursAttrDlg extends AttrDlg
 
     @Override
     public int open() {
-        if (drawingLayer == null) {
+        if (drawingLayers == null) {
             return CANCEL;
         }
 
@@ -4114,7 +4145,7 @@ public class ContoursAttrDlg extends AttrDlg
          * Use defaults defined for this layer. Otherwise, use the default from
          * settings table.
          */
-        if (drawingLayer.getSelectedDE() == null) {
+        if (drawingLayers.getSelectedDE() == null) {
             // Check for "One Contours Per Layer" rule.
             Contours oneContours = findExistingContours();
             if (oneContours != null) {
@@ -4235,12 +4266,13 @@ public class ContoursAttrDlg extends AttrDlg
      */
     private String getContourParmOnLayer() {
 
-        String currentProductType = PgenSession.getInstance().getPgenResource()
-                .getActiveProduct().getType();
+        PgenResource currentResource = PgenSession.getInstance()
+                .getCurrentResource();
+        String currentProductType = currentResource.getActiveProduct()
+                .getType();
         ProductType currentType = ProductConfigureDialog.getProductTypes()
                 .get(currentProductType);
-        String currentLayer = PgenSession.getInstance().getPgenResource()
-                .getActiveLayer().getName();
+        String currentLayer = currentResource.getActiveLayer().getName();
 
         String contourParm = PgenConstant.NONE;
         if (currentType != null && currentType.getPgenLayer() != null) {
@@ -4269,7 +4301,7 @@ public class ContoursAttrDlg extends AttrDlg
         Contours existingContours = null;
 
         // Check the Contours of same type.
-        Iterator<AbstractDrawableComponent> it = drawingLayer.getActiveLayer()
+        Iterator<AbstractDrawableComponent> it = drawingLayers.getActiveLayer()
                 .getComponentIterator();
         while (it.hasNext()) {
             AbstractDrawableComponent adc = it.next();
@@ -4284,7 +4316,7 @@ public class ContoursAttrDlg extends AttrDlg
 
         // Check "One Contours per Layer" rule.
         if (PgenUtil.getOneContourPerLayer()) {
-            Iterator<AbstractDrawableComponent> ite = drawingLayer
+            Iterator<AbstractDrawableComponent> ite = drawingLayers
                     .getActiveLayer().getComponentIterator();
             while (ite.hasNext()) {
                 AbstractDrawableComponent adc = ite.next();
@@ -4309,7 +4341,7 @@ public class ContoursAttrDlg extends AttrDlg
          * label, symbol-only, ot label only).
          */
         boolean typeChanged = false;
-        DrawableElement de = drawingLayer.getSelectedDE();
+        DrawableElement de = drawingLayers.getSelectedDE();
         if (de != null && de.getParent() instanceof ContourMinmax
                 && de.getParent().getParent() instanceof Contours) {
 
@@ -4453,7 +4485,7 @@ public class ContoursAttrDlg extends AttrDlg
              * new Contours.
              */
             newContours.update(this);
-            drawingLayer.replaceElement(oldContours, newContours);
+            drawingLayers.replaceElement(oldContours, newContours);
             if (tool != null) {
                 tool.setCurrentContour(newContours);
             }
@@ -4462,9 +4494,9 @@ public class ContoursAttrDlg extends AttrDlg
              * Reset the selected contours and DE to the updated ones.
              */
             currentContours = newContours;
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             if (newEl != null) {
-                drawingLayer.setSelected(newEl);
+                drawingLayers.setSelected(newEl);
             }
 
             if (mapEditor != null) {
@@ -4563,7 +4595,7 @@ public class ContoursAttrDlg extends AttrDlg
             lineAttrDlg.initDlg();
 
             // get stored attributes
-            DrawableElement de = drawingLayer.getSelectedDE();
+            DrawableElement de = drawingLayers.getSelectedDE();
 
             if (de != null && de.getParent() != null
                     && de.getParent() instanceof ContourLine) {
@@ -4602,7 +4634,7 @@ public class ContoursAttrDlg extends AttrDlg
             minmaxAttrDlg.initDlg();
 
             // get stored attributes
-            DrawableElement de = drawingLayer.getSelectedDE();
+            DrawableElement de = drawingLayers.getSelectedDE();
             if (de != null && de instanceof Symbol
                     && de.getParent() instanceof ContourMinmax) {
                 minmaxAttrDlg.setAttrForDlg(de);
@@ -4637,7 +4669,7 @@ public class ContoursAttrDlg extends AttrDlg
             circleAttrDlg.initDlg();
 
             // get stored attributes
-            DrawableElement de = drawingLayer.getSelectedDE();
+            DrawableElement de = drawingLayers.getSelectedDE();
 
             if (de != null && de.getParent() != null
                     && de.getParent() instanceof ContourCircle) {
@@ -4673,7 +4705,7 @@ public class ContoursAttrDlg extends AttrDlg
             labelAttrDlg.initDlg();
 
             // get stored attributes
-            DrawableElement de = drawingLayer.getSelectedDE();
+            DrawableElement de = drawingLayers.getSelectedDE();
 
             if (de != null) {
 
@@ -4726,8 +4758,8 @@ public class ContoursAttrDlg extends AttrDlg
      * Removes ghosts and selected elements. Sets to selecting mode.
      */
     private void attrDlgCleanUp() {
-        drawingLayer.removeSelected();
-        drawingLayer.removeGhostLine();
+        drawingLayers.removeSelected();
+        drawingLayers.removeGhostLine();
         setDrawingStatus(ContoursAttrDlg.ContourDrawingStatus.SELECT);
     }
 

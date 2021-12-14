@@ -61,16 +61,22 @@ import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
  * SOFTWARE HISTORY
  *
  * Date          Ticket#  Engineer  Description
- * ------------- -------- --------- -----------------
- * Jun 01, 2020  78215    smanoj   Initial creation
- * Jun 16, 2020  79243    smanoj   Added Caribbean and South American FIRs.
- * Mar 15, 2021  88217    smanoj   Added capability to SAVE CANCEL file.
- * Apr 07, 2021  88217    smanoj   Remove Hazard Type from Cancellation Information Text.
- *                                 Also remove unused buttons.
- * Apr 09, 2021  90325    smanoj   CARSAM Backup WMO headers update.
- * Jun 04, 2021  91845    smanoj   Fixing some issues with Backupmode and CANCEL.
- * Jun 15, 2021  91845    smanoj   Remove duplicate text from Cancellation Information Text.
- * Nov 18, 2021  98546    achalla  Modified CAR/SAM SIGMET Id and Sequence number in GUI and xml file
+ * ------------- -------- --------- --------------------------------------------
+ * Jun 01, 2020  78215    smanoj    Initial creation
+ * Jun 16, 2020  79243    smanoj    Added Caribbean and South American FIRs.
+ * Mar 15, 2021  88217    smanoj    Added capability to SAVE CANCEL file.
+ * Apr 07, 2021  88217    smanoj    Remove Hazard Type from Cancellation
+ *                                  Information Text. Also remove unused
+ *                                  buttons.
+ * Apr 09, 2021  90325    smanoj    CARSAM Backup WMO headers update.
+ * Jun 04, 2021  91845    smanoj    Fixing some issues with Backupmode and
+ *                                  CANCEL.
+ * Jun 15, 2021  91845    smanoj    Remove duplicate text from Cancellation
+ *                                  Information Text.
+ * Nov 18, 2021  98546    achalla   Modified CAR/SAM SIGMET Id and Sequence
+ *                                  number in GUI and xml file
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
  *
@@ -78,7 +84,7 @@ import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
  */
 public class SigmetCancelDlg extends AttrDlg {
 
-    private Sigmet sigmet;
+    private final Sigmet sigmet;
 
     private String firID;
 
@@ -189,7 +195,7 @@ public class SigmetCancelDlg extends AttrDlg {
                 // In the case of opening a cancelled SIGMET (existing *.xml)
                 // so the Cancel Dialog is populated with the correct Series
                 // Number.
-                String fileName = parentDlg.drawingLayer.getActiveProduct()
+                String fileName = parentDlg.drawingLayers.getActiveProduct()
                         .getInputFile();
                 if (fileName != null && fileName.startsWith(INTL_SIGMET)
                         && fileName.endsWith(".xml")) {
@@ -863,7 +869,7 @@ public class SigmetCancelDlg extends AttrDlg {
 
         private Text txtError;
 
-        private String errorMsg;
+        private final String errorMsg;
 
         SigmetCancelErrorDlg(Shell parShell, String errorMsg) {
             super(parShell);

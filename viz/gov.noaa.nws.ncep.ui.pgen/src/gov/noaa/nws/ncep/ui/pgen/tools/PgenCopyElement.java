@@ -1,12 +1,23 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenCopyElement
- * 
+ *
  * 22 April 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import org.geotools.coverage.grid.GridEnvelope2D;
+import org.geotools.referencing.CRS;
+import org.opengis.coverage.grid.GridEnvelope;
+
+import com.raytheon.uf.viz.core.rsc.IInputHandler;
+import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.annotation.Operation;
@@ -22,44 +33,40 @@ import gov.noaa.nws.ncep.ui.pgen.gfa.GfaReducePoint;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
 import gov.noaa.nws.ncep.viz.common.SnapUtil;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import org.geotools.coverage.grid.GridEnvelope2D;
-import org.geotools.referencing.CRS;
-import org.opengis.coverage.grid.GridEnvelope;
-
-import com.raytheon.uf.viz.core.rsc.IInputHandler;
 import org.locationtech.jts.geom.Coordinate;
-
 /**
  * Implements a modal map tool for the PGEN copy element function.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 04/09            78      B. Yin      Initial Creation.
- * 04/09            103     B. Yin      Extends from AbstractPgenTool
- * 06/09            106     B. Yin      Use AbstractDrawableCoponent
- * 09/10            ?       B. Yin      Using Screen coordinates 
- * 12/10            321     J. Wu       Select/Copy subcomponent instead
- *                                      of the whole Contours. 
- * 02/11                    J. Wu       Move Gfa text box with the polygon.                                      
- * 02/11            ?       B. Yin      Made it work for Outlooks
- * 02/12                    J. Wu       Make the new copy as the newly-selected.
- * 02/12            597     S. Gurung   Moved snap functionalities to SnapUtil from SigmetInfo. 
- * 02/12                    S. Gurung   Moved isSnapADC() and getNumOfCompassPts() to SigmeInfo.        
- * 04/12            750     Q. Zhou     Modified handleMouseDownMove for loc null.                               
- * 05/11            #808    J. Wu       Update Gfa vor text
- * 05/12            #610    J. Wu       Add warning when GFA FROM lines > 3
- * 08/12            #760    B. Yin      Check for world wrap
- * 09/14            ?       B. Yin      Handle map bounds.
- * 06/15/2016       R13559  bkowal      File cleanup. No longer simulate mouse clicks.
- * 
+ *
+ * Date          Ticket#  Engineer   Description
+ * ------------- -------- ---------- -------------------------------------------
+ * 04/09         78       B. Yin     Initial Creation.
+ * 04/09         103      B. Yin     Extends from AbstractPgenTool
+ * 06/09         106      B. Yin     Use AbstractDrawableCoponent
+ * 09/10         ?        B. Yin     Using Screen coordinates
+ * 12/10         321      J. Wu      Select/Copy subcomponent instead of the
+ *                                   whole Contours.
+ * 02/11                  J. Wu      Move Gfa text box with the polygon.
+ * 02/11         ?        B. Yin     Made it work for Outlooks
+ * 02/12                  J. Wu      Make the new copy as the newly-selected.
+ * 02/12         597      S. Gurung  Moved snap functionalities to SnapUtil from
+ *                                   SigmetInfo.
+ * 02/12                  S. Gurung  Moved isSnapADC() and getNumOfCompassPts()
+ *                                   to SigmeInfo.
+ * 04/12         750      Q. Zhou    Modified handleMouseDownMove for loc null.
+ * 05/11         808      J. Wu      Update Gfa vor text
+ * 05/12         610      J. Wu      Add warning when GFA FROM lines > 3
+ * 08/12         760      B. Yin     Check for world wrap
+ * 09/14         ?        B. Yin     Handle map bounds.
+ * Jun 15, 2016  13559    bkowal     File cleanup. No longer simulate mouse
+ *                                   clicks.
+ * Dec 02, 2021  95362    tjensen    Refactor PGEN Resource management to
+ *                                   support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
@@ -71,22 +78,19 @@ public class PgenCopyElement extends AbstractPgenTool {
     protected IInputHandler copyHandler = null;
 
     public PgenCopyElement() {
-
         super();
-
     }
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.copyHandler == null) {
-
             this.copyHandler = new PgenCopyHandler();
-
         }
 
         return this.copyHandler;
@@ -95,16 +99,16 @@ public class PgenCopyElement extends AbstractPgenTool {
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
     public class PgenCopyHandler extends InputHandlerDefaultImpl {
 
         private boolean preempt;
 
-        private OperationFilter copyFilter = new OperationFilter(
-                Operation.COPY_MOVE);;
+        private final OperationFilter copyFilter = new OperationFilter(
+                Operation.COPY_MOVE);
 
         private Coordinate ptSelected = null;
 
@@ -112,20 +116,16 @@ public class PgenCopyElement extends AbstractPgenTool {
 
         private boolean isMercator = false;
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             preempt = false;
-            isMercator = (CRS.getMapProjection(mapEditor.getActiveDisplayPane()
-                    .getDescriptor().getCRS())).getName().contains("Mercator");
+            isMercator = (CRS.getMapProjection(
+                    mapEditor.getActiveDisplayPane().getDescriptor().getCRS()))
+                            .getName().contains("Mercator");
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(anX, aY);
             if (loc == null || shiftDown) {
@@ -134,72 +134,66 @@ public class PgenCopyElement extends AbstractPgenTool {
 
             if (button == 1) {
 
-                if (drawingLayer.getSelectedComp() == null) {
+                if (drawingLayers.getSelectedComp() == null) {
                     /*
                      * Get the nearest element and set it as the selected
                      * element. Note: for Contours, we should select the nearest
                      * ContourLine, ContourMinmax or ContourCircle.
                      */
-                    AbstractDrawableComponent nadc = drawingLayer
+                    AbstractDrawableComponent nadc = drawingLayers
                             .getNearestComponent(loc, copyFilter, true);
                     if (nadc instanceof Contours) {
-                        nadc = drawingLayer.getNearestElement(loc,
-                                (DECollection) nadc).getParent();
+                        nadc = drawingLayers
+                                .getNearestElement(loc, (DECollection) nadc)
+                                .getParent();
                     }
 
-                    drawingLayer.setSelected(nadc);
-                    if (nadc != null)
+                    drawingLayers.setSelected(nadc);
+                    if (nadc != null) {
                         preempt = true;
+                    }
                     mapEditor.refresh();
                 }
                 return preempt;
 
             } else if (button == 3) {
-
                 return true;
-
             } else {
-
                 return true;
-
             }
 
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDownMove(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDownMove(int anX, int aY, int button) {
 
-            if (shiftDown || !isResourceEditable())
+            if (shiftDown || !isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(anX, aY);
-            // if ( loc == null ) return false;
 
-            AbstractDrawableComponent elSelected = drawingLayer
+            AbstractDrawableComponent elSelected = drawingLayers
                     .getSelectedComp();
             Color ghostColor = new java.awt.Color(255, 255, 255);
             double distanceToSelect = 20;
 
             if (loc != null) {
                 // make sure the click is close enough to the element
-                if (drawingLayer.getDistance(elSelected, loc) > distanceToSelect
-                        && ghostEl == null)
+                if (drawingLayers.getDistance(elSelected,
+                        loc) > distanceToSelect && ghostEl == null) {
                     return false;
+                }
             }
 
             else {
                 // make sure if no DE is selected, no moving the DE
-                if (elSelected == null)
+                if (elSelected == null) {
                     return false;
-                else
+                } else {
                     return true;
+                }
             }
 
             if (elSelected != null) {
@@ -212,13 +206,13 @@ public class PgenCopyElement extends AbstractPgenTool {
                     double[] screenPt = mapEditor
                             .translateInverseClick(elPoint);
 
-                    double distance = Math.sqrt((screenPt[0] - anX)
-                            * (screenPt[0] - anX) + (screenPt[1] - aY)
-                            * (screenPt[1] - aY));
+                    double distance = Math
+                            .sqrt((screenPt[0] - anX) * (screenPt[0] - anX)
+                                    + (screenPt[1] - aY) * (screenPt[1] - aY));
 
                     if (distance < distanceToSelect && ghostEl == null) {
                         ptSelected = elPoint;
-                        ghostEl = drawingLayer.getSelectedComp().copy();
+                        ghostEl = drawingLayers.getSelectedComp().copy();
                         break;
                     }
 
@@ -227,7 +221,7 @@ public class PgenCopyElement extends AbstractPgenTool {
                 if (ghostEl != null) {
 
                     // save the original points
-                    ArrayList<Coordinate> originalPts = new ArrayList<Coordinate>();
+                    ArrayList<Coordinate> originalPts = new ArrayList<>();
                     for (Coordinate coord : ghostEl.getPoints()) {
                         originalPts.add(new Coordinate(coord.x, coord.y, 0));
                     }
@@ -235,8 +229,6 @@ public class PgenCopyElement extends AbstractPgenTool {
                     boolean hitBound = false;
 
                     // use screen coordinate to copy/move
-                    // double[] locScreen =
-                    // mapEditor.translateInverseClick(loc);
                     double[] ptScreen = mapEditor
                             .translateInverseClick(ptSelected);
 
@@ -244,10 +236,10 @@ public class PgenCopyElement extends AbstractPgenTool {
                     double deltaY = aY - ptScreen[1];
 
                     // calculate locations of the ghost el
-                    for (int idx = 0; idx < elSelected.getPoints().size(); idx++) {
-                        double[] scnPt = mapEditor
-                                .translateInverseClick(elSelected.getPoints()
-                                        .get(idx));
+                    for (int idx = 0; idx < elSelected.getPoints()
+                            .size(); idx++) {
+                        double[] scnPt = mapEditor.translateInverseClick(
+                                elSelected.getPoints().get(idx));
                         scnPt[0] += deltaX;
                         scnPt[1] += deltaY;
 
@@ -258,24 +250,19 @@ public class PgenCopyElement extends AbstractPgenTool {
                         double[] world = mapEditor.getActiveDisplayPane()
                                 .screenToGrid(scnPt[0], scnPt[1], 0);
 
-                        if (isMercator
-                                && world[0] > ((GridEnvelope2D) ge).getWidth()) {
-                            // System.out.println("idx=" + idx +
-                            // " Out of Screen " + world[0] +" / " +
-                            // ((GridEnvelope2D)ge).getWidth() );
+                        if (isMercator && world[0] > ((GridEnvelope2D) ge)
+                                .getWidth()) {
                             world[0] -= ((GridEnvelope2D) ge).getWidth();
                             scnPt = mapEditor.getActiveDisplayPane()
                                     .gridToScreen(world);
                         } else if (isMercator && world[0] < 0) {
-                            // System.out.println("idx=" + idx +
-                            // " Out of Screen " + world[0] +" / " +
-                            // ((GridEnvelope2D)ge).getWidth() );
                             world[0] += ((GridEnvelope2D) ge).getWidth();
                             scnPt = mapEditor.getActiveDisplayPane()
                                     .gridToScreen(world);
                         } else if (world[0] > ((GridEnvelope2D) ge).getWidth()
                                 || world[0] < 0 || world[1] < 0
-                                || world[1] > ((GridEnvelope2D) ge).getHeight()) {
+                                || world[1] > ((GridEnvelope2D) ge)
+                                        .getHeight()) {
                             hitBound = true;
                             break;
                         }
@@ -283,8 +270,9 @@ public class PgenCopyElement extends AbstractPgenTool {
                         Coordinate cord = mapEditor.translateClick(scnPt[0],
                                 scnPt[1]);
 
-                        if (cord == null)
+                        if (cord == null) {
                             continue;
+                        }
 
                         ghostEl.getPoints().get(idx).x = cord.x;
                         ghostEl.getPoints().get(idx).y = cord.y;
@@ -293,7 +281,8 @@ public class PgenCopyElement extends AbstractPgenTool {
 
                     if (hitBound) {
                         // restore original points
-                        for (int idx = 0; idx < ghostEl.getPoints().size(); idx++) {
+                        for (int idx = 0; idx < ghostEl.getPoints()
+                                .size(); idx++) {
                             ghostEl.getPoints().get(idx).x = originalPts
                                     .get(idx).x;
                             ghostEl.getPoints().get(idx).y = originalPts
@@ -303,9 +292,8 @@ public class PgenCopyElement extends AbstractPgenTool {
 
                     if (elSelected instanceof Gfa) {
 
-                        double[] scnPt = mapEditor
-                                .translateInverseClick(((Gfa) elSelected)
-                                        .getGfaTextCoordinate());
+                        double[] scnPt = mapEditor.translateInverseClick(
+                                ((Gfa) elSelected).getGfaTextCoordinate());
                         scnPt[0] += deltaX;
                         scnPt[1] += deltaY;
 
@@ -321,7 +309,7 @@ public class PgenCopyElement extends AbstractPgenTool {
                     ghostEl.setColors(new Color[] { ghostColor,
                             new java.awt.Color(255, 255, 255) });
 
-                    drawingLayer.setGhostLine(ghostEl);
+                    drawingLayers.setGhostLine(ghostEl);
                     mapEditor.refresh();
 
                 }
@@ -332,12 +320,6 @@ public class PgenCopyElement extends AbstractPgenTool {
 
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseUp(int, int,
-         * int)
-         */
         @Override
         public boolean handleMouseUp(int x, int y, int button) {
             if (!isResourceEditable() || shiftDown) {
@@ -346,10 +328,10 @@ public class PgenCopyElement extends AbstractPgenTool {
 
             if (button == 3) {
 
-                if (drawingLayer.getSelectedComp() != null) {
+                if (drawingLayers.getSelectedComp() != null) {
                     // de-select element
-                    drawingLayer.removeSelected();
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeSelected();
+                    drawingLayers.removeGhostLine();
                     ghostEl = null;
                     mapEditor.refresh();
                 } else {
@@ -366,27 +348,27 @@ public class PgenCopyElement extends AbstractPgenTool {
 
                 Iterator<DrawableElement> iterator1 = ghostEl
                         .createDEIterator();
-                Iterator<DrawableElement> iterator2 = drawingLayer
+                Iterator<DrawableElement> iterator2 = drawingLayers
                         .getSelectedComp().createDEIterator();
 
                 while (iterator1.hasNext() && iterator2.hasNext()) {
                     iterator1.next().setColors(iterator2.next().getColors());
                 }
 
-                AbstractDrawableComponent parent = drawingLayer
+                AbstractDrawableComponent parent = drawingLayers
                         .getSelectedComp().getParent();
 
                 if (ghostEl instanceof WatchBox) {
                     if (PgenWatchBoxModifyTool.resnapWatchBox(mapEditor,
                             (WatchBox) ghostEl, (WatchBox) ghostEl)) {
-                        drawingLayer.addElement(ghostEl);
-                        drawingLayer.setSelected(ghostEl);
+                        drawingLayers.addElement(ghostEl);
+                        drawingLayers.setSelected(ghostEl);
                     }
                 } else if (parent.getName().equalsIgnoreCase("Contours")) {
                     copyContoursComponent(parent);
                 } else if (parent instanceof Outlook) {
                     ((Outlook) parent).add(ghostEl);
-                    drawingLayer.setSelected(ghostEl);
+                    drawingLayers.setSelected(ghostEl);
                 } else if (ghostEl instanceof Gfa) {
 
                     if (((Gfa) ghostEl).getGfaFcstHr().indexOf("-") > -1) {
@@ -395,10 +377,10 @@ public class PgenCopyElement extends AbstractPgenTool {
                         GfaReducePoint.WarningForOverThreeLines((Gfa) ghostEl);
                     }
 
-                    ((Gfa) ghostEl).setGfaVorText(Gfa
-                            .buildVorText((Gfa) ghostEl));
-                    drawingLayer.addElement(ghostEl);
-                    drawingLayer.setSelected(ghostEl);
+                    ((Gfa) ghostEl)
+                            .setGfaVorText(Gfa.buildVorText((Gfa) ghostEl));
+                    drawingLayers.addElement(ghostEl);
+                    drawingLayers.setSelected(ghostEl);
 
                 } else {
                     if (SigmetInfo.isSnapADC(ghostEl)) {
@@ -409,15 +391,15 @@ public class PgenCopyElement extends AbstractPgenTool {
 
                         AbstractDrawableComponent ghostElCp = ghostEl.copy();
                         ((DrawableElement) ghostElCp).setPoints(list);
-                        drawingLayer.addElement(ghostElCp);
-                        drawingLayer.setSelected(ghostElCp);
+                        drawingLayers.addElement(ghostElCp);
+                        drawingLayers.setSelected(ghostElCp);
                     } else {
-                        drawingLayer.addElement(ghostEl);
-                        drawingLayer.setSelected(ghostEl);
+                        drawingLayers.addElement(ghostEl);
+                        drawingLayers.setSelected(ghostEl);
                     }
                 }
 
-                drawingLayer.removeGhostLine();
+                drawingLayers.removeGhostLine();
                 ghostEl = null;
                 mapEditor.refresh();
 
@@ -449,13 +431,13 @@ public class PgenCopyElement extends AbstractPgenTool {
                  * and reset the selected element to the new copy in the new
                  * Contours for the next "COPY".
                  */
-                if (oldAdc.equals(drawingLayer.getSelectedComp())) {
+                if (oldAdc.equals(drawingLayers.getSelectedComp())) {
 
                     AbstractDrawableComponent dup = ghostEl.copy();
                     dup.setParent(newContours);
                     newContours.add(dup);
 
-                    drawingLayer.setSelected(dup);
+                    drawingLayers.setSelected(dup);
 
                 }
 
@@ -464,7 +446,7 @@ public class PgenCopyElement extends AbstractPgenTool {
             }
 
             newContours.update((Contours) adc);
-            drawingLayer.replaceElement(adc, newContours);
+            drawingLayers.replaceElement(adc, newContours);
 
         }
 

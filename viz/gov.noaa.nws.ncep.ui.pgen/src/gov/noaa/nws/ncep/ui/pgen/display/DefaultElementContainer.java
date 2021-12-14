@@ -1,28 +1,40 @@
 /*
  * DefaultElementContainer
- * 
+ *
  * Date created: 08 DECEMBER 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.display;
 
+import com.raytheon.uf.viz.core.IGraphicsTarget;
+import com.raytheon.uf.viz.core.drawables.PaintProperties;
+import com.raytheon.uf.viz.core.map.IMapDescriptor;
+
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.DisplayType;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.gfa.IGfa;
 
-import com.raytheon.uf.viz.core.IGraphicsTarget;
-import com.raytheon.uf.viz.core.drawables.PaintProperties;
-import com.raytheon.uf.viz.core.map.IMapDescriptor;
-
 /**
+ *
  * A Default Element Container that can be used for most Drawable Elements.
  * Recreation of the IDisplayable objects is only done when zooming or if the
  * layer DisplayProperties change.
- * 
+ *
+ * <pre>
+ *
+ * SOFTWARE HISTORY
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * ????                   sgilbert  Initial creation
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
+ * </pre>
+ *
  * @author sgilbert
- * 
  */
 public class DefaultElementContainer extends AbstractElementContainer {
 
@@ -44,7 +56,7 @@ public class DefaultElementContainer extends AbstractElementContainer {
     /*
      * Draws to the given graphics target. Recreates the IDisplayable objects if
      * zooming or if the Layer properties change.
-     * 
+     *
      * @see
      * gov.noaa.nws.ncep.ui.pgen.display.AbstractTBNL#draw(com.raytheon.uf.viz
      * .core.IGraphicsTarget,
@@ -59,7 +71,7 @@ public class DefaultElementContainer extends AbstractElementContainer {
     /*
      * Draws to the given graphics target. Recreates the IDisplayable objects if
      * zooming or if the Layer properties change
-     * 
+     *
      * @see
      * gov.noaa.nws.ncep.ui.pgen.display.AbstractTBNL#draw(com.raytheon.uf.viz
      * .core.IGraphicsTarget,
@@ -109,7 +121,8 @@ public class DefaultElementContainer extends AbstractElementContainer {
                 || (element instanceof IText && ((IText) element)
                         .getDisplayType().equals(DisplayType.BOX))
                 || element instanceof IGfa || isCCFPArrow(element)) {
-            if (PgenSession.getInstance().getPgenResource().isNeedsDisplay()) {
+            if (PgenSession.getInstance().getCurrentResource()
+                    .isNeedsDisplay()) {
                 needsCreate = true;
             }
         }

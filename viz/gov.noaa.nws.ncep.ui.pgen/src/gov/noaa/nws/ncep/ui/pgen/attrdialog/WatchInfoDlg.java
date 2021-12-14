@@ -1,17 +1,12 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.attrDialog.WatchInfoDlg
- * 
+ *
  * 20 September 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
-
-import gov.noaa.nws.ncep.common.staticdata.SPCCounty;
-import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.elements.WatchBox;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -39,25 +34,39 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 
+import gov.noaa.nws.ncep.common.staticdata.SPCCounty;
+import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.elements.WatchBox;
+
 /**
  * Singleton attribute dialog for a watch info dialog.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 09/09		#159		B. Yin   	Initial Creation.
- * 11/09		#159		B. Yin		Added all widgets
- * 12/09		#159		B. Yin		Added functions for specifications and county list.
- * 03/10		#159		B. Yin		Added FormatWatch, WatchStatus and WatchCancel
- * 02/11		?			B. Yin		Removed WatchCancel	
- * 11/13		?			B. Yin		Disable fmtBtn and status buttons when del/adding cnty.
- * 12/13		TTR800		B. Yin		Disable two status buttons before watch is issued		
- * 12/13		TTR904		B. Yin		Set the list title font and made the font smaller
- * 04/14        TRAC 1112   S. Russell  Added dialog & updateActiveCountiesInWatchBox()
- * 
+ *
+ * Date          Ticket#    Engineer    Description
+ * ------------- ---------- ----------- ----------------------------------------
+ * 09/09         159        B. Yin      Initial Creation.
+ * 11/09         159        B. Yin      Added all widgets
+ * 12/09         159        B. Yin      Added functions for specifications and
+ *                                      county list.
+ * 03/10         159        B. Yin      Added FormatWatch, WatchStatus and
+ *                                      WatchCancel
+ * 02/11         ?          B. Yin      Removed WatchCancel
+ * 11/13         ?          B. Yin      Disable fmtBtn and status buttons when
+ *                                      del/adding cnty.
+ * 12/13         TTR800     B. Yin      Disable two status buttons before watch
+ *                                      is issued
+ * 12/13         TTR904     B. Yin      Set the list title font and made the
+ *                                      font smaller
+ * 04/14         TRAC 1112  S. Russell  Added dialog &
+ *                                      updateActiveCountiesInWatchBox()
+ * Dec 01, 2021  95362      tjensen     Refactor PGEN Resource management to
+ *                                      support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
@@ -73,9 +82,6 @@ public class WatchInfoDlg extends CaveJFACEDialog {
     static String inactLbl = "=====Inactive counties INSIDE the watch area=====\n";
 
     static String actLbl = "=====Active counties OUTSIDE the watch area=====\n";
-
-    // county table
-    // static private List<County> allCounties;
 
     // instance of the FormatWatch Dialog
     private WatchFormatDlg fmtDlg;
@@ -93,7 +99,7 @@ public class WatchInfoDlg extends CaveJFACEDialog {
     static private Font cwaBtnFt;
 
     // instance of the watch box attribute dialog
-    private WatchBoxAttrDlg wbDlg;
+    private final WatchBoxAttrDlg wbDlg;
 
     // top level container of all widgets
     private Composite top;
@@ -150,7 +156,7 @@ public class WatchInfoDlg extends CaveJFACEDialog {
     private Composite stPane;
 
     // State check boxes
-    private List<Button> stBtns;
+    private final List<Button> stBtns;
 
     // CWA group, holding the "CWA" label and the cwa pane.
     private Composite cwaGrp;
@@ -162,11 +168,11 @@ public class WatchInfoDlg extends CaveJFACEDialog {
     private Composite wccGrp;
 
     // List of CWAs.Each CwaComposite contains a label, and in/out buttons
-    private List<CwaComposite> cwaComp;
+    private final List<CwaComposite> cwaComp;
 
     /**
      * Protected constructor
-     * 
+     *
      * @param parentShell
      */
     protected WatchInfoDlg(Shell parentShell, WatchBoxAttrDlg wbDlg) {
@@ -175,26 +181,23 @@ public class WatchInfoDlg extends CaveJFACEDialog {
         this.setShellStyle(SWT.TITLE | SWT.MODELESS | SWT.CLOSE);
 
         this.wbDlg = wbDlg;
-        stBtns = new ArrayList<Button>();
-        cwaComp = new ArrayList<CwaComposite>();
+        stBtns = new ArrayList<>();
+        cwaComp = new ArrayList<>();
     }
 
     /**
      * Return the instance of the singleton.
-     * 
+     *
      * @param parShell
      * @return
      */
-    public static WatchInfoDlg getInstance(Shell parShell, WatchBoxAttrDlg wbDlg) {
-
+    public static WatchInfoDlg getInstance(Shell parShell,
+            WatchBoxAttrDlg wbDlg) {
         if (INSTANCE == null) {
-
             INSTANCE = new WatchInfoDlg(parShell, wbDlg);
-
         }
 
         return INSTANCE;
-
     }
 
     /**
@@ -234,8 +237,9 @@ public class WatchInfoDlg extends CaveJFACEDialog {
         AttrDlg.addSeparator(top);
 
         // create text area and labels.
-        if (txtFt == null)
+        if (txtFt == null) {
             this.createFonts();
+        }
 
         textLabel = new Label(top, SWT.NONE);
         textLabel.setFont(txtFt);
@@ -295,11 +299,6 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
         AttrDlg.addSeparator(top);
 
-        // create the Anchor points toggle button
-        // toggleAnchorsBtn = new Button(top, SWT.PUSH);
-        // toggleAnchorsBtn.setText("Toggle Anchor Points");
-        // AttrDlg.addSeparator(top);
-
         wccGrp = new Composite(top, SWT.None);
         GridLayout wccGl = new GridLayout(4, false);
         wccGl.marginLeft = 15;
@@ -321,8 +320,11 @@ public class WatchInfoDlg extends CaveJFACEDialog {
                 if (wbDlg.getWatchBox().getCountyList().isEmpty()) {
                     String msg = "Watch has no counties! Set default counties?";
 
-                    MessageDialog confirmDlg = new MessageDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Confirm Delete", null, msg,
-                            MessageDialog.QUESTION, new String[] { "OK", "Cancel" }, 0);
+                    MessageDialog confirmDlg = new MessageDialog(
+                            PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                                    .getShell(),
+                            "Confirm Delete", null, msg, MessageDialog.QUESTION,
+                            new String[] { "OK", "Cancel" }, 0);
                     confirmDlg.open();
 
                     if (confirmDlg.getReturnCode() == MessageDialog.OK) {
@@ -333,20 +335,14 @@ public class WatchInfoDlg extends CaveJFACEDialog {
                 }
 
                 if (openCoordDlg) {
-                    WatchCoordDlg coordDlg = WatchCoordDlg.getInstance(WatchInfoDlg.this.getParentShell(), wbDlg);
+                    WatchCoordDlg coordDlg = WatchCoordDlg.getInstance(
+                            WatchInfoDlg.this.getParentShell(), wbDlg);
                     coordDlg.setBlockOnOpen(false);
                     coordDlg.open();
                 }
             }
 
         });
-
-        // Wathcformat WatchStatus WatchCancel butttons
-        // AttrDlg.addSeparator(top);
-        // Composite fmtPane = new Composite(top, SWT.NONE);
-        // GridLayout fmtGl = new GridLayout(2, false);
-        // fmtGl.marginLeft = 160;
-        // fmtPane.setLayout(fmtGl);
 
         // Create 'WatchFormat' button
         fmtBtn = new Button(wccGrp, SWT.PUSH);
@@ -366,8 +362,12 @@ public class WatchInfoDlg extends CaveJFACEDialog {
                 if (wbDlg.getWatchBox().getCountyList().isEmpty()) {
                     String msg = "Watch has no counties! Set default counties?";
 
-                    MessageDialog confirmDlg = new MessageDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Set Watch Counties", null, msg,
-                            MessageDialog.QUESTION, new String[] { "OK", "Cancel" }, 0);
+                    MessageDialog confirmDlg = new MessageDialog(
+                            PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                                    .getShell(),
+                            "Set Watch Counties", null, msg,
+                            MessageDialog.QUESTION,
+                            new String[] { "OK", "Cancel" }, 0);
                     confirmDlg.open();
                     if (confirmDlg.getReturnCode() == MessageDialog.OK) {
                         createCounties();
@@ -377,7 +377,8 @@ public class WatchInfoDlg extends CaveJFACEDialog {
                 }
 
                 if (openFmtDlg) {
-                    fmtDlg = WatchFormatDlg.getInstance(WatchInfoDlg.this.getParentShell(), wbDlg);
+                    fmtDlg = WatchFormatDlg.getInstance(
+                            WatchInfoDlg.this.getParentShell(), wbDlg);
                     fmtDlg.setWatchBox(wbDlg.getWatchBox());
                     fmtDlg.setBlockOnOpen(false);
                     fmtDlg.open();
@@ -404,18 +405,23 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
                     String msg = "Please issue the watch first!";
 
-                    MessageDialog confirmDlg = new MessageDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Warning!", null, msg, MessageDialog.INFORMATION,
+                    MessageDialog confirmDlg = new MessageDialog(
+                            PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                                    .getShell(),
+                            "Warning!", null, msg, MessageDialog.INFORMATION,
                             new String[] { "OK" }, 0);
                     confirmDlg.open();
                 } else {
 
                     // TRAC 1112 - add a question about automatic updates
                     boolean autoUpdtCounties = false;
-                    Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+                    Shell shell = PlatformUI.getWorkbench()
+                            .getActiveWorkbenchWindow().getShell();
                     String msg = "Do you want an automatic update to the active countines in the watch?";
                     String title = "Auto Update Of Counties";
 
-                    autoUpdtCounties = MessageDialog.openQuestion(shell, title, msg);
+                    autoUpdtCounties = MessageDialog.openQuestion(shell, title,
+                            msg);
                     if (autoUpdtCounties) {
                         updateActiveCountiesInWatchBox();
                     }
@@ -442,42 +448,22 @@ public class WatchInfoDlg extends CaveJFACEDialog {
                 if (wbDlg.getWatchBox().getIssueFlag() == 0) {
                     String msg = "Watch has not been issued!";
 
-                    MessageDialog infoDlg = new MessageDialog(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Warning!", null, msg, MessageDialog.INFORMATION,
+                    MessageDialog infoDlg = new MessageDialog(
+                            PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                                    .getShell(),
+                            "Warning!", null, msg, MessageDialog.INFORMATION,
                             new String[] { "OK" }, 0);
                     infoDlg.open();
                 } else {
-                    statusDlg = new WatchStatusDlg(WatchInfoDlg.this.getParentShell(), wbDlg.getWatchBox());
+                    statusDlg = new WatchStatusDlg(
+                            WatchInfoDlg.this.getParentShell(),
+                            wbDlg.getWatchBox());
                     statusDlg.setBlockOnOpen(false);
                     statusDlg.open();
                 }
             }
 
         });
-
-        // Create 'WatchCancel' button
-        /* Button cancelBtn = new Button(fmtPane, SWT.PUSH);
-         * cancelBtn.setText("Watch Cancel"); cancelBtn.addSelectionListener(new
-         * SelectionListener(){
-         * 
-         * @Override public void widgetDefaultSelected(SelectionEvent e) { //
-         * TODO Auto-generated method stub }
-         * 
-         * @Override public void widgetSelected(SelectionEvent e) { String msg =
-         * String.format("Are you sure you want to cancel watch %1$04d ?",
-         * wbDlg.getWatchBox().getWatchNumber());
-         * 
-         * MessageDialog confirmDlg = new MessageDialog(
-         * PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
-         * "Confirm Watch Cancel", null, msg, MessageDialog.QUESTION, new
-         * String[]{"OK", "Cancel"}, 0); confirmDlg.open();
-         * 
-         * //Set the issue flag is 'Ok' is pressed. if (
-         * confirmDlg.getReturnCode() == MessageDialog.OK ) {
-         * wbDlg.getWatchBox().setIssueFlag(-1); String fname =
-         * String.format("WW%1$04d.xml", wbDlg.getWatchBox().getWatchNumber());
-         * wbDlg.getWatchBox().saveToFile(fname); } }
-         * 
-         * }); */
     }
 
     /**
@@ -521,8 +507,13 @@ public class WatchInfoDlg extends CaveJFACEDialog {
             public void widgetSelected(SelectionEvent e) {
                 textLabel.setText(cntyLbl);
 
-                text.setText(inactLbl + wbDlg.getWatchBox().formatCountyInfo(wbDlg.getWatchBox().getInactiveCountiesInWB()) + "\n" + actLbl
-                        + wbDlg.getWatchBox().formatCountyInfo(wbDlg.getWatchBox().getActiveCountiesOutsideWB()));
+                text.setText(inactLbl
+                        + wbDlg.getWatchBox()
+                                .formatCountyInfo(wbDlg.getWatchBox()
+                                        .getInactiveCountiesInWB())
+                        + "\n" + actLbl
+                        + wbDlg.getWatchBox().formatCountyInfo(wbDlg
+                                .getWatchBox().getActiveCountiesOutsideWB()));
             }
 
         });
@@ -540,7 +531,8 @@ public class WatchInfoDlg extends CaveJFACEDialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 textLabel.setText(cntyLbl);
-                text.setText(wbDlg.getWatchBox().formatCountyInfo(wbDlg.getWatchBox().getCountyList()));
+                text.setText(wbDlg.getWatchBox()
+                        .formatCountyInfo(wbDlg.getWatchBox().getCountyList()));
 
             }
 
@@ -594,9 +586,9 @@ public class WatchInfoDlg extends CaveJFACEDialog {
             public void handleEvent(Event event) {
                 WatchBox newWb = (WatchBox) wbDlg.getWatchBox().copy();
                 newWb.clearCntyList();
-                wbDlg.drawingLayer.replaceElement(wbDlg.getWatchBox(), newWb);
+                wbDlg.drawingLayers.replaceElement(wbDlg.getWatchBox(), newWb);
                 wbDlg.setWatchBox(newWb);
-                wbDlg.drawingLayer.setSelected(newWb);
+                wbDlg.drawingLayers.setSelected(newWb);
 
                 clearCwaPane();
                 setStatesWFOs();
@@ -702,7 +694,8 @@ public class WatchInfoDlg extends CaveJFACEDialog {
             this.create();
         }
 
-        if (wbDlg != null && wbDlg.getWatchBox() != null && wbDlg.getWatchBox().getIssueFlag() != 0) {
+        if (wbDlg != null && wbDlg.getWatchBox() != null
+                && wbDlg.getWatchBox().getIssueFlag() != 0) {
             this.statusBtn.setEnabled(true);
             this.statusLineBtn.setEnabled(true);
             this.createBtn.setEnabled(false);
@@ -720,10 +713,14 @@ public class WatchInfoDlg extends CaveJFACEDialog {
         if (specBtn.getSelection()) {
             text.setText(wbDlg.getWatchBox().getSpec());
         } else if (countyListBtn.getSelection()) {
-            text.setText(wbDlg.getWatchBox().formatCountyInfo(wbDlg.getWatchBox().getCountyList()));
+            text.setText(wbDlg.getWatchBox()
+                    .formatCountyInfo(wbDlg.getWatchBox().getCountyList()));
         } else if (qcBtn.getSelection()) {
-            text.setText(inactLbl + wbDlg.getWatchBox().formatCountyInfo(wbDlg.getWatchBox().getInactiveCountiesInWB()) + "\n" + actLbl
-                    + wbDlg.getWatchBox().formatCountyInfo(wbDlg.getWatchBox().getActiveCountiesOutsideWB()));
+            text.setText(inactLbl
+                    + wbDlg.getWatchBox().formatCountyInfo(
+                            wbDlg.getWatchBox().getInactiveCountiesInWB())
+                    + "\n" + actLbl + wbDlg.getWatchBox().formatCountyInfo(
+                            wbDlg.getWatchBox().getActiveCountiesOutsideWB()));
 
         }
     }
@@ -753,7 +750,9 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
         WatchInfoDlg.this.getShell().pack(true);
         WatchInfoDlg.this.getShell().layout();
-        WatchInfoDlg.this.getShell().redraw(0, 0, WatchInfoDlg.this.getShell().getSize().x, WatchInfoDlg.this.getShell().getSize().y, true);
+        WatchInfoDlg.this.getShell().redraw(0, 0,
+                WatchInfoDlg.this.getShell().getSize().x,
+                WatchInfoDlg.this.getShell().getSize().y, true);
     }
 
     /**
@@ -774,19 +773,16 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
     /**
      * create CWA list and in/out buttons
-     * 
+     *
      * @param cwas
      */
     public void createCWAs(List<String> cwas) {
 
         if (cwas != null && !cwas.isEmpty()) {
-
             for (final String aCWA : cwas) {
-
                 cwaComp.add(new CwaComposite(aCWA));
                 cwaPane.layout();
                 cwaPane.pack(true);
-
             }
 
             setCwaBtns();
@@ -799,7 +795,7 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
     /**
      * Create state list and check boxes
-     * 
+     *
      * @param states
      */
     private void createStateChkBoxes(List<String> states) {
@@ -847,12 +843,15 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
                         @Override
                         public void widgetSelected(SelectionEvent e) {
-                            WatchBox newWb = (WatchBox) wbDlg.getWatchBox().copy();
-                            newWb.setCountyList(wbDlg.getWatchBox().getCountyList());
+                            WatchBox newWb = (WatchBox) wbDlg.getWatchBox()
+                                    .copy();
+                            newWb.setCountyList(
+                                    wbDlg.getWatchBox().getCountyList());
                             newWb.removeState(((Button) e.widget).getText());
-                            wbDlg.drawingLayer.replaceElement(wbDlg.getWatchBox(), newWb);
+                            wbDlg.drawingLayers
+                                    .replaceElement(wbDlg.getWatchBox(), newWb);
                             wbDlg.setWatchBox(newWb);
-                            wbDlg.drawingLayer.setSelected(newWb);
+                            wbDlg.drawingLayers.setSelected(newWb);
 
                             setStatesWFOs();
                             setCwaBtns();
@@ -881,12 +880,15 @@ public class WatchInfoDlg extends CaveJFACEDialog {
         // So they need to be cleared. If not, an exception would occur
         // when they are used in createStateChkBoxes().
         stBtns.clear();
-        if (fmtDlg != null)
+        if (fmtDlg != null) {
             fmtDlg.close();
-        WatchCoordDlg.getInstance(WatchInfoDlg.this.getParentShell(), wbDlg).close();
+        }
+        WatchCoordDlg.getInstance(WatchInfoDlg.this.getParentShell(), wbDlg)
+                .close();
         if (wbDlg != null) {
-            if (wbDlg.getWbTool() != null)
+            if (wbDlg.getWbTool() != null) {
                 wbDlg.getWbTool().resetMouseHandler();
+            }
             wbDlg.enableDspBtn(true);
         }
 
@@ -895,7 +897,7 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
     /**
      * Format the string of WFO list
-     * 
+     *
      * @param wfos
      * @return
      */
@@ -916,8 +918,9 @@ public class WatchInfoDlg extends CaveJFACEDialog {
                 if (aWfo != null && !wfoStr.contains(aWfo)) {
 
                     // one line contains 7 WFOs at most
-                    if (nWfo != 0 && nWfo % 7 == 0)
+                    if (nWfo != 0 && nWfo % 7 == 0) {
                         wfoStr += "\n";
+                    }
                     wfoStr += "...";
                     wfoStr += aWfo;
                     nWfo++;
@@ -931,7 +934,7 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
     /**
      * Enable/disable CWA in/out buttons
-     * 
+     *
      * @param flag
      */
     private void enableCWAComp(boolean flag) {
@@ -945,7 +948,7 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
     /**
      * Check if the county lock radio button is set.
-     * 
+     *
      * @return true if county lock is set
      */
     public boolean isCountyLock() {
@@ -954,7 +957,7 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
     /**
      * Check if the county lock radio button is set.
-     * 
+     *
      * @return true if county lock is set
      */
     public boolean isClusteringOn() {
@@ -981,7 +984,8 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
             } else {
                 // get the total county number of the CWA
-                int totalCounties = getCountiesOfCwa(cwa.lbl.getText(), PgenStaticDataProvider.getProvider().getSPCCounties());
+                int totalCounties = getCountiesOfCwa(cwa.lbl.getText(),
+                        PgenStaticDataProvider.getProvider().getSPCCounties());
                 if (totalCounties == countiesIn) {
                     cwa.inBtn.setSelection(true);
                     cwa.outBtn.setSelection(false);
@@ -996,7 +1000,7 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
     /**
      * Get total number of counties of the input CWA, which are in the list
-     * 
+     *
      * @param cwa
      * @param counties
      * @return - number of counties
@@ -1014,25 +1018,25 @@ public class WatchInfoDlg extends CaveJFACEDialog {
     /**
      * A class that hold a CWA composite, which contains a CWA label, and IN/OUT
      * radio buttons.
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
     private class CwaComposite {
 
-        private Composite comp;
+        private final Composite comp;
 
         // CWA label
-        private Label lbl;
+        private final Label lbl;
 
         // IN/OUT radio buttons
-        private Button inBtn;
+        private final Button inBtn;
 
-        private Button outBtn;
+        private final Button outBtn;
 
         /**
          * private constructor
-         * 
+         *
          * @param cwa
          * @param cwaFt
          *            - label font
@@ -1073,9 +1077,10 @@ public class WatchInfoDlg extends CaveJFACEDialog {
                     WatchBox newWb = (WatchBox) wbDlg.getWatchBox().copy();
                     newWb.setCountyList(wbDlg.getWatchBox().getCountyList());
                     newWb.addCwa(cwa);
-                    wbDlg.drawingLayer.replaceElement(wbDlg.getWatchBox(), newWb);
+                    wbDlg.drawingLayers.replaceElement(wbDlg.getWatchBox(),
+                            newWb);
                     wbDlg.setWatchBox(newWb);
-                    wbDlg.drawingLayer.setSelected(newWb);
+                    wbDlg.drawingLayers.setSelected(newWb);
 
                     setStatesWFOs();
                     wbDlg.mapEditor.refresh();
@@ -1105,9 +1110,10 @@ public class WatchInfoDlg extends CaveJFACEDialog {
                     WatchBox newWb = (WatchBox) wbDlg.getWatchBox().copy();
                     newWb.setCountyList(wbDlg.getWatchBox().getCountyList());
                     newWb.removeCwa(cwa);
-                    wbDlg.drawingLayer.replaceElement(wbDlg.getWatchBox(), newWb);
+                    wbDlg.drawingLayers.replaceElement(wbDlg.getWatchBox(),
+                            newWb);
                     wbDlg.setWatchBox(newWb);
-                    wbDlg.drawingLayer.setSelected(newWb);
+                    wbDlg.drawingLayers.setSelected(newWb);
 
                     setStatesWFOs();
                     wbDlg.mapEditor.refresh();
@@ -1119,12 +1125,13 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
     /**
      * Enable/disable all widgets in the dialog
-     * 
+     *
      * @param flag
      */
     public void enableAllButtons(boolean flag) {
 
-        if (wbDlg != null && wbDlg.getWatchBox() != null && wbDlg.getWatchBox().getIssueFlag() != 0) {
+        if (wbDlg != null && wbDlg.getWatchBox() != null
+                && wbDlg.getWatchBox().getIssueFlag() != 0) {
             // for issued watch, disable "create" button
             this.statusBtn.setEnabled(flag);
             this.statusLineBtn.setEnabled(flag);
@@ -1146,7 +1153,6 @@ public class WatchInfoDlg extends CaveJFACEDialog {
         specBtn.setEnabled(flag);
         qcBtn.setEnabled(flag);
         countyListBtn.setEnabled(flag);
-        // toggleAnchorsBtn.setEnabled(flag);
         wccBtn.setEnabled(flag);
         fmtBtn.setEnabled(flag);
 
@@ -1180,7 +1186,8 @@ public class WatchInfoDlg extends CaveJFACEDialog {
 
         WatchBox newWb = (WatchBox) wbDlg.getWatchBox().copy();
 
-        List<SPCCounty> counties = PgenStaticDataProvider.getProvider().getCountiesInGeometry(watchGeo);
+        List<SPCCounty> counties = PgenStaticDataProvider.getProvider()
+                .getCountiesInGeometry(watchGeo);
 
         for (SPCCounty county : counties) {
             if (isClusteringOn()) {
@@ -1198,8 +1205,8 @@ public class WatchInfoDlg extends CaveJFACEDialog {
         WatchInfoDlg.this.getShell().layout();
 
         newWb.update(wbDlg);
-        wbDlg.drawingLayer.replaceElement(wbDlg.getWatchBox(), newWb);
-        wbDlg.drawingLayer.setSelected(newWb);
+        wbDlg.drawingLayers.replaceElement(wbDlg.getWatchBox(), newWb);
+        wbDlg.drawingLayers.setSelected(newWb);
 
         wbDlg.setWatchBox(newWb);
         createCWAs(newWb.getWFOs());
@@ -1213,9 +1220,12 @@ public class WatchInfoDlg extends CaveJFACEDialog {
      * Create static fonts used in the dialog
      */
     private void createFonts() {
-        txtFt = new Font(this.getShell().getDisplay(), "Courier New", 11, SWT.NORMAL);
-        cwaBtnFt = new Font(this.getShell().getDisplay(), "Courier New", 9, SWT.NORMAL);
-        cwaFt = new Font(this.getShell().getDisplay(), "Courier New", 12, SWT.NORMAL);
+        txtFt = new Font(this.getShell().getDisplay(), "Courier New", 11,
+                SWT.NORMAL);
+        cwaBtnFt = new Font(this.getShell().getDisplay(), "Courier New", 9,
+                SWT.NORMAL);
+        cwaFt = new Font(this.getShell().getDisplay(), "Courier New", 12,
+                SWT.NORMAL);
     }
 
     public void setAddDelCountyMode() {
@@ -1230,16 +1240,17 @@ public class WatchInfoDlg extends CaveJFACEDialog {
     private void updateActiveCountiesInWatchBox() {
         List<String> ugcList = null;
         List<SPCCounty> oldCountyList = null;
-        WatchBox oldWatchBox = (WatchBox) wbDlg.getWatchBox();
+        WatchBox oldWatchBox = wbDlg.getWatchBox();
         WatchBox newWatchBox = (WatchBox) wbDlg.getWatchBox().copy();
         int watchNum = newWatchBox.getWatchNumber();
 
         oldCountyList = oldWatchBox.getCountyList();
-        ugcList = PgenStaticDataProvider.getProvider().getActiveCounties(watchNum, oldCountyList);
+        ugcList = PgenStaticDataProvider.getProvider()
+                .getActiveCounties(watchNum, oldCountyList);
 
         newWatchBox.updateActiveCountiesInWatchBox(ugcList);
 
-        wbDlg.drawingLayer.replaceElement(wbDlg.getWatchBox(), newWatchBox);
+        wbDlg.drawingLayers.replaceElement(wbDlg.getWatchBox(), newWatchBox);
         wbDlg.setWatchBox(newWatchBox);
         wbDlg.mapEditor.refresh();
     }

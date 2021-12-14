@@ -1,31 +1,11 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.graphToGrid.GraphToGridParamDialog
- * 
+ *
  * January 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.graphtogrid;
-
-import gov.noaa.nws.ncep.gempak.parameters.core.contourinterval.CINT;
-import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.ContoursAttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.OutlookAttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.contours.ContourCircle;
-import gov.noaa.nws.ncep.ui.pgen.contours.ContourLine;
-import gov.noaa.nws.ncep.ui.pgen.contours.ContourMinmax;
-import gov.noaa.nws.ncep.ui.pgen.contours.Contours;
-import gov.noaa.nws.ncep.ui.pgen.contours.IContours;
-import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
-import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
-import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
-import gov.noaa.nws.ncep.ui.pgen.elements.Outlook;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
-import gov.noaa.nws.ncep.viz.gempak.nativelib.LibraryLoader;
 
 import java.awt.Color;
 import java.io.File;
@@ -64,28 +44,55 @@ import com.raytheon.uf.viz.core.exception.VizException;
 import com.raytheon.viz.ui.dialogs.CaveJFACEDialog;
 import com.raytheon.viz.ui.editor.AbstractEditor;
 
+import gov.noaa.nws.ncep.gempak.parameters.core.contourinterval.CINT;
+import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
+import gov.noaa.nws.ncep.ui.pgen.attrdialog.ContoursAttrDlg;
+import gov.noaa.nws.ncep.ui.pgen.attrdialog.OutlookAttrDlg;
+import gov.noaa.nws.ncep.ui.pgen.contours.ContourCircle;
+import gov.noaa.nws.ncep.ui.pgen.contours.ContourLine;
+import gov.noaa.nws.ncep.ui.pgen.contours.ContourMinmax;
+import gov.noaa.nws.ncep.ui.pgen.contours.Contours;
+import gov.noaa.nws.ncep.ui.pgen.contours.IContours;
+import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
+import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
+import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
+import gov.noaa.nws.ncep.ui.pgen.elements.Outlook;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.viz.gempak.nativelib.LibraryLoader;
+
 /**
  * Dialog to get inputs for Graph-to-Grid parameters.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 01/10        #215        J. Wu       Initial Creation.
- * 11/10        #345        J. Wu       Added support for ContourCircle.
- * 10/11        #450        G. Hull     use localization names from NcPathConstants
- * 10/11        ?           J. Wu       Remove entry if the given table does not exist.
- * 08/13        TTR778      J. Wu       Load libg2g when this dialog is created.
- * 12/13        1090        J. Wu       Allow either table or element applied to g2g.
- * 05/14        TTR989      J. Wu       Find current contour via contour parameters.
- * 08/14        ?           J. Wu       build gdoutf & cycle from contours' time.
- * 10/14        R5712       J. Wu       Fixed index-out-of-bound issue for productNames.
- * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
- * 05/05/2021   91162       smanoj      ActivityType used for default configuration.
- * 05/13/2021   91162       smanoj      Fixed UELE issue and updated currentProductParams.
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 01/10         215      J. Wu     Initial Creation.
+ * 11/10         345      J. Wu     Added support for ContourCircle.
+ * 10/11         450      G. Hull   use localization names from NcPathConstants
+ * 10/11         ?        J. Wu     Remove entry if the given table does not
+ *                                  exist.
+ * 08/13         TTR778   J. Wu     Load libg2g when this dialog is created.
+ * 12/13         1090     J. Wu     Allow either table or element applied to
+ *                                  g2g.
+ * 05/14         TTR989   J. Wu     Find current contour via contour parameters.
+ * 08/14         ?        J. Wu     build gdoutf & cycle from contours' time.
+ * 10/14         5712     J. Wu     Fixed index-out-of-bound issue for
+ *                                  productNames.
+ * Apr 23, 2021  89949    smanoj    Fixed Graph to Grid Issues.
+ * May 05, 2021  91162    smanoj    ActivityType used for default configuration.
+ * May 13, 2021  91162    smanoj    Fixed UELE issue and updated
+ *                                  currentProductParams.
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
  */
 
@@ -126,7 +133,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
     private static int CYCLE_INTERVAL = 12;
 
-    private Color[] extColor = new Color[] { Color.blue };
+    private final Color[] extColor = new Color[] { Color.blue };
 
     private Composite top = null;
 
@@ -160,7 +167,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
     /**
      * Constructor
-     * 
+     *
      * @param parShell
      * @throws VizException
      */
@@ -174,12 +181,12 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
         if (productMaps == null) {
             productMaps = GraphToGrid.loadParameters(grphgdTblName);
-            productNames = new ArrayList<String>(productMaps.keySet());
+            productNames = new ArrayList<>(productMaps.keySet());
         }
 
         if (productDefaults == null) {
 
-            productDefaults = new ArrayList<HashMap<String, String>>();
+            productDefaults = new ArrayList<>();
 
             for (String str : productNames) {
 
@@ -334,8 +341,8 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             Control[] wids = advancedGrp.getChildren();
 
             if (wids != null) {
-                for (int kk = 0; kk < wids.length; kk++) {
-                    wids[kk].dispose();
+                for (Control wid : wids) {
+                    wid.dispose();
                 }
             }
 
@@ -444,6 +451,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
         currentFcstHr = fcstCombo.getText();
 
         fcstCombo.addSelectionListener(new SelectionAdapter() {
+            @Override
             public void widgetSelected(SelectionEvent event) {
                 currentFcstHr = fcstCombo.getText();
                 updateComboText(fcstCombo, fcsthrTxt, fcstCombo.getText());
@@ -526,7 +534,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
         GridLayout layout = new GridLayout(1, false);
         advancedGrp.setLayout(layout);
 
-        paramText = new ArrayList<Text>();
+        paramText = new ArrayList<>();
         createPanelFromList(advancedGrp, "Grid Navigation",
                 GraphToGrid.getGridCalcParams(), paramText, 9, false);
         createPanelFromList(advancedGrp, "Grid Display",
@@ -575,6 +583,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             }
 
             txt.addKeyListener(new KeyAdapter() {
+                @Override
                 public void keyReleased(KeyEvent e) {
                     Text etxt = (Text) e.widget;
                     if (etxt.getData().toString().equals("PATH")) {
@@ -635,8 +644,8 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             Control[] wids = advancedGrp.getChildren();
 
             if (wids != null) {
-                for (int kk = 0; kk < wids.length; kk++) {
-                    wids[kk].dispose();
+                for (Control wid : wids) {
+                    wid.dispose();
                 }
             }
 
@@ -748,7 +757,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
      */
     public HashMap<String, String> getParameters() {
 
-        HashMap<String, String> params = new HashMap<String, String>();
+        HashMap<String, String> params = new HashMap<>();
         if (currentProductParams != null) {
             params.putAll(currentProductParams);
         }
@@ -794,7 +803,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
      */
     private HashMap<String, String> retrievePrdMap(String prdName) {
 
-        HashMap<String, String> prdMap = new HashMap<String, String>();
+        HashMap<String, String> prdMap = new HashMap<>();
 
         int index = -1;
         for (int ii = 0; ii < productNames.size(); ii++) {
@@ -844,7 +853,8 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
     private void showExtension() {
 
         AbstractEditor currentEditor = PgenUtil.getActiveEditor();
-        PgenResource drawingLayer = PgenSession.getInstance().getPgenResource();
+        PgenResource drawingLayer = PgenSession.getInstance()
+                .getCurrentResource();
 
         Contours cnt = getCurrentContours();
 
@@ -914,7 +924,8 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
     private Contours getCurrentContours() {
 
         Contours curCnt = null;
-        PgenResource drawingLayer = PgenSession.getInstance().getPgenResource();
+        PgenResource drawingLayer = PgenSession.getInstance()
+                .getCurrentResource();
 
         if (cntAttrDlg instanceof ContoursAttrDlg) {
 
@@ -979,8 +990,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
      */
     private HashMap<String, String> generateParameters() {
 
-        HashMap<String, String> prm = new HashMap<String, String>(
-                currentProductParams);
+        HashMap<String, String> prm = new HashMap<>(currentProductParams);
 
         String gdt = null;
         String gparm = null;
@@ -1000,12 +1010,14 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
         if (applyTableInfoToOutput) {
             level = curPrdMapFromTable.get("GLEVEL");
-            if (level == null)
+            if (level == null) {
                 level = dlg.getLevel();
+            }
 
             cint = curPrdMapFromTable.get("CINT");
-            if (cint == null)
+            if (cint == null) {
                 cint = dlg.getCint();
+            }
 
         } else {
             level = dlg.getLevel();
@@ -1043,7 +1055,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
      */
     private HashMap<String, String> getPrdMapFromTable(String prdName) {
 
-        HashMap<String, String> prdMap = new HashMap<String, String>();
+        HashMap<String, String> prdMap = new HashMap<>();
 
         int index = -1;
         for (int ii = 0; ii < productNames.size(); ii++) {
@@ -1070,7 +1082,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
      */
     private void setOutPutParams() {
         HashMap<String, String> tableParams = generateParameters();
-        ArrayList<String> outParams = new ArrayList<String>(
+        ArrayList<String> outParams = new ArrayList<>(
                 Arrays.asList(GraphToGrid.getGridOutputParams()));
         for (String outp : tableParams.keySet()) {
             if (inList(outp, outParams)) {
@@ -1090,8 +1102,9 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
      */
     private boolean inList(String item, List<String> strList) {
         boolean inlist = false;
-        if (item == null || strList == null || strList.size() == 0)
+        if (item == null || strList == null || strList.size() == 0) {
             return inlist;
+        }
 
         for (String str : strList) {
             if (item.equals(str)) {
@@ -1108,7 +1121,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
      */
     public static List<String> parseCints(String contourCint) {
 
-        List<String> cints = new ArrayList<String>();
+        List<String> cints = new ArrayList<>();
 
         CINT cd = new CINT(contourCint);
         if (cd.isCINTStringParsed()) {
@@ -1127,8 +1140,9 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
                     int pos = str.indexOf(".");
                     if (pos >= 0) {
                         int nd = str.length() - pos - 1;
-                        if (ndecimals < nd)
+                        if (ndecimals < nd) {
                             ndecimals = nd;
+                        }
                     }
                 }
 
@@ -1160,7 +1174,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
     /*
      * Formats "gdoutf" based on the template, e.g., "PPPP_YYYYMMDDHHfFFF.grd"
-     * 
+     *
      * @return the formatted gdoutf
      */
     private String formatGdoutf(String tmp, Calendar date, String param,
@@ -1227,7 +1241,8 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
     private String getDefaultProdName() {
         defaultProdName = null;
 
-        PgenResource drawingLayer = PgenSession.getInstance().getPgenResource();
+        PgenResource drawingLayer = PgenSession.getInstance()
+                .getCurrentResource();
         if (drawingLayer != null) {
             currentActivityType = drawingLayer.getActiveProduct().getType();
         }

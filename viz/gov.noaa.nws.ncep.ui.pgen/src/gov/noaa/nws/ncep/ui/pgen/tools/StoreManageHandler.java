@@ -1,17 +1,11 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.controls.StoreManageHandler
- * 
+ *
  * 27 March 2013
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.tools;
-
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.controls.StoreActivityDialog;
-import gov.noaa.nws.ncep.ui.pgen.elements.Product;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -21,36 +15,38 @@ import org.eclipse.ui.PlatformUI;
 import com.raytheon.uf.viz.core.exception.VizException;
 import com.raytheon.viz.ui.tools.AbstractTool;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.controls.StoreActivityDialog;
+import gov.noaa.nws.ncep.ui.pgen.elements.Product;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+
 /**
  * Define a handler for PGEN product/activity store to EDEX.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 03/13		#977		S. Gilbert	modified from PgenFileManageHandler.
- * 11/13        #1077       J. Wu       Pop up dialog for "Save All".
- * 06/15        R8354       J. Wu       Add CTRL+S hotkey for "Save".
- * 
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 03/13         977      S. Gilbert  modified from PgenFileManageHandler.
+ * 11/13         1077     J. Wu       Pop up dialog for "Save All".
+ * 06/15         8354     J. Wu       Add CTRL+S hotkey for "Save".
+ * Dec 02, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author S. Gilbert
- * @version 0.0.1
  */
 public class StoreManageHandler extends AbstractTool {
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.core.commands.AbstractHandler#execute(org.eclipse.core.commands
-     * .ExecutionEvent)
-     */
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
 
-        if (PgenSession.getInstance().getPgenResource() == null
-                || !PgenSession.getInstance().getPgenResource().isEditable()) {
+        PgenResource currentResource = PgenSession.getInstance()
+                .getCurrentResource();
+        if (currentResource == null || !currentResource.isEditable()) {
             return null;
         }
 
@@ -59,10 +55,10 @@ public class StoreManageHandler extends AbstractTool {
         String btnClicked = null;
 
         if (event.getParameter("name") != null) {
-            btnName = (String) event.getParameter("name");
+            btnName = event.getParameter("name");
             btnClicked = btnName;
         } else if (event.getParameter("action") != null) {
-            actionName = (String) event.getParameter("action");
+            actionName = event.getParameter("action");
             btnClicked = actionName;
         } else {
             return null;
@@ -73,7 +69,7 @@ public class StoreManageHandler extends AbstractTool {
             PgenSession.getInstance().getPgenPalette().setActiveIcon(btnName);
         }
 
-        PgenResource rsc = PgenSession.getInstance().getPgenResource();
+        PgenResource rsc = PgenSession.getInstance().getCurrentResource();
         String curFile = rsc.getActiveProduct().getOutputFile();
 
         if (curFile != null && btnClicked.equalsIgnoreCase("Save")) {
@@ -90,8 +86,9 @@ public class StoreManageHandler extends AbstractTool {
 
             // Save the rest
             for (Product pp : rsc.getProducts()) {
-                if (pp == curPrd)
+                if (pp == curPrd) {
                     continue;
+                }
 
                 rsc.setActiveProduct(pp);
                 if (pp.getOutputFile() != null) {
@@ -121,7 +118,7 @@ public class StoreManageHandler extends AbstractTool {
 
     /*
      * Pops up the Save/Store dialog to save an activity.
-     * 
+     *
      * @param btnClicked
      */
     private void storeActivity(String btnClicked) {
@@ -139,8 +136,9 @@ public class StoreManageHandler extends AbstractTool {
             }
         }
 
-        if (storeDialog != null)
+        if (storeDialog != null) {
             storeDialog.open();
+        }
     }
 
 }

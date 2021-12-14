@@ -1,12 +1,22 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.PgenConnectTool
- * 
+ *
  * July 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+
+import org.geotools.referencing.GeodeticCalculator;
+
+import com.raytheon.uf.viz.core.rsc.IInputHandler;
+import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.annotation.Operation;
@@ -22,35 +32,31 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.elements.MultiPointElement;
 import gov.noaa.nws.ncep.ui.pgen.filter.OperationFilter;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-
-import org.geotools.referencing.GeodeticCalculator;
-
-import com.raytheon.uf.viz.core.rsc.IInputHandler;
 import org.locationtech.jts.geom.Coordinate;
-
 /**
  * Implements a modal map tool for PGEN connecting function.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 07/09		#141		J. Wu  		Initial Creation.
- * 12/09		#167		J. Wu  		Connect contour lines within the
- * 										same Contours with the same label.
- * 01/12		TTR342		J. Wu  		Update for connecting Contours lines.
- * 04/15/2014   TTR849      D. Sushon   Fix ghost/second element causing pips to flip direction,
- *                                      made preparations to update Pgen type selection to allow
- *                                      forming/dying front types to be connected
- *                                      (WARM/COLD/OCCLUDED/STATIONARY/etc.) [this is not yet hooked into the "datapath"]
- * 08/05/2015	RM8879		B. Yin		Skip empty contour component.
- * 
+ *
+ * Date          Ticket#  Engineer   Description
+ * ------------- -------- ---------- -------------------------------------------
+ * 07/09         141      J. Wu      Initial Creation.
+ * 12/09         167      J. Wu      Connect contour lines within the same
+ *                                   Contours with the same label.
+ * 01/12         TTR342   J. Wu      Update for connecting Contours lines.
+ * Apr 15, 2014  TTR849   D. Sushon  Fix ghost/second element causing pips to
+ *                                   flip direction, made preparations to update
+ *                                   Pgen type selection to allow forming/dying
+ *                                   front types to be connected
+ *                                   (WARM/COLD/OCCLUDED/STATIONARY/etc.) [this
+ *                                   is not yet hooked into the "datapath"]
+ * Aug 05, 2015  8879     B. Yin     Skip empty contour component.
+ * Dec 02, 2021  95362    tjensen    Refactor PGEN Resource management to
+ *                                   support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
  */
 
@@ -64,9 +70,10 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
@@ -79,9 +86,9 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author jwu
-     * 
+     *
      */
     public class PgenConnectHandler extends InputHandlerDefaultImpl {
 
@@ -93,7 +100,7 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
         String pgenType;
 
-        private OperationFilter connectFilter = new OperationFilter(
+        private final OperationFilter connectFilter = new OperationFilter(
                 Operation.CONNECT);
 
         /**
@@ -122,14 +129,8 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
         /**
          * Color of the ghost element.
          */
-        private Color ghostColor = new java.awt.Color(255, 255, 255);
+        private final Color ghostColor = new java.awt.Color(255, 255, 255);
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
             if (!isResourceEditable()) {
@@ -148,9 +149,9 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
                     // Get the nearest element and set it as the selected
                     // element.
-                    DrawableElement elSelected = drawingLayer
+                    DrawableElement elSelected = drawingLayers
                             .getNearestElement(loc, connectFilter);
-                    AbstractDrawableComponent adc = drawingLayer
+                    AbstractDrawableComponent adc = drawingLayers
                             .getNearestComponent(loc, connectFilter, false);
 
                     pgenCategory = getPgenCategory(elSelected, adc);
@@ -165,15 +166,14 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
                         }
 
                         firstEl = (MultiPointElement) elSelected;
-                        drawingLayer.setSelected(firstEl);
+                        drawingLayers.setSelected(firstEl);
 
-                        nearPt = findNearEnd(0,
-                                getNearestPtIndex(firstEl, loc), firstEl
-                                        .getPoints().size() - 1);
+                        nearPt = findNearEnd(0, getNearestPtIndex(firstEl, loc),
+                                firstEl.getPoints().size() - 1);
 
                         ghostEl = createGhostElement(firstEl, nearPt, loc);
 
-                        drawingLayer.setGhostLine(ghostEl);
+                        drawingLayers.setGhostLine(ghostEl);
 
                         mapEditor.refresh();
                     } else {
@@ -183,26 +183,18 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
                     if (secondEl == null) {
 
-                        DrawableElement elSelected = drawingLayer
+                        DrawableElement elSelected = drawingLayers
                                 .getNearestElement(loc, connectFilter);
-                        AbstractDrawableComponent adc = drawingLayer
+                        AbstractDrawableComponent adc = drawingLayers
                                 .getNearestComponent(loc, connectFilter, false);
 
-                        if (elSelected != firstEl
-                                && elSelected != null
-                                && getPgenCategory(elSelected, adc).equals(
-                                        pgenCategory)
-                                && getPgenType(elSelected, adc)
-                                        .equals(pgenType)// <--what about
-                                                         // forming/dying
-                                                         // fronts?
-                                // && comparePgenTypeForConnecting(elSelected,
-                                // adc, pgenType)
+                        if (elSelected != firstEl && elSelected != null
+                                && getPgenCategory(elSelected, adc)
+                                        .equals(pgenCategory)
+                                && getPgenType(elSelected, adc).equals(pgenType)
                                 && selectableContourLine(
-                                        (MultiPointElement) elSelected, firstEl)) {
-                            // System.out.println("PGEN category:"
-                            // + getPgenCategory(elSelected, adc)
-                            // + ", type:" + getPgenType(elSelected, adc));
+                                        (MultiPointElement) elSelected,
+                                        firstEl)) {
 
                             // Connect the second element to the first element
                             // for ghosting.
@@ -216,8 +208,8 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
                                     .copy();
 
                             secondPt = findNearEnd(0,
-                                    getNearestPtIndex(secondEl, loc), secondEl
-                                            .getPoints().size() - 1);
+                                    getNearestPtIndex(secondEl, loc),
+                                    secondEl.getPoints().size() - 1);
 
                             // reverse the second line if needed.
                             if ((nearPt == 0 && secondPt == 0)
@@ -227,37 +219,36 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
                             // remove the last point on the unconnected ghost
                             // line
-                            if (ghostEl.getPoints().size() > firstEl
-                                    .getPoints().size()) {
+                            if (ghostEl.getPoints().size() > firstEl.getPoints()
+                                    .size()) {
                                 if (nearPt == 0) {
                                     ghostEl.removePoint(0);
                                 } else {
-                                    ghostEl.removePoint(ghostEl.getPoints()
-                                            .size() - 1);
+                                    ghostEl.removePoint(
+                                            ghostEl.getPoints().size() - 1);
                                 }
                             }
 
                             // add all points in the second element to the first
                             // element
                             if (nearPt == 0) {
-                                ghostEl.getPoints()
-                                        .addAll(0, tmpEl.getPoints());
+                                ghostEl.getPoints().addAll(0,
+                                        tmpEl.getPoints());
                             } else {
                                 ghostEl.getPoints().addAll(tmpEl.getPoints());
                             }
 
-                            drawingLayer.setGhostLine(ghostEl);
+                            drawingLayers.setGhostLine(ghostEl);
 
                             mapEditor.refresh();
 
                         }
                     } else {
-
                         /*
                          * Connect and replace the selected elements.
                          */
-                        ArrayList<AbstractDrawableComponent> oldElem = new ArrayList<AbstractDrawableComponent>();
-                        ArrayList<AbstractDrawableComponent> newElem = new ArrayList<AbstractDrawableComponent>();
+                        ArrayList<AbstractDrawableComponent> oldElem = new ArrayList<>();
+                        ArrayList<AbstractDrawableComponent> newElem = new ArrayList<>();
 
                         if (firstJet != null && secondJet != null) { // Jet
 
@@ -282,13 +273,13 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
                             newElem.add(mpe);
                         }
 
-                        drawingLayer.replaceElements(oldElem, newElem);
+                        drawingLayers.replaceElements(oldElem, newElem);
 
                         /*
                          * Clean up for next "connect".
                          */
-                        drawingLayer.removeGhostLine();
-                        drawingLayer.removeSelected();
+                        drawingLayers.removeGhostLine();
+                        drawingLayers.removeSelected();
 
                         nearPt = -1;
                         firstEl = null;
@@ -298,31 +289,16 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
                         mapEditor.refresh();
                     }
-
                     return false;
-
                 }
-
                 return false;
-
             } else if (button == 3) {
-
                 return true;
-
             } else { // Button 2 - ignore
-
                 return false;
-
             }
-
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDownMove(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseMove(int x, int y) {
             if (!isResourceEditable()) {
@@ -336,50 +312,40 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
             }
 
             if (firstEl != null && secondEl == null) {
-
                 ghostEl = createGhostElement(firstEl, nearPt, loc);
-                drawingLayer.setGhostLine(ghostEl);
+                drawingLayers.setGhostLine(ghostEl);
 
                 mapEditor.refresh();
-
             }
 
             return false;
 
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseUp(int, int,
-         * int)
-         */
         @Override
         public boolean handleMouseUp(int x, int y, int button) {
             if (!isResourceEditable()) {
                 return false;
             }
-            
+
             Coordinate loc = mapEditor.translateClick(x, y);
             if (loc == null) {
                 return true;
             }
-            
-            if (button == 3) {
 
+            if (button == 3) {
                 if (secondEl != null) {
                     // reselect the second element
                     ghostEl = createGhostElement(firstEl, nearPt, loc);
-                    drawingLayer.setGhostLine(ghostEl);
+                    drawingLayers.setGhostLine(ghostEl);
 
                     secondEl = null;
                     secondJet = null;
                 } else {
-
                     if (firstEl != null) {
                         // unselect the first element but stay in "Connect" mode
-                        drawingLayer.removeGhostLine();
-                        drawingLayer.removeSelected();
+                        drawingLayers.removeGhostLine();
+                        drawingLayers.removeSelected();
                         nearPt = 0;
                         firstEl = null;
                         firstJet = null;
@@ -387,18 +353,17 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
                         // Exit "Connect" mode & set selecting mode
                         PgenUtil.setSelectingMode();
                     }
-
                 }
 
                 mapEditor.refresh();
             }
-            
+
             return true;
         }
 
         /**
          * Gets the nearest point of an selected element to the input point
-         * 
+         *
          * @param el
          *            element
          * @param pt
@@ -406,29 +371,23 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
          * @return
          */
         protected int getNearestPtIndex(MultiPointElement el, Coordinate pt) {
-
             int ptId = 0;
             double minDistance = -1;
             GeodeticCalculator gc = new GeodeticCalculator(
-                    drawingLayer.getCoordinateReferenceSystem());
+                    drawingLayers.getCoordinateReferenceSystem());
             gc.setStartingGeographicPoint(pt.x, pt.y);
 
             int index = 0;
             for (Coordinate elPoint : el.getPoints()) {
-
                 gc.setDestinationGeographicPoint(elPoint.x, elPoint.y);
-
                 double dist = gc.getOrthodromicDistance();
 
                 if (minDistance < 0 || dist < minDistance) {
-
                     minDistance = dist;
                     ptId = index;
-
                 }
 
                 index++;
-
             }
 
             return ptId;
@@ -437,7 +396,7 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
         /**
          * Finds the "near" point is close to the low end or the high end.
-         * 
+         *
          * @param lowEnd
          * @param near
          * @param highEnd
@@ -449,7 +408,7 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
         /**
          * Create a new MultiPointElement for ghosting.
-         * 
+         *
          * @param fstEl
          *            Element to start ghosting
          * @param nearPt
@@ -474,7 +433,6 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
                 } else {
                     gstEl.getPoints().add(clickPt);
                 }
-
             }
 
             return gstEl;
@@ -482,7 +440,7 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
         /**
          * Get PGEN category from a AbstractDrawableComponent.
-         * 
+         *
          * @param elSel
          *            Selected DrawableElement
          * @param adc
@@ -506,7 +464,7 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
         /**
          * Get PGEN type from a AbstractDrawableComponent.
-         * 
+         *
          * @param elSel
          *            Selected DrawableElement
          * @param adc
@@ -531,7 +489,7 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
         /**
          * Test if front types (some of which may be forming or dying), can be
          * connected (straight text-compare won't work).
-         * 
+         *
          * @param elSel
          *            Selected DrawableElement
          * @param adc
@@ -543,24 +501,24 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
         private boolean comparePgenTypeForConnecting(DrawableElement elSel,
                 AbstractDrawableComponent adc, String theOtherType) {
             // STAT, TROP, TROF, COLD, WARM, DRY, SHEAR, OCCL, INSTAB
-            if ((theOtherType.contains("STAT") && getPgenType(elSel, adc)
-                    .contains("STAT"))
-                    || ((theOtherType.contains("TROP") && getPgenType(elSel,
-                            adc).contains("TROP")))
-                    || ((theOtherType.contains("TROF") && getPgenType(elSel,
-                            adc).contains("TROF")))
-                    || ((theOtherType.contains("COLD") && getPgenType(elSel,
-                            adc).contains("COLD")))
-                    || ((theOtherType.contains("WARM") && getPgenType(elSel,
-                            adc).contains("WARM")))
-                    || ((theOtherType.contains("DRY") && getPgenType(elSel, adc)
-                            .contains("DRY")))
-                    || ((theOtherType.contains("SHEAR") && getPgenType(elSel,
-                            adc).contains("SHEAR")))
-                    || ((theOtherType.contains("OCCL") && getPgenType(elSel,
-                            adc).contains("OCCL")))
-                    || ((theOtherType.contains("INSTAB") && getPgenType(elSel,
-                            adc).contains("INSTAB")))) {
+            if ((theOtherType.contains("STAT")
+                    && getPgenType(elSel, adc).contains("STAT"))
+                    || ((theOtherType.contains("TROP")
+                            && getPgenType(elSel, adc).contains("TROP")))
+                    || ((theOtherType.contains("TROF")
+                            && getPgenType(elSel, adc).contains("TROF")))
+                    || ((theOtherType.contains("COLD")
+                            && getPgenType(elSel, adc).contains("COLD")))
+                    || ((theOtherType.contains("WARM")
+                            && getPgenType(elSel, adc).contains("WARM")))
+                    || ((theOtherType.contains("DRY")
+                            && getPgenType(elSel, adc).contains("DRY")))
+                    || ((theOtherType.contains("SHEAR")
+                            && getPgenType(elSel, adc).contains("SHEAR")))
+                    || ((theOtherType.contains("OCCL")
+                            && getPgenType(elSel, adc).contains("OCCL")))
+                    || ((theOtherType.contains("INSTAB")
+                            && getPgenType(elSel, adc).contains("INSTAB")))) {
                 return true;
             }
             return false;
@@ -568,7 +526,7 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
         /**
          * Connect two jets.
-         * 
+         *
          * @param fstJet
          *            The Jet to be connected to
          * @param sedJet
@@ -593,13 +551,8 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
             while (it.hasNext()) {
                 AbstractDrawableComponent de = it.next().copy();
                 if (de.getName().equalsIgnoreCase("windInfo")) {
-
-                    // Must set parent of this barb to the new Jet ???
-                    // ((JetBarb)de.getPrimaryDE()).setParent( mpe );
                     mpe.addBarb((DECollection) de);
-
                 }
-
             }
 
             mpe.getSnapTool().snapJet(mpe);
@@ -610,10 +563,10 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
         /**
          * Check if a contour line is select-able.
-         * 
+         *
          * Note: only a contour line within the same Contours and with the same
          * label string could be selected.
-         * 
+         *
          * @param el2bSelected
          *            The contour line to be selected
          * @param elSelected
@@ -654,9 +607,7 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
                             }
                         }
                     }
-
                 }
-
             }
 
             return selectable;
@@ -664,7 +615,7 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
         /**
          * Connect two contour lines in a Contours element.
-         * 
+         *
          * @param clines
          *            The contour line to be connected to
          * @param cline2
@@ -692,7 +643,8 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
 
                     Line oldLine = ((ContourLine) oldContourComp).getLine();
 
-                    if (oldLine != null && (oldLine.equals((Line) cline1) || oldLine.equals(cline2))) {
+                    if (oldLine != null && (oldLine.equals(cline1)
+                            || oldLine.equals(cline2))) {
 
                         if (!connected) {
 
@@ -704,7 +656,6 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
                             newContours.add(newContourComp);
 
                             connected = true;
-
                         }
 
                     } else {
@@ -715,7 +666,6 @@ public class PgenConnectTool extends AbstractPgenDrawingTool {
                     newContourComp.setParent(newContours);
                     newContours.add(newContourComp);
                 }
-
             }
 
             newContours.update(oldContours);

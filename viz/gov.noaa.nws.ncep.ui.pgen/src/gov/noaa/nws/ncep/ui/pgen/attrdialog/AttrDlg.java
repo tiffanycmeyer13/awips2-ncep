@@ -43,7 +43,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.Jet;
 import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
 import gov.noaa.nws.ncep.ui.pgen.elements.Text;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.AbstractSigmet;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
 
@@ -52,38 +52,54 @@ import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * --------------------------------------------------------------------
- * 02/09        ?           B. Yin      Initial Creation.
- * 04/09        #72         S. Gilbert  Added IText
- * 04/09        #89         J. Wu       Added IArc
- * 05/09        #111        J. Wu       Added IVector
- * 05/09        #116        B. Yin      Override open() to set dialog location
- * 07/09        #104        S. Gilbert  Added IAvnText methods
- * 08/09        #135        B. Yin      Modified okPressed method to handle jet barbs
- * 08/09        #149        B. Yin      Modified okPressed method to handle MultiSelect
- * 09/09        #169        Greg Hull   NCMapEditor
- * 01/10        #182        G. Zhang    Added DrawableElement and mousehandlerName for CONVSIGMET
- * 10/10        #?          B. Yin      Changed DrawableElement de to AbstractDrawableComponent
- * 04/11        #?          B. Yin      Re-factor IAttribute
- * 08/12        #?          B. Yin      Fixed the mouse-over issue for PGEN palette.
- * 03/13        #928        B. Yin      Make the button bar smaller.
- * 04/13        #874        B. Yin      Handle collection when OK is pressed for multi-selection.
- * 04/13        TTR399      J. Wu       Make the dialog compact
- * 12/14        R5413       B. Yin      Refresh editor after dialog close
- * 12/15        R12989      P. Moyer    Prior text attribute tracking via pgenTypeLabels HashMap
- * 05/16/2016   R18388      J. Wu       Use contants in PgenConstant.
- * 06/16/2016   R18370      B. Yin      Set focus back to map editor when multi-selecting
- * 08/05/2016   R17973      B. Yin      Don't create button bar in drawing mode.
- * 01/23/2019   7716        K. Sunil    return true in createButtonBar call in case of PgenInterpDlg.
- * 03/20/2019   #7572       dgilling    Code cleanup.
- * 07/26/2019   66393       mapeters    Handle {@link AttrSettings#getSettings} change
- * 09/06/2019   64150       ksunil      add button bar if working with various ContourAttr dialogs while "ANY"
- *                                           classes on UI is selected.
- * 06/18/2020   79252       pbutler     PGEN function fixes for null pointers when working w/ Airmets.
- * 11/11/2020   98328       thuggins    Drawing Layer can be null when all polygons are removed. Check that it's
- *                                          not null before calling removeSelected and removeGhostLine
  *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 02/09         ?        B. Yin      Initial Creation.
+ * 04/09         72       S. Gilbert  Added IText
+ * 04/09         89       J. Wu       Added IArc
+ * 05/09         111      J. Wu       Added IVector
+ * 05/09         116      B. Yin      Override open() to set dialog location
+ * 07/09         104      S. Gilbert  Added IAvnText methods
+ * 08/09         135      B. Yin      Modified okPressed method to handle jet
+ *                                    barbs
+ * 08/09         149      B. Yin      Modified okPressed method to handle
+ *                                    MultiSelect
+ * 09/09         169      Greg Hull   NCMapEditor
+ * 01/10         182      G. Zhang    Added DrawableElement and mousehandlerName
+ *                                    for CONVSIGMET
+ * 10/10         #?       B. Yin      Changed DrawableElement de to
+ *                                    AbstractDrawableComponent
+ * 04/11         #?       B. Yin      Re-factor IAttribute
+ * 08/12         #?       B. Yin      Fixed the mouse-over issue for PGEN
+ *                                    palette.
+ * 03/13         928      B. Yin      Make the button bar smaller.
+ * 04/13         874      B. Yin      Handle collection when OK is pressed for
+ *                                    multi-selection.
+ * 04/13         TTR399   J. Wu       Make the dialog compact
+ * 12/14         5413     B. Yin      Refresh editor after dialog close
+ * 12/15         12989    P. Moyer    Prior text attribute tracking via
+ *                                    pgenTypeLabels HashMap
+ * May 16, 2016  18388    J. Wu       Use contants in PgenConstant.
+ * Jun 16, 2016  18370    B. Yin      Set focus back to map editor when
+ *                                    multi-selecting
+ * Aug 05, 2016  17973    B. Yin      Don't create button bar in drawing mode.
+ * Jan 23, 2019  7716     K. Sunil    return true in createButtonBar call in
+ *                                    case of PgenInterpDlg.
+ * Mar 20, 2019  7572     dgilling    Code cleanup.
+ * Jul 26, 2019  66393    mapeters    Handle {@link AttrSettings#getSettings}
+ *                                    change
+ * Sep 06, 2019  64150    ksunil      add button bar if working with various
+ *                                    ContourAttr dialogs while "ANY" classes on
+ *                                    UI is selected.
+ * Jun 18, 2020  79252    pbutler     PGEN function fixes for null pointers when
+ *                                    working w/ Airmets.
+ * Nov 11, 2020  98328    thuggins    Drawing Layer can be null when all
+ *                                    polygons are removed. Check that it's not
+ *                                    null before calling removeSelected and
+ *                                    removeGhostLine
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
  *
  * </pre>
  *
@@ -99,7 +115,7 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
      * A handler to the current PGEN drawing layer, which is used to get the
      * selected element.
      */
-    protected PgenResource drawingLayer = null;
+    protected PgenResourceList drawingLayers = null;
 
     /**
      * A handler to the current map editor. The map editor is used to redraw the
@@ -189,9 +205,9 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
      */
     @Override
     public void handleShellCloseEvent() {
-        if (drawingLayer != null) {
-            drawingLayer.removeSelected();
-            drawingLayer.removeGhostLine();
+        if (drawingLayers != null) {
+            drawingLayers.removeSelected();
+            drawingLayers.removeGhostLine();
         }
         mapEditor.refresh();
         super.handleShellCloseEvent();
@@ -205,9 +221,9 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
      *
      * @param dl
      */
-    public void setDrawingLayer(PgenResource dl) {
+    public void setDrawingLayers(PgenResourceList dl) {
 
-        this.drawingLayer = dl;
+        this.drawingLayers = dl;
 
     }
 
@@ -230,7 +246,7 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
          * JetBarb/Jet/Hash/JetText cannot be multi-selected and they are
          * separated from those that can be multi-selected.
          */
-        DrawableElement de = drawingLayer.getSelectedDE();
+        DrawableElement de = drawingLayers.getSelectedDE();
         if (de != null && (de instanceof Jet.JetBarb
                 || de instanceof Jet.JetHash || de instanceof Jet.JetText
                 || de instanceof Jet.JetLine)) {
@@ -252,7 +268,7 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
                                 newJet.getNearestComponent(
                                         ((Jet.JetBarb) de).getLocation()),
                                 newWind);
-                        drawingLayer.replaceElement(oldJet, newJet);
+                        drawingLayers.replaceElement(oldJet, newJet);
 
                         newWind.replace(
                                 newWind.getNearestComponent(
@@ -269,7 +285,7 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
                 }
             } else {
                 newEl.update(this);
-                drawingLayer.replaceElement(de, newEl);
+                drawingLayers.replaceElement(de, newEl);
 
                 // reset the jet line attributes
                 if (de instanceof Jet.JetLine) {
@@ -287,16 +303,16 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
                 }
             }
 
-            drawingLayer.removeSelected();
-            drawingLayer.setSelected(newEl);
+            drawingLayers.removeSelected();
+            drawingLayers.setSelected(newEl);
         } else {
 
             ArrayList<AbstractDrawableComponent> adcList = null;
             ArrayList<AbstractDrawableComponent> newList = new ArrayList<>();
 
             // get the list of selected elements
-            if (drawingLayer != null) {
-                adcList = (ArrayList<AbstractDrawableComponent>) drawingLayer
+            if (drawingLayers != null) {
+                adcList = (ArrayList<AbstractDrawableComponent>) drawingLayers
                         .getAllSelected();
             }
 
@@ -352,14 +368,14 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
 
                 ArrayList<AbstractDrawableComponent> oldList = new ArrayList<>(
                         adcList);
-                drawingLayer.replaceElements(null, oldList, newList);
+                drawingLayers.replaceElements(null, oldList, newList);
             }
 
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
 
             // set new elements as selected
             for (AbstractDrawableComponent adc : newList) {
-                drawingLayer.addSelected(adc);
+                drawingLayers.addSelected(adc);
             }
 
         }
@@ -376,8 +392,8 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
     @Override
     public void cancelPressed() {
 
-        drawingLayer.removeSelected();
-        drawingLayer.removeGhostLine();
+        drawingLayers.removeSelected();
+        drawingLayers.removeGhostLine();
         super.cancelPressed();
 
     }

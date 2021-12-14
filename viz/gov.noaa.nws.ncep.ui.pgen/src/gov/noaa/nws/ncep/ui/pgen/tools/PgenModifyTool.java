@@ -1,12 +1,19 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenModifyTool
- * 
+ *
  * May 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
+
+import java.awt.Color;
+import java.util.ArrayList;
+
+import com.raytheon.uf.viz.core.IDisplayPane;
+import com.raytheon.uf.viz.core.rsc.IInputHandler;
+import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.annotation.Operation;
@@ -19,40 +26,41 @@ import gov.noaa.nws.ncep.ui.pgen.filter.OperationFilter;
 import gov.noaa.nws.ncep.ui.pgen.gfa.Gfa;
 import gov.noaa.nws.ncep.ui.pgen.gfa.GfaReducePoint;
 
-import java.awt.Color;
-import java.util.ArrayList;
-
-import com.raytheon.uf.viz.core.IDisplayPane;
-import com.raytheon.uf.viz.core.rsc.IInputHandler;
 import org.locationtech.jts.geom.Coordinate;
-
 //import gov.noaa.nws.ncep.ui.display.InputHandlerDefaultImpl;
 
 /**
  * Implements a modal map tool for PGEN Line Modification function.
- * 
+ *
  * Only Line/Front can be selected to be modified now (not Arc).
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 05/09		#120		J. Wu   	Initial Creation.
- * 04/10		#165		G. Zhang	Added isModifiableSigmet()
- * 02/12        #597        S. Gurung   Removed snapping while modification for all sigmets. 
- * 										Moved snap functionalities to SnapUtil from SigmetInfo. 
- * 05/12		#808		J. Wu   	Update GFA vor text
- * 05/12		#610		J. Wu   	Add warning when GFA FROM lines > 3
- * 05/12        TTR 998     J. Wu       Use mapDescriptor's pixelToWorld instead of PaneManager's
- *                                      translateClick() to convert point - translateClick() may 
- *                                      fail to convert if a point is outside of Grid coverage.
- * 12/14		R5413		B. Yin		PGEN in D2D changes.
- * 04/15        R6879       J. Wu       Make a local translateClick() without grid range check to 
- *                                      fix TTR 998 and make modification work on screen pixels 
- *                                      instead of canvas pixels.
- * 
+ *
+ * Date          Ticket#  Engineer   Description
+ * ------------- -------- ---------- -------------------------------------------
+ * 05/09         120      J. Wu      Initial Creation.
+ * 04/10         165      G. Zhang   Added isModifiableSigmet()
+ * 02/12         597      S. Gurung  Removed snapping while modification for all
+ *                                   sigmets. Moved snap functionalities to
+ *                                   SnapUtil from SigmetInfo.
+ * 05/12         808      J. Wu      Update GFA vor text
+ * 05/12         610      J. Wu      Add warning when GFA FROM lines > 3
+ * 05/12         TTR 998  J. Wu      Use mapDescriptor's pixelToWorld instead of
+ *                                   PaneManager's translateClick() to convert
+ *                                   point - translateClick() may fail to
+ *                                   convert if a point is outside of Grid
+ *                                   coverage.
+ * 12/14         5413     B. Yin     PGEN in D2D changes.
+ * 04/15         6879     J. Wu      Make a local translateClick() without grid
+ *                                   range check to fix TTR 998 and make
+ *                                   modification work on screen pixels instead
+ *                                   of canvas pixels.
+ * Dec 02, 2021  95362    tjensen    Refactor PGEN Resource management to
+ *                                   support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
  */
 
@@ -71,9 +79,10 @@ public class PgenModifyTool extends AbstractPgenTool {
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.modifyHandler == null) {
@@ -88,9 +97,9 @@ public class PgenModifyTool extends AbstractPgenTool {
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
     public class PgenModifyHandler extends InputHandlerDefaultImpl {
 
@@ -118,34 +127,31 @@ public class PgenModifyTool extends AbstractPgenTool {
          */
         Color ghostColor = new java.awt.Color(255, 255, 255);
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             preempt = false;
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(anX, aY);
-            if (loc == null || shiftDown)
+            if (loc == null || shiftDown) {
                 return false;
+            }
 
             if (button == 1) {
 
-                if (drawingLayer.getSelectedDE() == null) {
+                if (drawingLayers.getSelectedDE() == null) {
 
                     // Get the nearest element and set it as the selected
                     // element.
-                    DrawableElement elSelected = drawingLayer
+                    DrawableElement elSelected = drawingLayers
                             .getNearestElement(loc, modifyFilter);
-                    if (((elSelected instanceof Line) && !(elSelected instanceof Arc))
+                    if (((elSelected instanceof Line)
+                            && !(elSelected instanceof Arc))
                             || isModifiableSigmet(elSelected)) {
-                        drawingLayer.setSelected(elSelected);
+                        drawingLayers.setSelected(elSelected);
                         mapEditor.refresh();
                         preempt = true;
                     } else {
@@ -155,7 +161,7 @@ public class PgenModifyTool extends AbstractPgenTool {
                     preempt = true;
 
                     if (clickPts == null) {
-                        clickPts = new ArrayList<Coordinate>();
+                        clickPts = new ArrayList<>();
                     }
 
                     clickPts.add(loc);
@@ -164,15 +170,15 @@ public class PgenModifyTool extends AbstractPgenTool {
                         pml = new PgenModifyLine();
                     }
 
-                    pml.setClickPts(latlonToPixel(clickPts
-                            .toArray(new Coordinate[clickPts.size()])));
+                    pml.setClickPts(latlonToPixel(
+                            clickPts.toArray(new Coordinate[clickPts.size()])));
 
                     ModifyLine();
 
                     ghostEl.setColors(new Color[] { ghostColor,
                             new java.awt.Color(255, 255, 255) });
 
-                    drawingLayer.setGhostLine(ghostEl);
+                    drawingLayers.setGhostLine(ghostEl);
                     mapEditor.refresh();
 
                 }
@@ -180,69 +186,56 @@ public class PgenModifyTool extends AbstractPgenTool {
                 return preempt;
 
             } else if (button == 3) {
-
                 return true;
-            }
-
-            else {
+            } else {
                 return false;
             }
 
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseMove(int,
-         * int)
-         */
         @Override
         public boolean handleMouseMove(int x, int y) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(x, y);
-            if (loc == null)
+            if (loc == null) {
                 return false;
+            }
 
             // create the ghost element and put it in the drawing layer
             if (clickPts != null && clickPts.size() >= 1) {
 
-                ArrayList<Coordinate> newPts = new ArrayList<Coordinate>(
+                ArrayList<Coordinate> newPts = new ArrayList<>(
                         clickPts);
                 newPts.add(loc);
 
-                pml.setClickPts(latlonToPixel(newPts
-                        .toArray(new Coordinate[newPts.size()])));
+                pml.setClickPts(latlonToPixel(
+                        newPts.toArray(new Coordinate[newPts.size()])));
 
                 ModifyLine();
 
                 ghostEl.setColors(new Color[] { ghostColor,
                         new java.awt.Color(255, 255, 255) });
-                drawingLayer.setGhostLine(ghostEl);
+                drawingLayers.setGhostLine(ghostEl);
                 mapEditor.refresh();
 
             }
 
             return true;
-
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseUp(int, int,
-         * int)
-         */
         @Override
         public boolean handleMouseUp(int x, int y, int button) {
-            if (!isResourceEditable() || shiftDown)
+            if (!isResourceEditable() || shiftDown) {
                 return false;
-            
-            if ( button == 3 ) {
+            }
 
-                if (drawingLayer.getSelectedDE() != null) {
+            if (button == 3) {
+
+                if (drawingLayers.getSelectedDE() != null) {
 
                     if (clickPts != null && !clickPts.isEmpty()) {
 
@@ -251,62 +244,50 @@ public class PgenModifyTool extends AbstractPgenTool {
 
                         ModifyLine();
 
-                        if (!(((Line) drawingLayer.getSelectedDE())
-                                .isClosedLine() && ((MultiPointElement) ghostEl)
-                                .getLinePoints().length < 3)) {
+                        if (!(((Line) drawingLayers.getSelectedDE())
+                                .isClosedLine()
+                                && ghostEl.getLinePoints().length < 3)) {
 
-                            MultiPointElement selected = (MultiPointElement) drawingLayer
+                            MultiPointElement selected = (MultiPointElement) drawingLayers
                                     .getSelectedDE();
 
                             if (selected instanceof Jet.JetLine) {
 
-                                Jet jet = (Jet) drawingLayer.getActiveLayer()
+                                Jet jet = (Jet) drawingLayers.getActiveLayer()
                                         .search(selected);
                                 Jet newJet = jet.copy();
-                                drawingLayer.replaceElement(jet, newJet);
-                                newJet.getPrimaryDE().setPoints(
-                                        ghostEl.getPoints());
-                                drawingLayer.setSelected(newJet.getPrimaryDE());
+                                drawingLayers.replaceElement(jet, newJet);
+                                newJet.getPrimaryDE()
+                                        .setPoints(ghostEl.getPoints());
+                                drawingLayers
+                                        .setSelected(newJet.getPrimaryDE());
                             } else {
-                                MultiPointElement mpe = (MultiPointElement) drawingLayer
+                                MultiPointElement mpe = (MultiPointElement) drawingLayers
                                         .getSelectedDE().copy();
 
-                                drawingLayer.replaceElement(
-                                        drawingLayer.getSelectedDE(), mpe);
-
-                                // need snapping, get ghostEl's points with
-                                // mpe's pgenType
-                                /*
-                                 * if( isModifiableSigmet(mpe)){
-                                 * ArrayList<Coordinate> list =
-                                 * SigmetInfo.getSnapWithStation(
-                                 * ghostEl.getPoints(),
-                                 * SigmetInfo.VOR_STATION_LIST, 10,
-                                 * SigmetInfo.getNumOfCompassPts(mpe));
-                                 * //ArrayList<Coordinate> list2 =
-                                 * SigmetInfo.getNonDplicList(list);
-                                 * mpe.setPoints(list);//2); }else
-                                 */
+                                drawingLayers.replaceElement(
+                                        drawingLayers.getSelectedDE(), mpe);
 
                                 mpe.setPoints(ghostEl.getPoints());
                                 if (mpe instanceof Gfa) {
-                                    if (((Gfa) mpe).getGfaFcstHr().indexOf("-") > -1) {
+                                    if (((Gfa) mpe).getGfaFcstHr()
+                                            .indexOf("-") > -1) {
                                         // snap
                                         ((Gfa) mpe).snap();
 
-                                        GfaReducePoint
-                                                .WarningForOverThreeLines((Gfa) mpe);
+                                        GfaReducePoint.WarningForOverThreeLines(
+                                                (Gfa) mpe);
                                     }
 
-                                    ((Gfa) mpe).setGfaVorText(Gfa
-                                            .buildVorText((Gfa) mpe));
+                                    ((Gfa) mpe).setGfaVorText(
+                                            Gfa.buildVorText((Gfa) mpe));
                                 }
 
-                                drawingLayer.setSelected(mpe);
+                                drawingLayers.setSelected(mpe);
                             }
                         }
 
-                        drawingLayer.removeGhostLine();
+                        drawingLayers.removeGhostLine();
                         clickPts.clear();
 
                         mapEditor.refresh();
@@ -315,15 +296,15 @@ public class PgenModifyTool extends AbstractPgenTool {
 
                         ghostEl = null;
 
-                        drawingLayer.removeGhostLine();
-                        drawingLayer.removeSelected();
+                        drawingLayers.removeGhostLine();
+                        drawingLayers.removeSelected();
                         mapEditor.refresh();
 
                     }
 
                 } else {
 
-                    drawingLayer.removeSelected();
+                    drawingLayers.removeSelected();
                     mapEditor.refresh();
 
                     // set selecting mode
@@ -342,10 +323,11 @@ public class PgenModifyTool extends AbstractPgenTool {
 
         @Override
         public boolean handleMouseDownMove(int x, int y, int mouseButton) {
-            if (!isResourceEditable() || shiftDown)
+            if (!isResourceEditable() || shiftDown) {
                 return false;
-            else
+            } else {
                 return preempt;
+            }
         }
 
         /**
@@ -354,13 +336,14 @@ public class PgenModifyTool extends AbstractPgenTool {
          */
         private void ModifyLine() {
 
-            pml.setOriginalPts(latlonToPixel(((Line) drawingLayer
-                    .getSelectedDE()).getLinePoints()));
+            pml.setOriginalPts(latlonToPixel(
+                    ((Line) drawingLayers.getSelectedDE()).getLinePoints()));
 
-            pml.setSmoothLevel(((Line) drawingLayer.getSelectedDE())
-                    .getSmoothFactor());
+            pml.setSmoothLevel(
+                    ((Line) drawingLayers.getSelectedDE()).getSmoothFactor());
 
-            pml.setClosed(((Line) drawingLayer.getSelectedDE()).isClosedLine());
+            pml.setClosed(
+                    ((Line) drawingLayers.getSelectedDE()).isClosedLine());
 
             pml.PerformModify();
 
@@ -370,7 +353,7 @@ public class PgenModifyTool extends AbstractPgenTool {
 
         /**
          * Converts an array of lat/lons to pixel coordinates
-         * 
+         *
          * @param pts
          *            An array of points in lat/lon coordinates
          * @return The array of points in pixel coordinates
@@ -395,18 +378,16 @@ public class PgenModifyTool extends AbstractPgenTool {
 
         /**
          * Converts an array of pixel coordinates to lat/lons
-         * 
+         *
          * @param pts
          *            An array of points in pixel coordinates
          * @return The array of points in Lat/Lons
          */
         private ArrayList<Coordinate> pixelToLatlon(double[][] pixels) {
 
-            ArrayList<Coordinate> crd = new ArrayList<Coordinate>();
-            for (int ii = 0; ii < pixels.length; ii++) {
-                // Coordinate pp = mapEditor.translateClick(pixels[ii][0],
-                // pixels[ii][1]);
-                Coordinate pp = translateClick(pixels[ii][0], pixels[ii][1]);
+            ArrayList<Coordinate> crd = new ArrayList<>();
+            for (double[] pixel : pixels) {
+                Coordinate pp = translateClick(pixel[0], pixel[1]);
                 crd.add(pp);
             }
 
@@ -416,11 +397,11 @@ public class PgenModifyTool extends AbstractPgenTool {
 
         /**
          * Translate a current (x,y) screen coordinate to world coordinates.
-         * 
+         *
          * Note: R6879 - this method is the same as PaneManager.translateClick()
          * but without the check for grid range. The check for grid range turns
          * points outside of grid range to null and causes exceptions (TTR998).
-         * 
+         *
          * @param x
          *            a visible x screen coordinate
          * @param y
@@ -432,12 +413,6 @@ public class PgenModifyTool extends AbstractPgenTool {
 
             // Convert the screen coordinates to grid space
             double[] world = pane.screenToGrid(x, y, 0);
-
-            // GridEnvelope ge =
-            // pane.getDescriptor().getGridGeometry().getGridRange();
-            // IExtent extent = new PixelExtent(ge);
-            // Verify grid space is within the extent, otherwise return null
-            // if (world == null || extent.contains(world) == false) {
 
             if (world == null) {
                 return null;
@@ -456,21 +431,22 @@ public class PgenModifyTool extends AbstractPgenTool {
 
         /**
          * Build a new modified DrawableElement from a set of lat/lons
-         * 
+         *
          * @param pts
          *            An array of points in pixel coordinates
          * @return The array of points in Lat/Lons
          */
         private void buildNewElement() {
 
-            ghostEl = (MultiPointElement) (drawingLayer.getSelectedDE().copy());
+            ghostEl = (MultiPointElement) (drawingLayers.getSelectedDE()
+                    .copy());
 
             if (ghostEl != null && pml.getModifiedPts() != null
                     && pml.getModifiedPts().length > 1) {
 
                 ghostEl.setLinePoints(pixelToLatlon(pml.getModifiedPts()));
 
-                if (((Line) drawingLayer.getSelectedDE()).isClosedLine()) {
+                if (((Line) drawingLayers.getSelectedDE()).isClosedLine()) {
                     if (pml.getModifiedPts().length < 3) {
                         ghostEl.setClosed(false);
                     }
@@ -482,7 +458,7 @@ public class PgenModifyTool extends AbstractPgenTool {
 
     /**
      * check if the DE is modifiable Sigmet.
-     * 
+     *
      * @param DrawableElement
      *            : DE to be checked.
      * @return boolean: true: the Sigmet is Modifiable.
@@ -493,8 +469,9 @@ public class PgenModifyTool extends AbstractPgenTool {
             gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet sig = (gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet) el;
 
             if (!sig.getType().contains("Text")
-                    && !sig.getType().contains("Isolated"))
+                    && !sig.getType().contains("Isolated")) {
                 return true;
+            }
         }
 
         return false;
