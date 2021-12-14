@@ -243,6 +243,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       Updated SigmetAttrDlgSaveMsgDlg.getFileName(),
  *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine(),
  *                                       Updated SigmetAttrDlgSaveMsgDlg.getFirstLine()
+ * Dec 07, 2021  8653       tjensen      Fix ClassCastExceptions during init()
  * </pre>
  *
  * @author gzhang
