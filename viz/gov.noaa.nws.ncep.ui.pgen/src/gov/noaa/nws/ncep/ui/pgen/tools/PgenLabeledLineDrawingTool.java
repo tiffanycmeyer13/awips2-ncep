@@ -11,8 +11,9 @@ package gov.noaa.nws.ncep.ui.pgen.tools;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
@@ -32,7 +33,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 import gov.noaa.nws.ncep.ui.pgen.elements.labeledlines.Label;
 import gov.noaa.nws.ncep.ui.pgen.elements.labeledlines.LabeledLine;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements a modal map tool for PGEN labeled line drawing.
  *
@@ -220,8 +220,7 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
 
             if (points != null && points.size() >= 1) {
 
-                ArrayList<Coordinate> ghostPts = new ArrayList<>(
-                        points);
+                ArrayList<Coordinate> ghostPts = new ArrayList<>(points);
                 ghostPts.add(loc);
                 Line ln = (Line) ghost;
                 ln.setLinePoints(new ArrayList<>(ghostPts));

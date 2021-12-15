@@ -11,9 +11,10 @@ package gov.noaa.nws.ncep.ui.pgen.tools;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import com.raytheon.uf.viz.core.IDisplayPane;
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.annotation.Operation;
@@ -25,9 +26,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.MultiPointElement;
 import gov.noaa.nws.ncep.ui.pgen.filter.OperationFilter;
 import gov.noaa.nws.ncep.ui.pgen.gfa.Gfa;
 import gov.noaa.nws.ncep.ui.pgen.gfa.GfaReducePoint;
-
-import org.locationtech.jts.geom.Coordinate;
-//import gov.noaa.nws.ncep.ui.display.InputHandlerDefaultImpl;
 
 /**
  * Implements a modal map tool for PGEN Line Modification function.
@@ -208,8 +206,7 @@ public class PgenModifyTool extends AbstractPgenTool {
             // create the ghost element and put it in the drawing layer
             if (clickPts != null && clickPts.size() >= 1) {
 
-                ArrayList<Coordinate> newPts = new ArrayList<>(
-                        clickPts);
+                ArrayList<Coordinate> newPts = new ArrayList<>(clickPts);
                 newPts.add(loc);
 
                 pml.setClickPts(latlonToPixel(

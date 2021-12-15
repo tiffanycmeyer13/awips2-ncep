@@ -10,8 +10,9 @@ package gov.noaa.nws.ncep.ui.pgen.tools;
 
 import java.awt.Color;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import com.raytheon.viz.ui.editor.AbstractEditor;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.JetAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
@@ -20,7 +21,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Jet;
 import gov.noaa.nws.ncep.ui.pgen.elements.Jet.JetHash;
 //import gov.noaa.nws.ncep.viz.ui.display.NCMapEditor;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
-import org.locationtech.jts.geom.Coordinate;
 
 /**
  * Mouse handler to add hash when drawing jet.

@@ -8,8 +8,9 @@
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.annotation.Operation;
@@ -17,7 +18,6 @@ import gov.noaa.nws.ncep.ui.pgen.attrdialog.FromAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.filter.OperationFilter;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements a modal map tool for PGEN gfa formatting.
  *
@@ -48,7 +48,7 @@ public class PgenFromTool extends AbstractPgenDrawingTool {
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
     @Override
@@ -64,7 +64,7 @@ public class PgenFromTool extends AbstractPgenDrawingTool {
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author jwu
      *
      */

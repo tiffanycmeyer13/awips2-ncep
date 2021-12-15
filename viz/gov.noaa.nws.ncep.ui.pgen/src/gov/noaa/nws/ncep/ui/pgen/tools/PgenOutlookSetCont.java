@@ -8,8 +8,9 @@
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.OutlookAttrDlg;
@@ -18,7 +19,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.elements.Outlook;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements a modal map tool to set continue lines for outlooks.
  *

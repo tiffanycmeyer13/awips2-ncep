@@ -12,9 +12,9 @@ import static java.lang.Math.atan2;
 import static java.lang.Math.toDegrees;
 
 import org.geotools.referencing.GeodeticCalculator;
+import org.locationtech.jts.geom.Coordinate;
 
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.annotation.Operation;
@@ -27,7 +27,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 import gov.noaa.nws.ncep.ui.pgen.elements.Vector;
 import gov.noaa.nws.ncep.ui.pgen.filter.OperationFilter;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements a modal map tool for PGEN object rotat functions.
  *

@@ -14,10 +14,10 @@ import java.util.Iterator;
 
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.Coordinate;
 import org.opengis.coverage.grid.GridEnvelope;
 
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.annotation.Operation;
@@ -33,7 +33,6 @@ import gov.noaa.nws.ncep.ui.pgen.gfa.GfaReducePoint;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
 import gov.noaa.nws.ncep.viz.common.SnapUtil;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements a modal map tool for the PGEN copy element function.
  *

@@ -23,11 +23,11 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.locationtech.jts.geom.Coordinate;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.raytheon.uf.viz.core.map.MapDescriptor;
 import com.raytheon.uf.viz.core.rsc.ResourceProperties;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.controls.PgenCommandManager;
 import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;

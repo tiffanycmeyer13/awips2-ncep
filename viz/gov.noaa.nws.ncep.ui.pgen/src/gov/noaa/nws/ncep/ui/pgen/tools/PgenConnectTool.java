@@ -14,9 +14,9 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import org.geotools.referencing.GeodeticCalculator;
+import org.locationtech.jts.geom.Coordinate;
 
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.annotation.Operation;
@@ -32,7 +32,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.elements.MultiPointElement;
 import gov.noaa.nws.ncep.ui.pgen.filter.OperationFilter;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements a modal map tool for PGEN connecting function.
  *

@@ -2,8 +2,9 @@ package gov.noaa.nws.ncep.ui.pgen.tools;
 
 import java.util.ArrayList;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
@@ -14,16 +15,16 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 
 /**
  *
+ * TODO Add Description
  *
-import org.locationtech.jts.geom.Coordinate;
+ * <pre>
  *
  * SOFTWARE HISTORY
  *
- * Date          Ticket#  Engineer  Description
- * ------------- -------- --------- --------------------------------------------
- * ????                             Initial creation
- * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
- *                                  multi-panel displays
+ * Date         Ticket#    Engineer    Description
+ * ------------ ---------- ----------- --------------------------
+ * ???                                 Initial creation
+ * Dec 02, 2021 95362      tjensen     Refactor PGEN Resource management to support multi-panel
  *
  * </pre>
  *

@@ -10,8 +10,9 @@ package gov.noaa.nws.ncep.ui.pgen.tools;
 
 import java.util.ArrayList;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrSettings;
@@ -19,7 +20,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElementFactory;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableType;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements a modal map tool for PGEN kink line drawing.
  *

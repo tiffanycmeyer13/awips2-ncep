@@ -10,7 +10,7 @@ package gov.noaa.nws.ncep.ui.pgen.graphtogrid;
 import java.awt.Color;
 import java.util.ArrayList;
 
-import com.vividsolutions.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.gempak.parameters.core.categorymap.CatMap;
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
@@ -21,7 +21,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Class for Graph-to-Grid to extend contour lines to an given boundary and
  * prepare data for later calculation in grid space.

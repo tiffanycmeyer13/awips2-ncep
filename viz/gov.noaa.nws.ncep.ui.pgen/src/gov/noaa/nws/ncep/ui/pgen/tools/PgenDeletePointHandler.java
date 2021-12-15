@@ -8,7 +8,7 @@
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
-import com.vividsolutions.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.annotation.Operation;
@@ -21,7 +21,6 @@ import gov.noaa.nws.ncep.ui.pgen.filter.OperationFilter;
 import gov.noaa.nws.ncep.ui.pgen.gfa.Gfa;
 import gov.noaa.nws.ncep.ui.pgen.gfa.GfaReducePoint;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements input handler for mouse events for the deleting point action.
  *
@@ -46,7 +45,7 @@ public class PgenDeletePointHandler extends PgenSelectHandler {
 
     /**
      * Constructor
-     * 
+     *
      * @param tool
      */
     public PgenDeletePointHandler(AbstractPgenTool tool) {

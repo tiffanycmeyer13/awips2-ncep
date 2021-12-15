@@ -11,8 +11,9 @@ package gov.noaa.nws.ncep.ui.pgen.tools;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.LineAttrDlg;
@@ -24,7 +25,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.elements.WatchBox;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements a modal map tool to draw watch status line.
  *
@@ -97,7 +97,7 @@ public class PgenWatchStatusLineDrawingTool extends AbstractPgenDrawingTool {
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author bingfan
      *
      */
