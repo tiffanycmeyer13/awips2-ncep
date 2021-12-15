@@ -214,6 +214,17 @@ public class PgenSession
     }
 
     /**
+     * Old call to get the only resource. Should now call getCurrentResource()
+     * directly if a single resource is needed.
+     * 
+     * @return
+     */
+    @Deprecated
+    public PgenResource getPgenResource() {
+        return getCurrentResource();
+    }
+
+    /**
      * Gets the Resource's Command Manager
      *
      * @return the commandMgr
