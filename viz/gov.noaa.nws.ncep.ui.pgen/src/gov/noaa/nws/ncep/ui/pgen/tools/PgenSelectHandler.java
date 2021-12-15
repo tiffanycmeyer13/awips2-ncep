@@ -224,6 +224,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
              * reset ptSelected flag in case the dialog is closed without
              * right-mouse click.
              */
+            if (pgenrscs.getSelectedDE() == null) {
                 ptSelected = false;
             }
 
