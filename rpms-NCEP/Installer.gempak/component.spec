@@ -52,6 +52,7 @@ if [ $? -ne 0 ]; then
 fi
 
 /awips2/ant/bin/ant -f build.xml \
+   -Dtarget.dir=%{_uframe_target} \
    -Declipse.dir=%{_uframe_eclipse} \
    build
 if [ $? -ne 0 ]; then
