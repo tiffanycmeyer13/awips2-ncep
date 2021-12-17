@@ -258,6 +258,11 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Dec 03, 2021  98544      achalla      Modified CAR/SAM Backup mode req:1-4
  * Dec 09, 2021  99344      smanoj       Fixed Fcst Radial/Area/Line description Round To
  *                                       functionality issue for Volcanic Ash.
+ * Dec 17, 2021  99345      thuggins     Made the functionality consistent between the
+ *                                       methods getLatLonStringPrepend2 and getSecondLine.
+ *                                       This makes what shown in lat/lon In the main dialog
+ *                                       consistent with the save dialog
+ *
  *
  * </pre>
  *
@@ -342,6 +347,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private static final int APPLY_ID = IDialogConstants.CLIENT_ID + 1;
 
     private static final int SAVE_ID = IDialogConstants.CLIENT_ID + 2;
+
+    // This is the zero padding used in DecimalFormat for latitude
+    private static final String zeroPaddingForLatitue = "0000";
+
+    // This is the zero padding used in DecimalFormat for longitude
+    private static final String zeroPaddingLongitude = "00000";
 
     private static SigmetAttrDlg INSTANCE = null;
 
@@ -5328,16 +5339,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         lonval = getValRoundedToNearest15Min(lonval);
                         latLonLocation.append((i > 0) ? " " : "")
                                 .append(lat.substring(0, lat.length() - 4));
-                        latLonLocation.append(Integer.toString(latval))
-                                .append(" ");
+                        String latValStr = new DecimalFormat(
+                                zeroPaddingForLatitue).format(latval);
+                        latLonLocation.append(latValStr).append(" ");
                         latLonLocation
                                 .append(lon.substring(0, lon.length() - 5));
-                        String strLon = Integer.toString(lonval);
-                        if ((strLon.length()) < 5) {
-                            latLonLocation.append("0").append(strLon);
-                        } else {
-                            latLonLocation.append(strLon);
-                        }
+                        String strLon = new DecimalFormat(zeroPaddingLongitude)
+                                .format(lonval);
+                        latLonLocation.append(strLon);
 
                         if (i < locPair.length - 1) {
                             latLonLocation.append(" ").append("-");
@@ -6206,9 +6215,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         String paddedDash = " - ";
 
-        String fourZeros = "0000";
-        String fiveZeros = "00000";
-
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < coors.length; i++) {
             Coordinate coor = coors[i];
@@ -6229,7 +6235,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 y = ((int) Math.abs(coor.y) * 100)
                         + Math.round(Math.abs(coor.y - (int) (coor.y)) * 60);
             }
-            result.append(new DecimalFormat(fourZeros).format(y));
+            result.append(new DecimalFormat(zeroPaddingForLatitue).format(y));
 
             result.append(coor.x >= 0 ? " E" : " W");
             int lonDeg = ((int) Math.abs(coor.x)) * 100;
@@ -6247,7 +6253,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 x = ((int) Math.abs(coor.x)) * 100
                         + Math.round(Math.abs(coor.x - (int) (coor.x)) * 60);
             }
-            result.append(new DecimalFormat(fiveZeros).format(x));
+            result.append(new DecimalFormat(zeroPaddingLongitude).format(x));
 
             if (i < (coors.length - 1)) {
                 result.append(paddedDash);
