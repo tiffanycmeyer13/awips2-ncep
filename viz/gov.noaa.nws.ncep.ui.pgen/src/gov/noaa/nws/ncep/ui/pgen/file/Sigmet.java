@@ -95,6 +95,7 @@ import javax.xml.bind.annotation.XmlType;
  * Feb 08, 2021 87538       smanoj      Added FCST Lat/Lon for Tropical Cyclone.
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
+ * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
  *
  * </pre>
  *
@@ -265,6 +266,9 @@ public class Sigmet {
     protected String editableAttrFcstVADesc;
 
     @XmlAttribute
+    protected String editableAttrFcstVADescRoundToVal;
+
+    @XmlAttribute
     protected String editableAttrRALSelection;
 
     @XmlAttribute
@@ -301,6 +305,15 @@ public class Sigmet {
 
     public void setEditableAttrFcstVADesc(String editableAttrFcstVADesc) {
         this.editableAttrFcstVADesc = editableAttrFcstVADesc;
+    }
+
+    public String getEditableAttrFcstVADescRoundToVal() {
+        return editableAttrFcstVADescRoundToVal;
+    }
+
+    public void setEditableAttrFcstVADescRoundToVal(
+            String editableAttrFcstVADescRoundToVal) {
+        this.editableAttrFcstVADescRoundToVal = editableAttrFcstVADescRoundToVal;
     }
 
     public String getEditableAttrFcstAvail() {

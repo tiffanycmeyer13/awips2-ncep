@@ -152,7 +152,7 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * May 14, 2021 91961       tjensen     Resync with gov.noaa.nws.ncep.ui.pgen.file.ProductConverter
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
  * Dec 01, 2021 95362       tjensen     Refactor PGEN Resource management to support multi-panel displays
- *
+ * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
  *
  * </pre>
  *
@@ -1285,6 +1285,8 @@ public class ProductConverter {
                                 ((Sigmet) de).getEditableAttrFcstAvail());
                         sigmet.setEditableAttrFcstVADesc(
                                 ((Sigmet) de).getEditableAttrFcstVADesc());
+                        sigmet.setEditableAttrFcstVADescRoundToVal(
+                                ((Sigmet) de).getEditableAttrFcstVADescRoundToVal());
                         sigmet.setEditableAttrTrend(
                                 ((Sigmet) de).getEditableAttrTrend());
                         sigmet.setEditableAttrMovement(
