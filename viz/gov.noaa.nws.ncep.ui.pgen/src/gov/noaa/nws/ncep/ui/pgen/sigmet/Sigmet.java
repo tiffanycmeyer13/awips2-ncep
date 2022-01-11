@@ -33,7 +33,8 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
  * Feb 05, 2021 87538       smanoj      Added FCST Lat/Lon for Tropical Cyclone.
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
- *
+ * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
+ * 
  * </pre>
  *
  * @author gzhang
@@ -123,6 +124,8 @@ public class Sigmet extends AbstractSigmet {
 
     private String editableAttrFcstVADesc;
 
+    private String editableAttrFcstVADescRoundToVal;
+
     private String editableAttrRALSelection;
 
     private String editableAttrAltLevelText;
@@ -182,6 +185,8 @@ public class Sigmet extends AbstractSigmet {
         this.editableAttrFcstPhenomLat = fSig.getEditableAttrFcstPhenomLat();
         this.editableAttrFcstPhenomLon = fSig.getEditableAttrFcstPhenomLon();
         this.editableAttrFcstVADesc = fSig.getEditableAttrFcstVADesc();
+        this.editableAttrFcstVADescRoundToVal = fSig
+                .getEditableAttrFcstVADescRoundToVal();
         this.editableAttrRALSelection = fSig.getEditableAttrRALSelection();
         this.editableAttrAltLevelText = fSig.getEditableAttrAltLevelText();
         this.editableAttrAltitudeSelection = fSig
@@ -281,6 +286,8 @@ public class Sigmet extends AbstractSigmet {
         newSigmet.setEditableAttrCarSamBackupMode(
                 this.getEditableAttrCarSamBackupMode());
         newSigmet.setEditableAttrFcstVADesc(this.getEditableAttrFcstVADesc());
+        newSigmet.setEditableAttrFcstVADescRoundToVal(
+                this.getEditableAttrFcstVADescRoundToVal());
         newSigmet.setEditableAttrRALSelection(
                 this.getEditableAttrRALSelection());
         newSigmet.setEditableAttrAltLevelText(
@@ -550,6 +557,15 @@ public class Sigmet extends AbstractSigmet {
 
     public void setEditableAttrFcstVADesc(String editableAttrFcstVADesc) {
         this.editableAttrFcstVADesc = editableAttrFcstVADesc;
+    }
+
+    public String getEditableAttrFcstVADescRoundToVal() {
+        return editableAttrFcstVADescRoundToVal;
+    }
+
+    public void setEditableAttrFcstVADescRoundToVal(
+            String editableAttrFcstVADescRoundToVal) {
+        this.editableAttrFcstVADescRoundToVal = editableAttrFcstVADescRoundToVal;
     }
 
     public String getEditableAttrFir() {

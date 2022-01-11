@@ -164,7 +164,8 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  *                                      level info
  * Dec 01, 2021  95362     tjensen      Refactor PGEN Resource management to
  *                                      support multi-panel displays
- *
+ * Jan 10, 2022  99344     smanoj       Added VolcAsh Description coordinate RoundTo Value.
+ * 
  * </pre>
  *
  * @author J. Wu
@@ -1220,6 +1221,8 @@ public class ProductConverter {
                                 ((Sigmet) de).getEditableAttrFcstAvail());
                         sigmet.setEditableAttrFcstVADesc(
                                 ((Sigmet) de).getEditableAttrFcstVADesc());
+                        sigmet.setEditableAttrFcstVADescRoundToVal(
+                                ((Sigmet) de).getEditableAttrFcstVADescRoundToVal());
                         sigmet.setEditableAttrTrend(
                                 ((Sigmet) de).getEditableAttrTrend());
                         sigmet.setEditableAttrMovement(
