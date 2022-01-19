@@ -265,7 +265,9 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jan 10, 2022  99344      smanoj       Updates for Int'l Sigmet editableAttrfromLine
  *                                       coordinates (not rounded), and other additional
  *                                       requirements.
- * 
+ * Jan 19, 2022  99345      thuggins     More work to get Volcanic Ash and Tropical Cyclone
+ *                                       to display the zero padded latitude/longitudes
+ *
  * </pre>
  *
  * @author gzhang
@@ -355,8 +357,14 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     // This is the zero padding used in DecimalFormat for latitude
     private static final String zeroPaddingForLatitue = "0000";
 
+    private static DecimalFormat latitudeFormat = new DecimalFormat(
+            zeroPaddingForLatitue);
+
     // This is the zero padding used in DecimalFormat for longitude
     private static final String zeroPaddingLongitude = "00000";
+
+    private static DecimalFormat longitudeFormat = new DecimalFormat(
+            zeroPaddingLongitude);
 
     private static SigmetAttrDlg INSTANCE = null;
 
@@ -1211,16 +1219,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
             // Validate EditableAttrPhenomLat EditableAttrPhenomLon
             if (StringUtils
-                    .isEmpty(SigmetAttrDlg.this.getEditableAttrPhenomLat())
-                    || SigmetAttrDlg.this.getEditableAttrPhenomLat()
-                            .contains("0000")) {
+                    .isEmpty(SigmetAttrDlg.this.getEditableAttrPhenomLat())) {
                 errors.append(
                         "Observed phenomenon latitude should be valid.\n\n");
             }
             if (StringUtils
-                    .isEmpty(SigmetAttrDlg.this.getEditableAttrPhenomLon())
-                    || SigmetAttrDlg.this.getEditableAttrPhenomLon()
-                            .contains("00000")) {
+                    .isEmpty(SigmetAttrDlg.this.getEditableAttrPhenomLon())) {
                 errors.append(
                         "Observed phenomenon longitude should be valid.\n\n");
             }
@@ -1276,15 +1280,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
             // Validate EditableAttrPhenomLat EditableAttrPhenomLon
             if (StringUtils
-                    .isEmpty(SigmetAttrDlg.this.getEditableAttrPhenomLat())
-                    || SigmetAttrDlg.this.getEditableAttrPhenomLat()
-                            .contains("0000")) {
+                    .isEmpty(SigmetAttrDlg.this.getEditableAttrPhenomLat())) {
                 errors.append("Phenomenon latitude should be valid.\n\n");
             }
             if (StringUtils
-                    .isEmpty(SigmetAttrDlg.this.getEditableAttrPhenomLon())
-                    || SigmetAttrDlg.this.getEditableAttrPhenomLon()
-                            .contains("00000")) {
+                    .isEmpty(SigmetAttrDlg.this.getEditableAttrPhenomLon())) {
                 errors.append("Phenomenon longitude should be valid.\n\n");
             }
             // Validate Radical/Area/Line Description Lat/Lon
@@ -3595,7 +3595,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         Label lblRound = new Label(coordGrp, SWT.RIGHT);
         lblRound.setText("Round To: ");
         final Combo comboRound = new Combo(coordGrp, SWT.READ_ONLY);
-        attrControlMap.put(EDITABLE_ATTR_FCST_VADESC_ROUNDTOVAL,comboRound);
+        attrControlMap.put(EDITABLE_ATTR_FCST_VADESC_ROUNDTOVAL, comboRound);
         comboRound.setItems(SigmetInfo.ROUND_TO_ARRAY);
         if (editableAttrFcstVADescRoundToVal == null) {
             comboRound.select(2);
@@ -3606,7 +3606,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 volcAshRoundToVal = Integer.parseInt(comboRound.getText());
-                SigmetAttrDlg.this.setEditableAttrFcstVADescRoundToVal(comboRound.getText());
+                SigmetAttrDlg.this.setEditableAttrFcstVADescRoundToVal(
+                        comboRound.getText());
                 copyEditableAttrToSigmet((Sigmet) getSigmet());
             }
         });
@@ -5311,13 +5312,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                     sb.append(" ").append(SigmetConstant.PSN).append(" ");
                     sb.append(phenLat.substring(0, phenLat.length() - 4));
-                    String strLat = new DecimalFormat(
-                            zeroPaddingForLatitue).format(lat);
+                    String strLat = latitudeFormat.format(lat);
                     sb.append(strLat);
                     sb.append(" ")
                             .append(phenLon.substring(0, phenLon.length() - 5));
-                    String strLon = new DecimalFormat(zeroPaddingLongitude)
-                            .format(lon);
+                    String strLon = longitudeFormat.format(lon);
                     sb.append(strLon);
                     altLevelInfo = getEditableAttrAltLevel();
                 }
@@ -5367,13 +5366,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                         latLonLocation.append((i > 0) ? " " : "")
                                 .append(lat.substring(0, lat.length() - 4));
-                        String latValStr = new DecimalFormat(
-                                zeroPaddingForLatitue).format(latval);
+                        String latValStr = latitudeFormat.format(latval);
                         latLonLocation.append(latValStr).append(" ");
                         latLonLocation
                                 .append(lon.substring(0, lon.length() - 5));
-                        String strLon = new DecimalFormat(zeroPaddingLongitude)
-                                .format(lonval);
+                        String strLon = longitudeFormat.format(lonval);
                         latLonLocation.append(strLon);
 
                         if (i < locPair.length - 1) {
@@ -5708,14 +5705,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     }
 
                     fcstLatLonLoc.append(lat.substring(0, lat.length() - 4));
-                    String strLat = new DecimalFormat(
-                            zeroPaddingForLatitue).format(latval);
+                    String strLat = latitudeFormat.format(latval);
                     fcstLatLonLoc.append(strLat);
                     fcstLatLonLoc.append(" ");
 
                     fcstLatLonLoc.append(lon.substring(0, lon.length() - 5));
-                    String strLon =new DecimalFormat(zeroPaddingLongitude)
-                            .format(lonval);
+                    String strLon = longitudeFormat.format(lonval);
                     fcstLatLonLoc.append(strLon);
 
                     if (i < locPair.length - 1) {
@@ -6224,7 +6219,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 y = ((int) Math.abs(coor.y) * 100)
                         + Math.round(Math.abs(coor.y - (int) (coor.y)) * 60);
             }
-            result.append(new DecimalFormat(zeroPaddingForLatitue).format(y));
+            result.append(latitudeFormat.format(y));
 
             result.append(coor.x >= 0 ? " E" : " W");
             int lonDeg = ((int) Math.abs(coor.x)) * 100;
@@ -6242,7 +6237,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 x = ((int) Math.abs(coor.x)) * 100
                         + Math.round(Math.abs(coor.x - (int) (coor.x)) * 60);
             }
-            result.append(new DecimalFormat(zeroPaddingLongitude).format(x));
+            result.append(longitudeFormat.format(x));
 
             if (i < (coors.length - 1)) {
                 result.append(paddedDash);
