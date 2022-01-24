@@ -96,7 +96,9 @@ import javax.xml.bind.annotation.XmlType;
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
  * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
- *
+ * Jan 24, 2022 99344       smanoj      Updates for additional requirements from
+ *                                      NWS for Int'l Sigmet for Volcanic Ash.
+ * 
  * </pre>
  *
  */
@@ -219,9 +221,6 @@ public class Sigmet {
 
     @XmlAttribute
     protected String editableAttrLevelText2;
-
-    @XmlAttribute
-    protected String editableAttrAltLevel;
 
     @XmlAttribute
     protected String editableAttrAltLevelInfo1;
@@ -1147,27 +1146,6 @@ public class Sigmet {
      */
     public void setEditableAttrLevelText2(String value) {
         this.editableAttrLevelText2 = value;
-    }
-
-    /**
-     * Gets the value of the editableAttrAltLevel property.
-     *
-     * @return possible object is {@link String }
-     *
-     */
-    public String getEditableAttrAltLevel() {
-        return editableAttrAltLevel;
-    }
-
-    /**
-     * Sets the value of the editableAttrAltLevel property.
-     *
-     * @param value
-     *            allowed object is {@link String }
-     *
-     */
-    public void setEditableAttrAltLevel(String value) {
-        this.editableAttrAltLevel = value;
     }
 
     /**

@@ -267,7 +267,10 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       requirements.
  * Jan 19, 2022  99345      thuggins     More work to get Volcanic Ash and Tropical Cyclone
  *                                       to display the zero padded latitude/longitudes
- *
+ * Jan 24, 2022  99344      smanoj       Updates for revised requirement for Int'l Sigmet 
+ *                                       editableAttrfromLine coordinates (rounded).
+ *                                       Also additional requirements from NWS.
+ * 
  * </pre>
  *
  * @author gzhang
@@ -315,8 +318,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private static final String EDITABLE_ATTR_ALT_LEVEL_TEXT1 = "editableAttrAltLevelText1";
 
     private static final String EDITABLE_ATTR_ALT_LEVEL_INFO1 = "editableAttrAltLevelInfo1";
-
-    private static final String EDITABLE_ATTR_ALT_LEVEL = "editableAttrAltLevel";
 
     private static final String EDITABLE_ATTR_PHENOM2 = "editableAttrPhenom2";
 
@@ -490,8 +491,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private String editableAttrLevelText2;
 
-    private String editableAttrAltLevel;
-
     private String editableAttrAltLevelInfo1;
 
     private String editableAttrAltLevelInfo2;
@@ -579,6 +578,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     // Default roundTo value for Volcanic Ash
     private int volcAshRoundToVal = 15;
+
+    private Combo comboTrend;
 
     /**
      * Constructor.
@@ -1469,83 +1470,33 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                 String levelInfo1 = editableAttrAltLevelInfo1 == null ? ""
                         : editableAttrAltLevelInfo1;
-                String level = getEditableAttrAltLevel() == null ? ""
-                        : getEditableAttrAltLevel();
-
-                switch (level) {
-                case PgenConstant.LEVEL_FCST:
-
-                    switch (levelInfo1) {
-                    case PgenConstant.LEVEL_INFO_ABV:
-                    case PgenConstant.LEVEL_INFO_BLW:
-                        errors.append(validateLevelInfoSigmetEntries(
-                                SigmetAttrDlg.this
-                                        .getEditableAttrAltLevelText1(),
-                                0, 600, "Altitude - "));
-                        break;
-                    case PgenConstant.LEVEL_INFO_BTN:
-                        // validate both Flight level values in the case of BTN
-                        // option
-                        String flightAltLevelVal1 = SigmetAttrDlg.this
-                                .getEditableAttrAltLevelText1();
-                        String flightAltLevelVal2 = SigmetAttrDlg.this
-                                .getEditableAttrAltLevelText2();
-                        String flightAltLevelInfo = SigmetAttrDlg.this
-                                .getEditableAttrAltLevelInfo2();
-                        errors.append(validateFlightLevelInfoBTN(
-                                flightAltLevelVal1, flightAltLevelVal2,
-                                flightAltLevelInfo, "Altitudes - "));
-                        break;
-
-                    default:
-                        errors.append("Altitudes - ").append(
-                                "Level Info second widget combo box should be set to “ABV/BLW/BTN”.\n\n");
-
-                    }
-
+                switch (levelInfo1) {
+                case PgenConstant.LEVEL_INFO_ABV:
+                case PgenConstant.LEVEL_INFO_BLW:
+                    errors.append(validateLevelInfoSigmetEntries(
+                            SigmetAttrDlg.this.getEditableAttrAltLevelText1(),
+                            0, 600, "Altitude - "));
                     break;
-
-                case PgenConstant.LEVEL_TOPS:
-
-                    switch (levelInfo1) {
-                    case PgenConstant.LEVEL_INFO_BTN:
-                        // validate both Flight level values in the case of BTN
-                        // option
-                        String flightAltLevelVal1 = SigmetAttrDlg.this
-                                .getEditableAttrAltLevelText1();
-                        String flightAltLevelVal2 = SigmetAttrDlg.this
-                                .getEditableAttrAltLevelText2();
-                        String flightAltLevelInfo = SigmetAttrDlg.this
-                                .getEditableAttrAltLevelInfo2();
-                        errors.append(validateFlightLevelInfoBTN(
-                                flightAltLevelVal1, flightAltLevelVal2,
-                                flightAltLevelInfo, "Altitudes - "));
-                        break;
-                    case PgenConstant.LEVEL_INFO_TO:
-                    case PgenConstant.LEVEL_INFO_ABV:
-                    case PgenConstant.LEVEL_INFO_BLW:
-                        // validate level information (Max value is 600)
-                        errors.append(validateLevelInfoSigmetEntries(
-                                SigmetAttrDlg.this
-                                        .getEditableAttrAltLevelText1(),
-                                0, 600, "Altitudes - "));
-                        break;
-                    default:
-                        errors.append("Altitudes - ").append(
-                                "Level Info second widget combo box should be set to “TO/ABV/BLW”.\n\n");
-                    }
-
+                case PgenConstant.LEVEL_INFO_BTN:
+                    // validate both Flight level values in the case of BTN
+                    // option
+                    String flightAltLevelVal1 = SigmetAttrDlg.this
+                            .getEditableAttrAltLevelText1();
+                    String flightAltLevelVal2 = SigmetAttrDlg.this
+                            .getEditableAttrAltLevelText2();
+                    String flightAltLevelInfo = SigmetAttrDlg.this
+                            .getEditableAttrAltLevelInfo2();
+                    errors.append(validateFlightLevelInfoBTN(flightAltLevelVal1,
+                            flightAltLevelVal2, flightAltLevelInfo,
+                            "Altitudes - "));
                     break;
 
                 default:
                     errors.append("Altitudes - ").append(
-                            "Level Info first widget combo box should be set to “FCST” or “TOPS” .\n\n");
-
+                            "Forecast Level Info first widget combo box should be set to “ABV/BLW/BTN”.\n\n");
                 }
-
                 break;
             }
-
         }
 
         return errors.toString();
@@ -1880,6 +1831,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         comboLevelInfo1.select(0);
                         setEditableAttrLevelInfo1(comboLevelInfo1.getText());
                     }
+                    comboTrend.select(0);
+                    setEditableAttrTrend(comboTrend.getText());
                     break;
                 case PgenConstant.TYPE_SEV_ICE:
                 case PgenConstant.TYPE_RDOACT_CLD:
@@ -1891,6 +1844,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         comboLevelInfo1.select(1);
                         setEditableAttrLevelInfo1(comboLevelInfo1.getText());
                     }
+                    comboTrend.select(0);
+                    setEditableAttrTrend(comboTrend.getText());
                     break;
                 case PgenConstant.TYPE_TROPICAL_CYCLONE:
                     comboLevel.select(0);
@@ -1903,6 +1858,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     endTime = convertTimeStringPlusHourInHMS(
                             txtValidFrom.getText(), 6, true);
                     setEditableAttrPhenomName("");
+                    comboTrend.select(0);
+                    setEditableAttrTrend(comboTrend.getText());
                     break;
                 case PgenConstant.TYPE_VOLCANIC_ASH:
                     comboLevel.select(1);
@@ -1915,6 +1872,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     endTime = convertTimeStringPlusHourInHMS(
                             txtValidFrom.getText(), 6, true);
                     setEditableAttrPhenomName("");
+
+                    // Intensity trend is not included for VolcAsh
+                    comboTrend.select(3);
+                    setEditableAttrTrend(comboTrend.getText());
                     break;
                 default:
                     endTime = convertTimeStringPlusHourInHMS(
@@ -2078,7 +2039,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         lblMaxWinds.setText("Max\nWinds: ");
         Text txtMaxWinds = new Text(topPhenom, SWT.LEFT | SWT.BORDER);
         txtMaxWinds.setEnabled(tropCycFlag);
-        this.setEditableAttrPhenomMaxWind(txtMaxWinds.getText());
 
         txtMaxWinds.addListener(SWT.Modify, new Listener() {
             @Override
@@ -2394,7 +2354,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         Label lblTrend = new Label(top4, SWT.LEFT);
         lblTrend.setText("Trend: ");
-        final Combo comboTrend = new Combo(top4, SWT.READ_ONLY);
+        comboTrend = new Combo(top4, SWT.READ_ONLY);
         attrControlMap.put(EDITABLE_ATTR_TREND, comboTrend);
         comboTrend.setItems(SigmetInfo.TREND_ARRAY);
         if (editableAttrTrend == null) {
@@ -3292,16 +3252,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     public void createLevelAltitudesVolcAsh(Group topLbl) {
 
         Label lblLevelInfoVA = new Label(topLbl, SWT.LEFT);
-        lblLevelInfoVA.setText("Level Info: ");
-
-        final Combo comboLevelVA = new Combo(topLbl, SWT.READ_ONLY);
-        comboLevelVA.setItems(SigmetInfo.LEVEL_ARRAY);
-        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL, comboLevelVA);
-        setControl(comboLevelVA, EDITABLE_ATTR_ALT_LEVEL);
+        lblLevelInfoVA.setText("Forecast Level Info: ");
 
         final Combo comboLevelInfo1VA = new Combo(topLbl, SWT.READ_ONLY);
         attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_INFO1, comboLevelInfo1VA);
-        comboLevelInfo1VA.setItems(SigmetInfo.LEVEL_INFO_ARRAY);
+        comboLevelInfo1VA.setItems(SigmetInfo.ALT_LEVEL_INFO_ARRAY);
         setControl(comboLevelInfo1VA, EDITABLE_ATTR_ALT_LEVEL_INFO1);
 
         final Text txtLevelInfo1VA = new Text(topLbl, SWT.SINGLE | SWT.BORDER);
@@ -3354,19 +3309,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 qualityCheckForLevelInfo(txtLevelInfo2VA.getText());
                 SigmetAttrDlg.this.setEditableAttrAltLevelText2(
                         txtLevelInfo2VA.getText());
-            }
-        });
-
-        comboLevelVA.addListener(SWT.Selection, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                setEditableAttrAltLevel(comboLevelVA.getText());
-                if (NONE.equals(comboLevelVA.getText())) {
-                    txtLevelInfo1VA.setText("");
-                    txtLevelInfo2VA.setText("");
-                    txtFreeText.setText("");
-                    comboLevelInfo2VA.select(0);
-                }
             }
         });
 
@@ -3485,9 +3427,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         final Button rbtn = new Button(ralGrp, SWT.RADIO);
         rbtn.setText(RADIUS);
-        rbtn.setSelection(true);
-        SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
-
         rbtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
@@ -3521,6 +3460,30 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
             }
         });
+
+        if (editableAttrRALSelection == null) {
+            rbtn.setSelection(true);
+            SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
+        } else {
+            switch (editableAttrRALSelection) {
+            case RADIUS:
+                rbtn.setSelection(true);
+                SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
+                break;
+            case AREA:
+                abtn.setSelection(true);
+                SigmetAttrDlg.this.setEditableAttrRALSelection(AREA);
+                break;
+            case LINE:
+                lbtn.setSelection(true);
+                SigmetAttrDlg.this.setEditableAttrRALSelection(LINE);
+                break;
+            default:
+                rbtn.setSelection(true);
+                SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
+                break;
+            }
+        }
 
         attrButtonMap.put(EDITABLE_ATTR_RAL_SELECTION,
                 new Button[] { rbtn, abtn, lbtn });
@@ -4620,15 +4583,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 .setEditableAttrLevelText2(editableAttrLevelText2);
     }
 
-    public String getEditableAttrAltLevel() {
-        return editableAttrAltLevel;
-    }
-
-    public void setEditableAttrAltLevel(String editableAttrLevel) {
-        this.editableAttrAltLevel = editableAttrLevel;
-        ((Sigmet) this.getSigmet()).setEditableAttrAltLevel(editableAttrLevel);
-    }
-
     public String getEditableAttrAltLevelInfo1() {
         return editableAttrAltLevelInfo1;
     }
@@ -5294,7 +5248,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
 
             // ------------ VOLCANIC_ASH
-            String altLevelInfo = null;
             if (PgenConstant.TYPE_VOLCANIC_ASH.equals(phen)) {
                 // phenName in C code: volcn
                 sb.append(phenName == null ? "" : phenName);
@@ -5318,8 +5271,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                             .append(phenLon.substring(0, phenLon.length() - 5));
                     String strLon = longitudeFormat.format(lon);
                     sb.append(strLon);
-                    altLevelInfo = getEditableAttrAltLevel();
                 }
+                sb.append(" ").append(SigmetConstant.OBS_AT).append(" ");
+                // C code: loctim/local time
+                sb.append(getTimeStringPlusHourInHMS(0).substring(2, 6));
+                sb.append(SigmetConstant.Z);
             }
 
             // ----------------tops/fcst
@@ -5364,6 +5320,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         int latval = getIntValueOfLat(lat.trim());
                         int lonval = getIntValueOfLon(lon.trim());
 
+                        latval = getLatLonRoundedToNearest15Min(latval);
+                        lonval = getLatLonRoundedToNearest15Min(lonval);
+
                         latLonLocation.append((i > 0) ? " " : "")
                                 .append(lat.substring(0, lat.length() - 4));
                         String latValStr = latitudeFormat.format(latval);
@@ -5379,6 +5338,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     }
                 }
                 locationDesc = latLonLocation.toString();
+
+                latLonLocation.append(SigmetInfo.LINE_SEPERATER).append("New");
+                SigmetAttrDlg.this
+                        .setLatLonFormatFlagAndText(latLonLocation.toString());
+                setEditableAttrFromLine(latLonLocation.toString());
+
             }
 
             // in C: switch(_subType)nmap_pgsigw.c@4008
@@ -5493,9 +5458,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 }
 
                 // ------ trend
-                String trend = SigmetAttrDlg.this.getEditableAttrTrend();
-                if (!NONE.equals(trend) && trend != null) {
-                    sb.append(" ").append(trend).append(".");
+                if (!PgenConstant.TYPE_VOLCANIC_ASH.equals(phen)) {
+                    String trend = SigmetAttrDlg.this.getEditableAttrTrend();
+                    if (!NONE.equals(trend) && trend != null) {
+                        sb.append(" ").append(trend).append(".");
+                    }
                 }
             }
 
@@ -5512,7 +5479,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         SigmetAttrDlg.this.getEditableAttrFcstAvail())) {
                     sb.append(SigmetAttrDlg.this.getEditableAttrFcstTime())
                             .append("Z");
-                    sb.append(getAltLevelInfo(altLevelInfo).toString());
+                    sb.append(getAltLevelInfo().toString());
                     String ral = SigmetAttrDlg.this
                             .getEditableAttrRALSelection();
                     if (ral != null) {
@@ -5540,7 +5507,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         descText.setText(getEditableAttrFcstVADesc());
                     }
 
-                    sb.append(". ");
+                    sb.append(".");
 
                     if (SigmetAttrDlg.this
                             .getEditableAttrAltitudeSelection() != null) {
@@ -5641,45 +5608,53 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         }
 
-        private StringBuilder getAltLevelInfo(String tops) {
+        private StringBuilder getAltLevelInfo() {
             StringBuilder levelTxt = new StringBuilder();
-
-            // ------ TOPS
-            if (tops != null && (!NONE.equals(tops))) {
-                String text1 = SigmetAttrDlg.this
-                        .getEditableAttrAltLevelText1();
-                if (text1 != null && text1.length() > 0) {
-                    if (SigmetConstant.FCST.equals(tops)) {
-                        levelTxt.append(" ").append(SigmetConstant.FCST);
-                    } else {
-                        levelTxt.append(" ").append(SigmetConstant.TOP);
-                    }
-
-                    if ((SigmetAttrDlg.this.getEditableAttrAltLevelInfo1()
-                            .equalsIgnoreCase(SigmetConstant.ABV))
-                            || (SigmetAttrDlg.this
-                                    .getEditableAttrAltLevelInfo1()
-                                    .equalsIgnoreCase(SigmetConstant.BLW))) {
-                        levelTxt.append(" ").append(SigmetAttrDlg.this
-                                .getEditableAttrAltLevelInfo1());
-                    }
-
-                    levelTxt.append(" ").append(SigmetConstant.FL);
-                    levelTxt.append(text1 == null ? "" : text1);
-
-                    String levelInfo2 = SigmetAttrDlg.this
-                            .getEditableAttrAltLevelInfo2();
-                    if (!NONE.equals(levelInfo2)) {
-                        levelTxt.append("/");
-                        String text2 = SigmetAttrDlg.this
-                                .getEditableAttrAltLevelText2();
-                        levelTxt.append(text2 == null ? "" : text2);
-                    }
+            String text1 = SigmetAttrDlg.this.getEditableAttrAltLevelText1();
+            if (text1 != null && text1.length() > 0) {
+                if ((SigmetAttrDlg.this.getEditableAttrAltLevelInfo1()
+                        .equalsIgnoreCase(SigmetConstant.ABV))
+                        || (SigmetAttrDlg.this.getEditableAttrAltLevelInfo1()
+                                .equalsIgnoreCase(SigmetConstant.BLW))) {
+                    levelTxt.append(" ").append(
+                            SigmetAttrDlg.this.getEditableAttrAltLevelInfo1());
                 }
-            } else {
-                levelTxt = null;
+
+                levelTxt.append(" ").append(SigmetConstant.FL);
+                levelTxt.append(text1 == null ? "" : text1);
+
+                String levelInfo2 = SigmetAttrDlg.this
+                        .getEditableAttrAltLevelInfo2();
+                if (!NONE.equals(levelInfo2)) {
+                    levelTxt.append("/");
+                    String text2 = SigmetAttrDlg.this
+                            .getEditableAttrAltLevelText2();
+                    levelTxt.append(text2 == null ? "" : text2);
+                }
             }
             return levelTxt;
+        }
+
+        private int getLatLonRoundedToNearest15Min(int val) {
+            int adjVal = val;
+            int hour = val / 100;
+            int min = val % 100;
+            int mod = min % 15;
+            int res = 0;
+
+            if (mod >= 8) {
+                res = min + (15 - mod);
+            } else {
+                res = min - mod;
+            }
+
+            if (res > 59) {
+                adjVal = (hour + 1) * 100;
+            } else {
+                adjVal = hour * 100 + res;
+            }
+
+            return adjVal;
         }
 
         private StringBuilder getfcstLatLonLoc(String lineInfo) {
@@ -6650,7 +6625,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         this.setEditableAttrLevelInfo2(sig.getEditableAttrLevelInfo2());
         this.setEditableAttrLevelText1(sig.getEditableAttrLevelText1());
         this.setEditableAttrLevelText2(sig.getEditableAttrLevelText2());
-        this.setEditableAttrAltLevel(sig.getEditableAttrAltLevel());
         this.setEditableAttrAltLevelInfo1(sig.getEditableAttrAltLevelInfo1());
         this.setEditableAttrAltLevelInfo2(sig.getEditableAttrAltLevelInfo2());
         this.setEditableAttrAltLevelText1(sig.getEditableAttrAltLevelText1());

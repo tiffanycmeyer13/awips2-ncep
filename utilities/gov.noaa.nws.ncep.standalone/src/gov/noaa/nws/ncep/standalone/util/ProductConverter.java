@@ -153,7 +153,9 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
  * Dec 01, 2021 95362       tjensen     Refactor PGEN Resource management to support multi-panel displays
  * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
- *
+ * Jan 24, 2022 99344       smanoj      Updates for additional requirements from
+ *                                      NWS for Int'l Sigmet for Volcanic Ash.
+ * 
  * </pre>
  *
  * @author J. Wu
@@ -1305,8 +1307,6 @@ public class ProductConverter {
                                 ((Sigmet) de).getEditableAttrLevelText1());
                         sigmet.setEditableAttrLevelText2(
                                 ((Sigmet) de).getEditableAttrLevelText2());
-                        sigmet.setEditableAttrAltLevel(
-                                ((Sigmet) de).getEditableAttrAltLevel());
                         sigmet.setEditableAttrAltLevelInfo1(
                                 ((Sigmet) de).getEditableAttrAltLevelInfo1());
                         sigmet.setEditableAttrAltLevelInfo2(

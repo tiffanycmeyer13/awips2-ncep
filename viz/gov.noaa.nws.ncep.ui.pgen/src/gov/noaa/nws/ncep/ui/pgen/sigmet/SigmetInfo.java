@@ -101,6 +101,8 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
  * Nov 29, 2021  98547    srussell   Added getIncludeBlankSeriesIdFlag()
  * Dec 01, 2021  95362    tjensen    Refactor PGEN Resource management to
  *                                   support multi-panel displays
+ * Jan 24, 2022  99344    smanoj     Updates for additional requirements from
+ *                                   NWS for Int'l Sigmet for Volcanic Ash.
  *
  * </pre>
  *
@@ -175,11 +177,14 @@ public class SigmetInfo {
     public static final String[] LEVEL_INFO_ARRAY = new String[] { "TO", "ABV",
             "BLW", "BTN" };
 
+    public static final String[] ALT_LEVEL_INFO_ARRAY = new String[] { "ABV",
+            "BLW", "BTN" };
+
     public static final String[] LEVEL_INFO_2_ARRAY = new String[] { "-none-",
             "AND" };
 
     public static final String[] TREND_ARRAY = new String[] { "NC", "WKN",
-            "INTSF" };
+            "INTSF", "-none-" };
 
     public static final String[] REM_ARRAY = new String[] { "-none-",
             "BASED_ON_SATELLITE_OBS", "BASED_ON_ACFT_AND_SAT",
