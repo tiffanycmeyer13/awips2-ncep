@@ -95,6 +95,7 @@ import gov.noaa.nws.ncep.viz.common.ISaveableResourceData;
  * Jan 07, 2020  71971    smanoj      Modified code to use PgenConstants
  * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
  *                                    support multi-panel displays
+ * Jan 25, 2022  100402   smanoj      Check against null pointer.
  *
  * </pre>
  *
@@ -806,10 +807,12 @@ public class PgenResourceData extends AbstractResourceData
         String filepath = PgenUtil.getTempWorkDir() + File.separator
                 + recoveryFilename;
         PgenResource rsc = PgenSession.getInstance().getCurrentResource();
-        ArrayList<Product> prds = (ArrayList<Product>) rsc.getProducts();
+        if (rsc != null) {
+            ArrayList<Product> prds = (ArrayList<Product>) rsc.getProducts();
 
-        Products filePrds = ProductConverter.convert(prds);
-        FileTools.write(filepath, filePrds);
+            Products filePrds = ProductConverter.convert(prds);
+            FileTools.write(filepath, filePrds);
+        }
 
     }
 
