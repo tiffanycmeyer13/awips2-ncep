@@ -280,7 +280,6 @@ public class Sigmet extends AbstractSigmet {
                 this.getEditableAttrAltLevelText1());
         newSigmet.setEditableAttrAltLevelText2(
                 this.getEditableAttrAltLevelText2());
-                this.getEditableAttrAltLevelText2());
         newSigmet.setEditableAttrFir(this.getEditableAttrFir());
         newSigmet.setEditableAttrCarSamBackupMode(
                 this.getEditableAttrCarSamBackupMode());

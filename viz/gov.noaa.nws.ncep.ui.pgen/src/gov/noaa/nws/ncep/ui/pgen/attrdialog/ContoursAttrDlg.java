@@ -1179,10 +1179,6 @@ public class ContoursAttrDlg extends AttrDlg
         return toggleSnapLblChecked;
     }
 
-    public boolean getToggleSnapLblChecked() {
-        return toggleSnapLblChecked;
-    }
-
     /**
      * Flag to see if we apply the line/symbol/color to its label.
      */

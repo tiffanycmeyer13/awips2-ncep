@@ -1010,8 +1010,6 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
             this.asig.setEditableAttrFromLine(newEditableLine);
         }
 
-        }
-
         if (drawingLayers != null) {
             adcList = drawingLayers.getAllSelected();
             if (adcList != null && !adcList.isEmpty()) {
@@ -1041,7 +1039,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
             // set the new elements as selected.
             drawingLayers.removeSelected();
-        for (AbstractDrawableComponent adc : newList) {
+            for (AbstractDrawableComponent adc : newList) {
                 drawingLayers.addSelected(adc);
             }
         }

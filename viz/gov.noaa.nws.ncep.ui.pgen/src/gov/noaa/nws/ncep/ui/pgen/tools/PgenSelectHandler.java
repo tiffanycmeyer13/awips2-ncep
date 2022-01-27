@@ -1386,7 +1386,6 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
 
                                         cline.add(lbl);
                                     }
-                                    }
                                 }
                             }
 

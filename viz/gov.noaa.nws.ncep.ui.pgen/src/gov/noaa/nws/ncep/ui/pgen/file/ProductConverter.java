@@ -1661,7 +1661,7 @@ public class ProductConverter {
 
         // Snap jet
         if (PgenSession.getInstance() != null) {
-            PgenSnapJet st = new PgenSnapJet(
+            PgenSnapJet st = new PgenSnapJet(PgenSession.getInstance()
                     .getCurrentResource().getDescriptor(),
                     PgenUtil.getActiveEditor(), null);
             jet.setSnapTool(st);
