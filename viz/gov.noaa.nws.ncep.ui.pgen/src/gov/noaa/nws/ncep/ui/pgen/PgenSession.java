@@ -72,7 +72,8 @@ import gov.noaa.nws.ncep.ui.pgen.tools.AbstractPgenTool;
  *                                       of pgen resources for entire session.
  * Dec 01, 2021  95362    tjensen        Refactor PGEN Resource management to
  *                                       support multi-panel displays
- *
+ * Jan 25, 2022  100402   smanoj         Check against null pointer.
+ * 
  * </pre>
  *
  */
@@ -209,8 +210,13 @@ public class PgenSession
      * @return
      */
     public PgenResource getCurrentResource() {
-        return (PgenResource) PgenUtil.findResource(PgenResource.class,
-                PgenUtil.getActiveEditor());
+        PgenResource rsc = (PgenResource) PgenUtil
+                .findResource(PgenResource.class, PgenUtil.getActiveEditor());
+        if (rsc == null) {
+            rsc = PgenUtil.createNewResource();
+            return rsc;
+        }
+        return rsc;
     }
 
     /**

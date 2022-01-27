@@ -34,6 +34,8 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
  * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
+ * Jan 24, 2022 99344       smanoj      Updates for additional requirements from
+ *                                      NWS for Int'l Sigmet for Volcanic Ash.
  * 
  * </pre>
  *
@@ -97,8 +99,6 @@ public class Sigmet extends AbstractSigmet {
     private String editableAttrLevelText1;
 
     private String editableAttrLevelText2;
-
-    private String editableAttrAltLevel;
 
     private String editableAttrAltLevelInfo1;
 
@@ -171,7 +171,6 @@ public class Sigmet extends AbstractSigmet {
         this.editableAttrLevelInfo2 = fSig.getEditableAttrLevelInfo2();
         this.editableAttrLevelText1 = fSig.getEditableAttrLevelText1();
         this.editableAttrLevelText2 = fSig.getEditableAttrLevelText2();
-        this.editableAttrAltLevel = fSig.getEditableAttrAltLevel();
         this.editableAttrAltLevelInfo1 = fSig.getEditableAttrAltLevelInfo1();
         this.editableAttrAltLevelInfo2 = fSig.getEditableAttrAltLevelInfo2();
         this.editableAttrAltLevelText1 = fSig.getEditableAttrAltLevelText1();
@@ -273,7 +272,6 @@ public class Sigmet extends AbstractSigmet {
         newSigmet.setEditableAttrLevelInfo2(this.getEditableAttrLevelInfo2());
         newSigmet.setEditableAttrLevelText1(this.getEditableAttrLevelText1());
         newSigmet.setEditableAttrLevelText2(this.getEditableAttrLevelText2());
-        newSigmet.setEditableAttrAltLevel(this.getEditableAttrAltLevel());
         newSigmet.setEditableAttrAltLevelInfo1(
                 this.getEditableAttrAltLevelInfo1());
         newSigmet.setEditableAttrAltLevelInfo2(
@@ -465,14 +463,6 @@ public class Sigmet extends AbstractSigmet {
 
     public void setEditableAttrLevelText2(String editableAttrLevelText2) {
         this.editableAttrLevelText2 = editableAttrLevelText2;
-    }
-
-    public String getEditableAttrAltLevel() {
-        return editableAttrAltLevel;
-    }
-
-    public void setEditableAttrAltLevel(String editableAttrLevel) {
-        this.editableAttrAltLevel = editableAttrLevel;
     }
 
     public String getEditableAttrAltLevelInfo1() {
