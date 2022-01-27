@@ -24,6 +24,9 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.Polygon;
 
 import gov.noaa.nws.ncep.common.staticdata.SPCCounty;
 import gov.noaa.nws.ncep.edex.common.stationTables.IStationField.StationField;
@@ -155,6 +158,11 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
  * Jan 24, 2022 99344       smanoj      Updates for additional requirements from
  *                                      NWS for Int'l Sigmet for Volcanic Ash.
+ *
+ * 04/28/20     77994       ksunil      new fields in Sigmet for Tropical Cyclone.
+ * May 22, 2020 78000       ksunil      New Tropical Cyclone UI components for Fcst
+ * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
+ * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
  * 
  * </pre>
  *
@@ -1568,6 +1576,7 @@ public class ProductConverter {
                     vector.setSpeed(((Vector) de).getSpeed());
                     vector.setArrowHeadSize(((Vector) de).getArrowHeadSize());
                     vector.setDirectionOnly(((Vector) de).hasDirectionOnly());
+        sigmet.setEditableAttrCarSamBackupMode(((Sigmet) de).getEditableAttrCarSamBackupMode());
 
                     fde.getVector().add(vector);
                 }

@@ -121,7 +121,6 @@ import gov.noaa.nws.ncep.viz.common.SnapUtil;
  * Dec 02, 2021  95362       tjensen     Refactor PGEN Resource management to
  *                                       support multi-panel displays
  * Dec 03, 2021  98784       smanoj      Users should be able to move Symbol label.
- *
  * </pre>
  *
  * @author sgilbert
@@ -1386,6 +1385,7 @@ public class PgenSelectHandler extends InputHandlerDefaultImpl {
                                         lbl.setHide(false);
 
                                         cline.add(lbl);
+                                    }
                                     }
                                 }
                             }

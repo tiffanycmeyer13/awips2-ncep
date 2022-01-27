@@ -114,6 +114,14 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
                         elSelected = adc;
                     } else {
                         elSelected = adc.getParent();
+                } else if (elSelected instanceof Contours) {
+                    AbstractDrawableComponent adc = pgenrsc
+                            .getNearestElement(loc);
+                    if (adc instanceof Text) {
+                        elSelected = adc;
+                    } else {
+                        elSelected = adc.getParent();
+                    }
                     }
                 }
 

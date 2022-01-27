@@ -327,6 +327,30 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
         return otpl.getProduct(pd.getType());
     }
 
+     */
+    private OutlookTimeProduct getProductType() {
+        Product pd = otlkDlg.drawingLayer.getActiveProduct();
+        String pdType = fixStringForKeyCheck(pd.getName());
+        OutlookTimeProduct otpValue = null;
+
+        // - get products and populate products map
+        OutlookTimeProductLookup otpl = new OutlookTimeProductLookup()
+                .getInstance();
+
+        Map<String, OutlookTimeProduct> productMap = otpl.getProductMap();
+
+        // - check for product default vs activity
+        if (productMap.containsKey(pdType)) {
+            otpValue = productMap.get(pdType);
+            otpValue.setDefault(false);
+        } else {
+            otpValue = productMap.get("Default");
+            otpValue.setDefault(true);
+        }
+
+        return otpValue;
+    }
+
     /**
      * Set the location of the dialog and initialize the widgets
      */
@@ -680,7 +704,7 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
 
     /**
      * Get the default initial date/time for the input day period
-     *
+     * 
      * @param days
      * @return
      */

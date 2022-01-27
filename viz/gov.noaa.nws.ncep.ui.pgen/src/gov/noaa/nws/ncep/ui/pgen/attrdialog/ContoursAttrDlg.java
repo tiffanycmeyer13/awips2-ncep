@@ -204,7 +204,6 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSelectHandler;
  * Dec 01, 2021  95362        tjensen    Refactor PGEN Resource management to
  *                                       support multi-panel displays
  * Dec 09, 2021   98783       srussell   Updated ContoursAttrDlg.close()
- *
  * </pre>
  *
  * @author J. Wu
@@ -1174,6 +1173,10 @@ public class ContoursAttrDlg extends AttrDlg
     @Override
     public Boolean isClosedLine() {
         return lineClosedBtn.getSelection();
+    }
+
+    public boolean getToggleSnapLblChecked() {
+        return toggleSnapLblChecked;
     }
 
     public boolean getToggleSnapLblChecked() {
