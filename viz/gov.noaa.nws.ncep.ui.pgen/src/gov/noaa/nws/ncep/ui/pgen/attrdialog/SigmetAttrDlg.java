@@ -162,6 +162,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Mar 25, 2021  86828     achalla       Updated getFirs() to check FIR Region buttons instantly
  *                                       when the area polygon is moved into new region
  *
+ * Dec 7,  2021  8653       tjensen      Fix ClassCastExceptions during init()
+ * 
  * </pre>
  *
  * @author gzhang
@@ -3936,7 +3938,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             String attr = f.getName();
             String typeValue = "";
             try {
-                typeValue = (String) f.get(this);
+                typeValue = String.valueOf(f.get(this));
             } catch (Exception e) {
                 statusHandler.debug(e.getLocalizedMessage(), e);
             }
