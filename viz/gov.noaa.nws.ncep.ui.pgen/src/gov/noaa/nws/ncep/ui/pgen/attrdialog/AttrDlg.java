@@ -100,6 +100,9 @@ import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
  *                                    removeGhostLine
  * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
  *                                    support multi-panel displays
+ * Feb 02, 2022  100705   thuggins    Fixing code that was throwing a NPE when
+ *                                    a user closes the Collective Convection
+ *                                    Forecast Message dialog
  *
  * </pre>
  *
@@ -209,7 +212,9 @@ public abstract class AttrDlg extends Dialog implements IAttribute {
             drawingLayers.removeSelected();
             drawingLayers.removeGhostLine();
         }
-        mapEditor.refresh();
+        if (mapEditor != null) {
+            mapEditor.refresh();
+        }
         super.handleShellCloseEvent();
         PgenUtil.setSelectingMode();
     }
