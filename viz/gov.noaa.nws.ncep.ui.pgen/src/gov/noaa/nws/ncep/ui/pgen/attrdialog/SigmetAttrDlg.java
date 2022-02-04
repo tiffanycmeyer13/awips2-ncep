@@ -270,6 +270,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jan 24, 2022  99344      smanoj       Updates for revised requirement for Int'l Sigmet 
  *                                       editableAttrfromLine coordinates (rounded).
  *                                       Also additional requirements from NWS.
+ * Feb 02, 2022  99344      smanoj       Volcanic Ash LatLon values are converted to VOR
+ *                                       coordinates in Fcst Radial/Area/Line description.
  * 
  * </pre>
  *
@@ -340,6 +342,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private static final String EDITABLE_ATTR_FCST_VADESC_ROUNDTOVAL = "editableAttrFcstVADescRoundToVal";
 
     private static final String EDITABLE_ATTR_RAL_SELECTION = "editableAttrRALSelection";
+
+    private static final String EDITABLE_ATTR_FCST_VADESC_VOR = "editableAttrFcstVADescVor";
 
     private static final String EDITABLE_ATTR_ALTITUDE_SELECTION = "editableAttrAltitudeSelection";
 
@@ -471,6 +475,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private String editableAttrFcstVADesc;
 
+    private String editableAttrFcstVADescVor;
+
     private String editableAttrFcstVADescRoundToVal;
 
     private String editableAttrTrend;
@@ -580,6 +586,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private int volcAshRoundToVal = 15;
 
     private Combo comboTrend;
+
+    private boolean isRadDescInVor = false;
+
+    private String radDescVal = null;
+
+    private boolean isObsLatLonInVor = false;
 
     /**
      * Constructor.
@@ -1012,7 +1024,26 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     }
 
     private void validateRadialDescription() {
+        if (isRadDescInVor) {
+            validateRadialVORDescription();
+            return;
+        }
+
         StringBuffer errors = new StringBuffer();
+        if (isObsLatLonInVor) {
+            errors.append(
+                    "Observed and Forecast coordinates shall be in the same format(LATLON or VOR).\n\n");
+            isRadialDescValid = false;
+            if (!StringUtils.isEmpty(errors.toString())) {
+                (new SigmetAttrValidateDlg(getShell(), errors.toString()))
+                        .open();
+            }
+            if (descText != null) {
+                setBackgroundColor(descText, wrongFormatColor);
+            }
+            return;
+        }
+
         if (getEditableAttrFcstVADesc() == null) {
             if (SigmetConstant.TRUE
                     .equals(SigmetAttrDlg.this.getEditableAttrFcstAvail())) {
@@ -3252,7 +3283,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     public void createLevelAltitudesVolcAsh(Group topLbl) {
 
         Label lblLevelInfoVA = new Label(topLbl, SWT.LEFT);
-        lblLevelInfoVA.setText("Forecast Level Info: ");
+        lblLevelInfoVA.setText("Fcst Level Info: ");
 
         final Combo comboLevelInfo1VA = new Combo(topLbl, SWT.READ_ONLY);
         attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_INFO1, comboLevelInfo1VA);
@@ -3493,12 +3524,39 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         final Button check = new Button(ralGrp, SWT.CHECK | SWT.RIGHT);
         check.setText("VOR");
+        if (editableAttrFcstVADescVor != null) {
+            if (editableAttrFcstVADescVor
+                    .equalsIgnoreCase(SigmetConstant.TRUE)) {
+                check.setSelection(true);
+            }
+        }
+
         check.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
-
+                if (check.getSelection()) {
+                    SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
+                            Boolean.toString(check.getSelection()));
+                    isRadDescInVor = true;
+                    radDescVal = SigmetAttrDlg.this.getEditableAttrFcstVADesc();
+                    if (isRadialDescValid) {
+                        String vortext = getRadialAreaLineDescVOR();
+                        if (vortext != null) {
+                            descText.setText(vortext);
+                            SigmetAttrDlg.this
+                                    .setEditableAttrFcstVADesc(vortext);
+                        }
+                    }
+                } else {
+                    SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
+                            Boolean.toString(check.getSelection()));
+                    descText.setText(radDescVal);
+                    SigmetAttrDlg.this.setEditableAttrFcstVADesc(radDescVal);
+                    isRadDescInVor = false;
+                }
             }
         });
+        attrControlMap.put(EDITABLE_ATTR_FCST_VADESC_VOR, check);
 
         // Forecast coordinates Text not populated by default
         Group coordGrp = new Group(topSecPhenom, SWT.LEFT);
@@ -3888,10 +3946,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         editableFirID = "";
         createFirRegion(top2);
 
-        final Button btnNew = new Button(top2, SWT.RADIO);
-        btnNew.setSelection(true);
-        btnNew.setText("LATLON");
-        btnNew.setLayoutData(
+        final Button btnLatLon = new Button(top2, SWT.RADIO);
+        btnLatLon.setSelection(true);
+        btnLatLon.setText("LATLON");
+        btnLatLon.setLayoutData(
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
 
         final Button btnVor = new Button(top2, SWT.RADIO);
@@ -3913,7 +3971,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 .hint(size.width, size.height).create());
 
         attrButtonMap.put(EDITABLE_ATTR_FROM_LINE,
-                new Button[] { btnNew, btnVor });
+                new Button[] { btnLatLon, btnVor });
+        isObsLatLonInVor = false;
 
         final StringBuilder coorsLatLon = new StringBuilder();
         final AbstractDrawableComponent elSelected = PgenSession.getInstance()
@@ -3936,7 +3995,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             setEditableAttrFromLine(latLonFmtText);
         }
 
-        btnNew.addListener(SWT.Selection, new Listener() {
+        btnLatLon.addListener(SWT.Selection, new Listener() {
             @Override
             public void handleEvent(Event e) {
                 StringBuilder sb = new StringBuilder();
@@ -3948,6 +4007,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 String latLonFmtText = sb.append("New").toString();
                 setLatLonFormatFlagAndText(latLonFmtText);
                 setEditableAttrFromLine(latLonFmtText);
+                isObsLatLonInVor = false;
             }
         });
 
@@ -3962,6 +4022,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 String latLonFmtText = sb.append("VOR").toString();
                 setLatLonFormatFlagAndText(latLonFmtText);
                 setEditableAttrFromLine(latLonFmtText);
+                isObsLatLonInVor = true;
             }
         });
 
@@ -4229,6 +4290,142 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         return isActive;
     }
 
+    private void validateRadialVORDescription() {
+        StringBuffer errors = new StringBuffer();
+        if (!isObsLatLonInVor) {
+            errors.append(
+                    "Observed and Forecast coordinates shall be in the same format(LATLON or VOR).\n\n");
+            isRadialDescValid = false;
+            if (!StringUtils.isEmpty(errors.toString())) {
+                (new SigmetAttrValidateDlg(getShell(), errors.toString()))
+                        .open();
+            }
+            if (descText != null) {
+                setBackgroundColor(descText, wrongFormatColor);
+            }
+            return;
+        }
+
+        if (getEditableAttrFcstVADesc() == null) {
+            if (SigmetConstant.TRUE
+                    .equals(SigmetAttrDlg.this.getEditableAttrFcstAvail())) {
+                isRadialDescValid = false;
+                errors.append(
+                        "Radial Lat/Lon Description can not be null.\n\n");
+            }
+        } else {
+            isRadialDescValid = true;
+            if (!StringUtils
+                    .isEmpty(SigmetAttrDlg.this.getEditableAttrFcstVADesc())
+                    && (SigmetAttrDlg.this.getEditableAttrFcstVADesc().trim()
+                            .length() > 0)) {
+                String[] locPair = SigmetAttrDlg.this
+                        .getEditableAttrFcstVADesc().split("-");
+                String ralSel = SigmetAttrDlg.this
+                        .getEditableAttrRALSelection();
+
+                switch (ralSel) {
+                case RADIUS:
+                    if (locPair.length > 1) {
+                        errors.append(
+                                "Should have only one pair of values for the RADIUS Description.\n\n");
+                        isRadialDescValid = false;
+                    }
+                    break;
+                case AREA:
+                    if (locPair.length < 3) {
+                        errors.append(
+                                "Should have at least three pairs of values for the AREA Description.\n\n");
+                        isRadialDescValid = false;
+                    }
+                    break;
+                case LINE:
+                    if (locPair.length != 2) {
+                        errors.append(
+                                "Should have two pairs of values for the LINE Description.\n\n");
+                        isRadialDescValid = false;
+                    }
+                    break;
+                default:
+
+                }
+            }
+        }
+        if (isRadialDescValid) {
+            if (descText != null) {
+                setBackgroundColor(descText, rightFormatColor);
+            }
+        } else {
+            if (!StringUtils.isEmpty(errors.toString())) {
+                (new SigmetAttrValidateDlg(getShell(), errors.toString()))
+                        .open();
+            }
+            if (descText != null) {
+                setBackgroundColor(descText, wrongFormatColor);
+            }
+        }
+        return;
+    }
+
+    private String getRadialAreaLineDescVOR() {
+        if (!StringUtils.isEmpty(SigmetAttrDlg.this.getEditableAttrFcstVADesc())
+                && (SigmetAttrDlg.this.getEditableAttrFcstVADesc().trim()
+                        .length() > 0)) {
+            String[] locPair = SigmetAttrDlg.this.getEditableAttrFcstVADesc()
+                    .split("-");
+            ArrayList<Coordinate> coordinates = new ArrayList<>();
+            for (int i = 0; i < locPair.length; i++) {
+                String locTemp = locPair[i];
+                locTemp = locTemp.trim();
+                String[] latlonPair = locTemp.split(" ");
+                if (latlonPair.length > 1) {
+                    String lat = latlonPair[0];
+                    String lon = latlonPair[1];
+
+                    if ((lat.length() < 5) || (lon.length() < 6)) {
+                        return null;
+                    }
+
+                    int latval = Integer.parseInt(
+                            lat.substring(lat.length() - 4, lat.length()));
+                    int lonval = Integer.parseInt(
+                            lon.substring(lon.length() - 5, lon.length()));
+
+                    double latY = latval;
+                    int latDeg = ((int) Math.abs(latY) / 100);
+                    int latMin = (int) Math.round(latY - (latDeg * 100));
+                    latMin = (latMin * 100) / 60;
+                    latY = latDeg * 100 + latMin;
+                    latY = latY / 100;
+                    if (lat.startsWith("S")) {
+                        latY = -1 * latY;
+                    }
+
+                    double lonX = lonval;
+                    int lonDeg = ((int) Math.abs(lonX)) / 100;
+                    int lonMin = (int) Math.round(lonX - (lonDeg * 100));
+                    lonMin = (lonMin * 100) / 60;
+                    lonX = lonDeg * 100 + lonMin;
+                    lonX = lonX / 100;
+                    if (lon.startsWith("W")) {
+                        lonX = -1 * lonX;
+                    }
+
+                    Coordinate latLonCoord = new Coordinate(lonX, latY, 0.0);
+                    coordinates.add(latLonCoord);
+                }
+            }
+
+            Coordinate coords[] = new Coordinate[coordinates.size()];
+            for (int i = 0; i < coordinates.size(); i++) {
+                coords[i] = coordinates.get(i);
+            }
+            return SnapUtil.getVORText(coords, "-",
+                    SigmetAttrDlg.this.getEditableAttrRALSelection(), 6, false);
+        }
+        return null;
+    }
+
     private boolean validateNumInput(Event e) {
 
         boolean result = true;
@@ -4470,6 +4667,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         this.editableAttrFcstVADesc = editableAttrFcstVADesc;
         ((Sigmet) this.getSigmet())
                 .setEditableAttrFcstVADesc(editableAttrFcstVADesc);
+    }
+
+    public String getEditableAttrFcstVADescVor() {
+        return editableAttrFcstVADescVor;
+    }
+
+    public void setEditableAttrFcstVADescVor(String editableAttrFcstVADescVor) {
+        this.editableAttrFcstVADescVor = editableAttrFcstVADescVor;
+        ((Sigmet) this.getSigmet())
+                .setEditableAttrFcstVADescVor(editableAttrFcstVADescVor);
     }
 
     public String getEditableAttrFcstVADescRoundToVal() {
@@ -5497,14 +5704,18 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                     if (SigmetAttrDlg.this
                             .getEditableAttrFcstVADesc() != null) {
-                        StringBuilder fcstLatLonLoc = new StringBuilder();
                         String lineInfo = SigmetAttrDlg.this
                                 .getEditableAttrFcstVADesc();
-                        fcstLatLonLoc = getfcstLatLonLoc(lineInfo);
-                        sb.append(" ").append(fcstLatLonLoc.toString());
-                        SigmetAttrDlg.this.setEditableAttrFcstVADesc(
-                                fcstLatLonLoc.toString());
-                        descText.setText(getEditableAttrFcstVADesc());
+                        if (isRadDescInVor) {
+                            sb.append(" ").append(lineInfo);
+                        } else {
+                            StringBuilder fcstLatLonLoc = new StringBuilder();
+                            fcstLatLonLoc = getfcstLatLonLoc(lineInfo);
+                            sb.append(" ").append(fcstLatLonLoc.toString());
+                            SigmetAttrDlg.this.setEditableAttrFcstVADesc(
+                                    fcstLatLonLoc.toString());
+                            descText.setText(getEditableAttrFcstVADesc());
+                        }
                     }
 
                     sb.append(".");
@@ -6606,6 +6817,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         this.setEditableAttrFcstPhenomLat(sig.getEditableAttrFcstPhenomLat());
         this.setEditableAttrFcstPhenomLon(sig.getEditableAttrFcstPhenomLon());
         this.setEditableAttrFcstVADesc(sig.getEditableAttrFcstVADesc());
+        this.setEditableAttrFcstVADescVor(sig.getEditableAttrFcstVADescVor());
         this.setEditableAttrFcstVADescRoundToVal(
                 sig.getEditableAttrFcstVADescRoundToVal());
         this.setEditableAttrFcstAvail(sig.getEditableAttrFcstAvail());

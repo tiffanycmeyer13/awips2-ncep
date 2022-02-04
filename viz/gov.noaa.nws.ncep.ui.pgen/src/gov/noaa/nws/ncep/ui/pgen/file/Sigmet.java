@@ -98,6 +98,9 @@ import javax.xml.bind.annotation.XmlType;
  * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
  * Jan 24, 2022 99344       smanoj      Updates for additional requirements from
  *                                      NWS for Int'l Sigmet for Volcanic Ash.
+ * Feb 02, 2022 99344       smanoj      Volcanic Ash LatLon values are converted to VOR
+ *                                      coordinates in Fcst Radial/Area/Line description.
+ * 
  * 
  * </pre>
  *
@@ -265,6 +268,9 @@ public class Sigmet {
     protected String editableAttrFcstVADesc;
 
     @XmlAttribute
+    protected String editableAttrFcstVADescVor;
+
+    @XmlAttribute
     protected String editableAttrFcstVADescRoundToVal;
 
     @XmlAttribute
@@ -304,6 +310,14 @@ public class Sigmet {
 
     public void setEditableAttrFcstVADesc(String editableAttrFcstVADesc) {
         this.editableAttrFcstVADesc = editableAttrFcstVADesc;
+    }
+
+    public String getEditableAttrFcstVADescVor() {
+        return editableAttrFcstVADescVor;
+    }
+
+    public void setEditableAttrFcstVADescVor(String editableAttrFcstVADescVor) {
+        this.editableAttrFcstVADescVor = editableAttrFcstVADescVor;
     }
 
     public String getEditableAttrFcstVADescRoundToVal() {

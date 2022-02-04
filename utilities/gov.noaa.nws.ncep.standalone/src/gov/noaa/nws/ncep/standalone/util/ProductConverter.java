@@ -160,6 +160,8 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * May 22, 2020 78000       ksunil      New Tropical Cyclone UI components for Fcst
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
+ * Feb 02, 2022 99344       smanoj      Volcanic Ash LatLon values are converted to VOR
+ *                                      coordinates in Fcst Radial/Area/Line description.
  *
  * </pre>
  *
@@ -1292,6 +1294,8 @@ public class ProductConverter {
                                 ((Sigmet) de).getEditableAttrFcstAvail());
                         sigmet.setEditableAttrFcstVADesc(
                                 ((Sigmet) de).getEditableAttrFcstVADesc());
+                        sigmet.setEditableAttrFcstVADescVor(
+                                ((Sigmet) de).getEditableAttrFcstVADescVor());
                         sigmet.setEditableAttrFcstVADescRoundToVal(((Sigmet) de)
                                 .getEditableAttrFcstVADescRoundToVal());
                         sigmet.setEditableAttrTrend(

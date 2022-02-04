@@ -167,6 +167,9 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * Jan 10, 2022  99344     smanoj       Added VolcAsh Description coordinate RoundTo Value.
  * Jan 24, 2022  99344     smanoj       Updates for additional requirements from
  *                                      NWS for Int'l Sigmet for Volcanic Ash.
+ * Feb 02, 2022 99344       smanoj      Volcanic Ash LatLon values are converted to VOR
+ *                                      coordinates in Fcst Radial/Area/Line description.
+ * 
  * </pre>
  *
  * @author J. Wu
@@ -1222,6 +1225,8 @@ public class ProductConverter {
                                 ((Sigmet) de).getEditableAttrFcstAvail());
                         sigmet.setEditableAttrFcstVADesc(
                                 ((Sigmet) de).getEditableAttrFcstVADesc());
+                        sigmet.setEditableAttrFcstVADescVor(
+                                ((Sigmet) de).getEditableAttrFcstVADescVor());
                         sigmet.setEditableAttrFcstVADescRoundToVal(
                                 ((Sigmet) de).getEditableAttrFcstVADescRoundToVal());
                         sigmet.setEditableAttrTrend(
