@@ -48,6 +48,84 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
         Operation.DELETE_POINT, Operation.ADD_POINT, Operation.INTERPOLATE,
         Operation.MODIFY })
 public class Sigmet extends AbstractSigmet {
+
+    public final static String SIGMET_PGEN_CATEGORY = "Sigmet";
+
+    public final static String SIGMET_PGEN_TYPE = "INTL_SIGMET";
+
+    // public for DisplayElementFactory/others use
+    public static final String AREA = "Area", LINE = "Line",
+            ISOLATED = "Isolated";
+
+    // new,amend...
+    private String editableAttrStatus;
+
+    // valid start time
+    private String editableAttrStartTime;
+
+    // valid end time
+    private String editableAttrEndTime;
+
+    private String editableAttrRemarks;
+
+    private String editableAttrPhenom;
+
+    private String editableAttrPhenom2;
+
+    private String editableAttrPhenomName;
+
+    private String editableAttrPhenomLat;
+
+    private String editableAttrPhenomLon;
+
+    private String editableAttrPhenomPressure;
+
+    private String editableAttrPhenomMaxWind;
+
+    private String editableAttrFreeText;
+
+    private String editableAttrTrend;
+
+    private String editableAttrMovement;
+
+    private String editableAttrPhenomSpeed;
+
+    private String editableAttrPhenomDirection;
+
+    private String editableAttrLevel;
+
+    private String editableAttrLevelInfo1;
+
+    private String editableAttrLevelInfo2;
+
+    private String editableAttrLevelText1;
+
+    private String editableAttrLevelText2;
+
+    private String editableAttrAltLevelInfo1;
+
+    private String editableAttrAltLevelInfo2;
+
+    private String editableAttrAltLevelText1;
+
+    private String editableAttrAltLevelText2;
+
+    private String editableAttrFir;
+
+    private String editableAttrCarSamBackupMode;
+
+    private String editableAttrFcstAvail;
+
+    private String editableAttrFcstTime;
+
+    private String editableAttrFcstCntr;
+
+    private String editableAttrFcstPhenomLat;
+
+    private String editableAttrFcstPhenomLon;
+
+    private String editableAttrFcstVADesc;
+
     private String editableAttrFcstVADescVor;
 
     private String editableAttrFcstVADescRoundToVal;

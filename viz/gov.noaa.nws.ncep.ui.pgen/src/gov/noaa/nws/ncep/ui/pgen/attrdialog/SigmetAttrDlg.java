@@ -1045,6 +1045,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
             return;
         }
+        
         if (getEditableAttrFcstVADesc() == null) {
             if (SigmetConstant.TRUE
                     .equals(SigmetAttrDlg.this.getEditableAttrFcstAvail())) {
@@ -1125,6 +1126,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         }
                     }
                 }
+            }
+
             if (isRadialDescValid) {
                 if (descText != null) {
                     setBackgroundColor(descText, rightFormatColor);
@@ -2510,6 +2513,39 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         });
 
+        txtLevelInfo1.addListener(SWT.Modify, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                qualityCheckForLevelInfo(txtLevelInfo1.getText());
+                SigmetAttrDlg.this
+                        .setEditableAttrLevelText1(txtLevelInfo1.getText());
+            }
+        });
+
+        switch (comboLevelInfo1.getText()) {
+        case PgenConstant.LEVEL_INFO_TO:
+        case PgenConstant.LEVEL_INFO_ABV:
+        case PgenConstant.LEVEL_INFO_BLW:
+            comboLevelInfo2.setVisible(false);
+            comboLevelInfo2.select(0);
+            setEditableAttrLevelInfo2(comboLevelInfo2.getText());
+            txtLevelInfo2.setVisible(false);
+            break;
+        default:
+            comboLevelInfo2.setVisible(true);
+            comboLevelInfo2.select(1);
+            setEditableAttrLevelInfo2(comboLevelInfo2.getText());
+            txtLevelInfo2.setVisible(true);
+        }
+
+    }
+
+    private void createDetailsAreaRemarks(Composite detailsComposite) {
+        Group top6 = new Group(detailsComposite, SWT.LEFT);
+        top6.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
+        top6.setLayout(new GridLayout(8, false));
+
         Label lblFreeText = new Label(top6, SWT.LEFT);
         lblFreeText.setText("Free Text:   ");
         lblFreeText
@@ -2593,11 +2629,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             firButtonMap.put(s, new Button[] { btnAtlantic });
             btnAtlantic.addSelectionListener(new SelectionAdapter() {
 
-                @Override
+            	@Override
                 public void widgetSelected(SelectionEvent event) {
                     setNewFirID(btnAtlantic);
                 }
-
+            	
             });
 
             if (editableFirID != null) {
@@ -3690,6 +3726,24 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         this.getShell().setText("International SIGMET Edit");
         this.setShellStyle(SWT.RESIZE | SWT.CLOSE);
+
+        // Only the portion of the dialog that has the polygon menu
+        createDialogAreaGeneral();
+
+        if ("Pgen Select".equals(mouseHandlerName) || withExpandedArea) {
+            // The full dialog box
+            createDialogAreaSelect(parent);
+        }
+        init();
+        addSeparator(top.getParent());
+
+        return top;
+    }
+
+    private void createDialogAreaGeneral() {
+        final Button btnArea = new Button(top, SWT.RADIO);
+        btnArea.setSelection(true);
+        btnArea.setText(AREA);
         btnArea.setLayoutData(
                 new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
         final Button btnLine = new Button(top, SWT.RADIO);
