@@ -112,7 +112,6 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jul 21, 2021  93981    tjensen     Make SaveDlg block. Fix polygon updates
  * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
  *                                    support multi-panel displays
- *
  * </pre>
  *
  * @author gzhang
@@ -1009,6 +1008,8 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
                 .equals(this.asig.getPgenType().trim())) {
             this.setEditableAttrFromLine(newEditableLine);
             this.asig.setEditableAttrFromLine(newEditableLine);
+        }
+
         }
 
         if (drawingLayers != null) {

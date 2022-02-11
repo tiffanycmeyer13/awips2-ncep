@@ -115,9 +115,10 @@ import systems.uom.common.USCustomary;;
  *                                      into
  *                                      get{High|Low}InverseCentralMeridian()
  * Nov 05, 2015  5070       randerso    Adjust font sizes for dpi scaling
+ * Apr 28, 2020  77667      smanoj      Flight Information Region (FIR) update.
  * Jul 15, 2020  8191       randerso    Updated for changes to LatLonPoint
  * Apr 28, 2020  77667      smanoj      Flight Information Region (FIR) update.
- *
+ * 
  * </pre>
  *
  * @author Archana
@@ -137,6 +138,9 @@ public class IntlSigmetResource extends
     private IFont font = null;
 
     private final float baseFontSize = 12;
+
+
+
 
     private enum WeatherHazardType {
         /** Thunder Storm */
@@ -703,10 +707,9 @@ public class IntlSigmetResource extends
                                                 .get(i).getSymbolType();
                                         Symbol symbol = new Symbol(null,
                                                 symbolColor, symbolWidth,
-                                                // scale per NMAP
-                                                symbolSize * 0.60, false,
-                                                symbolCoordinate, "Symbol",
-                                                symbolType);
+                                                symbolSize * 0.60, 
+                                                false, symbolCoordinate,
+                                                "Symbol", symbolType);
                                         displayEls = df.createDisplayElements(
                                                 symbol, paintProps);
                                     }
@@ -1016,14 +1019,6 @@ public class IntlSigmetResource extends
                         drawPolygon(graphicsTarget, sideOfLinePixCoordlist,
                                 polygonLineColor, polygonLineWidth, lineStyle);
 
-                        // The following method should be used if we want the
-                        // polygons that span the edges to be clipped
-                        // Seems this case is extremely rare. No test cases were
-                        // found. So for now not using the new drawPolygon
-                        // method for this case.
-                        // this.drawPolygon(sideOfLineArrInLatLonCoordinates,
-                        // graphicsTarget, polygonLineColor, polygonLineWidth,
-                        // lineStyle);
                     }
                 }
 
@@ -1045,7 +1040,7 @@ public class IntlSigmetResource extends
 
     /**
      * Converts a list of world coordinates to a list of pixel coordinates.
-     *
+     * 
      * @param listOfVerticesOnSide1
      *            - the list of Coordinate objects
      * @return an array-list of PixelCoordinate objects

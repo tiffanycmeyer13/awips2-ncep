@@ -167,7 +167,6 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  * Jan 10, 2022  99344     smanoj       Added VolcAsh Description coordinate RoundTo Value.
  * Jan 24, 2022  99344     smanoj       Updates for additional requirements from
  *                                      NWS for Int'l Sigmet for Volcanic Ash.
- * 
  * </pre>
  *
  * @author J. Wu
@@ -1662,7 +1661,7 @@ public class ProductConverter {
 
         // Snap jet
         if (PgenSession.getInstance() != null) {
-            PgenSnapJet st = new PgenSnapJet(PgenSession.getInstance()
+            PgenSnapJet st = new PgenSnapJet(
                     .getCurrentResource().getDescriptor(),
                     PgenUtil.getActiveEditor(), null);
             jet.setSnapTool(st);

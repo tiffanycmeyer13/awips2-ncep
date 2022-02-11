@@ -238,6 +238,9 @@ public class Sigmet {
     protected String editableAttrAltLevelText2;
 
     @XmlAttribute
+    protected String editableAttrAltLevelText2;
+
+    @XmlAttribute
     protected String editableAttrFromLine;
 
     @XmlAttribute
@@ -1209,6 +1212,27 @@ public class Sigmet {
      */
     public void setEditableAttrAltLevelText1(String value) {
         this.editableAttrAltLevelText1 = value;
+    }
+
+    /**
+     * Gets the value of the editableAttrAltLevelText2 property.
+     *
+     * @return possible object is {@link String }
+     *
+     */
+    public String getEditableAttrAltLevelText2() {
+        return editableAttrAltLevelText2;
+    }
+
+    /**
+     * Sets the value of the editableAttrAltLevelText2 property.
+     *
+     * @param value
+     *            allowed object is {@link String }
+     *
+     */
+    public void setEditableAttrAltLevelText2(String value) {
+        this.editableAttrAltLevelText2 = value;
     }
 
     /**
