@@ -103,6 +103,12 @@ import gov.noaa.nws.ncep.ui.pgen.tools.AbstractPgenTool;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenContoursTool;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
 
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateArrays;
+import org.locationtech.jts.geom.CoordinateList;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineSegment;
+import org.locationtech.jts.geom.Point;
 /**
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource This code has been developed by
  * the NCEP/SIB for use in the AWIPS2 system.
@@ -2297,16 +2303,6 @@ public class PgenResource
             }
         }
 
-    }
-
-    private void generateSubMenuForContourLabel(IMenuManager menuManager,
-            final Text label) {
-        menuManager.add(new Action("Remove Label") {
-            @Override
-            public void run() {
-                removeContourLineLabel(label);
-            }
-        });
     }
 
     private void generateSubMenuForContourLabel(IMenuManager menuManager,

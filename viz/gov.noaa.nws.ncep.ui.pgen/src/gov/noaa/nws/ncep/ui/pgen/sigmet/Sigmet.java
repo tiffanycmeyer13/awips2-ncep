@@ -559,18 +559,6 @@ public class Sigmet extends AbstractSigmet {
         return editableAttrFir;
     }
 
-    public String getEditableAttrFcstVADesc() {
-        return editableAttrFcstVADesc;
-    }
-
-    public void setEditableAttrFcstVADesc(String editableAttrFcstVADesc) {
-        this.editableAttrFcstVADesc = editableAttrFcstVADesc;
-    }
-
-    public String getEditableAttrFir() {
-        return editableAttrFir;
-    }
-
     public void setEditableAttrFir(String editableAttrFir) {
         this.editableAttrFir = editableAttrFir;
     }
