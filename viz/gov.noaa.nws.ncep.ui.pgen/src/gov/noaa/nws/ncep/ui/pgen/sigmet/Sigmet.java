@@ -36,6 +36,8 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
  * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
  * Jan 24, 2022 99344       smanoj      Updates for additional requirements from
  *                                      NWS for Int'l Sigmet for Volcanic Ash.
+ * Feb 02, 2022 99344       smanoj      Volcanic Ash LatLon values are converted to VOR
+ *                                      coordinates in Fcst Radial/Area/Line description.
  * 
  * </pre>
  *
@@ -46,83 +48,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
         Operation.DELETE_POINT, Operation.ADD_POINT, Operation.INTERPOLATE,
         Operation.MODIFY })
 public class Sigmet extends AbstractSigmet {
-
-    public final static String SIGMET_PGEN_CATEGORY = "Sigmet";
-
-    public final static String SIGMET_PGEN_TYPE = "INTL_SIGMET";
-
-    // public for DisplayElementFactory/others use
-    public static final String AREA = "Area", LINE = "Line",
-            ISOLATED = "Isolated";
-
-    // new,amend...
-    private String editableAttrStatus;
-
-    // valid start time
-    private String editableAttrStartTime;
-
-    // valid end time
-    private String editableAttrEndTime;
-
-    private String editableAttrRemarks;
-
-    private String editableAttrPhenom;
-
-    private String editableAttrPhenom2;
-
-    private String editableAttrPhenomName;
-
-    private String editableAttrPhenomLat;
-
-    private String editableAttrPhenomLon;
-
-    private String editableAttrPhenomPressure;
-
-    private String editableAttrPhenomMaxWind;
-
-    private String editableAttrFreeText;
-
-    private String editableAttrTrend;
-
-    private String editableAttrMovement;
-
-    private String editableAttrPhenomSpeed;
-
-    private String editableAttrPhenomDirection;
-
-    private String editableAttrLevel;
-
-    private String editableAttrLevelInfo1;
-
-    private String editableAttrLevelInfo2;
-
-    private String editableAttrLevelText1;
-
-    private String editableAttrLevelText2;
-
-    private String editableAttrAltLevelInfo1;
-
-    private String editableAttrAltLevelInfo2;
-
-    private String editableAttrAltLevelText1;
-
-    private String editableAttrAltLevelText2;
-
-    private String editableAttrFir;
-
-    private String editableAttrCarSamBackupMode;
-
-    private String editableAttrFcstAvail;
-
-    private String editableAttrFcstTime;
-
-    private String editableAttrFcstCntr;
-
-    private String editableAttrFcstPhenomLat;
-
-    private String editableAttrFcstPhenomLon;
-
-    private String editableAttrFcstVADesc;
+    private String editableAttrFcstVADescVor;
 
     private String editableAttrFcstVADescRoundToVal;
 
@@ -184,6 +110,7 @@ public class Sigmet extends AbstractSigmet {
         this.editableAttrFcstPhenomLat = fSig.getEditableAttrFcstPhenomLat();
         this.editableAttrFcstPhenomLon = fSig.getEditableAttrFcstPhenomLon();
         this.editableAttrFcstVADesc = fSig.getEditableAttrFcstVADesc();
+        this.editableAttrFcstVADescVor = fSig.getEditableAttrFcstVADescVor();
         this.editableAttrFcstVADescRoundToVal = fSig
                 .getEditableAttrFcstVADescRoundToVal();
         this.editableAttrRALSelection = fSig.getEditableAttrRALSelection();
@@ -284,6 +211,8 @@ public class Sigmet extends AbstractSigmet {
         newSigmet.setEditableAttrCarSamBackupMode(
                 this.getEditableAttrCarSamBackupMode());
         newSigmet.setEditableAttrFcstVADesc(this.getEditableAttrFcstVADesc());
+        newSigmet.setEditableAttrFcstVADescVor(
+                this.getEditableAttrFcstVADescVor());
         newSigmet.setEditableAttrFcstVADescRoundToVal(
                 this.getEditableAttrFcstVADescRoundToVal());
         newSigmet.setEditableAttrRALSelection(
@@ -547,6 +476,14 @@ public class Sigmet extends AbstractSigmet {
 
     public void setEditableAttrFcstVADesc(String editableAttrFcstVADesc) {
         this.editableAttrFcstVADesc = editableAttrFcstVADesc;
+    }
+
+    public String getEditableAttrFcstVADescVor() {
+        return editableAttrFcstVADescVor;
+    }
+
+    public void setEditableAttrFcstVADescVor(String editableAttrFcstVADescVor) {
+        this.editableAttrFcstVADescVor = editableAttrFcstVADescVor;
     }
 
     public String getEditableAttrFcstVADescRoundToVal() {

@@ -184,7 +184,7 @@ import gov.noaa.nws.ncep.viz.common.display.NcDisplayType;
  *                                        when working w/ Airmets.
  * Dec 01, 2021  95362       tjensen      Refactor PGEN Resource management to
  *                                        support multi-panel displays
- * Jan 25, 2022  100402      smanoj       Check against null pointer.
+ * Feb 07, 2022  100402      smanoj       Check against null pointer.
  *
  * </pre>
  *
@@ -300,6 +300,10 @@ public class PgenUtil {
 
         for (ResourcePair rp : rscList) {
             AbstractVizResource<?, ?> rsc = rp.getResource();
+
+            if (rsc == null) {
+                return null;
+            }
 
             if (rsc.getClass() == PgenResource.class) {
                 return (PgenResource) rsc;

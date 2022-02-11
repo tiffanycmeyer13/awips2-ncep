@@ -1010,8 +1010,6 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
             this.asig.setEditableAttrFromLine(newEditableLine);
         }
 
-        }
-
         if (drawingLayers != null) {
             adcList = drawingLayers.getAllSelected();
             if (adcList != null && !adcList.isEmpty()) {
