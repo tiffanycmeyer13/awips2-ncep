@@ -273,6 +273,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Dec 07, 2021  8653       tjensen      Fix ClassCastExceptions during init()
  * Feb 02, 2022  99344      smanoj       Volcanic Ash LatLon values are converted to VOR
  *                                       coordinates in Fcst Radial/Area/Line description.
+ * Feb 21, 2022  99344      smanoj       Additional changes for Volcanic Ash Forecast
+ *                                       Section.
  * 
  * Dec 07, 2021  8653       tjensen      Fix ClassCastExceptions during init()
  * </pre>
@@ -594,6 +596,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private String radDescVal = null;
 
     private boolean isObsLatLonInVor = false;
+
+    private Button radBtn, areaBtn, lineBtn, vorBtn;
 
     /**
      * Constructor.
@@ -3458,36 +3462,36 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         ralGrp.setLayout(new GridLayout(8, false));
         ralGrp.setText("Fcst Radial/Area/Line Description");
 
-        final Button rbtn = new Button(ralGrp, SWT.RADIO);
-        rbtn.setText(RADIUS);
-        rbtn.addSelectionListener(new SelectionAdapter() {
+        radBtn = new Button(ralGrp, SWT.RADIO);
+        radBtn.setText(RADIUS);
+        radBtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
-                if (rbtn.getSelection()) {
+                if (radBtn.getSelection()) {
                     SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
                     validateRadialDescription();
                 }
             }
         });
 
-        final Button abtn = new Button(ralGrp, SWT.RADIO);
-        abtn.setText(AREA);
-        abtn.addSelectionListener(new SelectionAdapter() {
+        areaBtn = new Button(ralGrp, SWT.RADIO);
+        areaBtn.setText(AREA);
+        areaBtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
-                if (abtn.getSelection()) {
+                if (areaBtn.getSelection()) {
                     SigmetAttrDlg.this.setEditableAttrRALSelection(AREA);
                     validateRadialDescription();
                 }
             }
         });
 
-        final Button lbtn = new Button(ralGrp, SWT.RADIO);
-        lbtn.setText(LINE);
-        lbtn.addSelectionListener(new SelectionAdapter() {
+        lineBtn = new Button(ralGrp, SWT.RADIO);
+        lineBtn.setText(LINE);
+        lineBtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
-                if (lbtn.getSelection()) {
+                if (lineBtn.getSelection()) {
                     SigmetAttrDlg.this.setEditableAttrRALSelection(LINE);
                     validateRadialDescription();
                 }
@@ -3495,50 +3499,51 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         });
 
         if (editableAttrRALSelection == null) {
-            rbtn.setSelection(true);
+            radBtn.setSelection(true);
             SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
         } else {
             switch (editableAttrRALSelection) {
             case RADIUS:
-                rbtn.setSelection(true);
+                radBtn.setSelection(true);
                 SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
                 break;
             case AREA:
-                abtn.setSelection(true);
+                areaBtn.setSelection(true);
                 SigmetAttrDlg.this.setEditableAttrRALSelection(AREA);
                 break;
             case LINE:
-                lbtn.setSelection(true);
+                lineBtn.setSelection(true);
                 SigmetAttrDlg.this.setEditableAttrRALSelection(LINE);
                 break;
             default:
-                rbtn.setSelection(true);
+                radBtn.setSelection(true);
                 SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
                 break;
             }
         }
 
         attrButtonMap.put(EDITABLE_ATTR_RAL_SELECTION,
-                new Button[] { rbtn, abtn, lbtn });
+                new Button[] { radBtn, areaBtn, lineBtn });
 
         Label lbl2 = new Label(ralGrp, SWT.LEFT);
         lbl2.setText("  WI     ");
 
-        final Button check = new Button(ralGrp, SWT.CHECK | SWT.RIGHT);
-        check.setText("VOR");
-        if (editableAttrFcstVADescVor != null) {
-            if (editableAttrFcstVADescVor
-                    .equalsIgnoreCase(SigmetConstant.TRUE)) {
-                check.setSelection(true);
-            }
+        vorBtn = new Button(ralGrp, SWT.CHECK | SWT.RIGHT);
+        vorBtn.setText("VOR");
+        isRadDescInVor = false;
+
+        if (isObsLatLonInVor) {
+            vorBtn.setSelection(true);
+            isRadDescInVor = true;
         }
 
-        check.addSelectionListener(new SelectionAdapter() {
+        vorBtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
-                if (check.getSelection()) {
+                setBackgroundColor(descText, Color.WHITE);
+                if (vorBtn.getSelection()) {
                     SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
-                            Boolean.toString(check.getSelection()));
+                            Boolean.toString(vorBtn.getSelection()));
                     isRadDescInVor = true;
                     radDescVal = SigmetAttrDlg.this.getEditableAttrFcstVADesc();
                     if (isRadialDescValid) {
@@ -3551,14 +3556,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     }
                 } else {
                     SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
-                            Boolean.toString(check.getSelection()));
-                    descText.setText(radDescVal);
-                    SigmetAttrDlg.this.setEditableAttrFcstVADesc(radDescVal);
+                            Boolean.toString(vorBtn.getSelection()));
                     isRadDescInVor = false;
+                    if (radDescVal != null) {
+                        descText.setText(radDescVal);
+                        SigmetAttrDlg.this
+                                .setEditableAttrFcstVADesc(radDescVal);
+                    }
                 }
             }
         });
-        attrControlMap.put(EDITABLE_ATTR_FCST_VADESC_VOR, check);
+        attrControlMap.put(EDITABLE_ATTR_FCST_VADESC_VOR, vorBtn);
 
         // Forecast coordinates Text not populated by default
         Group coordGrp = new Group(topSecPhenom, SWT.LEFT);
@@ -3599,16 +3607,17 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             public void focusLost(FocusEvent e) {
                 if ((SigmetConstant.TRUE.equals(
                         SigmetAttrDlg.this.getEditableAttrFcstAvail()))) {
-
-                    validateRadialDescription();
-
-                    if (isRadialDescValid) {
-                        descText.setText(getEditableAttrFcstVADesc());
-                        setBackgroundColor(descText, rightFormatColor);
-                    } else {
-                        setBackgroundColor(descText, wrongFormatColor);
+                    setBackgroundColor(descText, Color.WHITE);
+                    if ((getEditableAttrFcstVADesc() != null)
+                            && (!(getEditableAttrFcstVADesc().isEmpty()))) {
+                        validateRadialDescription();
+                        if (isRadialDescValid) {
+                            descText.setText(getEditableAttrFcstVADesc());
+                            setBackgroundColor(descText, rightFormatColor);
+                        } else {
+                            setBackgroundColor(descText, wrongFormatColor);
+                        }
                     }
-
                 } else {
                     setBackgroundColor(descText, Color.WHITE);
                 }
@@ -3974,7 +3983,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         attrButtonMap.put(EDITABLE_ATTR_FROM_LINE,
                 new Button[] { btnLatLon, btnVor });
-        isObsLatLonInVor = false;
 
         final StringBuilder coorsLatLon = new StringBuilder();
         final AbstractDrawableComponent elSelected = PgenSession.getInstance()
@@ -4010,7 +4018,18 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 setLatLonFormatFlagAndText(latLonFmtText);
                 setEditableAttrFromLine(latLonFmtText);
                 isObsLatLonInVor = false;
+
+                if ((isAttrEdited) && (PgenConstant.TYPE_VOLCANIC_ASH
+                        .equals(editableAttrPhenom))) {
+                    vorBtn.setSelection(false);
+                    SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
+                            Boolean.toString(vorBtn.getSelection()));
+                    isRadDescInVor = false;
+                    setBackgroundColor(descText, Color.WHITE);
+                    descText.setText("");
+                }
             }
+
         });
 
         btnVor.addListener(SWT.Selection, new Listener() {
@@ -4025,10 +4044,37 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 setLatLonFormatFlagAndText(latLonFmtText);
                 setEditableAttrFromLine(latLonFmtText);
                 isObsLatLonInVor = true;
+
+                if ((isAttrEdited) && (PgenConstant.TYPE_VOLCANIC_ASH
+                        .equals(editableAttrPhenom))) {
+                    setBackgroundColor(descText, Color.WHITE);
+                    vorBtn.setSelection(true);
+                    isRadDescInVor = true;
+                    SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
+                            Boolean.toString(vorBtn.getSelection()));
+                    if (!isRadDescInVor) {
+                        if ((SigmetAttrDlg.this
+                                .getEditableAttrFcstVADesc() != null)
+                                && (!(SigmetAttrDlg.this
+                                        .getEditableAttrFcstVADesc()
+                                        .isEmpty()))) {
+                            validateRadialDescription();
+                            if (isRadialDescValid) {
+                                String vortext = getRadialAreaLineDescVOR();
+                                if (vortext != null) {
+                                    descText.setText(vortext);
+                                    SigmetAttrDlg.this
+                                            .setEditableAttrFcstVADesc(vortext);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
 
         isAttrEdited = false;
+        isObsLatLonInVor = false;
 
         if (!withExpandedArea) {
 
@@ -5547,12 +5593,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     }
                 }
                 locationDesc = latLonLocation.toString();
-
                 latLonLocation.append(SigmetInfo.LINE_SEPERATER).append("New");
-                SigmetAttrDlg.this
-                        .setLatLonFormatFlagAndText(latLonLocation.toString());
-                setEditableAttrFromLine(latLonLocation.toString());
-
             }
 
             // in C: switch(_subType)nmap_pgsigw.c@4008
@@ -5714,9 +5755,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                             StringBuilder fcstLatLonLoc = new StringBuilder();
                             fcstLatLonLoc = getfcstLatLonLoc(lineInfo);
                             sb.append(" ").append(fcstLatLonLoc.toString());
-                            SigmetAttrDlg.this.setEditableAttrFcstVADesc(
-                                    fcstLatLonLoc.toString());
-                            descText.setText(getEditableAttrFcstVADesc());
                         }
                     }
 

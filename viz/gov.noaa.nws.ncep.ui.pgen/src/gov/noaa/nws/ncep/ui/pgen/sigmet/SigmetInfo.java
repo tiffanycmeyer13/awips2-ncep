@@ -103,7 +103,9 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
  *                                   support multi-panel displays
  * Jan 24, 2022  99344    smanoj     Updates for additional requirements from
  *                                   NWS for Int'l Sigmet for Volcanic Ash.
- *
+ * Feb 21, 2022  99344    smanoj     BTN shall be default option for Volcanic
+ *                                   Ash Altitude levelInfo.
+ * 
  * </pre>
  *
  * @author gzhang
@@ -177,8 +179,8 @@ public class SigmetInfo {
     public static final String[] LEVEL_INFO_ARRAY = new String[] { "TO", "ABV",
             "BLW", "BTN" };
 
-    public static final String[] ALT_LEVEL_INFO_ARRAY = new String[] { "ABV",
-            "BLW", "BTN" };
+    public static final String[] ALT_LEVEL_INFO_ARRAY = new String[] { "BTN",
+            "ABV", "BLW" };
 
     public static final String[] LEVEL_INFO_2_ARRAY = new String[] { "-none-",
             "AND" };
