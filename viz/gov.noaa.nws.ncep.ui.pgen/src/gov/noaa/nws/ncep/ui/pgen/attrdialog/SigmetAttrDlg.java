@@ -267,14 +267,14 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       requirements.
  * Jan 19, 2022  99345      thuggins     More work to get Volcanic Ash and Tropical Cyclone
  *                                       to display the zero padded latitude/longitudes
- * Jan 24, 2022  99344      smanoj       Updates for revised requirement for Int'l Sigmet 
+ * Jan 24, 2022  99344      smanoj       Updates for revised requirement for Int'l Sigmet
  *                                       editableAttrfromLine coordinates (rounded).
  *                                       Also additional requirements from NWS.
  * Feb 02, 2022  99344      smanoj       Volcanic Ash LatLon values are converted to VOR
  *                                       coordinates in Fcst Radial/Area/Line description.
  * Feb 21, 2022  99344      smanoj       Additional changes for Volcanic Ash Forecast
  *                                       Section.
- * 
+ * Feb 25, 2022  100984     achalla      Fixed bugs for sprint 83 CAR/SAM International SIGMET Functionality
  * </pre>
  *
  * @author gzhang
@@ -824,27 +824,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         switch (buttonId) {
         case SAVE_ID:
-            String inValid = "";
-            if (isAttrEdited) {
-                inValid = this.validateSigmetEntries();
-            } else {
-                inValid = "Edit Attributes before Save.";
-            }
+
+            String inValid = this.validateSigmetEntries();
 
             if (!StringUtils.isEmpty(inValid)) {
                 (new SigmetAttrValidateDlg(getShell(), inValid)).open();
                 break;
-            }
-            boolean carSamEnabled = (SigmetAttrDlg.this
-                    .getEditableAttrCarSamBackupMode() != null
-                    && SigmetAttrDlg.this.getEditableAttrCarSamBackupMode()
-                            .equals("true")) ? true : false;
-
-            if (inBackupCarSamArea && carSamEnabled == false) {
-
-                MessageDialog.openWarning(null,
-                        "CARSAM Backup Mode should be selected.",
-                        "CARSAM Backup Mode should be selected, otherwise malformed headers will result.");
             }
 
             setEditableAttrId(comboID.getText());
@@ -2832,20 +2817,40 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         String[] mwoItems = SigmetInfo.AREA_MAP
                 .get(SigmetInfo.getSigmetTypeString(pgenType));
 
-        if (firValues.length > 1) {
-            MessageDialog.openWarning(null, "MWO attribute should be selected.",
-                    "The sigmet object covers two or more areas,select a list item from the MWO drop-down.");
+        String allFirStr = String.join(",", firValues);
+        int fitStrIndex = allFirStr.lastIndexOf(",");
+        /*
+         * skip this warning if MMFR AND MMFO regions intersect/ valid use case
+         * otherwise display warning for all other fir region intersection
+         */
+        if (fitStrIndex >= 4) {
+
+            if ((allFirStr.contains("MMFO") && allFirStr.contains("MMFR"))
+                    && fitStrIndex >= 9) {
+                MessageDialog.openWarning(null,
+                        "MWO attribute should be selected.",
+                        "The sigmet object covers two or more areas,select a list item from the MWO drop-down.");
+            } else if ((!(allFirStr.contains("MMFO")
+                    && allFirStr.contains("MMFR"))) && fitStrIndex >= 4) {
+                MessageDialog.openWarning(null,
+                        "MWO attribute should be selected.",
+                        "The sigmet object covers two or more areas,select a list item from the MWO drop-down.");
+            }
         }
+
+        String idSelected = " ";
 
         int i = 0;
         for (String str : mwoItems) {
             if (str.substring(0, 2).equals(firValues[0].substring(0, 2))) {
                 this.comboMWO.setItems(mwoItems);
                 this.comboMWO.select(i);
+                idSelected = str;
                 break;
             }
             i++;
         }
+        this.setEditableAttrArea(idSelected);
     }
 
     public void uncheckMultipleFir(String[] firValues) {
@@ -3895,7 +3900,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 setEditableAttrIssueOffice(comboISU.getText());
-                populateIdList(comboISU.getText());
             }
         });
 
@@ -3914,6 +3918,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 setEditableAttrArea(comboMWO.getText());
+                /*
+                 * MWO attribute shall determine the IDs available in the ID
+                 * attribute menu instead of the ISSUE attribute
+                 */
+                populateIdList(comboMWO.getText());
             }
         });
 
@@ -4420,8 +4429,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             String[] locPair = SigmetAttrDlg.this.getEditableAttrFcstVADesc()
                     .split("-");
             ArrayList<Coordinate> coordinates = new ArrayList<>();
-            for (int i = 0; i < locPair.length; i++) {
-                String locTemp = locPair[i];
+            for (String element : locPair) {
+                String locTemp = element;
                 locTemp = locTemp.trim();
                 String[] latlonPair = locTemp.split(" ");
                 if (latlonPair.length > 1) {
@@ -6146,6 +6155,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     }
 
+    private boolean iscarSamEnabled() {
+
+        boolean carSamEnabled = (SigmetAttrDlg.this
+                .getEditableAttrCarSamBackupMode() != null
+                && SigmetAttrDlg.this.getEditableAttrCarSamBackupMode()
+                        .equals("true")) ? true : false;
+
+        return carSamEnabled;
+    }
+
     private void init() {
 
         Sigmet sigmet = (Sigmet) this.getSigmet();
@@ -6174,6 +6193,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     if (EDITABLE_ATTR_FROM_LINE.equals(attr)) {
                         this.resetText(typeValue, (Text) cont);
                     } else {
+                        // do not reset the comboBoX WMO when edit attribute is
+                        // pressed and CarSam is enabled
+                        if (attr.equals("editableAttrArea")
+                                && iscarSamEnabled()) {
+                            break;
+                        }
                         setControl(cont, attr);
                     }
                 }
