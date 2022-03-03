@@ -81,6 +81,11 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
  * Jun 11, 2020 79243       smanoj      Added Caribbean and South American FIRs.
  * Feb 24, 2021 86827       srussell    Updated getIsolated() to use consistent
  *                                      units when making an ellipsoid
+ * Mar 15, 2021 86159       srussell    Added isValidLatLonArray method and 1
+ *                                      call to it.
+ * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
+ * Jun 29, 2021 93036       smanoj      Changes for QC alerts for Int'l SIGMETS.
+ * Oct 04, 2021 93036       omoncayo    Remove --none- as a option in combo
  *
  * </pre>
  *
@@ -93,6 +98,10 @@ public class SigmetInfo {
             + IPathManager.SEPARATOR + "pgen" + IPathManager.SEPARATOR
             + "IntlSigmetIssueList.xml";
 
+    private static final String AWC_BACKUP_CARSAM_WMO_HEADERS = "ncep"
+            + IPathManager.SEPARATOR + "pgen" + IPathManager.SEPARATOR
+            + "AWCBackupCarSamWmoHeaders.xml";
+
     private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(SigmetInfo.class);
 
@@ -100,12 +109,16 @@ public class SigmetInfo {
 
     public static IntlSigmetIssueList availableOffices;
 
+    public static AWCBackupCarSamWmoHeaders awcBackupCarSamWmoHeaders;
+
     public static final String[] SIGMET_TYPES = new String[] { "INTL", "CONV",
             "NCON", "AIRM", "OUTL" };// should be consistent with plugin.xml
 
     public static final String GFA_TEXT = new String("GFA_TYPE");
 
     public static final Map<String, String[]> AREA_MAP = new HashMap<>();
+
+
 
     public static final Map<String, String[]> ID_MAP = new HashMap<>();
 
@@ -140,8 +153,17 @@ public class SigmetInfo {
     public static final String[] FIR_OTHER = new String[] { "MUFH", "MKJK",
             "MDCS", "TTZP" };
 
-    public static final String[] TREND_ARRAY = new String[] { "-none-", "NC",
-            "WKN", "INTSF" };
+    public static final String[] LEVEL_ARRAY = new String[] { "TOPS", "FCST",
+            "-none-" };
+
+    public static final String[] LEVEL_INFO_ARRAY = new String[] { "TO", "ABV",
+            "BLW", "BTN" };
+
+    public static final String[] LEVEL_INFO_2_ARRAY = new String[] { "-none-",
+            "AND" };
+
+    public static final String[] TREND_ARRAY = new String[] { "NC", "WKN",
+            "INTSF" };
 
     public static final String[] REM_ARRAY = new String[] { "-none-",
             "BASED_ON_SATELLITE_OBS", "BASED_ON_ACFT_AND_SAT",
@@ -169,6 +191,8 @@ public class SigmetInfo {
             VOLCANO_BUCKET_MAP = initVolBucketMap();
 
             availableOffices = readAvailableOfficesList();
+
+            awcBackupCarSamWmoHeaders= readAWCBackupCarSamWmoHeaders();
 
             String[] officeNames = availableOffices.getOffices().stream()
                     .map(IssueOffice::getName).toArray(String[]::new);
@@ -213,6 +237,31 @@ public class SigmetInfo {
             }
         }
         return SIGMET_TYPES[0]; // default INTL
+    }
+
+    private static AWCBackupCarSamWmoHeaders readAWCBackupCarSamWmoHeaders() {
+        PathManager pm = (PathManager) PathManagerFactory.getPathManager();
+        ILocalizationFile lFile = pm.getStaticLocalizationFile(
+                LocalizationType.CAVE_STATIC, AWC_BACKUP_CARSAM_WMO_HEADERS);
+        if (lFile != null) {
+
+            try (InputStream is = lFile.openInputStream()) {
+
+                SingleTypeJAXBManager<AWCBackupCarSamWmoHeaders> sTypeJAXB = SingleTypeJAXBManager
+                        .createWithoutException(
+                                AWCBackupCarSamWmoHeaders.class);
+
+                AWCBackupCarSamWmoHeaders awcBackupCarSamWmoHeaders = sTypeJAXB
+                        .unmarshalFromInputStream(is);
+
+                return awcBackupCarSamWmoHeaders;
+
+            } catch (SerializationException | LocalizationException
+                    | IOException e) {
+                statusHandler.error("Unable to read AWCBackupCarSamWmoHeaders", e);
+            }
+        }
+        return new AWCBackupCarSamWmoHeaders();
     }
 
     private static IntlSigmetIssueList readAvailableOfficesList() {
@@ -330,6 +379,7 @@ public class SigmetInfo {
         if (!(coorArray.length > 3)) {
             coorArray = new Coordinate[] {};
         }
+
         GeometryFactory gf = new GeometryFactory();
         return gf.createPolygon(gf.createLinearRing(coorArray),
                 new LinearRing[] {});
@@ -694,10 +744,33 @@ public class SigmetInfo {
 
         for (String firId : firGeoMap.keySet()) {
             Coordinate[] coors = firGeoMap.get(firId);
-            result.put(firId, SigmetInfo.getPolygon(coors, mapDescriptor));
+            if (isValidLatLonArray(coors, mapDescriptor)) {
+                result.put(firId, SigmetInfo.getPolygon(coors, mapDescriptor));
+            }
         }
 
         return result;
+    }
+
+    /*-
+     * Screen out latlon arrays with NAN for x or y coordinates.
+     */
+    public static boolean isValidLatLonArray(Coordinate[] latlonArray,
+            IMapDescriptor mapDescriptor) {
+
+        boolean isValidLatLonArray = false;
+
+        Coordinate[] coorArray = latlonToPixelInCoor(latlonArray,
+                mapDescriptor);
+
+        for (Coordinate c : coorArray) {
+            if (Double.isNaN(c.x) || Double.isNaN(c.y)) {
+                isValidLatLonArray = false;
+                return isValidLatLonArray;
+            }
+        }
+        isValidLatLonArray = true;
+        return isValidLatLonArray;
     }
 
     /*

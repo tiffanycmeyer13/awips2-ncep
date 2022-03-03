@@ -8,9 +8,9 @@
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
-import org.locationtech.jts.geom.Coordinate;
-
 import com.raytheon.viz.ui.editor.AbstractEditor;
+
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
@@ -26,6 +26,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 import gov.noaa.nws.ncep.ui.pgen.filter.AcceptFilter;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 
+import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements input handler for mouse events for the deleting action.
  *
