@@ -2436,6 +2436,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             // map all fir buttons with their name as keys
             firButtonMap.put(s, new Button[] { btnAtlantic });
             btnAtlantic.addSelectionListener(new SelectionAdapter() {
+
                 @Override
                 public void widgetSelected(SelectionEvent event) {
                     setNewFirID(btnAtlantic);
@@ -2996,6 +2997,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
 
         txtLevelInfo2VA.addListener(SWT.Verify, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                e.doit = validateNumInput(e);
+            }
+        });
         txtLevelInfo2VA.setLayoutData(gdText1VA);
 
         txtLevelInfo2VA.addListener(SWT.Modify, new Listener() {
@@ -3135,6 +3141,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         final Button rbtn = new Button(ralGrp, SWT.RADIO);
         rbtn.setText(RADIUS);
+        rbtn.setSelection(true);
         SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
 
         rbtn.addSelectionListener(new SelectionAdapter() {
@@ -5598,37 +5605,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
         tropCycFlag = false;
         withExpandedArea = false;
-    }
-
-    private void setForecastSectionGUI(String attr, String typeValue) {
-        if (EDITABLE_ATTR_FCST_AVAIL.equals(attr) && this.withExpandedArea
-                && !StringUtils.isEmpty(typeValue)) {
-            Button checkBox = (Button) attrControlMap
-                    .get(EDITABLE_ATTR_FCST_AVAIL);
-            checkBox.setSelection(Boolean.valueOf(typeValue));
-        }
-        if (EDITABLE_ATTR_RAL_SELECTION.equals(attr)
-                || EDITABLE_ATTR_ALTITUDE_SELECTION.equals(attr)) {
-            Button[] butts = null;
-            if (EDITABLE_ATTR_RAL_SELECTION.equals(attr)
-                    || EDITABLE_ATTR_ALTITUDE_SELECTION.equals(attr)) {
-                butts = attrButtonMap.get(attr);
-                if (butts != null) {
-                    for (Button butt : butts) {
-                        if (butt != null && !butt.isDisposed()
-                                && typeValue != null
-                                && typeValue.equals(butt.getText())) {
-                            butt.setSelection(true);
-                            for (Button butt2 : butts) {
-                                if (butt2 != butt) {
-                                    butt2.setSelection(false);
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
     }
 
     private void setForecastSectionGUI(String attr, String typeValue) {
