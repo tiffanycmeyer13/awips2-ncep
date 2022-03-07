@@ -112,6 +112,9 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Jul 21, 2021  93981    tjensen     Make SaveDlg block. Fix polygon updates
  * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
  *                                    support multi-panel displays
+ * Mar 04, 2022  100402   smanoj      Bug fix to support multi-panel
+ *                                    display refactor.
+ * 
  * </pre>
  *
  * @author gzhang
@@ -239,7 +242,9 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
     @Override
     public void enableButtons() {
 
-        this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
+        if (this.getButton(IDialogConstants.CANCEL_ID) != null) {
+            this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
+        }
 
     }
 
@@ -783,8 +788,13 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
         @Override
         public void enableButtons() {
-            this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
-            this.getButton(IDialogConstants.OK_ID).setEnabled(true);
+            if (this.getButton(IDialogConstants.CANCEL_ID) != null) {
+                this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
+            }
+
+            if (this.getButton(IDialogConstants.OK_ID) != null) {
+                this.getButton(IDialogConstants.OK_ID).setEnabled(true);
+            }
         }
 
         @Override
