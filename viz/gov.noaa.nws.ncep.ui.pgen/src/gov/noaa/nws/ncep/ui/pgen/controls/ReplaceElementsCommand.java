@@ -32,7 +32,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
  * 04/13          #874        B. Yin     If the parent is null, loop through
  *                                       every element, find its parent,
  *                                       remove the old DE and add the new DE.
- * Feb 18, 2022   100402      smanoj     Bug fix to support multi-panel
+ * Mar 04, 2022   100402      smanoj     Bug fix to support multi-panel
  *                                       display refactor.
  * 
  * </pre>
@@ -119,9 +119,12 @@ public class ReplaceElementsCommand extends PgenCommand {
                     parent.removeElement(ade);
                 }
             }
-
             if (newElements != null) {
-                parent.add(newElements);
+                for (AbstractDrawableComponent ade : newElements) {
+                    if (!(parent.contains(ade))) {
+                        parent.add(ade);
+                    }
+                }
             }
         } else if (oldElements.size() == newElements.size()) {
             for (int ii = 0; ii < oldElements.size(); ii++) {

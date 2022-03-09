@@ -105,6 +105,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
  *                                   NWS for Int'l Sigmet for Volcanic Ash.
  * Feb 21, 2022  99344    smanoj     BTN shall be default option for Volcanic
  *                                   Ash Altitude levelInfo.
+ * Mar 07, 2022  99344    smanoj     Remove -none- from TREND_ARRAY.
  * 
  * </pre>
  *
@@ -186,7 +187,7 @@ public class SigmetInfo {
             "AND" };
 
     public static final String[] TREND_ARRAY = new String[] { "NC", "WKN",
-            "INTSF", "-none-" };
+            "INTSF" };
 
     public static final String[] REM_ARRAY = new String[] { "-none-",
             "BASED_ON_SATELLITE_OBS", "BASED_ON_ACFT_AND_SAT",

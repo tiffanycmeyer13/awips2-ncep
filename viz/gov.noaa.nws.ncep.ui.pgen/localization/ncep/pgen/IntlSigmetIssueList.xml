@@ -2,19 +2,16 @@
 <!--
         This_software_was_developed_and_/_or_modified_by_Raytheon_Company,
         pursuant_to_Contract_DG133W-05-CQ-1067_with_the_US_Government.
-        
         U.S._EXPORT_CONTROLLED_TECHNICAL_DATA
         This_software_product_contains_export-restricted_data_whose
         export/transfer/disclosure_is_restricted_by_U.S._law._Dissemination
         to_non-U.S._persons_whether_in_the_United_States_or_abroad_requires
         an_export_license_or_other_authorization.
-
         Contractor_Name:________Raytheon_Company
         Contractor_Address:_____6825_Pine_Street,_Suite_340
         ________________________Mail_Stop_B8
         ________________________Omaha,_NE_68106
         ________________________402.291.0100
-
         See_the_AWIPS_II_Master_Rights_File_("Master_Rights_File.pdf")_for
         further_licensing_information.
     -->
@@ -24,29 +21,18 @@
     -->
     <!--
        Default issue office and corresponding series IDs for INTL SIGMET
-
        name                     -    name of the Issue Office
        includeABlankSeriesId    -    include an option for a blank name in
-                                     the Series ID menu ("ID" )
+                                     the Series ID menu ("ID")
        seriesIDs                -    a list of the options in the Series ID menu
-
      -->
 <IntlSigmetIssueList>
-
-	<IssueOffice name="KKCI" includeABlankSeriesId="false" seriesIDs="ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
-
-	<IssueOffice name="PAWU" includeABlankSeriesId="false" seriesIDs="INDIA,JULIET,KILO,LIMA,MIKE" />
-
-	<IssueOffice name="PHFO" includeABlankSeriesId="false" seriesIDs="NOVEMBER,OSCAR,PAPA,QUEBEC" />
-
-	<IssueOffice name="MMMX" includeABlankSeriesId="false" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
-
-    <IssueOffice name="MUHA" includeABlankSeriesId="false" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
-
-    <IssueOffice name="TTPP" includeABlankSeriesId="false" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
-
-    <IssueOffice name="MDSD" includeABlankSeriesId="false" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
-
-    <IssueOffice name="MKJP" includeABlankSeriesId="false" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
-
+	<IssueOffice name="KKCI" includeABlankSeriesId="true" seriesIDs="ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
+	<IssueOffice name="PAWU" includeABlankSeriesId="true" seriesIDs="INDIA,JULIET,KILO,LIMA,MIKE" />
+	<IssueOffice name="PHFO" includeABlankSeriesId="true" seriesIDs="NOVEMBER,OSCAR,PAPA,QUEBEC" />
+	<IssueOffice name="MMMX" includeABlankSeriesId="true" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
+    <IssueOffice name="MUHA" includeABlankSeriesId="true" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
+    <IssueOffice name="TTPP" includeABlankSeriesId="true" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
+    <IssueOffice name="MDSD" includeABlankSeriesId="true" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
+    <IssueOffice name="MKJP" includeABlankSeriesId="true" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
 </IntlSigmetIssueList>

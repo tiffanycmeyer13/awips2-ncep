@@ -267,7 +267,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       requirements.
  * Jan 19, 2022  99345      thuggins     More work to get Volcanic Ash and Tropical Cyclone
  *                                       to display the zero padded latitude/longitudes
- * Jan 24, 2022  99344      smanoj       Updates for revised requirement for Int'l Sigmet 
+ * Jan 24, 2022  99344      smanoj       Updates for revised requirement for Int'l Sigmet
  *                                       editableAttrfromLine coordinates (rounded).
  *                                       Also additional requirements from NWS.
  * Dec 07, 2021  8653       tjensen      Fix ClassCastExceptions during init()
@@ -275,8 +275,11 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       coordinates in Fcst Radial/Area/Line description.
  * Feb 21, 2022  99344      smanoj       Additional changes for Volcanic Ash Forecast
  *                                       Section.
- * 
  * Dec 07, 2021  8653       tjensen      Fix ClassCastExceptions during init()
+ * Feb 25, 2022  100984     achalla      Fixed bugs for sprint 83 CAR/SAM International
+ *                                       SIGMET Functionality
+ * Mar 07, 2022  99344      smanoj       Remove Trend from Intl Sigmet GUI and other
+ *                                       bug fixes for Volcanic Ash.
  * </pre>
  *
  * @author gzhang
@@ -826,27 +829,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         switch (buttonId) {
         case SAVE_ID:
-            String inValid = "";
-            if (isAttrEdited) {
-                inValid = this.validateSigmetEntries();
-            } else {
-                inValid = "Edit Attributes before Save.";
-            }
+
+            String inValid = this.validateSigmetEntries();
 
             if (!StringUtils.isEmpty(inValid)) {
                 (new SigmetAttrValidateDlg(getShell(), inValid)).open();
                 break;
-            }
-            boolean carSamEnabled = (SigmetAttrDlg.this
-                    .getEditableAttrCarSamBackupMode() != null
-                    && SigmetAttrDlg.this.getEditableAttrCarSamBackupMode()
-                            .equals("true")) ? true : false;
-
-            if (inBackupCarSamArea && carSamEnabled == false) {
-
-                MessageDialog.openWarning(null,
-                        "CARSAM Backup Mode should be selected.",
-                        "CARSAM Backup Mode should be selected, otherwise malformed headers will result.");
             }
 
             setEditableAttrId(comboID.getText());
@@ -1183,6 +1171,15 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             return errors.toString();
         }
 
+        // Flight Level Info can't be missing.
+        if (SigmetAttrDlg.this.getEditableAttrLevelText1() == null
+                || SigmetAttrDlg.this.getEditableAttrLevelText1().isEmpty()) {
+            errors.append(
+                    "Flight Level Info text field should be a 3-digit value. "
+                            + "Please Edit Level Info Value.\n\n");
+            return errors.toString();
+        }
+
         // Validations by Phenom Type
         switch (phenomType) {
         case PgenConstant.TYPE_FRQ_TS:
@@ -1502,7 +1499,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         SigmetAttrDlg.this.getEditableAttrFcstVADesc())) {
                     errors.append(
                             "Both Latitude and Longitude coordinates need to be entered for the "
-                                    + "Radial/Area/Line Description. Example N2330 W07500. \n\n");
+                                    + "Radial/Area/Line Description.\n\n");
                 }
 
                 String levelInfo1 = editableAttrAltLevelInfo1 == null ? ""
@@ -1868,8 +1865,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         comboLevelInfo1.select(0);
                         setEditableAttrLevelInfo1(comboLevelInfo1.getText());
                     }
-                    comboTrend.select(0);
-                    setEditableAttrTrend(comboTrend.getText());
                     break;
                 case PgenConstant.TYPE_SEV_ICE:
                 case PgenConstant.TYPE_RDOACT_CLD:
@@ -1881,8 +1876,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         comboLevelInfo1.select(1);
                         setEditableAttrLevelInfo1(comboLevelInfo1.getText());
                     }
-                    comboTrend.select(0);
-                    setEditableAttrTrend(comboTrend.getText());
                     break;
                 case PgenConstant.TYPE_TROPICAL_CYCLONE:
                     comboLevel.select(0);
@@ -1895,8 +1888,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     endTime = convertTimeStringPlusHourInHMS(
                             txtValidFrom.getText(), 6, true);
                     setEditableAttrPhenomName("");
-                    comboTrend.select(0);
-                    setEditableAttrTrend(comboTrend.getText());
                     break;
                 case PgenConstant.TYPE_VOLCANIC_ASH:
                     comboLevel.select(1);
@@ -1911,8 +1902,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     setEditableAttrPhenomName("");
 
                     // Intensity trend is not included for VolcAsh
-                    comboTrend.select(3);
-                    setEditableAttrTrend(comboTrend.getText());
+                    setEditableAttrTrend(null);
                     break;
                 default:
                     endTime = convertTimeStringPlusHourInHMS(
@@ -2389,25 +2379,27 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         });
 
-        Label lblTrend = new Label(top4, SWT.LEFT);
-        lblTrend.setText("Trend: ");
-        comboTrend = new Combo(top4, SWT.READ_ONLY);
-        attrControlMap.put(EDITABLE_ATTR_TREND, comboTrend);
-        comboTrend.setItems(SigmetInfo.TREND_ARRAY);
-        if (editableAttrTrend == null) {
-            comboTrend.select(0);
-            this.setEditableAttrTrend(comboTrend.getText());
-        }
-        copyEditableAttrToSigmet((Sigmet) getSigmet());
-        comboTrend.setLayoutData(
-                new GridData(SWT.LEFT, SWT.CENTER, false, false, 7, 1));
-        comboTrend.addListener(SWT.Selection, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                setEditableAttrTrend(comboTrend.getText());
-                copyEditableAttrToSigmet((Sigmet) getSigmet());
+        if (!(PgenConstant.TYPE_VOLCANIC_ASH.equals(editableAttrPhenom))) {
+            Label lblTrend = new Label(top4, SWT.LEFT);
+            lblTrend.setText("Trend: ");
+            comboTrend = new Combo(top4, SWT.READ_ONLY);
+            attrControlMap.put(EDITABLE_ATTR_TREND, comboTrend);
+            comboTrend.setItems(SigmetInfo.TREND_ARRAY);
+            if (editableAttrTrend == null) {
+                comboTrend.select(0);
+                this.setEditableAttrTrend(comboTrend.getText());
             }
-        });
+            copyEditableAttrToSigmet((Sigmet) getSigmet());
+            comboTrend.setLayoutData(
+                    new GridData(SWT.LEFT, SWT.CENTER, false, false, 7, 1));
+            comboTrend.addListener(SWT.Selection, new Listener() {
+                @Override
+                public void handleEvent(Event e) {
+                    setEditableAttrTrend(comboTrend.getText());
+                    copyEditableAttrToSigmet((Sigmet) getSigmet());
+                }
+            });
+        }
     }
 
     private void createDetailsAreaLevel(Composite detailsComposite) {
@@ -2834,20 +2826,40 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         String[] mwoItems = SigmetInfo.AREA_MAP
                 .get(SigmetInfo.getSigmetTypeString(pgenType));
 
-        if (firValues.length > 1) {
-            MessageDialog.openWarning(null, "MWO attribute should be selected.",
-                    "The sigmet object covers two or more areas,select a list item from the MWO drop-down.");
+        String allFirStr = String.join(",", firValues);
+        int fitStrIndex = allFirStr.lastIndexOf(",");
+        /*
+         * skip this warning if MMFR AND MMFO regions intersect/ valid use case
+         * otherwise display warning for all other fir region intersection
+         */
+        if (fitStrIndex >= 4) {
+
+            if ((allFirStr.contains("MMFO") && allFirStr.contains("MMFR"))
+                    && fitStrIndex >= 9) {
+                MessageDialog.openWarning(null,
+                        "MWO attribute should be selected.",
+                        "The sigmet object covers two or more areas,select a list item from the MWO drop-down.");
+            } else if ((!(allFirStr.contains("MMFO")
+                    && allFirStr.contains("MMFR"))) && fitStrIndex >= 4) {
+                MessageDialog.openWarning(null,
+                        "MWO attribute should be selected.",
+                        "The sigmet object covers two or more areas,select a list item from the MWO drop-down.");
+            }
         }
+
+        String idSelected = " ";
 
         int i = 0;
         for (String str : mwoItems) {
             if (str.substring(0, 2).equals(firValues[0].substring(0, 2))) {
                 this.comboMWO.setItems(mwoItems);
                 this.comboMWO.select(i);
+                idSelected = str;
                 break;
             }
             i++;
         }
+        this.setEditableAttrArea(idSelected);
     }
 
     public void uncheckMultipleFir(String[] firValues) {
@@ -3897,7 +3909,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 setEditableAttrIssueOffice(comboISU.getText());
-                populateIdList(comboISU.getText());
             }
         });
 
@@ -3916,6 +3927,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 setEditableAttrArea(comboMWO.getText());
+                /*
+                 * MWO attribute shall determine the IDs available in the ID
+                 * attribute menu instead of the ISSUE attribute
+                 */
+                populateIdList(comboMWO.getText());
             }
         });
 
@@ -4008,25 +4024,29 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         btnLatLon.addListener(SWT.Selection, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(getLatLonStringPrepend2(coors,
-                        AREA.equals(((Sigmet) elSelected).getType())));
-                resetText(sb.toString(), txtInfo);
-                // for Sigment element use later
-                sb.append(SigmetInfo.LINE_SEPERATER);
-                String latLonFmtText = sb.append("New").toString();
-                setLatLonFormatFlagAndText(latLonFmtText);
-                setEditableAttrFromLine(latLonFmtText);
-                isObsLatLonInVor = false;
+                if (btnLatLon.getSelection()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(getLatLonStringPrepend2(coors,
+                            AREA.equals(((Sigmet) elSelected).getType())));
+                    resetText(sb.toString(), txtInfo);
+                    // for Sigment element use later
+                    sb.append(SigmetInfo.LINE_SEPERATER);
+                    String latLonFmtText = sb.append("New").toString();
+                    setLatLonFormatFlagAndText(latLonFmtText);
+                    setEditableAttrFromLine(latLonFmtText);
+                    isObsLatLonInVor = false;
 
-                if ((isAttrEdited) && (PgenConstant.TYPE_VOLCANIC_ASH
-                        .equals(editableAttrPhenom))) {
-                    vorBtn.setSelection(false);
-                    SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
-                            Boolean.toString(vorBtn.getSelection()));
-                    isRadDescInVor = false;
-                    setBackgroundColor(descText, Color.WHITE);
-                    descText.setText("");
+                    if ((isAttrEdited) && (PgenConstant.TYPE_VOLCANIC_ASH
+                            .equals(editableAttrPhenom))) {
+                        vorBtn.setSelection(false);
+                        SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
+                                Boolean.toString(vorBtn.getSelection()));
+                        isRadDescInVor = false;
+                        setBackgroundColor(descText, Color.WHITE);
+                        descText.setText("");
+                        SigmetAttrDlg.this
+                                .setEditableAttrFcstVADesc(descText.getText());
+                    }
                 }
             }
 
@@ -4035,24 +4055,23 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         btnVor.addListener(SWT.Selection, new Listener() {
             @Override
             public void handleEvent(Event e) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(getVOR(coors));
-                resetText(sb.toString(), txtInfo);
-                // for Sigment element use later
-                sb.append(SigmetInfo.LINE_SEPERATER);
-                String latLonFmtText = sb.append("VOR").toString();
-                setLatLonFormatFlagAndText(latLonFmtText);
-                setEditableAttrFromLine(latLonFmtText);
-                isObsLatLonInVor = true;
+                if (btnVor.getSelection()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(getVOR(coors));
+                    resetText(sb.toString(), txtInfo);
+                    // for Sigment element use later
+                    sb.append(SigmetInfo.LINE_SEPERATER);
+                    String latLonFmtText = sb.append("VOR").toString();
+                    setLatLonFormatFlagAndText(latLonFmtText);
+                    setEditableAttrFromLine(latLonFmtText);
+                    isObsLatLonInVor = true;
 
-                if ((isAttrEdited) && (PgenConstant.TYPE_VOLCANIC_ASH
-                        .equals(editableAttrPhenom))) {
-                    setBackgroundColor(descText, Color.WHITE);
-                    vorBtn.setSelection(true);
-                    isRadDescInVor = true;
-                    SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
-                            Boolean.toString(vorBtn.getSelection()));
-                    if (!isRadDescInVor) {
+                    if ((isAttrEdited) && (PgenConstant.TYPE_VOLCANIC_ASH
+                            .equals(editableAttrPhenom))) {
+                        setBackgroundColor(descText, Color.WHITE);
+                        vorBtn.setSelection(true);
+                        SigmetAttrDlg.this.setEditableAttrFcstVADescVor(
+                                Boolean.toString(vorBtn.getSelection()));
                         if ((SigmetAttrDlg.this
                                 .getEditableAttrFcstVADesc() != null)
                                 && (!(SigmetAttrDlg.this
@@ -4066,8 +4085,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                                     SigmetAttrDlg.this
                                             .setEditableAttrFcstVADesc(vortext);
                                 }
+                            } else {
+                                descText.setText("");
+                                SigmetAttrDlg.this.setEditableAttrFcstVADesc(
+                                        descText.getText());
                             }
                         }
+                        isRadDescInVor = true;
                     }
                 }
             }
@@ -4339,6 +4363,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     }
 
     private void validateRadialVORDescription() {
+        setBackgroundColor(descText, Color.WHITE);
+
         StringBuffer errors = new StringBuffer();
         if (!isObsLatLonInVor) {
             errors.append(
@@ -4422,8 +4448,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             String[] locPair = SigmetAttrDlg.this.getEditableAttrFcstVADesc()
                     .split("-");
             ArrayList<Coordinate> coordinates = new ArrayList<>();
-            for (int i = 0; i < locPair.length; i++) {
-                String locTemp = locPair[i];
+            for (String element : locPair) {
+                String locTemp = element;
                 locTemp = locTemp.trim();
                 String[] latlonPair = locTemp.split(" ");
                 if (latlonPair.length > 1) {
@@ -6148,6 +6174,16 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     }
 
+    private boolean iscarSamEnabled() {
+
+        boolean carSamEnabled = (SigmetAttrDlg.this
+                .getEditableAttrCarSamBackupMode() != null
+                && SigmetAttrDlg.this.getEditableAttrCarSamBackupMode()
+                        .equals("true")) ? true : false;
+
+        return carSamEnabled;
+    }
+
     private void init() {
 
         Sigmet sigmet = (Sigmet) this.getSigmet();
@@ -6176,6 +6212,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     if (EDITABLE_ATTR_FROM_LINE.equals(attr)) {
                         this.resetText(typeValue, (Text) cont);
                     } else {
+                        // do not reset the comboBoX WMO when edit attribute is
+                        // pressed and CarSam is enabled
+                        if (attr.equals("editableAttrArea")
+                                && iscarSamEnabled()) {
+                            break;
+                        }
                         setControl(cont, attr);
                     }
                 }
