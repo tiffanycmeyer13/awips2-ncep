@@ -59,8 +59,10 @@ import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpResourceHandler;
  * 05/23/2010               Chin Chen   Initial coding
  * 08/10/2015    RM#9396    Chin Chen   implement new OPC pane configuration
  * Aug 20, 2018  #7081      dgilling    Refactor based on CaveJFACEDialog.
- * Apr 22, 2020  76580      smanoj      Allow user to interact with NsharpEditor while
- *                                      the dialog is open.
+ * Apr 22, 2020  76580      smanoj      Allow user to interact with NsharpEditor
+ *                                      while the dialog is open.
+ * 03/21/2022   89212       smanoj      Configuration Dialog display issues.
+ * 
  * </pre>
  *
  * @author Chin Chen
@@ -85,6 +87,8 @@ public class NsharpDataPageConfigDialog extends AbstractNsharpConfigDlg {
     private Text[] currentOrderTextArray;
 
     private Text[] newOrderTextArray;
+
+    private Button onePageBtn, twoPageBtn;
 
     public NsharpDataPageConfigDialog(Shell parentShell) {
         super(parentShell, "Data Page Display Configuration");
@@ -114,8 +118,9 @@ public class NsharpDataPageConfigDialog extends AbstractNsharpConfigDlg {
                 .getConvectiveInitiationPage();
         pageOrderNumberArray[NsharpConstants.PAGE_SEVERE_POTENTIAL] = dpp
                 .getSeverePotentialPage();
+        // d2dlite
         pageOrderNumberArray[NsharpConstants.PAGE_D2DLITE] = dpp
-                .getD2dLitePage(); // d2dlite
+                .getD2dLitePage();
         // d2dlite
         pageOrderNumberArray[NsharpConstants.PAGE_FUTURE] = dpp.getFuturePage();
 
@@ -135,23 +140,27 @@ public class NsharpDataPageConfigDialog extends AbstractNsharpConfigDlg {
         pageGroup.setLayout(new GridLayout());
         pageGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        Button onePageBtn = new Button(pageGroup, SWT.RADIO);
+        onePageBtn = new Button(pageGroup, SWT.RADIO);
         onePageBtn.setText("1");
         onePageBtn.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
+                twoPageBtn.setSelection(false);
                 numberPagePerDisplay = 1;
+                dpp.setNumberPagePerDisplay(numberPagePerDisplay);
             }
         });
 
-        Button twoPageBtn = new Button(pageGroup, SWT.RADIO);
+        twoPageBtn = new Button(pageGroup, SWT.RADIO);
         twoPageBtn.setText("2");
         twoPageBtn.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
+                onePageBtn.setSelection(false);
                 numberPagePerDisplay = 2;
+                dpp.setNumberPagePerDisplay(numberPagePerDisplay);
             }
         });
 
@@ -302,10 +311,11 @@ public class NsharpDataPageConfigDialog extends AbstractNsharpConfigDlg {
                     pageOrderNumberArray[NsharpConstants.PAGE_CONVECTIVE_INITIATION]);
             editingDpp.setSeverePotentialPage(
                     pageOrderNumberArray[NsharpConstants.PAGE_SEVERE_POTENTIAL]);
+            // d2dlite
             editingDpp.setD2dLitePage(
-                    pageOrderNumberArray[NsharpConstants.PAGE_D2DLITE]); // d2dlite
+                    pageOrderNumberArray[NsharpConstants.PAGE_D2DLITE]);
             editingDpp.setFuturePage(
-                    pageOrderNumberArray[NsharpConstants.PAGE_FUTURE]); // d2dlite
+                    pageOrderNumberArray[NsharpConstants.PAGE_FUTURE]);
             editingDpp.setNumberPagePerDisplay(numberPagePerDisplay);
             rsc.setDataPageProperty(editingDpp);
             editor.refresh();
@@ -321,20 +331,33 @@ public class NsharpDataPageConfigDialog extends AbstractNsharpConfigDlg {
 
     @Override
     protected void handleSaveClicked() {
-        if (sanityCheck() == false) {
+        if (sanityCheck()) {
             applyChange();
-            dpp.setSummary1Page(pageOrderNumberArray[NsharpConstants.PAGE_SUMMARY1]);
-            dpp.setSummary2Page(pageOrderNumberArray[NsharpConstants.PAGE_SUMMARY2]);
-            dpp.setParcelDataPage(pageOrderNumberArray[NsharpConstants.PAGE_PARCEL_DATA]);
-            dpp.setThermodynamicDataPage(pageOrderNumberArray[NsharpConstants.PAGE_THERMODYNAMIC_DATA]);
-            dpp.setOpcDataPage(pageOrderNumberArray[NsharpConstants.PAGE_OPC_DATA]);
-            dpp.setMixingHeightPage(pageOrderNumberArray[NsharpConstants.PAGE_MIXING_HEIGHT]);
-            dpp.setStormRelativePage(pageOrderNumberArray[NsharpConstants.PAGE_STORM_RELATIVE]);
-            dpp.setMeanWindPage(pageOrderNumberArray[NsharpConstants.PAGE_MEAN_WIND]);
-            dpp.setConvectiveInitiationPage(pageOrderNumberArray[NsharpConstants.PAGE_CONVECTIVE_INITIATION]);
-            dpp.setSeverePotentialPage(pageOrderNumberArray[NsharpConstants.PAGE_SEVERE_POTENTIAL]);
-            dpp.setD2dLitePage(pageOrderNumberArray[NsharpConstants.PAGE_D2DLITE]);// d2dlite
-            dpp.setFuturePage(pageOrderNumberArray[NsharpConstants.PAGE_FUTURE]);// d2dlite
+            dpp.setSummary1Page(
+                    pageOrderNumberArray[NsharpConstants.PAGE_SUMMARY1]);
+            dpp.setSummary2Page(
+                    pageOrderNumberArray[NsharpConstants.PAGE_SUMMARY2]);
+            dpp.setParcelDataPage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_PARCEL_DATA]);
+            dpp.setThermodynamicDataPage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_THERMODYNAMIC_DATA]);
+            dpp.setOpcDataPage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_OPC_DATA]);
+            dpp.setMixingHeightPage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_MIXING_HEIGHT]);
+            dpp.setStormRelativePage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_STORM_RELATIVE]);
+            dpp.setMeanWindPage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_MEAN_WIND]);
+            dpp.setConvectiveInitiationPage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_CONVECTIVE_INITIATION]);
+            dpp.setSeverePotentialPage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_SEVERE_POTENTIAL]);
+            // d2dlite
+            dpp.setD2dLitePage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_D2DLITE]);
+            dpp.setFuturePage(
+                    pageOrderNumberArray[NsharpConstants.PAGE_FUTURE]);
             dpp.setNumberPagePerDisplay(numberPagePerDisplay);
             try {
                 // save to xml

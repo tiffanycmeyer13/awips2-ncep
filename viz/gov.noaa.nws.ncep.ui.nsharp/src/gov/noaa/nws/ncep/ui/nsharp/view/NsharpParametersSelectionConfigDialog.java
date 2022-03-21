@@ -58,8 +58,10 @@ import com.raytheon.uf.viz.core.exception.VizException;
  * Date         Ticket#     Engineer    Description
  * -------      -------     --------    -----------
  * 03/23/2010   229         Chin Chen   Initial coding
- * 04/22/2020   76580       smanoj      Allow user to interact with NsharpEditor while
- *                                      the dialog is open.
+ * 04/22/2020   76580       smanoj      Allow user to interact with NsharpEditor
+ *                                      while the dialog is open.
+ * 03/21/2022   89212       smanoj      Configuration Dialog display issues.
+ * 
  * </pre>
  * 
  * @author Chin Chen
@@ -869,12 +871,19 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
 
     @Override
     public int open() {
+
         if (this.getShell() == null) {
             this.create();
+        } else {
+            try {
+                this.getShell().setLocation(
+                        this.getShell().getParent().getLocation().x + 1100,
+                        this.getShell().getParent().getLocation().y + 200);
+            } catch (Exception e) {
+                // if widget disposed
+                this.create();
+            }
         }
-        this.getShell().setLocation(
-                this.getShell().getParent().getLocation().x + 1100,
-                this.getShell().getParent().getLocation().y + 200);
         return super.open();
 
     }
