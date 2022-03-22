@@ -50,6 +50,7 @@ import gov.noaa.nws.ncep.common.dataplugin.modis.ModisSpatialCoverage;
  * Mar 29, 2021  8374     randerso     Renamed IDataRecord.get/setProperties to
  *                                     get/setProps
  * Sep 23, 2021 8608       mapeters     Pass metadata ids to datastore
+ * Feb 16, 2022 8608       mapeters     Update usage of obsolete storeInterpolated method
  *
  *
  * </pre>
@@ -169,7 +170,7 @@ public class ModisDao extends PluginDao {
                 spatialRecord.getGridGeometry(latitudes, longitudes));
 
         DownscaleStoreUtil.storeInterpolated(dataStore, downscaler, ds, creator,
-                metaId, false);
+                metaId);
 
         // add latitude and longitude datasets
         dataset = new FloatDataRecord(LATITUDE_DATASET_NAME,

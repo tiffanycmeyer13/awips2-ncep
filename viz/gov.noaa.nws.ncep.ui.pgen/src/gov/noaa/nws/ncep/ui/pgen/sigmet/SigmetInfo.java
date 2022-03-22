@@ -86,7 +86,7 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * Jun 29, 2021 93036       smanoj      Changes for QC alerts for Int'l SIGMETS.
  * Oct 04, 2021 93036       omoncayo    Remove --none- as a option in combo
- * 
+ *
  * </pre>
  *
  * @author gzhang
@@ -410,6 +410,7 @@ public class SigmetInfo {
             double widthInNautical, IMapDescriptor mapDescriptor) {
 
         Double widthInMeters = widthInNautical * PgenUtil.NM2M;
+
         double[] tmp = { vertex.x, vertex.y, 0.0 };
         double[] center = mapDescriptor.worldToPixel(tmp);
 

@@ -19,6 +19,7 @@
  **/
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
+import java.util.Iterator;
 import java.util.List;
 import java.awt.Color;
 
@@ -30,6 +31,9 @@ import gov.noaa.nws.ncep.ui.pgen.PgenSession;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.ContoursAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.contours.ContourLine;
+import gov.noaa.nws.ncep.ui.pgen.contours.Contours;
+
+import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;

@@ -1754,7 +1754,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 setEditableAttrPhenomName(txtSEPhenomName.getText());
-                setPhenomLatLon(txtSEPhenomName.getText());
             }
         });
 
@@ -2569,6 +2568,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         }
                     }
                 }
+
             }
 
         });
@@ -3141,6 +3141,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         final Button rbtn = new Button(ralGrp, SWT.RADIO);
         rbtn.setText(RADIUS);
+        rbtn.setSelection(true);
+        SigmetAttrDlg.this.setEditableAttrRALSelection(RADIUS);
 
         rbtn.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -5541,7 +5543,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     }
                 }
             }
-
+            // TROPICAL CYCLONE
             // Forecast Section of the GUI for VOLCANIC ASH and
             // TROPICAL CYCLONE
             if (PgenConstant.TYPE_TROPICAL_CYCLONE.equals(editableAttrPhenom)
