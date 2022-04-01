@@ -73,33 +73,34 @@ import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
  * developed by the NCEP-SIB for use in the AWIPS2 system.
  *
  * <pre>
-* SOFTWARE HISTORY
-*
-* Date         Ticket#     Engineer    Description
-* -----------  ----------  ----------  -----------
-* 03/16/2010   229         Chin Chen   Initial coding
-* 03/11/2013   972         Greg Hull   NatlCntrsEditor
-* 09/03/2013   1031        Greg Hull   try 5 times to initialize the inventory.
-* 01/08/2014               Chin Chen   Only initializing inventory when in NCP
-* 01/13/2014   TTR829      Chin Chen   when interpolation, edit graph is allowed
-* 01/22/2014   DR17003     Chin Chen   NSHARP sounding display throws errors
-*                                      when swapping into main pane when 
-*                                      show text is turned on.
-* 10/20/2014   DR16864     Chin Chen   D2D does not use unload button. 
-*                                      Check to make sure not D2D instance
-*                                      before access unload button.
-* 02/04/2015   DR16888     Chin Chen   do not allow swap between Skewt and
-*                                      hodo when comparison is on, check in
-*                                      with DR17079
-* 08/10/2015   RM#9396     Chin Chen   implement new OPC pane configuration
-* 04/05/2016   RM#10435    rjpeter     Removed Inventory usage.
-* 07/05/2016   RM#15923    Chin Chen   NSHARP - Native Code replacement
-* 08/21/2018   #7081       dgilling    Support refactored NsharpEditDataDialog.
-* 10/16/2018   6835        bsteffen    Refactor printing.
-* 12/20/2018   7575        bsteffen    Do not reuse parcel dialog
-* 04/06/2020   73571       smanoj      NSHARP D2D port refactor
-* 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
- *03/21/2022   89212       smanoj      Configuration Dialog display issues.
+ * SOFTWARE HISTORY
+ *
+ * Date         Ticket#     Engineer    Description
+ * -----------  ----------  ----------  -----------
+ * 03/16/2010   229         Chin Chen   Initial coding
+ * 03/11/2013   972         Greg Hull   NatlCntrsEditor
+ * 09/03/2013   1031        Greg Hull   try 5 times to initialize the inventory.
+ * 01/08/2014               Chin Chen   Only initializing inventory when in NCP
+ * 01/13/2014   TTR829      Chin Chen   when interpolation, edit graph is allowed
+ * 01/22/2014   DR17003     Chin Chen   NSHARP sounding display throws errors
+ *                                      when swapping into main pane when 
+ *                                      show text is turned on.
+ * 10/20/2014   DR16864     Chin Chen   D2D does not use unload button. 
+ *                                      Check to make sure not D2D instance
+ *                                      before access unload button.
+ * 02/04/2015   DR16888     Chin Chen   do not allow swap between Skewt and
+ *                                      hodo when comparison is on, check in
+ *                                      with DR17079
+ * 08/10/2015   RM#9396     Chin Chen   implement new OPC pane configuration
+ * 04/05/2016   RM#10435    rjpeter     Removed Inventory usage.
+ * 07/05/2016   RM#15923    Chin Chen   NSHARP - Native Code replacement
+ * 08/21/2018   #7081       dgilling    Support refactored NsharpEditDataDialog.
+ * 10/16/2018   6835        bsteffen    Refactor printing.
+ * 12/20/2018   7575        bsteffen    Do not reuse parcel dialog
+ * 04/06/2020   73571       smanoj      NSHARP D2D port refactor
+ * 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
+ * 03/21/2022   89212       smanoj      Configuration Dialog display issues.
+ * 04/01/2022   89212       smanoj      Fix some Nsharp display issues.
  *
  * </pre>
  *
@@ -1896,6 +1897,37 @@ public class NsharpPaletteWindow extends ViewPart
 
     @Override
     public void partActivated(IWorkbenchPart part) {
+
+        // Prevent NSharp Configuration Dialog going to Localization Perspective.
+        if (VizPerspectiveListener.getCurrentPerspectiveManager() != null) {
+            if ((!(VizPerspectiveListener.getCurrentPerspectiveManager()
+                    .getPerspectiveId().equals(D2D5Pane.ID_PERSPECTIVE)))
+                    || (part.getTitle().contains("File Browser"))) {
+                if (cfgDia != null) {
+                    cfgDia.close();
+                }
+                if (parcelDia != null) {
+                    parcelDia.close();
+                }
+                if (editDia != null) {
+                    editDia.close();
+                }
+            }
+        } else {
+            if ((!(part instanceof NsharpPaletteWindow))
+                    || (part.getTitle().contains("File Browser"))) {
+                if (cfgDia != null) {
+                    cfgDia.close();
+                }
+                if (parcelDia != null) {
+                    parcelDia.close();
+                }
+                if (editDia != null) {
+                    editDia.close();
+                }
+            }
+        }
+
         if (context == null) {
             IContextService ctxSvc = PlatformUI.getWorkbench()
                     .getService(IContextService.class);
