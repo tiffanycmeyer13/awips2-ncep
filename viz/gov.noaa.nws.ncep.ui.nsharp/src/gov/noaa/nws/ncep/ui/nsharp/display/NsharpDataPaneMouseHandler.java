@@ -22,6 +22,8 @@ package gov.noaa.nws.ncep.ui.nsharp.display;
 import gov.noaa.nws.ncep.ui.nsharp.display.map.AbstractNsharpMapResource;
 import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpDataPaneResource;
 
+import org.eclipse.swt.widgets.Event;
+
 import com.raytheon.uf.viz.core.IDisplayPane;
 import org.locationtech.jts.geom.Coordinate;
 
@@ -41,7 +43,8 @@ import org.locationtech.jts.geom.Coordinate;
  * 03/09/2011               Chin Chen   Updated for R1G2-9
  * 06/14/2011   11-5        Chin Chen   migration
  * 04/16/2020   73571       smanoj      NSHARP D2D port refactor
- *
+ * 04/01/2022   89212       smanoj      Fix some Nsharp display issues.
+ * 
  * </pre>
  * 
  * @author Chin Chen
@@ -50,6 +53,26 @@ public class NsharpDataPaneMouseHandler extends NsharpAbstractMouseHandler {
 
     public NsharpDataPaneMouseHandler(NsharpEditor editor, IDisplayPane pane) {
         super(editor, pane);
+    }
+
+    @Override
+    public boolean handleMouseWheel(Event event, int x, int y) {
+
+        if (editor == null || cursorInPane == false) {
+            return false;
+        }
+
+        com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_FORWARD = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_FORWARD;
+        com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_BACK = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_BACK;
+        if ((event.count < 0
+                && prefManager.handleEvent(ZOOMIN_PREF, SCROLL_FORWARD))
+                || (event.count > 0 && prefManager.handleEvent(ZOOMOUT_PREF,
+                        SCROLL_BACK))) {
+            currentPane.zoom(event.count, event.x, event.y);
+
+            editor.refresh();
+        }
+        return true;
     }
 
     @Override
