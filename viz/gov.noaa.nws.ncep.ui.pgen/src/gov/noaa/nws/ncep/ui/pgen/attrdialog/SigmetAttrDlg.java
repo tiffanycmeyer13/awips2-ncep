@@ -3123,7 +3123,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         });
 
-        Grou altitudesGrp = new Group(topSecPhenom, SWT.LEFT);
+        Group altitudesGrp = new Group(topSecPhenom, SWT.LEFT);
         altitudesGrp.setLayoutData(
                 new GridData(SWT.RIGHT, SWT.CENTER, true, false, 4, 1));
         altitudesGrp.setLayout(new GridLayout(8, false));
