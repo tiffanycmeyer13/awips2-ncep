@@ -676,6 +676,7 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
 
     /**
      * Get the default initial date/time for the input day period
+     *
      * 
      * @param days
      * @return

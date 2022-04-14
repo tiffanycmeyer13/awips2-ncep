@@ -118,8 +118,6 @@ public class SigmetInfo {
 
     public static final Map<String, String[]> AREA_MAP = new HashMap<>();
 
-
-
     public static final Map<String, String[]> ID_MAP = new HashMap<>();
 
     public static final Map<String, String[]> PHEN_MAP = new HashMap<>();
