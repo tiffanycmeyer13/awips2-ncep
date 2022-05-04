@@ -57,6 +57,8 @@ import gov.noaa.nws.ncep.edex.plugin.airep.AirepSeparator;
  * Apr 14, 2022  95500     thuggins      Added code to pass header dates from the Airep Separator to here.
  *                                       Corrected logic for when header date is the beginning of the
  *                                       month and individual events are at the end
+ * May 02, 2022  104287    smanoj        Added Null check to avoid parsing error.
+ *
  * </pre>
  */
 public class AirepParser {
@@ -1374,13 +1376,15 @@ public class AirepParser {
 
     Date getHeaderDate(String formatMe) {
         Date retVal = null;
-        try {
-            Calendar myCal = TimeUtil.newGmtCalendar();
-            Date debugMe = sdf.get().parse(formatMe);
-            myCal.setTime(debugMe);
-            retVal = myCal.getTime();
-        } catch (ParseException e) {
-            logger.error("Failed to parse a Date from: " + formatMe, e);
+        if (formatMe != null) {
+            try {
+                Calendar myCal = TimeUtil.newGmtCalendar();
+                Date debugMe = sdf.get().parse(formatMe);
+                myCal.setTime(debugMe);
+                retVal = myCal.getTime();
+            } catch (ParseException e) {
+                logger.error("Failed to parse a Date from: " + formatMe, e);
+            }
         }
         return retVal;
     }
