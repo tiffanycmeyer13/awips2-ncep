@@ -278,6 +278,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       SIGMET Functionality
  * Mar 07, 2022  99344      smanoj       Remove Trend from Intl Sigmet GUI and other
  *                                       bug fixes for Volcanic Ash.
+ * May 17, 2022  103690     achalla      PGEN functionality CarSam Enhancement.
  * </pre>
  *
  * @author gzhang
@@ -599,6 +600,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private boolean isObsLatLonInVor = false;
 
     private Button radBtn, areaBtn, lineBtn, vorBtn;
+   
 
     /**
      * Constructor.
@@ -2348,6 +2350,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             comboSpeed.select(0);
             this.setEditableAttrPhenomSpeed(comboSpeed.getText());
         }
+        /*When CARSAM Backup Mode is enabled and  Intl SIGMET 
+        Edit GUI closes and reopens save Speed Info*/
+        else if(iscarSamEnabled() && editableAttrPhenomSpeed != null){
+            comboSpeed.setText(editableAttrPhenomSpeed);
+
+        }
         copyEditableAttrToSigmet((Sigmet) getSigmet());
         comboSpeed.addListener(SWT.Selection, new Listener() {
             @Override
@@ -2368,6 +2376,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             comboDirection.select(0);
             this.setEditableAttrPhenomDirection(comboDirection.getText());
         }
+        /*When CARSAM Backup Mode is enabled and  Intl SIGMET 
+        Edit GUI closes and reopens save  Direction toward Info*/
+        else if(iscarSamEnabled() && editableAttrPhenomDirection != null){
+            comboDirection.setText(editableAttrPhenomDirection);
+        }
         copyEditableAttrToSigmet((Sigmet) getSigmet());
         comboDirection.addListener(SWT.Selection, new Listener() {
             @Override
@@ -2386,6 +2399,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             if (editableAttrTrend == null) {
                 comboTrend.select(0);
                 this.setEditableAttrTrend(comboTrend.getText());
+            }
+            /*When CARSAM Backup Mode is enabled and  Intl SIGMET 
+            Edit GUI closes and reopens save Trend Info*/
+            else if(iscarSamEnabled() && editableAttrTrend != null){
+                comboTrend.setText(editableAttrTrend);
             }
             copyEditableAttrToSigmet((Sigmet) getSigmet());
             comboTrend.setLayoutData(
@@ -2422,7 +2440,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         attrControlMap.put(EDITABLE_ATTR_LEVEL_TEXT1, txtLevelInfo1);
         txtLevelInfo1.setLayoutData(
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
-
+        /*When CARSAM Backup Mode is enabled and  Intl SIGMET 
+          Edit GUI closes and reopens save Level Info text*/
+        if(iscarSamEnabled() && editableAttrLevelText1 != null){
+            txtLevelInfo1.setText(editableAttrLevelText1);
+         }
         txtLevelInfo1.addListener(SWT.Verify, new Listener() {
             @Override
             public void handleEvent(Event e) {
@@ -2759,9 +2781,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
                     // select MWO value corresponding to fir region
                     carSamFirMWOSelection(firValues);
-
-                    // CarSamBackup is disabled, select the default regular
-                    // regions
+                    populateIdList(editableAttrArea); 
+                    /* CarSamBackup is disabled, select the default regular
+                     regions*/
                 } else {
                     unCheckFirButtons();
                     editableFirID = null;
@@ -3876,7 +3898,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
         setWidthStr(entry);
     }
-
     private void createDialogAreaSelect(Composite parent) {
         String[] mwoItems = SigmetInfo.AREA_MAP
                 .get(SigmetInfo.getSigmetTypeString(pgenType));
@@ -3915,7 +3936,22 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         comboMWO = new Combo(top2, SWT.READ_ONLY);
         attrControlMap.put("editableAttrArea", comboMWO);
         comboMWO.setItems(mwoItems);
-        comboMWO.select(0);
+        /*save value when edit attribute is pressed or when 
+         sigmet info dialog is applied and is closed*/
+        if ( iscarSamEnabled()) {
+            int mwoIndex = 0;
+            for(String  strVal:   mwoItems){
+                  if(editableAttrArea.equals(strVal)){
+                      break;
+                  }
+                  mwoIndex++;
+            }
+            comboMWO.select(mwoIndex);
+
+        }else{
+            comboMWO.select(0);
+
+        }
 
         setEditableAttrArea(comboMWO.getText());
         comboMWO.setLayoutData(
@@ -4167,9 +4203,38 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
 
     }
+  
+    private void populateIdListCarSam(String issueOffice){
 
+        boolean includeABlankSeriesId = SigmetInfo
+                .getIncludeBlankSeriesIdFlag(issueOffice);
+        
+        if (SigmetInfo.SIGMET_TYPES[0]
+                .equals(SigmetInfo.getSigmetTypeString(pgenType))) {
+            comboID.setItems(SigmetInfo.getSeriesIDs(issueOffice));
+        } else {
+            comboID.setItems(SigmetInfo.ID_MAP
+                    .get(SigmetInfo.getSigmetTypeString(pgenType)));
+        }
+        /*Save the Selected ID when Edit Attributes 
+          in the International SIGMET is closed*/
+             if(includeABlankSeriesId){
+                 comboID.add(" ", 0);
+                 comboID.setText(this.editableAttrId);
+                 
+             }else{
+                 comboID.setText(this.editableAttrId);
+             }
+  
+}
     private void populateIdList(String issueOffice) {
-
+        //only if backup mode is enabled
+        if ( iscarSamEnabled()) {
+            issueOffice = editableAttrArea;
+            populateIdListCarSam(issueOffice);
+            
+        }else{
+            
         boolean includeABlankSeriesId = SigmetInfo
                 .getIncludeBlankSeriesIdFlag(issueOffice);
 
@@ -4190,6 +4255,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
 
         comboID.select(0);
+        }
     }
 
     private boolean validateFcstTimeString(String time) {
@@ -5427,8 +5493,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(" ").append(editableAttrId);
                     sb.append(" ");
                 }
-
-                sb.append(SigmetAttrDlg.this.getEditableAttrSeqNum());
+                
+                sb.append(" ").append(SigmetAttrDlg.this.getEditableAttrSeqNum());
                 sb.append(" ")
                         .append(SigmetAttrDlg.this.getEditableAttrStartTime());
                 sb.append("/")
@@ -6190,6 +6256,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             if (sigmet.getEditableAttrIssueOffice() != null) {
                 if (!comboID.isDisposed()) {
                     populateIdList(sigmet.getEditableAttrIssueOffice());
+             
                 }
             }
         }
@@ -6210,7 +6277,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     if (EDITABLE_ATTR_FROM_LINE.equals(attr)) {
                         this.resetText(typeValue, (Text) cont);
                     } else {
-                        // do not reset the comboBoX WMO when edit attribute is
+                        // do not reset the comboBoX MWO when edit attribute is
                         // pressed and CarSam is enabled
                         if (attr.equals("editableAttrArea")
                                 && iscarSamEnabled()) {
