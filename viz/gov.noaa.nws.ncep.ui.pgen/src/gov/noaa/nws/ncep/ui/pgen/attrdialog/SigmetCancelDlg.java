@@ -77,7 +77,7 @@ import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
  *                                  number in GUI and xml file
  * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
  *                                  multi-panel displays
- *
+ * May 17, 2022  103690   achalla   PGEN functionality CarSam Enhancement.
  * </pre>
  *
  * @author smanoj
@@ -615,7 +615,12 @@ public class SigmetCancelDlg extends AttrDlg {
 
         sb.append(firID);
         sb.append(" ").append(SigmetConstant.SIGMET);
+        //if attrID == " "/ cut one space
+        if(attrId.length() == 1){
+            sb.append(attrId.substring(0, 1));
+        }else{
         sb.append(" ").append(attrId.substring(0, 1));
+        }
         sb.append(seriesNumber);
         sb.append(" ").append(SigmetConstant.VALID).append(" ");
         sb.append(getTimeStringPlusHourInHMS(0)).append("/").append(endTime);
@@ -632,8 +637,15 @@ public class SigmetCancelDlg extends AttrDlg {
         sb.append(SigmetConstant.CNL);
 
         sb.append(" ").append(SigmetConstant.SIGMET);
-        sb.append(" ").append(attrId);
-        sb.append(" ").append(seqNum);
+       
+        //if attrID == " "/ cut one space
+        if(attrId.length() == 1){
+            sb.append(attrId); 
+            sb.append(seqNum);
+        }else{
+            sb.append(" ").append(attrId); 
+            sb.append(" ").append(seqNum);
+        }
         sb.append(" ").append(startTime).append("/").append(endTime);
         sb.append(".\n");
 

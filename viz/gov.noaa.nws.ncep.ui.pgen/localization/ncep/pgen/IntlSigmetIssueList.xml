@@ -27,9 +27,9 @@
        seriesIDs                -    a list of the options in the Series ID menu
      -->
 <IntlSigmetIssueList>
-	<IssueOffice name="KKCI" includeABlankSeriesId="true" seriesIDs="ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
-	<IssueOffice name="PAWU" includeABlankSeriesId="true" seriesIDs="INDIA,JULIET,KILO,LIMA,MIKE" />
-	<IssueOffice name="PHFO" includeABlankSeriesId="true" seriesIDs="NOVEMBER,OSCAR,PAPA,QUEBEC" />
+	<IssueOffice name="KKCI" includeABlankSeriesId="false" seriesIDs="ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
+	<IssueOffice name="PAWU" includeABlankSeriesId="false" seriesIDs="INDIA,JULIET,KILO,LIMA,MIKE" />
+	<IssueOffice name="PHFO" includeABlankSeriesId="false" seriesIDs="NOVEMBER,OSCAR,PAPA,QUEBEC" />
 	<IssueOffice name="MMMX" includeABlankSeriesId="true" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
     <IssueOffice name="MUHA" includeABlankSeriesId="true" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
     <IssueOffice name="TTPP" includeABlankSeriesId="true" seriesIDs="ZULU,ALFA,BRAVO,CHARLIE,DELTA,ECHO,FOXTROT,GOLF,HOTEL,INDIA,JULIETT,KILO,LIMA,MIKE" />
