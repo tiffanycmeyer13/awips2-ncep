@@ -4223,6 +4223,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
              if(includeABlankSeriesId){
                  comboID.add(" ", 0);
                  comboID.setText(this.editableAttrId);
+                 //set the Default SeriesID to " " if no selection is made
+                 if(comboID.getSelectionIndex() == -1){
+                     comboID.select(0);
+                 }
                  
              }else{
                  comboID.setText(this.editableAttrId);
