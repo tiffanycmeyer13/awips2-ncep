@@ -49,6 +49,7 @@ import gov.noaa.nws.ncep.common.dataplugin.mcidas.McidasRecord;
  * Mar 29, 2021  8374     randerso     Renamed IDataRecord.get/setProperties to
  *                                     get/setProps
  * Sep 23, 2021  8608     mapeters     Pass metadata ids to datastore
+ * Jun 22, 2022  8865     mapeters     Update populateDataStore to return boolean
  *
  * </pre>
  *
@@ -61,8 +62,9 @@ public class McidasDao extends PluginDao {
     }
 
     @Override
-    protected IDataStore populateDataStore(IDataStore dataStore,
+    protected boolean populateDataStore(IDataStore dataStore,
             IPersistable record) throws StorageException {
+        boolean populated = false;
         final McidasRecord satRecord = (McidasRecord) record;
 
         /*
@@ -75,6 +77,7 @@ public class McidasDao extends PluginDao {
                     new long[] { satRecord.getHeaderBlock().length });
             storageRecord.setCorrelationObject(satRecord);
             dataStore.addDataRecord(storageRecord, metaId);
+            populated = true;
         }
 
         /*
@@ -106,6 +109,7 @@ public class McidasDao extends PluginDao {
             storageRecord.setCorrelationObject(satRecord);
             // Store the base record.
             dataStore.addDataRecord(storageRecord, metaId);
+            populated = true;
 
             BufferWrapper dataSource = BufferWrapper
                     .wrapArray(storageRecord.getDataObject(), xdim, ydim);
@@ -145,7 +149,7 @@ public class McidasDao extends PluginDao {
 
                     }, metaId);
         }
-        return dataStore;
+        return populated;
     }
 
     @Override
