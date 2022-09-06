@@ -13,7 +13,7 @@ import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.NcUnits;
 import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.PRLibrary;
 import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.PRLibrary.InvalidValueException;
 import si.uom.SI;
-import tec.uom.se.unit.MetricPrefix;
+import javax.measure.MetricPrefix;
 
 /**
  * <pre>

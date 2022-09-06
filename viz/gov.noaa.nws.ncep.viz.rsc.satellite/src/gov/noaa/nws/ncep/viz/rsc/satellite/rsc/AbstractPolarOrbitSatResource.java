@@ -48,8 +48,8 @@ import gov.noaa.nws.ncep.viz.resources.DfltRecordRscDataObj;
 import gov.noaa.nws.ncep.viz.resources.IRscDataObject;
 import gov.noaa.nws.ncep.viz.resources.util.Sampler;
 import gov.noaa.nws.ncep.viz.ui.display.ColorBarFromColormap;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.quantity.Quantities;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.quantity.Quantities;
 
 /**
  * Abstract class for display of polar-orbiting (MODIS/VIIRS) satellite data.

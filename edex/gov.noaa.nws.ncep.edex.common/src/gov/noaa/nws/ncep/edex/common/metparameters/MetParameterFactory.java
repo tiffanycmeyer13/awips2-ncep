@@ -6,7 +6,7 @@ import java.text.ParsePosition;
 import java.util.HashMap;
 
 import javax.measure.Unit;
-import javax.measure.format.ParserException;
+import javax.measure.format.MeasurementParseException;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -15,8 +15,8 @@ import com.raytheon.uf.common.serialization.annotations.DynamicSerialize;
 import com.raytheon.uf.common.serialization.annotations.DynamicSerializeElement;
 import com.raytheon.uf.common.time.DataTime;
 
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * Creates AbstractNcParameters
@@ -676,7 +676,7 @@ public class MetParameterFactory {
             try {
                 units = SimpleUnitFormat.getInstance(SimpleUnitFormat.Flavor.ASCII).parseProductUnit(unitName, 
                         new ParsePosition(0));
-            } catch (ParserException e) {
+            } catch (MeasurementParseException e) {
                 System.out.println("unable to determine units for " + unitName);
                 return null;
             }

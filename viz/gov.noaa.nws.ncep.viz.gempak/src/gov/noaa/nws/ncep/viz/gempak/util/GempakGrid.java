@@ -23,7 +23,7 @@ import com.sun.jna.ptr.IntByReference;
 
 import gov.noaa.nws.ncep.viz.gempak.grid.jna.GridDiag;
 import si.uom.SI;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * @author gamaz

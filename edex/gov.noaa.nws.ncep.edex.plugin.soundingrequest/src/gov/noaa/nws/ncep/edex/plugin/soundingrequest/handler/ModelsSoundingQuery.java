@@ -37,7 +37,7 @@ import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingProfile;
 import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingTimeLines;
 import si.uom.SI;
 import systems.uom.common.USCustomary;
-import tec.uom.se.unit.Units;
+import tech.units.indriya.unit.Units;
 
 /**
  *

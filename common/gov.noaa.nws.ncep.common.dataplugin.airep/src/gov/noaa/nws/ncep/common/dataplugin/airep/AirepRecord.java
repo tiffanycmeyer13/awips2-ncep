@@ -50,7 +50,7 @@ import com.raytheon.uf.common.serialization.annotations.DynamicSerializeElement;
 import si.uom.NonSI;
 import si.uom.SI;
 import systems.uom.common.USCustomary;
-import tec.uom.se.unit.MetricPrefix;
+import javax.measure.MetricPrefix;
 
 /**
  * AirepRecord is the Data Access component for pirep observation data.

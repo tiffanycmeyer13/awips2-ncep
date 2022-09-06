@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import si.uom.SI;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.unit.MetricPrefix;
+import tech.units.indriya.AbstractUnit;
+import javax.measure.MetricPrefix;
 
 import gov.noaa.nws.ncep.edex.common.metparameters.AirTemperature;
 import gov.noaa.nws.ncep.edex.common.metparameters.Amount;

@@ -43,7 +43,7 @@ import com.raytheon.uf.viz.core.rsc.capabilities.ColorableCapability;
 
 import gov.noaa.nws.ncep.viz.resources.AbstractNatlCntrsResource2;
 import gov.noaa.nws.ncep.viz.resources.AbstractSatelliteRecordData;
-import tec.uom.se.AbstractUnit;
+import tech.units.indriya.AbstractUnit;
 
 /**
  * Provides sampling capability for a resource, draws sampled text to the
