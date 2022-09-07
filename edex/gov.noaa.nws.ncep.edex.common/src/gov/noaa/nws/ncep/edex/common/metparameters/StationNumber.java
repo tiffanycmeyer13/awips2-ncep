@@ -7,7 +7,7 @@ import javax.measure.quantity.Dimensionless;
 
 import com.raytheon.uf.common.serialization.ISerializableObject;
 
-import tec.uom.se.AbstractUnit;
+import tech.units.indriya.AbstractUnit;
 
 /**
  * @author archana

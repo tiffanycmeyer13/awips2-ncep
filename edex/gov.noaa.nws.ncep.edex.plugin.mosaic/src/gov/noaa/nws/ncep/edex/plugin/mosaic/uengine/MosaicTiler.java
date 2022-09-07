@@ -12,8 +12,8 @@ import org.geotools.geometry.GeneralEnvelope;
 import org.opengis.referencing.crs.ProjectedCRS;
 
 import gov.noaa.nws.ncep.edex.plugin.mosaic.common.MosaicRecord;
-import tec.uom.se.AbstractConverter;
-import tec.uom.se.function.MultiplyConverter;
+import tech.units.indriya.function.AbstractConverter;
+import tech.units.indriya.function.MultiplyConverter;
 
 /**
  * A tiler class that will allow the user to take a radial container and create
@@ -103,7 +103,7 @@ public class MosaicTiler {
         if (dataToImage == null) {
             this.dataToImage = AbstractConverter.IDENTITY;
             if (data.getNumLevels() <= 16) {
-                this.dataToImage = new MultiplyConverter(16);
+                this.dataToImage = MultiplyConverter.of(16);
             }
         } else {
             this.dataToImage = dataToImage;

@@ -23,7 +23,7 @@ import javax.measure.IncommensurableException;
 import javax.measure.UnconvertibleException;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
-import javax.measure.format.ParserException;
+import javax.measure.format.MeasurementParseException;
 
 import org.eclipse.swt.graphics.RGB;
 import org.geotools.referencing.CRS;
@@ -84,10 +84,10 @@ import gov.noaa.nws.ncep.viz.common.ColorMapUtil;
 import gov.noaa.nws.ncep.viz.resources.colorBar.ColorBarResource;
 import gov.noaa.nws.ncep.viz.resources.colorBar.ColorBarResourceData;
 import gov.noaa.nws.ncep.viz.ui.display.ColorBarFromColormap;
-import tec.uom.se.AbstractConverter;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.format.SimpleUnitFormat;
-import tec.uom.se.function.MultiplyConverter;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.format.SimpleUnitFormat;
+import tech.units.indriya.function.AbstractConverter;
+import tech.units.indriya.function.MultiplyConverter;
 
 /**
  * TODO Add Description
@@ -208,7 +208,7 @@ public abstract class RadarImageResource<D extends IDescriptor>
             try {
                 dataUnit = SimpleUnitFormat.getInstance(SimpleUnitFormat.Flavor.ASCII).parseProductUnit(
                         radarRecord.getUnit(), new ParsePosition(0));
-            } catch (ParserException e) {
+            } catch (MeasurementParseException e) {
                 throw new VizException("Unable to parse units ", e);
             }
         } else {
@@ -663,7 +663,7 @@ public abstract class RadarImageResource<D extends IDescriptor>
             dataToImage = params.getDataToImageConverter();
         }
         if (dataToImage == null && record.getNumLevels() <= 16) {
-            dataToImage = new MultiplyConverter(16);
+            dataToImage = MultiplyConverter.of(16);
         } else if (dataToImage == null) {
             dataToImage = AbstractConverter.IDENTITY;
         }

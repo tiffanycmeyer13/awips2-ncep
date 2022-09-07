@@ -1,11 +1,10 @@
 package gov.noaa.nws.ncep.viz.rsc.satellite.units;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
+import javax.measure.UnitConverter;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
-import tec.uom.se.AbstractConverter;
+import tech.units.indriya.function.AbstractConverter;
 
 /**
  * Converts a temperature value in Kelvin to a pixel value from 0 to 255 using
@@ -19,6 +18,8 @@ import tec.uom.se.AbstractConverter;
  * 06/07         #          archana   Updated the convert() method to 
  *                                    match legacy imttob.f   
  * Apr 29, 2019  7596       lsingh    Updated units framework to JSR-363.
+ * Aug 05, 2022  8905       lsingh    Updated units framework to 2.0.2.
+ *                                    Renamed methods, and overrided additional methods.
  * </pre>
  * 
  * @author ghull
@@ -28,20 +29,9 @@ public class NcIRTempToPixelConverter extends AbstractConverter {
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	public double convert(double aTemperature) {
+	public Number convertWhenNotIdentity(Number temperature) {
 		double result = Double.NaN;
-
-//		if (aTemperature < 238.15) {
-//			result = 418.15 - aTemperature;
-//		} else {
-//			result = 656.3 - (2.0 * aTemperature);
-//		}
-//
-//		if (result < 0) {
-//			result = 0.0;
-//		} else if (result > 255) {
-//			result = 255.0;
-//		}
+        double aTemperature = temperature.doubleValue();
 
 		if ( aTemperature < 163 || aTemperature > 330)
 			return result;
@@ -63,7 +53,7 @@ public class NcIRTempToPixelConverter extends AbstractConverter {
 	}
 
 	@Override
-	public AbstractConverter inverse() {
+	public AbstractConverter inverseWhenNotIdentity() {
 		return new NcIRPixelToTempConverter();
 	}
 
@@ -73,9 +63,26 @@ public class NcIRTempToPixelConverter extends AbstractConverter {
 	}
 	
     @Override
-    public BigDecimal convert(BigDecimal value, MathContext ctx)
-            throws ArithmeticException {
-        throw new UnsupportedOperationException();
+    public boolean isIdentity() {
+        return false;
+    }
+
+    @Override
+    public int compareTo(UnitConverter o) {
+     // This method hasn't been implemented yet since it's unused
+        return 0;
+    }
+
+    @Override
+    protected String transformationLiteral() {
+     // This method hasn't been implemented yet since it's unused
+        return null;
+    }
+
+    @Override
+    protected boolean canReduceWith(AbstractConverter that) {
+     // This method hasn't been implemented yet since it's unused
+        return false;
     }
 
 }

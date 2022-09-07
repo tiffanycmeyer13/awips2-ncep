@@ -6,7 +6,7 @@ import javax.measure.quantity.Temperature;
 
 import com.raytheon.uf.common.dataplugin.satellite.units.SatelliteUnits;
 
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 
 /**

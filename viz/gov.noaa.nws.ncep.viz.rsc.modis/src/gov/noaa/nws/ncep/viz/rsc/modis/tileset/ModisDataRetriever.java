@@ -27,7 +27,7 @@ import com.raytheon.uf.viz.core.data.IColorMapDataRetrievalCallback;
 import com.raytheon.uf.viz.datacube.DataCubeContainer;
 
 import gov.noaa.nws.ncep.common.dataplugin.modis.ModisRecord;
-import tec.uom.se.AbstractUnit;
+import tech.units.indriya.AbstractUnit;
 
 /**
  * {@link IColorMapDataRetrievalCallback} for MODIS satellite imagery data.

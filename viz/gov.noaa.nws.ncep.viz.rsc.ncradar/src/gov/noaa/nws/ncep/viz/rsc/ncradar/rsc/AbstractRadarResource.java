@@ -44,7 +44,7 @@ import com.raytheon.viz.radar.VizRadarRecord;
 import gov.noaa.nws.ncep.viz.resources.AbstractNatlCntrsResource;
 import gov.noaa.nws.ncep.viz.ui.display.NCMapDescriptor;
 import systems.uom.common.USCustomary;
-import tec.uom.se.quantity.Quantities;
+import tech.units.indriya.quantity.Quantities;
 
 /**
  * Top level radar resource that contains the code that is shared by all below

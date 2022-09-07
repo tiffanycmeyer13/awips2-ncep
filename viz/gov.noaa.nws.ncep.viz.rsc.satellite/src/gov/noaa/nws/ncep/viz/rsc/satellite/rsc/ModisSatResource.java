@@ -30,7 +30,7 @@ import com.raytheon.uf.viz.core.tile.TileSetRenderable;
 import gov.noaa.nws.ncep.common.dataplugin.modis.ModisRecord;
 import gov.noaa.nws.ncep.common.dataplugin.modis.dao.ModisDao;
 import gov.noaa.nws.ncep.viz.resources.AbstractFrameData;
-import tec.uom.se.AbstractUnit;
+import tech.units.indriya.AbstractUnit;
 
 /**
  * Class for display of the MODIS satellite data. Also provides the capability

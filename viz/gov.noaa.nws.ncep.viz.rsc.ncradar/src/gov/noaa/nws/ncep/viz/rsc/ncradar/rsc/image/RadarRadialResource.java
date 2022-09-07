@@ -32,7 +32,7 @@ import com.raytheon.viz.radar.rsc.image.IRadialMeshExtension.RadialMeshData;
 import gov.noaa.nws.ncep.viz.rsc.ncradar.rsc.RadarImageResource;
 import gov.noaa.nws.ncep.viz.rsc.ncradar.rsc.RadarResourceData;
 import systems.uom.common.USCustomary;
-import tec.uom.se.quantity.Quantities;
+import tech.units.indriya.quantity.Quantities;
 
 /**
  * TODO Add Description

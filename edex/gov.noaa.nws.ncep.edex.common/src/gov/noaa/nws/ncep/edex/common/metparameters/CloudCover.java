@@ -4,7 +4,7 @@ import javax.measure.quantity.Dimensionless;
 
 import com.raytheon.uf.common.serialization.ISerializableObject;
 
-import tec.uom.se.AbstractUnit;
+import tech.units.indriya.AbstractUnit;
 
 // The cloud coverage at a given height. Values are strings representing 
 // metar observations FEW, OVC,
