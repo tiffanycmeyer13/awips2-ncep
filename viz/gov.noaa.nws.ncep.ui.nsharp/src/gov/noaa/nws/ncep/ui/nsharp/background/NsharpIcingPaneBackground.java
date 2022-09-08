@@ -1,20 +1,22 @@
 /**
- * 
+ *
  * gov.noaa.nws.ncep.ui.nsharp.background.NsharpIcingPaneBackground
- * 
+ *
  * This java class performs the NSHARP NsharpSkewTPaneBackground functions.
  * This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * 
+ *
  * Date         Ticket#     Engineer    Description
  * -------      -------     --------    -----------
  * 05/02/2012   229         Chin Chen   Initial coding for multiple display panes implementation
  * 04/15/2019   7480        bhurley     Code cleanup
- *
+ * 07/06/2021   93845       omoncayo    Configure Similar to NSHARP Skew-T Display
+ *                                      and Enable Sampling Features for Turbulence
+ *                                      and Icing Displays
  * </pre>
- * 
+ *
  * @author Chin Chen
  * @version 1.0
  */
@@ -142,12 +144,12 @@ public class NsharpIcingPaneBackground extends NsharpGenericPaneBackground {
             linesNumbersShape.addLabel(s, lblXy);
         }
         // RHLabel
-        // double [] lblRhXy = {iceXOrig+ iceWidth/2, iceYOrig-45};
-        // RHLabelShape.addLabel("*****ICING Display*****", lblRhXy);
-        double[] lblRhXy1 = { iceXOrig + iceWidth / 2,
-                iceYOrig - 35 * yMagFactor };
-        RHLabelShape.addLabel("*****ICING Display*****     RELATIVE HUMIDITY",
-                lblRhXy1);
+        double[] lblRhXy1 = { iceXOrig + 0.95 * iceWidth,
+                iceYOrig + 35 * yMagFactor };
+        RHLabelShape.addLabel("ICING", lblRhXy1);
+        double[] lblRhXy2 = { iceXOrig + 0.95 * iceWidth,
+                iceYOrig + 45 * yMagFactor };
+        RHLabelShape.addLabel("RELATIVE HUMIDITY", lblRhXy2);
         double[][] lineRH = { { 0, 0 }, { 0, 0 } };
         // add dummy line
         RHLabelShape.addLineSegment(lineRH);
@@ -171,7 +173,7 @@ public class NsharpIcingPaneBackground extends NsharpGenericPaneBackground {
         }
         // temperature label
         double[] lblTXy = { iceXOrig + iceWidth / 2,
-                iceYEnd + 20 * yMagFactor };
+                iceYEnd - 25 * yMagFactor };
         tempLabelShape.addLabel("TEMPERATURE (C)", lblTXy);
         double[][] lineT = { { 0, 0 }, { 0, 0 } };
         // add dummy line
@@ -198,7 +200,7 @@ public class NsharpIcingPaneBackground extends NsharpGenericPaneBackground {
         }
         // EPI label
         double[] lblEPIXy = { iceXOrig + iceWidth / 2,
-                iceYEnd + 35 * yMagFactor };
+                iceYEnd + 2 * yMagFactor };
         EPILabelShape.addLabel("EQUIVALENT POTENTIAL INSTABILITY x 1E-3 K/m",
                 lblEPIXy);
         double[][] lineE = { { 0, 0 }, { 0, 0 } };
@@ -391,23 +393,20 @@ public class NsharpIcingPaneBackground extends NsharpGenericPaneBackground {
         if (target == null) {
             return;
         }
-        // IExtent ext = desc.getRenderableDisplay().getExtent();
-        // ext.reset();
         float prevHeight = paneHeight;
         float prevWidth = iceWidth;
         paneHeight = (int) (ext.getHeight());
         yMagFactor = yMagFactor * (paneHeight / prevHeight);
         labelSpace = defaultLabelSpace * yMagFactor;
         iceXOrig = (int) (ext.getMinX());
-        iceYOrig = (int) (ext.getMinY()) + (int) labelSpace;
+        iceYOrig = (int) (ext.getMinY()) + 2;
         iceXEnd = iceXOrig + (int) (ext.getWidth());
-        iceYEnd = iceYOrig + (int) (ext.getHeight()) - 2 * (int) labelSpace;
+        iceYEnd = iceYOrig + (int) (ext.getHeight()) - 15;
         iceWidth = (int) (ext.getWidth());
         xMagFactor = xMagFactor * (iceWidth / prevWidth);
-        this.rectangle = new Rectangle(iceXOrig, iceYOrig, iceWidth,
-                (int) ext.getHeight() - 2 * (int) labelSpace);
+        this.rectangle = new Rectangle(iceXOrig, iceYOrig + 2, iceWidth,
+                (int) ext.getHeight() - 20);
         pe = new PixelExtent(this.rectangle);
-        // desc.setNewPe(pe);
         world = new NsharpWGraphics(this.rectangle);
 
         if (linesNumbersShape != null) {

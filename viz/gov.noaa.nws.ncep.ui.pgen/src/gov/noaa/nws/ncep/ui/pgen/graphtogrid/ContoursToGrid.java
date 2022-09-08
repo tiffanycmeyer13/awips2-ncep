@@ -61,6 +61,8 @@ import org.locationtech.jts.geom.impl.CoordinateArraySequence;
  * 05/14        TTR989      J. Wu       Allow environmental variable in PATH.
  * 01/27/2016   R13166      J. Wu       Allow symbol only & label only Minmax.
  * 07/21/2016   R16077      J. Wu       Allow number of labels to be 0 for contour lines.
+ * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
+ * 06/14/2021   91162       smanoj      Turn extend off, so grid lines match contour lines.
  * 
  * </pre>
  * 
@@ -135,9 +137,11 @@ public class ContoursToGrid extends GraphToGrid {
                 newPt[1] = jj + 1;
                 lonlat = gtrans.gridToWorld(newPt);
 
-                c = new Coordinate(lonlat[0], lonlat[1]);
+                if (lonlat != null) {
+                    c = new Coordinate(lonlat[0], lonlat[1]);
 
-                gridPts[ii + jj * kx] = c;
+                    gridPts[ii + jj * kx] = c;
+                }
             }
         }
 
@@ -201,11 +205,6 @@ public class ContoursToGrid extends GraphToGrid {
                 kx, ky, new Color[] { Color.blue }, cmap);
 
         /*
-         * Draw bounds and grids for diagnosis
-         */
-        // drawBoundsAndGrid( bndContours, hist, kx, ky, gridPts );
-
-        /*
          * Prepare data to be set into g2g_driver
          * 
          * Note that if no extension is required (bounds is empty or the line is
@@ -214,7 +213,9 @@ public class ContoursToGrid extends GraphToGrid {
          * 
          * ?It is reasonable to always extend the lines regardless of bounds?
          */
-        boolean extend = true;
+        // Always 'extend' the lines logic is not working properly, so turning
+        // it off for now.
+        boolean extend = false;
 
         float[][] flat, flon;
         float[][] fi_orig, fj_orig;
@@ -338,8 +339,7 @@ public class ContoursToGrid extends GraphToGrid {
 
             Coordinate cmmPt;
             if (cmm.getSymbol() != null) {
-                cmmPt = ((SinglePointElement) (cmm.getSymbol()))
-                    .getLocation();
+                cmmPt = ((SinglePointElement) (cmm.getSymbol())).getLocation();
             } else {
                 cmmPt = cmm.getLabel().getLocation();
             }
@@ -422,9 +422,6 @@ public class ContoursToGrid extends GraphToGrid {
             return;
         }
 
-        gdatim = new String(PgenUtil.calendarToGempakDattim(extContours
-                .getTime1()) + extContours.getForecastHours());
-
         /*
          * Find the correct current working directory in case.
          */
@@ -497,8 +494,10 @@ public class ContoursToGrid extends GraphToGrid {
 
         if (msg != null) {
 
-            MessageDialog msgDlg = new MessageDialog(PlatformUI.getWorkbench()
-                    .getActiveWorkbenchWindow().getShell(), "Warning", null,
+            MessageDialog msgDlg = new MessageDialog(
+                    PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                            .getShell(),
+                    "Warning", null,
                     "Fail to write to " + fullFile + " because:\n\n" + msg,
                     MessageDialog.INFORMATION, new String[] { "OK" }, 0);
             msgDlg.open();
@@ -512,8 +511,8 @@ public class ContoursToGrid extends GraphToGrid {
         String cpyfil = new String(" ");
         String anlyss = new String(" ");
 
-        g2gNative.g2g_write(grid, hist, histgrd, fullFile, proj, cpyfil,
-                gdarea, anlyss, ckxky, maxgrd, gparm, gdatim, gvcord, glevel);
+        g2gNative.g2g_write(grid, hist, histgrd, fullFile, proj, cpyfil, gdarea,
+                anlyss, ckxky, maxgrd, gparm, gdatim, gvcord, glevel);
 
     }
 
@@ -639,7 +638,8 @@ public class ContoursToGrid extends GraphToGrid {
         int npts = 0;
         for (int ii = 0; ii < nContours; ii++) {
             float[] line = container.xyContourPoints.get(ii);
-            contourValue[ncnt] = ((int) (container.contourVals.get(ii) * 10)) / 10.0f;
+            contourValue[ncnt] = ((int) (container.contourVals.get(ii) * 10))
+                    / 10.0f;
             nContourPts[ncnt] = line.length / 2;
             for (int jj = 0; jj < line.length; jj += 1) {
                 vals[npts] = line[jj];
@@ -692,9 +692,8 @@ public class ContoursToGrid extends GraphToGrid {
      * Note: need to access the "hist" array as it is an FORTRAN array (column
      * first).
      */
-    private Contours contoursFromBounds(String bnds,
-            CoordinateTransform gtrans, float hist[], Coordinate[] grdPts,
-            int kx, int ky) {
+    private Contours contoursFromBounds(String bnds, CoordinateTransform gtrans,
+            float hist[], Coordinate[] grdPts, int kx, int ky) {
 
         ArrayList<BoundPolygon> boundPolys = BoundPolygon.getAllBounds(bnds);
 
@@ -773,8 +772,8 @@ public class ContoursToGrid extends GraphToGrid {
 
             float lblValue = getValueForLabel(cmap, label[0]);
 
-            if (ln.isClosedLine()
-                    && (lblValue == G2GCommon.RMISSD || lblValue == -G2GCommon.RMISSD)) {
+            if (ln.isClosedLine() && (lblValue == G2GCommon.RMISSD
+                    || lblValue == -G2GCommon.RMISSD)) {
                 ArrayList<Coordinate> coords = ln.getPoints();
                 coords.add(new Coordinate(coords.get(0).x, coords.get(0).y));
 
@@ -895,8 +894,8 @@ public class ContoursToGrid extends GraphToGrid {
         /*
          * calculate angle of major axis
          */
-        double axisAngle = Math.toDegrees(Math.atan2((circum[1] - center[1]),
-                (circum[0] - center[0])));
+        double axisAngle = Math.toDegrees(
+                Math.atan2((circum[1] - center[1]), (circum[0] - center[0])));
         double cosineAxis = Math.cos(Math.toRadians(axisAngle));
         double sineAxis = Math.sin(Math.toRadians(axisAngle));
 
@@ -912,8 +911,8 @@ public class ContoursToGrid extends GraphToGrid {
          */
         double increment = interval; // degrees
         double angle = arc.getStartAngle();
-        int numpts = (int) (Math.round(arc.getEndAngle() - arc.getStartAngle()
-                + 1.0) / increment);
+        int numpts = (int) (Math.round(
+                arc.getEndAngle() - arc.getStartAngle() + 1.0) / increment);
 
         double[][] path = new double[numpts][3];
         for (int j = 0; j < numpts; j++) {
@@ -924,8 +923,8 @@ public class ContoursToGrid extends GraphToGrid {
             path[j][1] = center[1] + (major * sineAxis * thisCosine)
                     + (minor * cosineAxis * thisSine);
 
-            double[] pt = drawingLayer.getDescriptor().pixelToWorld(
-                    new double[] { path[j][0], path[j][1], 0.0 });
+            double[] pt = drawingLayer.getDescriptor()
+                    .pixelToWorld(new double[] { path[j][0], path[j][1], 0.0 });
 
             points.add(new Coordinate(pt[0], pt[1]));
 

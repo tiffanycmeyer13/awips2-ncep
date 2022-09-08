@@ -137,59 +137,90 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *                                       INTL_SIGMET.
  * Jan 31, 2020  73863      smanoj       Added check to validate lat/lon values.
  * Mar 13, 2020  76151      tjensen      Code cleanup and added null checks
- * Apr 21, 2020  76155      ksunil       ID values for INTL is dependent on WMO value selected
- * Apr 21, 2020  77994      ksunil       Tropical Cyclone and Volcanic Ash should default to 6 hours end time.
+ * Apr 21, 2020  76155      ksunil       ID values for INTL is dependent on WMO
+ *                                       value selected
+ * Apr 21, 2020  77994      ksunil       Tropical Cyclone and Volcanic Ash
+ *                                       should default to 6 hours end time.
  *               78000                   New fcst widget items for TC
  * May 12, 2020  77473      ksunil       INtl Sigmet input validation framework
  * Apr 28, 2020  77667      smanoj       Flight Information Region (FIR) update.
  * May 04, 2020  77670      smanoj       Format changes for Thunderstorm.
  * May 06, 2020  77691      smanoj       Format changes for Volcanic Ash.
- * May 14, 2020  77691      smanoj       Additional format changes for VA ERUPTION.
+ * May 14, 2020  77691      smanoj       Additional format changes for VA
+ *                                       ERUPTION.
  * May 18, 2020  77690      smanoj       Tropical Cyclone format changes.
  * May 22, 2020  78470      smanoj       INTL Sigmet Save ID Bug Fix.
- * May 22, 2020  78000      ksunil       New Tropical Cyclone UI components for Fcst
- * Jun 4,  2020  79256      ksunil       Series ID is now a function of Issuing Office
- * Jun 03, 2020  78215      smanoj       INTL Sigmet Cancel functionality changes.
- * Jun 11, 2020  79243      smanoj       Added Caribbean and South American FIRs.
- * Jul 01, 2020  79980      smanoj       Tropical Cyclone FCST Center enhancement.
- * Aug 19, 2020  81314      smanoj       INTL Sigmet Volcanic Ash GUI enhancement.
- * Jan 28, 2021  86821      achalla      Refactored width attribute in International SIGMET Edit GUI,
- *                                       SIGMET Save output and International SIGMET message to show Integer.
- * Feb 05, 2021  87538      smanoj       Added FCST Lat/Lon for Tropical Cyclone, also fixed some issues.
- * Feb 18, 2021  86828      achalla      Created updateFirBtn() method to check the correct FIR Region buttons
+ * May 22, 2020  78000      ksunil       New Tropical Cyclone UI components for
+ *                                       Fcst
+ * Jun 04, 2020  79256      ksunil       Series ID is now a function of Issuing
+ *                                       Office
+ * Jun 03, 2020  78215      smanoj       INTL Sigmet Cancel functionality
+ *                                       changes.
+ * Jun 11, 2020  79243      smanoj       Added Caribbean and South American
+ *                                       FIRs.
+ * Jul 01, 2020  79980      smanoj       Tropical Cyclone FCST Center
+ *                                       enhancement.
+ * Aug 19, 2020  81314      smanoj       INTL Sigmet Volcanic Ash GUI
+ *                                       enhancement.
+ * Jan 28, 2021  86821      achalla      Refactored width attribute in
+ *                                       International SIGMET Edit GUI, SIGMET
+ *                                       Save output and International SIGMET
+ *                                       message to show Integer.
+ * Feb 05, 2021  87538      smanoj       Added FCST Lat/Lon for Tropical
+ *                                       Cyclone, also fixed some issues.
+ * Feb 18, 2021  86828      achalla      Created updateFirBtn() method to check
+ *                                       the correct FIR Region buttons
  * Feb 24, 2021  86827      srussell     Updated createDialogAreaGeneral():
  *                                       Removed the setWidthStr() call in the
  *                                       set and reset area, it was preventing
  *                                       user entered values from being used.
  *                                       Updated getFirString() removed the
  *                                       unneeded call to JTS covers() method
- * Feb 26, 2021  87541      achalla      Updated getFirString() to identify and select AWC Backup FIR Regions
- *                                       and drop AWC AOR FIR Regions if  the sigmet polygon crosses over
- *                                       or partially extends into those regions.
- * Mar 09, 2021  88219      achalla      Added a duplicate set of Level Info attributes within
- *                                       the Forecast Section of the Edit Attributes area in the
- *                                       Int'l SIGMET Edit GUI for the VOLCANIC_ASH phenomenon and
- *                                       Removed the existing Altitudes attributes
+ * Feb 26, 2021  87541      achalla      Updated getFirString() to identify and
+ *                                       select AWC Backup FIR Regions and drop
+ *                                       AWC AOR FIR Regions if  the sigmet
+ *                                       polygon crosses over or partially
+ *                                       extends into those regions.
+ * Mar 08, 2021  88654      smanoj       TOPS Attribute saved in Isolated INTL
+ *                                       SIGMET.
+ * Mar 09, 2021  88219      achalla      Added a duplicate set of Level Info
+ *                                       attributes within the Forecast Section
+ *                                       of the Edit Attributes area in the
+ *                                       Int'l SIGMET Edit GUI for the
+ *                                       VOLCANIC_ASH phenomenon and Removed the
+ *                                       existing Altitudes attributes
  * Mar 09, 2021  87540      srussell     Added createLineWidthControls() to
  *                                       install a slider & spinner to control
- *                                       the line width of polygons.
- *                                       Updated okPressed() to support the new
- *                                       line width controls when the "Apply"
- *                                       button is pressed.
- *                                       Updated setAttrForDlg() to support the
- *                                       new line width GUI controls.
- * Mar 15, 2021  88217     smanoj        SIGMET CANCEL SAVE Enhancement.
- * Mar 25, 2021  86828     achalla       Updated getFirs() to check FIR Region buttons instantly
- *                                       when the area polygon is moved into new region
- * Apr 09, 2021  90325     smanoj        CARSAM Backup WMO headers update.
- * Apr 28, 2021  90556     smanoj        Drop unneeded trailing attributes from
+ *                                       the line width of polygons. Updated
+ *                                       okPressed() to support the new line
+ *                                       width controls when the "Apply" button
+ *                                       is pressed. Updated setAttrForDlg() to
+ *                                       support the new line width GUI
+ *                                       controls.
+ * Mar 15, 2021  88217      smanoj       SIGMET CANCEL SAVE Enhancement.
+ * Mar 25, 2021  86828      achalla      Updated getFirs() to check FIR Region
+ *                                       buttons instantly when the area polygon
+ *                                       is moved into new region
+ * Apr 09, 2021  90325      smanoj       CARSAM Backup WMO headers update.
+ * Apr 28, 2021  90556      smanoj       Drop unneeded trailing attributes from
  *                                       final Cancellation SIGMET Save.
- * May 10, 2021  91845     smanoj        Save CARSAM Backupmode flag to the SIGMET xml.
- * May 28, 2021  91845     smanoj        Drawing SIGMET spanning multiple FIRs in Backupmode.
- * Jun 04, 2021  91845     smanoj        Fixing some issues with Backupmode and CANCEL.
- * Jun 09, 2021  90732     mroos         Correcting Level Info locations, drop-down box, and observed info
- * Jun 29, 2021  93036     smanoj        Changes for QC alerts for Int'l SIGMETS.
- * Jun 30, 2021  93038     mroos         Change default Trend attribute and allow default attributes to change
+ * May 10, 2021  91845      smanoj       Save CARSAM Backupmode flag to the
+ *                                       SIGMET xml.
+ * May 28, 2021  91845      smanoj       Drawing SIGMET spanning multiple FIRs
+ *                                       in Backupmode.
+ * Jun 04, 2021  91845      smanoj       Fixing some issues with Backupmode and
+ *                                       CANCEL.
+ * Jun 09, 2021  90732      mroos        Correcting Level Info locations,
+ *                                       drop-down box, and observed info
+ * Jun 29, 2021  93036      smanoj       Changes for QC alerts for Int'l
+ *                                       SIGMETS.
+ * Jun 30, 2021  93038      mroos        Change default Trend attribute and
+ *                                       allow default attributes to change
+ * Jul 01, 2021  93750      mroos        Add alternate speed list for
+ *                                       VOLCANIC_ASH products
+ * Jul 06, 2021  93039      mroos        Removed extraneous spaces from
+ *                                       VOLCANIC_ASH save text.
+ * Jul 21, 2021  93981      tjensen      Make SaveDlg block.
  * Jul 26, 2021  93964      omoncayo     Eliminate gosh volcanos menu for Cyclone
  *                                       populate Observed Phenom Lat and Lon
  * Aug 20, 2021  93036      omoncayo     PGEN INTL SIGMET:QC Check Attributes
@@ -203,6 +234,7 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Oct 18, 2021  93036      smanoj       Fixing some QC alerts issues.
  * Nov 01, 2021  93036      smanoj       Additional QC validation for INTL SIGMET.
  * Nov 11, 2021  93036      smanoj       QC validation for Lat/Lon fields.
+ * Nov 11, 2021  97247      achalla      Int'l SigmetT GUI modified and Input validation for width value
  * Dec 07, 2021  8653       tjensen      Fix ClassCastExceptions during init()
  *
  * </pre>
@@ -302,7 +334,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private String origLineType = lineType;
 
-    private static final String WIDTH = "10.00";
+    private static final String WIDTH = "10";
 
     // default, nautical miles
     private String widthStr = WIDTH;
@@ -2158,7 +2190,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         lblSpeed.setText("Speed: ");
         final Combo comboSpeed = new Combo(top4, SWT.READ_ONLY);
         attrControlMap.put(EDITABLE_ATTR_PHENOM_SPEED, comboSpeed);
-        comboSpeed.setItems(SigmetInfo.SPEED_ARRAY);
+        comboSpeed.setItems(PgenConstant.TYPE_VOLCANIC_ASH.equals(
+                this.getEditableAttrPhenom()) ? SigmetInfo.VOL_ASH_SPEED_ARRAY
+                        : SigmetInfo.SPEED_ARRAY);
         if (editableAttrPhenomSpeed == null) {
             comboSpeed.select(0);
             this.setEditableAttrPhenomSpeed(comboSpeed.getText());
@@ -2568,7 +2602,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         }
                     }
                 }
-
             }
 
         });
@@ -3218,7 +3251,33 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 SigmetAttrDlg.this
-                        .setEditableAttrFcstVADesc(descText.getText());
+                        .setEditableAttrFcstVADesc(descText.getText().trim());
+            }
+        });
+
+        descText.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                setBackgroundColor(descText, Color.WHITE);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if ((SigmetConstant.TRUE.equals(
+                        SigmetAttrDlg.this.getEditableAttrFcstAvail()))) {
+
+                    validateRadialDescription();
+
+                    if (isRadialDescValid) {
+                        descText.setText(getEditableAttrFcstVADesc());
+                        setBackgroundColor(descText, rightFormatColor);
+                    } else {
+                        setBackgroundColor(descText, wrongFormatColor);
+                    }
+
+                } else {
+                    setBackgroundColor(descText, Color.WHITE);
+                }
             }
         });
 
@@ -3363,9 +3422,12 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         final Button btnArea = new Button(top, SWT.RADIO);
         btnArea.setSelection(true);
         btnArea.setText(AREA);
-
+        btnArea.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
         final Button btnLine = new Button(top, SWT.RADIO);
         btnLine.setText(LINE);
+        btnLine.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
 
         final Combo comboLine = new Combo(top, SWT.READ_ONLY);
         // sideOfLine
@@ -3375,9 +3437,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         // default: ESOL
         comboLine.select(0);
         comboLine.setEnabled(false);
+        comboLine.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
 
         final Button btnIsolated = new Button(top, SWT.RADIO);
         btnIsolated.setText("Isolated  ");
+        btnIsolated.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
 
         Label lblText = new Label(top, SWT.LEFT);
         lblText.setText("Width: ");
@@ -3385,6 +3451,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         attrControlMap.put("widthStr", txtWidth);
         txtWidth.setText(WIDTH);
         txtWidth.setEnabled(false);
+        txtWidth.setLayoutData(
+                new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
+
         attrButtonMap.put(LINE_TYPE,
                 new Button[] { btnArea, btnLine, btnIsolated });
 
@@ -3429,7 +3498,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
         });
 
-        txtWidth.addModifyListener(e -> setWidthStr(txtWidth.getText()));
+        txtWidth.addModifyListener(e -> validateWidth(txtWidth.getText()));
 
         Label colorLbl = new Label(top, SWT.LEFT);
         colorLbl.setText("Color:");
@@ -3452,6 +3521,19 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             comboLine.setEnabled(false);
             txtWidth.setEnabled(false);
         }
+    }
+
+    public void validateWidth(String entry) {
+        if ((entry == null) || (entry.length() == 0)) {
+            statusHandler
+                    .warn("Width value is empty: Enter a value for width.");
+            return;
+        }
+        if (!entry.matches("[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)")) {
+            statusHandler.warn("Enter a decimal or integer value for width.");
+            return;
+        }
+        setWidthStr(entry);
     }
 
     private void createDialogAreaSelect(Composite parent) {
@@ -3653,13 +3735,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
         // Line Width Label
         lineWidthLabel = new Label(top, SWT.LEFT);
-        lineWidthLabel.setText("Line Width:");
+        lineWidthLabel.setText(" Line Thickness:");
 
         // Line Width Spinner and Slider
         lineWidthSpinSlide = new SpinnerSlider(top, SWT.HORIZONTAL, 1);
-        GridData gd = new GridData(150, 42);
-        gd.horizontalIndent = 6;
-        lineWidthSpinSlide.setLayoutData(gd);
+
         lineWidthSpinSlide.setMinimum(1);
         lineWidthSpinSlide.setMaximum(10);
         lineWidthSpinSlide.setIncrement(1);
@@ -3688,6 +3768,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         } else {
             return java.lang.Float.NaN;
         }
+
+    }
 
     }
 
@@ -4170,6 +4252,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public void setEditableAttrLevel(String editableAttrLevel) {
         this.editableAttrLevel = editableAttrLevel;
+        ((Sigmet) this.getSigmet()).setEditableAttrLevel(editableAttrLevel);
     }
 
     public String getEditableAttrLevelInfo1() {
@@ -4438,6 +4521,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     .equals(SigmetAttrDlg.this.getEditableAttrStatus())) {
                 cnlSigmet = true;
             }
+            this.setShellStyle(SWT.TITLE | SWT.CLOSE | SWT.PRIMARY_MODAL);
         }
 
         @Override
@@ -4977,6 +5061,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(" ").append(SigmetConstant.WITHIN).append(" ");
                     sb.append((int) SigmetAttrDlg.this.getWidth());
                     sb.append(" ").append(SigmetConstant.NM_CENTER).append(".");
+                    if (getLevelInfo(tops) != null) {
+                        sb.append(getLevelInfo(tops).toString());
+                    }
                 } else {
                     sb.append(" ").append(SigmetConstant.WI).append(" ");
                     sb.append((int) SigmetAttrDlg.this.getWidth());
@@ -5049,44 +5136,21 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(" ").append(SigmetConstant.LINE_FM);
                 }
                 sb.append(locationDesc).append(".");
+
+                if (isTropCyc) {
+                    // Add Level Info for Line Sigmet
+                    if (getLevelInfo(tops) != null) {
+                        sb.append(getLevelInfo(tops).toString()).append(".");
+                    }
+                }
             }
 
             // in C: if( ! tc )nmap_pgsigw.c@4062
             if (!isTropCyc) {
 
                 // ------ TOPS
-                if (tops != null && (!NONE.equals(tops))) {
-                    if (SigmetConstant.TOPS.equals(tops)) {
-                        sb.append(" ").append(SigmetConstant.TOP);
-                    }
-                    String levelInfo1 = SigmetAttrDlg.this
-                            .getEditableAttrLevelText1();
-                    if (levelInfo1 != null) {
-                        if ((SigmetAttrDlg.this.getEditableAttrLevelInfo1()
-                                .equalsIgnoreCase(SigmetConstant.ABV))
-                                || (SigmetAttrDlg.this
-                                        .getEditableAttrLevelInfo1()
-                                        .equalsIgnoreCase(
-                                                SigmetConstant.BLW))) {
-                            sb.append(" ").append(SigmetAttrDlg.this
-                                    .getEditableAttrLevelInfo1());
-                        }
-                    }
-                    sb.append(" ").append(SigmetConstant.FL);
-                    String text1 = SigmetAttrDlg.this
-                            .getEditableAttrLevelText1();
-                    sb.append(text1 == null ? "" : text1);
-
-                    String levelInfo2 = SigmetAttrDlg.this
-                            .getEditableAttrLevelInfo2();
-                    if (!NONE.equals(levelInfo2)) {
-                        sb.append("/");
-                        String text2 = SigmetAttrDlg.this
-                                .getEditableAttrLevelText2();
-                        sb.append(text2 == null ? "" : text2);
-
-                    }
-                    sb.append(".");
+                if (getLevelInfo(tops) != null) {
+                    sb.append(getLevelInfo(tops).toString());
                 }
 
                 // ------ movement
@@ -5209,6 +5273,45 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             return sb.toString();
         }
 
+        private StringBuilder getLevelInfo(String tops) {
+            StringBuilder levelTxt = new StringBuilder();
+
+            // ------ TOPS
+            if (tops != null && (!NONE.equals(tops))) {
+                String text1 = SigmetAttrDlg.this.getEditableAttrLevelText1();
+                if (text1 != null && text1.length() > 0) {
+                    if (SigmetConstant.TOPS.equals(tops)) {
+                        levelTxt.append(" ").append(SigmetConstant.TOP);
+                    }
+
+                    if ((SigmetAttrDlg.this.getEditableAttrLevelInfo1()
+                            .equalsIgnoreCase(SigmetConstant.ABV))
+                            || (SigmetAttrDlg.this.getEditableAttrLevelInfo1()
+                                    .equalsIgnoreCase(SigmetConstant.BLW))) {
+                        levelTxt.append(" ").append(
+                                SigmetAttrDlg.this.getEditableAttrLevelInfo1());
+                    }
+
+                    levelTxt.append(" ").append(SigmetConstant.FL);
+                    levelTxt.append(text1 == null ? "" : text1);
+
+                    String levelInfo2 = SigmetAttrDlg.this
+                            .getEditableAttrLevelInfo2();
+                    if (!NONE.equals(levelInfo2)) {
+                        levelTxt.append("/");
+                        String text2 = SigmetAttrDlg.this
+                                .getEditableAttrLevelText2();
+                        levelTxt.append(text2 == null ? "" : text2);
+                    }
+                    levelTxt.append(".");
+                }
+            } else {
+                levelTxt = null;
+            }
+            return levelTxt;
+
+        }
+
         private StringBuilder getAltLevelInfo(String tops) {
             StringBuilder levelTxt = new StringBuilder();
 
@@ -5265,8 +5368,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     latval = getValRoundedToNearest15Min(latval);
                     lonval = getValRoundedToNearest15Min(lonval);
 
-                    fcstLatLonLoc.append(" ")
-                            .append(lat.substring(0, lat.length() - 4));
+                    if (i != 0) {
+                        fcstLatLonLoc.append(" ");
+                    }
+                    fcstLatLonLoc.append(lat.substring(0, lat.length() - 4));
                     fcstLatLonLoc.append(Integer.toString(latval)).append(" ");
                     fcstLatLonLoc.append(lon.substring(0, lon.length() - 5));
                     String strLon = Integer.toString(lonval);

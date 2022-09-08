@@ -33,6 +33,7 @@ import com.raytheon.uf.edex.decodertools.core.DecoderTools;
  * ------------	----------	-----------	--------------------------
  * 09/09/2011   458		    sgurung	    Initial Creation from Raytheon's taf plugin
  * May 14, 2014 2536        bclement    moved WMO Header to common
+ * Aug 24  2021 93101       smanoj      Modified the code to separate nctaf records
  * 
  * </pre>
  * 
@@ -98,11 +99,10 @@ public class NcTafSeparator extends AbstractRecordSeparator {
      * @see com.raytheon.edex.plugin.AbstractRecordSeparator#hasNext()
      */
     public boolean hasNext() {
-        return ((tafRecords != null) && (tafRecords.size() > 0) && (currentReport < tafRecords
-                .size()));
+        return ((tafRecords != null) && (tafRecords.size() > 0)
+                && (currentReport < tafRecords.size()));
     }
 
-    
     /**
      * Get the currently available record from this separator. Make the next
      * record available if it exists.
@@ -128,30 +128,31 @@ public class NcTafSeparator extends AbstractRecordSeparator {
      */
     private void doSeparate(byte[] message, Headers headers) {
 
-        byte[] data = DecoderTools.cleanData(message);
-        if (data != null) {
-
+        if (message != null) {
             String fileName = (String) headers.get(WMOHeader.INGEST_FILE_NAME);
-            wmoHeader = new WMOHeader(data, fileName);
+            wmoHeader = new WMOHeader(message, fileName);
+
             if (wmoHeader.isValid()) {
 
-                int dStart = wmoHeader.getMessageDataStart();
+                message = DecoderTools.stripWMOHeader(message,
+                        wmoHeader.getWmoHeader());
+                byte[] data = DecoderTools.cleanData(message);
 
-                // Default length of the select text.
-                int dLen = data.length - dStart;
-                for (int i = data.length - 1; i > dStart; i--) {
+                int dLen = data.length;
+                for (int i = data.length - 1; i > 0; i--) {
                     // If we find an ETX then set the length there.
                     if ((data[i] & 0xFF) == 0x03) {
-                        dLen = i - dStart;
+                        dLen = i;
                         break;
                     }
                 }
+
                 String s = wmoHeader.getBBBIndicator();
 
                 boolean isAmd = s.startsWith("AA");
                 boolean isCor = s.startsWith("CC");
 
-                s = new String(data, dStart, dLen);
+                s = new String(data, 0, dLen);
 
                 Pattern tafLine = Pattern.compile("\\nTAF *(AMD|COR)?\\n");
                 Matcher m = tafLine.matcher(s);
@@ -241,8 +242,8 @@ public class NcTafSeparator extends AbstractRecordSeparator {
 
                         NcTafParts parts = new NcTafParts();
 
-                        StringBuilder tafHdr = new StringBuilder(s.substring(
-                                partPos.get(i), partPos.get(i + 1)));
+                        StringBuilder tafHdr = new StringBuilder(s
+                                .substring(partPos.get(i), partPos.get(i + 1)));
 
                         if ((isCor) && (tafHdr.indexOf(COR_IND) < 0)) {
                             tafHdr.insert(0, ' ');
