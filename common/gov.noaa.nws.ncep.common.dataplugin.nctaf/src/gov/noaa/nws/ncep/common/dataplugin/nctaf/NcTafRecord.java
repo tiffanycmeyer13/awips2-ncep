@@ -5,9 +5,6 @@
 
 package gov.noaa.nws.ncep.common.dataplugin.nctaf;
 
-import gov.noaa.nws.ncep.common.dataplugin.nctaf.util.VisibilityParser;
-import gov.noaa.nws.ncep.common.tools.IDecoderConstantsN;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -23,6 +20,7 @@ import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -33,7 +31,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.lang.time.DateUtils;
-import org.hibernate.annotations.Index;
 
 import com.raytheon.uf.common.dataplugin.PluginDataObject;
 import com.raytheon.uf.common.dataplugin.annotations.DataURI;
@@ -48,13 +45,16 @@ import com.raytheon.uf.common.time.DataTime;
 import com.raytheon.uf.common.time.TimeRange;
 import com.raytheon.uf.edex.decodertools.time.TimeTools;
 
+import gov.noaa.nws.ncep.common.dataplugin.nctaf.util.VisibilityParser;
+import gov.noaa.nws.ncep.common.tools.IDecoderConstantsN;
+
 /**
  * Record implementation for taf plugin
- * 
+ *
  * <pre>
- * 
+ *
  * SOFTWARE HISTORY
- * 
+ *
  * Date         Ticket#     Engineer    Description
  * ------------ ----------  ----------- --------------------------
  * Sep 20, 2011 458         sgurung     Main pdo class
@@ -79,25 +79,28 @@ import com.raytheon.uf.edex.decodertools.time.TimeTools;
  * Dec 03, 2013 2551        rjpeter     Extend PersistablePluginDataObject.
  * Feb 11, 2014 2784        rferrel     Remove override of setIdentifier.
  * Aug 03, 2015 4360        rferrel     Name unique constraint.
+ * Aug 08, 2022 8892        tjensen     Update indexes for Hibernate 5
  * </pre>
- * 
+ *
  * @author sgurung
- * @version 1.0
  */
 @Entity
 @SequenceGenerator(initialValue = 1, name = PluginDataObject.ID_GEN, sequenceName = "nctafseq")
-@Table(name = "nctaf", uniqueConstraints = { @UniqueConstraint(name = "uk_nctaf_datauri_fields", columnNames = { "dataURI" }) })
 /*
  * Both refTime and forecastTime are included in the refTimeIndex since
  * forecastTime is unlikely to be used.
  */
-@org.hibernate.annotations.Table(appliesTo = "nctaf", indexes = { @Index(name = "nctaf_refTimeIndex", columnNames = {
-        "refTime", "forecastTime" }) })
+@Table(name = "nctaf", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_nctaf_datauri_fields", columnNames = {
+                "dataURI" }) }, indexes = {
+                        @Index(name = "%TABLE%_refTimeIndex", columnList = "refTime, forecastTime"),
+                        @Index(name = "%TABLE%_stationIndex", columnList = "stationId") })
+
 @DynamicSerialize
 @XmlAccessorType(XmlAccessType.NONE)
 @XmlRootElement
-public class NcTafRecord extends PersistablePluginDataObject implements
-        ISpatialEnabled, IPointData {
+public class NcTafRecord extends PersistablePluginDataObject
+        implements ISpatialEnabled, IPointData {
 
     private static final long serialVersionUID = 1L;
 
@@ -450,7 +453,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
 
     /**
      * Constructs a taf record from a dataURI
-     * 
+     *
      * @param uri
      *            The dataURI
      * @param tableDef
@@ -462,7 +465,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the WMO header for the enclosing WMO message.
-     * 
+     *
      * @return The wmoHeader.
      */
     public String getWmoHeader() {
@@ -471,7 +474,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
 
     /**
      * Set the WMO header for the enclosing WMO message.
-     * 
+     *
      * @param wmoHeader
      *            The WMOHeader to set.
      */
@@ -481,7 +484,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the text of this terminal forecast.
-     * 
+     *
      * @return The terminal forecast text.
      */
     public String getTafText() {
@@ -490,7 +493,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
 
     /**
      * Set the text of this terminal forecast.
-     * 
+     *
      * @param tafText
      *            The terminal forecast text.
      */
@@ -500,7 +503,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the observation report type.
-     * 
+     *
      * @return the reportType
      */
     public String getReportType() {
@@ -509,7 +512,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
 
     /**
      * Set the observation report type.
-     * 
+     *
      * @param reportType
      *            the reportType to set
      */
@@ -518,7 +521,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     }
 
     /**
-     * 
+     *
      * @return
      */
     public String getStationId() {
@@ -526,7 +529,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     }
 
     /**
-     * 
+     *
      * @param stationID
      */
     public void setStationId(String stationID) {
@@ -534,7 +537,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     }
 
     /**
-     * 
+     *
      * @return the corIndicator
      */
     public String getCorIndicator() {
@@ -542,7 +545,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     }
 
     /**
-     * 
+     *
      * @param corIndicator
      *            the corIndicator to set
      */
@@ -551,7 +554,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     }
 
     /**
-     * 
+     *
      * @return the amdIndicator
      */
     public String getAmdIndicator() {
@@ -559,7 +562,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     }
 
     /**
-     * 
+     *
      * @param amdIndicator
      *            the amdIndicator to set
      */
@@ -568,7 +571,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     }
 
     /**
-     * 
+     *
      * @return the bulletin_time
      */
     public Date getBulletin_time() {
@@ -576,7 +579,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     }
 
     /**
-     * 
+     *
      * @param bulletin_time
      *            the bulletin_time to set
      */
@@ -642,7 +645,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     /**
      * Returns the hashCode for this object. This implementation returns the
      * hashCode of the generated dataURI.
-     * 
+     *
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -657,7 +660,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     /**
      * Checks if this record is equal to another by checking the generated
      * dataURI.
-     * 
+     *
      * @param obj
      * @see java.lang.Object#equals(java.lang.Object)
      */
@@ -683,30 +686,18 @@ public class NcTafRecord extends PersistablePluginDataObject implements
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.uf.common.pointdata.IPointData#getPointDataView()
-     */
     @Override
     public PointDataView getPointDataView() {
         return this.pointDataView;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.raytheon.uf.common.pointdata.IPointData#setPointDataView(com.raytheon
-     * .uf.common.pointdata.PointDataView)
-     */
     @Override
     public void setPointDataView(PointDataView pointDataView) {
         this.pointDataView = pointDataView;
     }
 
     /**
-     * 
+     *
      * @return The string containing the change group text
      */
     public String getChangeGroup() {
@@ -833,7 +824,8 @@ public class NcTafRecord extends PersistablePluginDataObject implements
         return probable_wind_shear_dir_degrees;
     }
 
-    public void setProbable_wind_shear_dir_degrees(float wind_shear_dir_degrees) {
+    public void setProbable_wind_shear_dir_degrees(
+            float wind_shear_dir_degrees) {
         this.probable_wind_shear_dir_degrees = wind_shear_dir_degrees;
     }
 
@@ -935,7 +927,8 @@ public class NcTafRecord extends PersistablePluginDataObject implements
         return turbulence_layers;
     }
 
-    public void setTurbulence_layers(Set<NcTafTurbulenceLayer> turbulence_layers) {
+    public void setTurbulence_layers(
+            Set<NcTafTurbulenceLayer> turbulence_layers) {
         this.turbulence_layers = turbulence_layers;
     }
 
@@ -967,7 +960,8 @@ public class NcTafRecord extends PersistablePluginDataObject implements
         return temp_forecasts;
     }
 
-    public void setTemp_forecasts(Set<NcTafTemperatureForecast> temp_forecasts) {
+    public void setTemp_forecasts(
+            Set<NcTafTemperatureForecast> temp_forecasts) {
         this.temp_forecasts = temp_forecasts;
     }
 
@@ -1101,22 +1095,20 @@ public class NcTafRecord extends PersistablePluginDataObject implements
         // and the vertical visibility becomes the ceiling.
         if ((vertVis >= 0) && (vertVis < 1e20f)) {
             return vertVis;
-        } else {
-            // Otherwise, determine the ceiling value.
-            return findTafCeilingFromLayers(sortSkyCover(skyCov));
         }
+        // Otherwise, determine the ceiling value.
+        return findTafCeilingFromLayers(sortSkyCover(skyCov));
     }
 
     public static Set<NcTafSkyCover> sortSkyCover(Set<NcTafSkyCover> skySet) {
         if (skySet != null) {
-            SortedSet<NcTafSkyCover> skSet = new TreeSet<NcTafSkyCover>();
+            SortedSet<NcTafSkyCover> skSet = new TreeSet<>();
             for (NcTafSkyCover sc : skySet) {
                 skSet.add(sc);
             }
             return skSet;
-        } else {
-            return new HashSet<NcTafSkyCover>();
         }
+        return new HashSet<>();
     }
 
     /**
@@ -1124,7 +1116,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
      * By definition, the ceiling is the lowest overcast or broken cloud layer,
      * so the method looks for the lowest layer that matches a BKN or OVC
      * condition, and returns that layer.
-     * 
+     *
      * @param skyCov
      *            -- the set of sky coverage data
      * @return -- the ceiling
@@ -1134,11 +1126,11 @@ public class NcTafRecord extends PersistablePluginDataObject implements
         // Find a ceiling in a TAF report.
         try {
             for (NcTafSkyCover sc : skyCov) {
-                if (sc.getType().equals("CLR") || sc.getType().equals("SKC")) {
+                if ("CLR".equals(sc.getType()) || "SKC".equals(sc.getType())) {
                     ceiling = IDecoderConstantsN.NEGATIVE_FLOAT_MISSING;
                     break;
-                } else if ((sc.getType().equals("BKN"))
-                        || (sc.getType().equals("OVC"))) {
+                } else if (("BKN".equals(sc.getType()))
+                        || ("OVC".equals(sc.getType()))) {
                     if (sc.getHeight() != null) {
                         ceiling = sc.getHeight();
                         break;
@@ -1164,13 +1156,13 @@ public class NcTafRecord extends PersistablePluginDataObject implements
      * NcTafWeatherCondition) hierarchy efficiently represents the original
      * structure as parsed from the text, but we want the persistent PDO
      * (NcTafRecord) to be optimized for efficient access.
-     * 
+     *
      * @param bulletin
      *            the bulletin record to split
      * @return NcTafRecord[] the array of NcTafRecord PDOs
      */
     public static NcTafRecord[] split(NcTafBulletinRecord bulletin) {
-        List<NcTafRecord> records = new ArrayList<NcTafRecord>();
+        List<NcTafRecord> records = new ArrayList<>();
         if (bulletin.getChangeGroups() != null) {
             Iterator<NcTafChangeGroup> chgGrps = bulletin.getChangeGroups()
                     .iterator();
@@ -1202,15 +1194,17 @@ public class NcTafRecord extends PersistablePluginDataObject implements
                     }
 
                     if (chgGrp.getTafChangePeriod().getEndDate() != null) {
-                        tfr.setEndDate(chgGrp.getTafChangePeriod().getEndDate());
+                        tfr.setEndDate(
+                                chgGrp.getTafChangePeriod().getEndDate());
                     }
 
                     if (chgGrp.getTafChangePeriod().getStartDate() != null) {
-                        tfr.setStartDate(chgGrp.getTafChangePeriod()
-                                .getStartDate());
+                        tfr.setStartDate(
+                                chgGrp.getTafChangePeriod().getStartDate());
                     }
 
-                    if (chgGrp.getTafChangePeriod().getTransitionEndDate() != null) {
+                    if (chgGrp.getTafChangePeriod()
+                            .getTransitionEndDate() != null) {
                         tfr.setTransitionEndDate(chgGrp.getTafChangePeriod()
                                 .getTransitionEndDate());
                     }
@@ -1281,10 +1275,11 @@ public class NcTafRecord extends PersistablePluginDataObject implements
 
                     if ((chgGrp.getAltim_in_hg() != null)
                             && (chgGrp.getAltim_in_hg().trim().length() > 0)) {
-                        tfr.setAltim_in_hg(Float.parseFloat(chgGrp
-                                .getAltim_in_hg()));
+                        tfr.setAltim_in_hg(
+                                Float.parseFloat(chgGrp.getAltim_in_hg()));
                     } else {
-                        tfr.setAltim_in_hg(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setAltim_in_hg(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getRemarks() != null) {
@@ -1296,63 +1291,71 @@ public class NcTafRecord extends PersistablePluginDataObject implements
                     }
 
                     VisibilityParser parser = new VisibilityParser();
-                    if ((chgGrp.getVisibility_mi() != null)
-                            && parser.decode(chgGrp.getVisibility_mi() + "SM")) {
+                    if ((chgGrp.getVisibility_mi() != null) && parser
+                            .decode(chgGrp.getVisibility_mi() + "SM")) {
                         float val = (float) parser.getPrevail_vsbySM();
                         tfr.setVisibility_mi(val);
                     } else {
-                        tfr.setVisibility_mi(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setVisibility_mi(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if ((chgGrp.getVert_vis_ft() != null)
                             && (chgGrp.getVert_vis_ft().trim().length() > 0)) {
-                        tfr.setVert_vis_ft(Float.parseFloat(chgGrp
-                                .getVert_vis_ft()));
+                        tfr.setVert_vis_ft(
+                                Float.parseFloat(chgGrp.getVert_vis_ft()));
                     } else {
-                        tfr.setVert_vis_ft(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setVert_vis_ft(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
-                    if ((chgGrp.getWind_dir_degrees() != null)
-                            && !chgGrp.getWind_dir_degrees().equalsIgnoreCase(
-                                    "VRB")) {
-                        tfr.setWind_dir_degrees(Float.parseFloat(chgGrp
-                                .getWind_dir_degrees()));
+                    if ((chgGrp.getWind_dir_degrees() != null) && !("VRB"
+                            .equalsIgnoreCase(chgGrp.getWind_dir_degrees()))) {
+                        tfr.setWind_dir_degrees(
+                                Float.parseFloat(chgGrp.getWind_dir_degrees()));
                     } else {
-                        tfr.setWind_dir_degrees(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setWind_dir_degrees(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getWind_gust_kt() != null) {
-                        tfr.setWind_gust_kt(new Float(chgGrp.getWind_gust_kt()));
+                        tfr.setWind_gust_kt(
+                                new Float(chgGrp.getWind_gust_kt()));
                     } else {
-                        tfr.setWind_gust_kt(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setWind_gust_kt(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getWind_speed_kt() != null) {
-                        tfr.setWind_speed_kt(new Float(chgGrp
-                                .getWind_speed_kt()));
+                        tfr.setWind_speed_kt(
+                                new Float(chgGrp.getWind_speed_kt()));
                     } else {
-                        tfr.setWind_speed_kt(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setWind_speed_kt(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getWind_shear_dir_degrees() != null) {
-                        tfr.setWind_shear_dir_degrees(new Float(chgGrp
-                                .getWind_shear_dir_degrees()));
+                        tfr.setWind_shear_dir_degrees(
+                                new Float(chgGrp.getWind_shear_dir_degrees()));
                     } else {
-                        tfr.setWind_shear_dir_degrees(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setWind_shear_dir_degrees(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getWind_shear_speed_kt() != null) {
-                        tfr.setWind_shear_speed_kt(new Float(chgGrp
-                                .getWind_shear_speed_kt()));
+                        tfr.setWind_shear_speed_kt(
+                                new Float(chgGrp.getWind_shear_speed_kt()));
                     } else {
-                        tfr.setWind_shear_speed_kt(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setWind_shear_speed_kt(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getWind_shear_hgt_ft_agl() != null) {
-                        tfr.setWind_shear_hgt_ft_agl(new Float(chgGrp
-                                .getWind_shear_hgt_ft_agl()));
+                        tfr.setWind_shear_hgt_ft_agl(
+                                new Float(chgGrp.getWind_shear_hgt_ft_agl()));
                     } else {
-                        tfr.setWind_shear_hgt_ft_agl(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setWind_shear_hgt_ft_agl(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if ((chgGrp.getProbable_visibility_mi() != null)
@@ -1361,61 +1364,67 @@ public class NcTafRecord extends PersistablePluginDataObject implements
                         float val = (float) parser.getPrevail_vsbySM();
                         tfr.setProbable_visibility_mi(val);
                     } else {
-                        tfr.setProbable_visibility_mi(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setProbable_visibility_mi(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
-                    if ((chgGrp.getProbable_vert_vis_ft() != null)
-                            && (chgGrp.getProbable_vert_vis_ft().trim()
-                                    .length() > 0)) {
-                        tfr.setProbable_vert_vis_ft(Float.parseFloat(chgGrp
-                                .getProbable_vert_vis_ft()));
+                    if ((chgGrp.getProbable_vert_vis_ft() != null) && (chgGrp
+                            .getProbable_vert_vis_ft().trim().length() > 0)) {
+                        tfr.setProbable_vert_vis_ft(Float
+                                .parseFloat(chgGrp.getProbable_vert_vis_ft()));
                     } else {
-                        tfr.setProbable_vert_vis_ft(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setProbable_vert_vis_ft(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if ((chgGrp.getProbable_wind_dir_degrees() != null)
-                            && !chgGrp.getProbable_wind_dir_degrees()
-                                    .equalsIgnoreCase("VRB")) {
-                        tfr.setProbable_wind_dir_degrees(Float
-                                .parseFloat(chgGrp
-                                        .getProbable_wind_dir_degrees()));
+                            && !("VRB".equalsIgnoreCase(
+                                    chgGrp.getProbable_wind_dir_degrees()))) {
+                        tfr.setProbable_wind_dir_degrees(Float.parseFloat(
+                                chgGrp.getProbable_wind_dir_degrees()));
                     } else {
-                        tfr.setProbable_wind_dir_degrees(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setProbable_wind_dir_degrees(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getProbable_wind_gust_kt() != null) {
-                        tfr.setProbable_wind_gust_kt(new Float(chgGrp
-                                .getProbable_wind_gust_kt()));
+                        tfr.setProbable_wind_gust_kt(
+                                new Float(chgGrp.getProbable_wind_gust_kt()));
                     } else {
-                        tfr.setProbable_wind_gust_kt(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setProbable_wind_gust_kt(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getProbable_wind_speed_kt() != null) {
-                        tfr.setProbable_wind_speed_kt(new Float(chgGrp
-                                .getProbable_wind_speed_kt()));
+                        tfr.setProbable_wind_speed_kt(
+                                new Float(chgGrp.getProbable_wind_speed_kt()));
                     } else {
-                        tfr.setProbable_wind_speed_kt(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setProbable_wind_speed_kt(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getProbable_wind_shear_dir_degrees() != null) {
-                        tfr.setProbable_wind_speed_kt(new Float(chgGrp
-                                .getProbable_wind_shear_dir_degrees()));
+                        tfr.setProbable_wind_speed_kt(new Float(
+                                chgGrp.getProbable_wind_shear_dir_degrees()));
                     } else {
-                        tfr.setWind_shear_dir_degrees(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setWind_shear_dir_degrees(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getProbable_wind_shear_speed_kt() != null) {
-                        tfr.setWind_shear_speed_kt(new Float(chgGrp
-                                .getProbable_wind_shear_speed_kt()));
+                        tfr.setWind_shear_speed_kt(new Float(
+                                chgGrp.getProbable_wind_shear_speed_kt()));
                     } else {
-                        tfr.setWind_shear_speed_kt(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setWind_shear_speed_kt(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getProbable_wind_shear_hgt_ft_agl() != null) {
-                        tfr.setProbable_wind_shear_hgt_ft_agl(new Float(chgGrp
-                                .getProbable_wind_shear_hgt_ft_agl()));
+                        tfr.setProbable_wind_shear_hgt_ft_agl(new Float(
+                                chgGrp.getProbable_wind_shear_hgt_ft_agl()));
                     } else {
-                        tfr.setProbable_wind_shear_hgt_ft_agl(IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
+                        tfr.setProbable_wind_shear_hgt_ft_agl(
+                                IDecoderConstantsN.NEGATIVE_FLOAT_MISSING);
                     }
 
                     if (chgGrp.getIcing_layers() != null) {
@@ -1427,8 +1436,8 @@ public class NcTafRecord extends PersistablePluginDataObject implements
                     }
 
                     if (chgGrp.getProbable_sky_cover() != null) {
-                        tfr.setProbable_sky_cover(chgGrp
-                                .getProbable_sky_cover());
+                        tfr.setProbable_sky_cover(
+                                chgGrp.getProbable_sky_cover());
                     }
 
                     if (chgGrp.getTemp_forecasts() != null) {
@@ -1456,7 +1465,7 @@ public class NcTafRecord extends PersistablePluginDataObject implements
 
     public static List<NcTafRecord> splitToHourlyRecords(
             List<NcTafRecord> records) {
-        List<NcTafRecord> newRecords = new ArrayList<NcTafRecord>();
+        List<NcTafRecord> newRecords = new ArrayList<>();
         int recordsSize = (records != null) ? records.size() : 0;
 
         if (recordsSize > 0) {
@@ -1493,9 +1502,10 @@ public class NcTafRecord extends PersistablePluginDataObject implements
                     tfr.setTafValidPeriod(record.getTafValidPeriod());
                     tfr.setTafChangePeriod(record.getTafChangePeriod());
                     tfr.setEndDate(record.getTafChangePeriod().getEndDate());
-                    tfr.setStartDate(record.getTafChangePeriod().getStartDate());
-                    tfr.setTransitionEndDate(record.getTafChangePeriod()
-                            .getTransitionEndDate());
+                    tfr.setStartDate(
+                            record.getTafChangePeriod().getStartDate());
+                    tfr.setTransitionEndDate(
+                            record.getTafChangePeriod().getTransitionEndDate());
                     tfr.setWmoHeader(record.getWmoHeader());
                     if ((record.getTafText() != null)
                             && (record.getTafText().length() > 1024)) {
@@ -1515,8 +1525,8 @@ public class NcTafRecord extends PersistablePluginDataObject implements
                     tfr.setChange_indicator(record.getChange_indicator());
                     if ((record.getChangeGroup() != null)
                             && (record.getChangeGroup().length() > 128)) {
-                        tfr.setChangeGroup(record.getChangeGroup().substring(0,
-                                128));
+                        tfr.setChangeGroup(
+                                record.getChangeGroup().substring(0, 128));
                     } else {
                         tfr.setChangeGroup(record.getChangeGroup());
                     }
@@ -1532,27 +1542,27 @@ public class NcTafRecord extends PersistablePluginDataObject implements
                     tfr.setWind_dir_degrees(record.getWind_dir_degrees());
                     tfr.setWind_gust_kt(record.getWind_gust_kt());
                     tfr.setWind_speed_kt(record.getWind_speed_kt());
-                    tfr.setWind_shear_dir_degrees(record
-                            .getWind_shear_dir_degrees());
+                    tfr.setWind_shear_dir_degrees(
+                            record.getWind_shear_dir_degrees());
                     tfr.setWind_shear_speed_kt(record.getWind_shear_speed_kt());
-                    tfr.setWind_shear_hgt_ft_agl(record
-                            .getWind_shear_hgt_ft_agl());
-                    tfr.setProbable_visibility_mi(record
-                            .getProbable_visibility_mi());
-                    tfr.setProbable_vert_vis_ft(record
-                            .getProbable_vert_vis_ft());
-                    tfr.setProbable_wind_dir_degrees(record
-                            .getProbable_wind_dir_degrees());
-                    tfr.setProbable_wind_gust_kt(record
-                            .getProbable_wind_gust_kt());
-                    tfr.setProbable_wind_speed_kt(record
-                            .getProbable_wind_speed_kt());
-                    tfr.setWind_shear_dir_degrees(record
-                            .getProbable_wind_shear_dir_degrees());
-                    tfr.setWind_shear_speed_kt(record
-                            .getProbable_wind_shear_speed_kt());
-                    tfr.setProbable_wind_shear_hgt_ft_agl(record
-                            .getProbable_wind_shear_hgt_ft_agl());
+                    tfr.setWind_shear_hgt_ft_agl(
+                            record.getWind_shear_hgt_ft_agl());
+                    tfr.setProbable_visibility_mi(
+                            record.getProbable_visibility_mi());
+                    tfr.setProbable_vert_vis_ft(
+                            record.getProbable_vert_vis_ft());
+                    tfr.setProbable_wind_dir_degrees(
+                            record.getProbable_wind_dir_degrees());
+                    tfr.setProbable_wind_gust_kt(
+                            record.getProbable_wind_gust_kt());
+                    tfr.setProbable_wind_speed_kt(
+                            record.getProbable_wind_speed_kt());
+                    tfr.setWind_shear_dir_degrees(
+                            record.getProbable_wind_shear_dir_degrees());
+                    tfr.setWind_shear_speed_kt(
+                            record.getProbable_wind_shear_speed_kt());
+                    tfr.setProbable_wind_shear_hgt_ft_agl(
+                            record.getProbable_wind_shear_hgt_ft_agl());
                     tfr.setIcing_layers(record.getIcing_layers());
                     tfr.setSky_cover(record.getSky_cover());
                     tfr.setProbable_sky_cover(record.getProbable_sky_cover());
@@ -1577,12 +1587,12 @@ public class NcTafRecord extends PersistablePluginDataObject implements
     }
 
     /**
-     * 
+     *
      * @param args
      */
     public static final void main(String[] args) {
 
-        Set<NcTafSkyCover> skyCovers = new HashSet<NcTafSkyCover>();
+        Set<NcTafSkyCover> skyCovers = new HashSet<>();
 
         NcTafSkyCover cover = new NcTafSkyCover();
         cover.setGenus("");
@@ -1631,8 +1641,8 @@ public class NcTafRecord extends PersistablePluginDataObject implements
         System.out.println(" diffHours = " + diffHours);
 
         for (int hour = 0; hour < diffHours; hour++) {
-            System.out.println(" startRefTime = "
-                    + startRefTime.getTime().toString());
+            System.out.println(
+                    " startRefTime = " + startRefTime.getTime().toString());
             startRefTime.add(Calendar.HOUR_OF_DAY, 1);
         }
     }

@@ -22,6 +22,7 @@ import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -32,7 +33,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.hibernate.annotations.Index;
 import org.locationtech.jts.geom.Geometry;
 
 import com.raytheon.uf.common.dataplugin.NullUtil;
@@ -54,11 +54,11 @@ import tec.uom.se.unit.MetricPrefix;
 
 /**
  * AirepRecord is the Data Access component for pirep observation data.
- * 
+ *
  * <pre>
- * 
+ *
  * SOFTWARE HISTORY
- * 
+ *
  * Date         Ticket#    Engineer    Description
  * ------------ ---------- ----------- --------------------------
  * Apr 21, 2011            F. J. Yen   Initial creation from Raytheon's pirep.
@@ -84,26 +84,30 @@ import tec.uom.se.unit.MetricPrefix;
  *                                     internal variable to prevent auto unboxing
  *                                     NPE on serialization.
  * Jul 30, 2015 4360       rferrel     Unique constraints named. Made reportType and corIndicator non-nullable.
+ * Aug 08, 2022 8892       tjensen     Update indexes for Hibernate 5
+ *
  * </pre>
- * 
+ *
  * @author jkorman
- * @version 1.0
  */
 
 @Entity
 @SequenceGenerator(initialValue = 1, name = PluginDataObject.ID_GEN, sequenceName = "airepseq")
-@Table(name = "airep", uniqueConstraints = { @UniqueConstraint(name = "uk_airep_datauri_fields", columnNames = { "dataURI" }) })
 /*
  * Both refTime and forecastTime are included in the refTimeIndex since
  * forecastTime is unlikely to be used.
  */
-@org.hibernate.annotations.Table(appliesTo = "airep", indexes = { @Index(name = "airep_refTimeIndex", columnNames = {
-        "refTime", "forecastTime" }) })
+@Table(name = "airep", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_airep_datauri_fields", columnNames = {
+                "dataURI" }) }, indexes = {
+                        @Index(name = "%TABLE%_refTimeIndex", columnList = "refTime, forecastTime"),
+                        @Index(name = "%TABLE%_stationIndex", columnList = "stationId") })
+
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.NONE)
 @DynamicSerialize
-public class AirepRecord extends PersistablePluginDataObject implements
-        ISpatialEnabled, IPointData {
+public class AirepRecord extends PersistablePluginDataObject
+        implements ISpatialEnabled, IPointData {
 
     private static final long serialVersionUID = 1L;
 
@@ -117,11 +121,8 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     public static final Unit<Angle> LOCATION_UNIT = NonSI.DEGREE_ANGLE;
 
-    private static UnitConverter ftToHft = USCustomary.FOOT.getConverterTo(MetricPrefix
-            .HECTO(USCustomary.FOOT));
-
-    // private static final HashMap<Integer, String> WX_MAP = new
-    // HashMap<Integer, String>();
+    private static UnitConverter ftToHft = USCustomary.FOOT
+            .getConverterTo(MetricPrefix.HECTO(USCustomary.FOOT));
 
     @Transient
     @DynamicSerializeElement
@@ -178,7 +179,6 @@ public class AirepRecord extends PersistablePluginDataObject implements
     // Observation wind speed in knots.
     // Decimal(5,2)
     @Transient
-    // @Column
     @DynamicSerializeElement
     @XmlElement
     private Float windSpeed;
@@ -198,29 +198,8 @@ public class AirepRecord extends PersistablePluginDataObject implements
     @XmlElement
     private Integer flightConditions;
 
-    // @Transient
-    // @DynamicSerializeElement
-    // @XmlElement
-    // private Float latitude;
-    //
-    // @Transient
-    // @DynamicSerializeElement
-    // @XmlElement
-    // private Float longitude;
-    //
-    // @Transient
-    // @DynamicSerializeElement
-    // @XmlElement
-    // private String stationId;
-
-    // @Transient
-    // @DynamicSerializeElement
-    // @XmlElement
-    // private String dataURI;
-
     @Transient
     @DynamicSerializeElement
-    // @XmlElement
     @XmlAttribute
     private String turbInten;
 
@@ -274,16 +253,13 @@ public class AirepRecord extends PersistablePluginDataObject implements
     @DynamicSerializeElement
     private PointDataView pointDataView;
 
-    /**
-     * 
-     */
     public AirepRecord() {
     }
 
     /**
      * Constructor for DataURI construction through base class. This is used by
      * the notification service.
-     * 
+     *
      * @param uri
      *            A data uri applicable to this class.
      * @param tableDef
@@ -318,7 +294,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the report correction indicator.
-     * 
+     *
      * @return The corIndicator
      */
     public String getCorIndicator() {
@@ -327,7 +303,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Set the report correction indicator.
-     * 
+     *
      * @param corIndicator
      *            The corIndicator.
      */
@@ -337,7 +313,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the report data for this observation.
-     * 
+     *
      * @return The Report data.
      */
     public String getReportData() {
@@ -352,7 +328,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Set the report data for this observation.
-     * 
+     *
      * @param reportData
      *            The Report data.
      */
@@ -362,7 +338,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Get this observation's geometry.
-     * 
+     *
      * @return The geometry for this observation.
      */
     public Geometry getGeometry() {
@@ -371,7 +347,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the geometry latitude.
-     * 
+     *
      * @return The geometry latitude.
      */
     public double getLatitude() {
@@ -380,7 +356,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the geometry longitude.
-     * 
+     *
      * @return The geometry longitude.
      */
     public double getLongitude() {
@@ -389,7 +365,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Boolean for whether location is defined in the spatial tables.
-     * 
+     *
      * @return true or false (Is location defined in the spatial tables?)
      */
     public Boolean getLocationDefined() {
@@ -398,7 +374,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the station identifier for this observation.
-     * 
+     *
      * @return the stationId
      */
     public String getStationId() {
@@ -407,7 +383,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the elevation, in meters, of the observing platform or location.
-     * 
+     *
      * @return The observation elevation, in meters.
      */
     public Integer getFlightLevel() {
@@ -725,7 +701,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
     /**
      * Returns the hashCode for this object. This implementation returns the
      * hashCode of the generated dataURI.
-     * 
+     *
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -740,7 +716,7 @@ public class AirepRecord extends PersistablePluginDataObject implements
     /**
      * Checks if this record is equal to another by checking the generated
      * dataURI.
-     * 
+     *
      * @param obj
      * @see java.lang.Object#equals(java.lang.Object)
      */
@@ -766,23 +742,11 @@ public class AirepRecord extends PersistablePluginDataObject implements
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.uf.common.pointdata.IPointData#getPointDataView()
-     */
     @Override
     public PointDataView getPointDataView() {
         return this.pointDataView;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.raytheon.uf.common.pointdata.IPointData#setPointDataView(com.raytheon
-     * .uf.common.pointdata.PointDataView)
-     */
     @Override
     public void setPointDataView(PointDataView pdv) {
         this.pointDataView = pdv;
