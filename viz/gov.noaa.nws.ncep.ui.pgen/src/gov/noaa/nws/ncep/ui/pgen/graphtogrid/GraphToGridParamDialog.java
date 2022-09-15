@@ -8,6 +8,7 @@
 package gov.noaa.nws.ncep.ui.pgen.graphtogrid;
 
 import gov.noaa.nws.ncep.gempak.parameters.core.contourinterval.CINT;
+import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
 import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
@@ -41,6 +42,8 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -53,6 +56,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -65,17 +69,20 @@ import com.raytheon.viz.ui.editor.AbstractEditor;
  * 
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 01/10		#215		J. Wu   	Initial Creation.
- * 11/10		#345		J. Wu   	Added support for ContourCircle.
+ * Date         Ticket#     Engineer    Description
+ * ------------ ----------  ----------- --------------------------
+ * 01/10        #215        J. Wu       Initial Creation.
+ * 11/10        #345        J. Wu       Added support for ContourCircle.
  * 10/11        #450        G. Hull     use localization names from NcPathConstants
- * 10/11		?			J. Wu   	Remove entry if the given table does not exist.
- * 08/13		TTR778		J. Wu		Load libg2g when this dialog is created.
+ * 10/11        ?           J. Wu       Remove entry if the given table does not exist.
+ * 08/13        TTR778      J. Wu       Load libg2g when this dialog is created.
  * 12/13        1090        J. Wu       Allow either table or element applied to g2g.
  * 05/14        TTR989      J. Wu       Find current contour via contour parameters.
  * 08/14        ?           J. Wu       build gdoutf & cycle from contours' time.
  * 10/14        R5712       J. Wu       Fixed index-out-of-bound issue for productNames.
+ * 04/23/2021   89949       smanoj      Fixed Graph to Grid Issues.
+ * 05/05/2021   91162       smanoj      ActivityType used for default configuration.
+ * 05/13/2021   91162       smanoj      Fixed UELE issue and updated currentProductParams.
  * 
  * </pre>
  * 
@@ -91,7 +98,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
     private static ArrayList<String> productNames = null;
 
     private static String grphgdTblName = PgenStaticDataProvider.getProvider()
-            .getPgenLocalizationRoot() + "grphgd.tbl"; // "grphgd.tbl";
+            .getPgenLocalizationRoot() + "grphgd.tbl";
 
     private static ArrayList<HashMap<String, String>> productDefaults = null;
 
@@ -119,10 +126,6 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
     private static int CYCLE_INTERVAL = 12;
 
-    private static int NFCSTHRS = 13;
-
-    private static int FCSTHUR_INTREVAL = 6;
-
     private Color[] extColor = new Color[] { Color.blue };
 
     private Composite top = null;
@@ -143,9 +146,17 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
     private AttrDlg cntAttrDlg = null;
 
-    private boolean applyTableInfoToOutput = false;
+    private boolean applyTableInfoToOutput = true;
 
     private Button infoOptBtn = null;
+
+    private Text fcsthrTxt = null;
+
+    private String currentFcstHr = "f000";
+
+    private String currentActivityType = "Default";
+
+    private String defaultProdName = null;
 
     /**
      * Constructor
@@ -172,13 +183,13 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
             for (String str : productNames) {
 
-                String value = productMaps.get(str);
-                String fileName = value.substring(value.lastIndexOf('/') + 1);
+                String[] prodValues = (productMaps.get(str)).split("/");
+                String fileName = prodValues[0]
+                        .substring(prodValues[0].lastIndexOf('/') + 1);
 
                 HashMap<String, String> map = GraphToGrid
                         .loadParameters(PgenStaticDataProvider.getProvider()
-                                .getPgenLocalizationRoot()
-                                + File.separator
+                                .getPgenLocalizationRoot() + File.separator
                                 + fileName);
 
                 if (map.size() > 0) {
@@ -188,6 +199,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
                 }
 
             }
+            defaultProdName = getDefaultProdName();
 
             // Reset the "productNames" to keys in productMaps;
             productNames.clear();
@@ -260,7 +272,6 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
                 String newPrd = ((Combo) e.widget).getText();
                 if (!newPrd.equals(currentPrd)) {
                     currentPrd = newPrd;
-                    // applyTableInfoToOutput = true;
                     if (advancedGrp != null && infoOptBtn != null) {
                         if (applyTableInfoToOutput) {
                             infoOptBtn.setText("Apply Elem Info");
@@ -275,7 +286,12 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             }
         });
 
-        prdCombo.select(0);
+        defaultProdName = getDefaultProdName();
+        if (defaultProdName != null) {
+            prdCombo.select(prdCombo.indexOf(defaultProdName));
+        } else {
+            prdCombo.select(0);
+        }
         currentPrd = prdCombo.getText();
 
         displayOption = new Button(prdComp, SWT.CHECK);
@@ -335,12 +351,6 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
     }
 
-    /*
-     * 
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.dialogs.Dialog#buttonPressed(int)
-     */
     @Override
     protected void buttonPressed(int buttonId) {
 
@@ -403,18 +413,67 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
         }
         cycleCombo.select(0);
 
+        cycleCombo.addListener(SWT.Selection, new Listener() {
+            @Override
+            public void handleEvent(org.eclipse.swt.widgets.Event event) {
+                currentProductParams.put("CYCLE", cycleCombo.getText());
+                updateCurrentProductParameters();
+            }
+        });
+
         // Forecast hour dropdown
         Label fcstLbl = new Label(g1, SWT.LEFT);
         fcstLbl.setText("FCST_HR");
-        cycleLbl.setLayoutData(gdata1);
+        fcstLbl.setLayoutData(gdata1);
 
-        fcstCombo = new Combo(g1, SWT.DROP_DOWN);
-        fcstCombo.setLayoutData(gdata2);
-        for (String str : buildFcstHrs(NFCSTHRS, FCSTHUR_INTREVAL)) {
-            fcstCombo.add(str);
+        Composite fhrComp = new Composite(g1, SWT.NONE);
+        fhrComp.setLayout(new GridLayout(2, false));
+        fcstCombo = new Combo(fhrComp, SWT.DROP_DOWN | SWT.READ_ONLY);
+
+        List<String> fcstHrs = null;
+        if (cntAttrDlg instanceof ContoursAttrDlg) {
+            String param = ((ContoursAttrDlg) cntAttrDlg).getParm();
+            fcstHrs = ((ContoursAttrDlg) cntAttrDlg).getContourFcstHrs(param);
+        }
+        for (int i = 0; i < fcstHrs.size(); i++) {
+            fcstCombo.add(fcstHrs.get(i));
         }
 
+        fcstCombo.add(PgenConstant.EVENT_OTHER);
         fcstCombo.select(0);
+        currentFcstHr = fcstCombo.getText();
+
+        fcstCombo.addSelectionListener(new SelectionAdapter() {
+            public void widgetSelected(SelectionEvent event) {
+                currentFcstHr = fcstCombo.getText();
+                updateComboText(fcstCombo, fcsthrTxt, fcstCombo.getText());
+                if (!(fcstCombo.getText().contains(PgenConstant.EVENT_OTHER))) {
+                    currentFcstHr = fcstCombo.getText();
+                    if (currentProductParams != null) {
+                        currentProductParams.put("FCST_HR", currentFcstHr);
+                        updateCurrentProductParameters();
+                    }
+                }
+            }
+        });
+
+        fcsthrTxt = new Text(fhrComp, SWT.SINGLE | SWT.BORDER);
+        fcsthrTxt.setLayoutData(new GridData(45, 15));
+        fcsthrTxt.setEditable(true);
+        fcsthrTxt.setText(currentFcstHr);
+
+        fcsthrTxt.addModifyListener(new ModifyListener() {
+            @Override
+            public void modifyText(ModifyEvent e) {
+                if (!fcsthrTxt.getText().isEmpty()) {
+                    currentFcstHr = fcsthrTxt.getText();
+                    if (currentProductParams != null) {
+                        currentProductParams.put("FCST_HR", currentFcstHr);
+                        updateCurrentProductParameters();
+                    }
+                }
+            }
+        });
 
         if (cntAttrDlg instanceof ContoursAttrDlg) {
             Contours curCnt = ((ContoursAttrDlg) cntAttrDlg)
@@ -439,10 +498,20 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
             if (found) {
                 fcstCombo.select(index + 1);
+                fcsthrTxt.setText(fcstCombo.getText());
             }
 
         }
 
+    }
+
+    /*
+     * Update current product with new parameters
+     */
+    private void updateCurrentProductParameters() {
+        HashMap<String, String> currentParams = generateParameters();
+        setParameters(currentParams);
+        currentProductParams.putAll(currentParams);
     }
 
     /*
@@ -501,15 +570,16 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
             txt.setData(str);
             if (str.equals("PATH")) {
-                txt.setToolTipText("The directory must exist and has lower case only!");
+                txt.setToolTipText(
+                        "The directory must exist and has lower case only!");
             }
 
             txt.addKeyListener(new KeyAdapter() {
                 public void keyReleased(KeyEvent e) {
-                    // Text etxt = (Text)e.widget;
-                    // if ( etxt.getData().toString().equals( "PATH" ) ) {
-                    // etxt.setText( etxt.getText().toLowerCase() );
-                    // }
+                    Text etxt = (Text) e.widget;
+                    if (etxt.getData().toString().equals("PATH")) {
+                        etxt.setText(etxt.getText().toLowerCase());
+                    }
                 }
             });
 
@@ -605,8 +675,6 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
         String cycle = "";
 
-        // int year = cntTime.get(Calendar.YEAR);
-
         for (int ii = 0; ii < ncycles; ii++) {
 
             int year = cntTime.get(Calendar.YEAR);
@@ -642,38 +710,6 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
         }
 
         return cycleTimes;
-    }
-
-    /*
-     * Set the current time for "CYCLE" text field and pulldown menu items.
-     * There are _nCycs positions for CYCLE times... in this case, starting w/
-     * 12 hrs forward and working backwards.
-     */
-    private String[] buildFcstHrs(int nhours, int interval) {
-
-        String[] fcsthrs = new String[nhours];
-
-        String hourStr = "f";
-        int value = 0;
-
-        for (int ii = 0; ii < nhours; ii++) {
-
-            value = ii * interval;
-            if (value < 10) {
-                hourStr += "00";
-            } else if (value < 100) {
-                hourStr += "0";
-            }
-
-            hourStr += value;
-
-            fcsthrs[ii] = new String(hourStr);
-
-            hourStr = "f";
-
-        }
-
-        return fcsthrs;
     }
 
     /**
@@ -719,7 +755,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
         params.put("PRODUCT", prdCombo.getText());
         params.put("CYCLE", cycleCombo.getText());
-        params.put("FCST_HR", fcstCombo.getText());
+        params.put("FCST_HR", currentFcstHr);
         if (displayOption.getSelection() == true) {
             params.put("DISPOPT", "TRUE");
         } else {
@@ -733,16 +769,21 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             }
         }
 
-        // Parse CINT if we are going to use cint from contour element.
-        if (!applyTableInfoToOutput) {
-            List<String> cints = parseCints(params.get("CINT"));
+        // Parse CINT if it contains "/"
+        String paramCint = params.get("CINT");
+        if (paramCint != null && paramCint.contains("/")) {
+            List<String> cints = parseCints(paramCint);
             String cintStr = "";
             for (String str : cints) {
                 cintStr += ";" + str;
             }
 
-            if (cintStr.length() > 0)
+            if (cintStr.length() > 0) {
+                cintStr = cintStr.substring(1, cintStr.length());
                 params.put("CINT", cintStr);
+            }
+        } else {
+            params.put("CINT", currentProductParams.get("CINT"));
         }
 
         return params;
@@ -769,7 +810,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
         prdMap.put("PRODUCT", prdName);
         prdMap.put("CYCLE", cycleCombo.getText());
-        prdMap.put("FCST_HR", fcstCombo.getText());
+        prdMap.put("FCST_HR", currentFcstHr);
 
         if (advancedGrp != null && paramText != null) {
             for (Text txt : paramText) {
@@ -802,8 +843,6 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
      */
     private void showExtension() {
 
-        // AbstractEditor currentEditor =
-        // NmapUiUtils.getActiveNatlCntrsEditor();
         AbstractEditor currentEditor = PgenUtil.getActiveEditor();
         PgenResource drawingLayer = PgenSession.getInstance().getPgenResource();
 
@@ -824,8 +863,6 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             if (nkxky.length > 1) {
                 kx = Integer.parseInt(nkxky[0]);
                 ky = Integer.parseInt(nkxky[1]);
-            } else {
-                // logger.warn( "Invalid input for kx;ky - default to 63;28" );
             }
 
             CoordinateTransform gtrans = new CoordinateTransform(proj, garea,
@@ -887,10 +924,9 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             // Then try to get from the selected DE's parent....
             if (curCnt == null) {
                 DrawableElement de = drawingLayer.getSelectedDE();
-                if (de != null
-                        && (de.getParent() instanceof ContourLine
-                                || de.getParent() instanceof ContourMinmax || de
-                                    .getParent() instanceof ContourCircle)) {
+                if (de != null && (de.getParent() instanceof ContourLine
+                        || de.getParent() instanceof ContourMinmax
+                        || de.getParent() instanceof ContourCircle)) {
 
                     curCnt = (Contours) de.getParent().getParent();
                 }
@@ -907,8 +943,8 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
                         Contours thisContour = (Contours) de;
                         ContoursAttrDlg thisDlg = (ContoursAttrDlg) cntAttrDlg;
 
-                        if (thisContour.getKey().equals(
-                                Contours.getKey(thisDlg))) {
+                        if (thisContour.getKey()
+                                .equals(Contours.getKey(thisDlg))) {
                             curCnt = (Contours) de;
                             break;
                         }
@@ -958,7 +994,8 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
         // get values for GPARM, GLEVEL, GFUNC - from table and/or element.
         gparm = dlg.getParm();
-        HashMap<String, String> curPrdMapFromTable = getPrdMapFromTable(currentPrd);
+        HashMap<String, String> curPrdMapFromTable = getPrdMapFromTable(
+                currentPrd);
         gfunc = curPrdMapFromTable.get("GFUNC");
 
         if (applyTableInfoToOutput) {
@@ -979,22 +1016,16 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             gfunc = gparm;
         }
 
-        // GDOUTF template: PPPP_YYYYMMDDHHfFFF.grd
-        /*
-         * gdoutf = new String(gparm.toLowerCase() + "_" +
-         * dlg.getTime1().get(Calendar.YEAR) + gdt.substring(2, 6) +
-         * gdt.substring(7, 9) + fcstCombo.getText() + ".grd");
-         */
-
         gdoutf = formatGdoutf(curPrdMapFromTable.get("GDOUTF"), dlg.getTime1(),
-                gparm, fcstCombo.getText());
+                gparm, currentFcstHr);
 
         prm.put("GPARM", gparm);
         prm.put("GLEVEL", level);
-        prm.put("GDATTIM", gdt + fcstCombo.getText());
+        prm.put("GDATTIM", gdt + currentFcstHr);
         prm.put("GFUNC", gfunc);
         prm.put("GDOUTF", gdoutf);
 
+        prm.put("from graphtoGrid CINT=", cint);
         prm.put("CINT", cint);
 
         if (cntAttrDlg instanceof OutlookAttrDlg) {
@@ -1028,7 +1059,7 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
 
         prdMap.put("PRODUCT", prdName);
         prdMap.put("CYCLE", cycleCombo.getText());
-        prdMap.put("FCST_HR", fcstCombo.getText());
+        prdMap.put("FCST_HR", currentFcstHr);
 
         return prdMap;
 
@@ -1086,8 +1117,8 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
             String cint = cd.getCINTString(CINT.FIRST_ZOOM_LEVEL);
 
             if (cint.contains(";")) {
-                cints.addAll(cd
-                        .getContourLabelsForZoomLevel(CINT.FIRST_ZOOM_LEVEL));
+                cints.addAll(
+                        cd.getContourLabelsForZoomLevel(CINT.FIRST_ZOOM_LEVEL));
             } else {
 
                 String[] values = cint.split("/");
@@ -1150,4 +1181,68 @@ public class GraphToGridParamDialog extends CaveJFACEDialog {
         return goutf;
     }
 
+    /**
+     * Updates the Combo/text to a selected item.
+     */
+    private void updateComboText(Combo cmb, Text txt, String sel) {
+
+        // Use the current selection on the Combo if no selection is provided.
+        if (sel == null) {
+            sel = cmb.getText();
+        }
+
+        // Update the Text.
+        txt.setText(sel);
+
+        // Update the Combo selection.
+        int index = -1;
+        boolean found = false;
+        for (String str : cmb.getItems()) {
+            if (str.equals(sel)) {
+                found = true;
+                break;
+            }
+
+            index++;
+        }
+
+        if (found) {
+            cmb.select(index + 1);
+            if (sel.equalsIgnoreCase(PgenConstant.EVENT_OTHER)) {
+                txt.setText("");
+                txt.setEnabled(true);
+            } else {
+                txt.setEnabled(false);
+            }
+        } else {
+            cmb.select(cmb.getItemCount() - 1);
+            txt.setEnabled(true);
+        }
+
+    }
+
+    /**
+     * Updates defaultProdName according to the current activity type.
+     */
+    private String getDefaultProdName() {
+        defaultProdName = null;
+
+        PgenResource drawingLayer = PgenSession.getInstance().getPgenResource();
+        if (drawingLayer != null) {
+            currentActivityType = drawingLayer.getActiveProduct().getType();
+        }
+
+        for (String str : productNames) {
+            if (productMaps.get(str) != null) {
+                String[] prodValues = (productMaps.get(str)).split("/");
+                if (prodValues.length > 1) {
+                    if (currentActivityType.equalsIgnoreCase(prodValues[1])) {
+                        defaultProdName = str;
+                    }
+                }
+            }
+        }
+
+        return defaultProdName;
+    }
 }

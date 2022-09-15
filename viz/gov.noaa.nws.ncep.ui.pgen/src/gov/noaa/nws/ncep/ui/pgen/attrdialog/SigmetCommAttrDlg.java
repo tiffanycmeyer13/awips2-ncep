@@ -74,32 +74,44 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ---------    --------   ----------   --------------------------
- * 12/09        182         G. Zhang    Initial Creation.
- * 03/10        231         Archana     Altered the common dialog for
- *                                      ConvSigmet, NonConvSigmet,Airmet and Outlook
- *                                      to display only a button showing the
- *                                      selected color instead of displaying
- *                                      the complete color matrix.
- * 03/10        #223        M.Laryukhin Refactored getVOR method to be used with gfa too.
- * 04/11        #?          B. Yin      Re-factor IAttribute
- * 12/11        #526        B. Yin      Close dialog after saving text.
- * 01/12        #597        S. Gurung   Removed Snapping for ConvSigmet
- * 02/12        #597        S. Gurung   Removed snapping for NonConvSigmet. Moved snap functionalities to SnapUtil from SigmetInfo.
- * 03/12        #611        S. Gurung   Fixed ability to change SIGMET type (from Area to Line/Isolated and back and forth)
- * 11/12        #873        B. Yin      Pass sigmet type "CONV_SIGMET" for snapping.
- * 03/13        #928        B. Yin      Made the button bar smaller.
- * 04/29        #977        S. Gilbert  PGEN Database support
- * 04/29        #726        J. Wu       Remove the line breaker when saving vor list into file.
- * 01/15        #5801       A. Su       Made tag ID part of the activity label.
- * 12/12/2016   17469       W. Kwock    Added CWA Formatter
- * 03/20/2019   #7572       dgilling    Code cleanup.
- * 11/04/2019   70576       smanoj      Update to allow forecaster change/update alphanumeric labels.
- * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
- * 06/26/2020   79977       pbutler     Added code to add data editableAttrFromLine: states, lakes, coastal waters
- * 08/18/2020   81809       mroos       Remove States list duplication
- * 02/01/2021   87515       wkwock      Remove CWA
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 12/09         182      G. Zhang    Initial Creation.
+ * 03/10         231      Archana     Altered the common dialog for ConvSigmet,
+ *                                    NonConvSigmet,Airmet and Outlook to
+ *                                    display only a button showing the selected
+ *                                    color instead of displaying the complete
+ *                                    color matrix.
+ * 03/10         223      M.Laryukh   Refactored getVOR method to be used with
+ *                                    gfa too.
+ * 04/11         #?       B. Yin      Re-factor IAttribute
+ * 12/11         526      B. Yin      Close dialog after saving text.
+ * 01/12         597      S. Gurung   Removed Snapping for ConvSigmet
+ * 02/12         597      S. Gurung   Removed snapping for NonConvSigmet. Moved
+ *                                    snap functionalities to SnapUtil from
+ *                                    SigmetInfo.
+ * 03/12         611      S. Gurung   Fixed ability to change SIGMET type (from
+ *                                    Area to Line/Isolated and back and forth)
+ * 11/12         873      B. Yin      Pass sigmet type "CONV_SIGMET" for
+ *                                    snapping.
+ * 03/13         928      B. Yin      Made the button bar smaller.
+ * 04/29         977      S. Gilbert  PGEN Database support
+ * 04/29         726      J. Wu       Remove the line breaker when saving vor
+ *                                    list into file.
+ * 01/15         5801     A. Su       Made tag ID part of the activity label.
+ * Dec 12, 2016  17469    W. Kwock    Added CWA Formatter
+ * Mar 20, 2019  7572     dgilling    Code cleanup.
+ * Nov 04, 2019  70576    smanoj      Update to allow forecaster change/update
+ *                                    alphanumeric labels.
+ * Jan 07, 2020  71971    smanoj      Modified code to use PgenConstants
+ * Jun 26, 2020  79977    pbutler     Added code to add data
+ *                                    editableAttrFromLine: states, lakes,
+ *                                    coastal waters
+ * Aug 18, 2020  81809    mroos       Remove States list duplication
+ * 02/01/2021    87515    wkwock      Remove CWA
+ * Jul 21, 2021  93981    tjensen     Make SaveDlg block. Fix polygon updates
+ *
  * </pre>
  *
  * @author gzhang
@@ -141,9 +153,9 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
     private boolean withExpandedArea = false;
 
-    private Map<String, Control> attrControlMap = new HashMap<>();
+    private final Map<String, Control> attrControlMap = new HashMap<>();
 
-    private Map<String, Button[]> attrButtonMap = new HashMap<>();
+    private final Map<String, Button[]> attrButtonMap = new HashMap<>();
 
     private String editableAttrArea = "";
 
@@ -245,7 +257,9 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
         String s = this.getVOR(coors);
         this.setEditableAttrFromLine(s);
         this.relatedState = this.getRelatedStates(coors, de);
-        ((AbstractSigmet) de).setEditableAttrFromLine(s);
+        if (s != null) {
+            ((AbstractSigmet) de).setEditableAttrFromLine(s);
+        }
         if (txtInfo != null && !txtInfo.isDisposed() && s != null) {
             txtInfo.setText(s);
         }
@@ -753,6 +767,9 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
         SigmetCommAttrDlgSaveMsgDlg(Shell parShell) throws VizException {
             super(parShell);
+
+            this.setShellStyle(SWT.TITLE | SWT.CLOSE | SWT.PRIMARY_MODAL);
+
         }
 
         public Map<String, Object> getAttrFromDlg() {
@@ -906,7 +923,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
             }
 
             if (PgenConstant.TYPE_AIRM_SIGMET
-                            .equalsIgnoreCase(SigmetCommAttrDlg.this.pgenType)
+                    .equalsIgnoreCase(SigmetCommAttrDlg.this.pgenType)
                     || PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(
                             SigmetCommAttrDlg.this.pgenType)) {
                 return s.toUpperCase();
@@ -997,43 +1014,36 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
         if (drawingLayer != null) {
             adcList = drawingLayer.getAllSelected();
-        }
+            if (adcList != null && !adcList.isEmpty()) {
 
-        if (adcList != null && !adcList.isEmpty()) {
+                for (AbstractDrawableComponent adc : adcList) {
 
-            for (AbstractDrawableComponent adc : adcList) {
+                    Sigmet el = (Sigmet) adc.getPrimaryDE();
+                    if (el != null) {
+                        Sigmet newEl = (Sigmet) el.copy();
 
-                Sigmet el = (Sigmet) adc.getPrimaryDE();
-                if (el != null) {
-                    Sigmet newEl = (Sigmet) el.copy();
+                        attrUpdate();
 
-                    attrUpdate();
+                        copyEditableAttrToAbstractSigmet(newEl);
 
-                    copyEditableAttrToAbstractSigmet(newEl);
+                        // Change type and update From line
+                        newEl = convertType(newEl);
 
-                    // Change type and update From line
-                    newEl = convertType(newEl);
-
-                    this.setAbstractSigmet(newEl);
-                    newList.add(newEl);
+                        this.setAbstractSigmet(newEl);
+                        newList.add(newEl);
+                    }
                 }
+
+                List<AbstractDrawableComponent> oldList = new ArrayList<>(
+                        adcList);
+                drawingLayer.replaceElements(oldList, newList);
             }
 
-            List<AbstractDrawableComponent> oldList = new ArrayList<>(adcList);
-            drawingLayer.replaceElements(oldList, newList);
-        }
-
-        AbstractDrawableComponent newCmp = null;
-
-        for (AbstractDrawableComponent adc : newList) {
-            newCmp = adc;
-            drawingLayer.removeElement(adc);
-        }
-
-        if (newCmp != null) {
-            drawingLayer.addElement(newCmp);
-            drawingLayer.addSelected(newCmp);
-            drawingLayer.issueRefresh();
+            // set the new elements as selected.
+            drawingLayer.removeSelected();
+            for (AbstractDrawableComponent adc : newList) {
+                drawingLayer.addSelected(adc);
+            }
         }
 
         if (mapEditor != null) {

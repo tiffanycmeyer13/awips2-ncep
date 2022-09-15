@@ -1,20 +1,23 @@
 /**
- * 
+ *
  * gov.noaa.nws.ncep.ui.nsharp.background.NsharpTurbulencePaneBackground
- * 
+ *
  * This java class performs the NSHARP NsharpSkewTPaneBackground functions.
  * This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * 
+ *
  * Date         Ticket#     Engineer    Description
  * -------      -------     --------    -----------
  * 05/02/2012   229         Chin Chen   Initial coding for multiple display panes implementation
  * 04/15/2019   7480        bhurley     Code cleanup
+ * 07/06/2021   93845       omoncayo    Configure Similar to NSHARP Skew-T Display
+ *                                      and Enable Sampling Features for Turbulence
+ *                                      and Icing Displays
  *
  * </pre>
- * 
+ *
  * @author Chin Chen
  * @version 1.0
  */
@@ -134,11 +137,12 @@ public class NsharpTurbulencePaneBackground
             linesNumbersShape.addLabel(s, lblXy);
         }
         // LN label
-        double[] lblRhXy1 = { turbXOrig + 0.5 * turbWidth,
-                turbYOrig - 30 * yMagFactor };
-        lNLabelShape.addLabel("*****TURBULENCE Display*****", lblRhXy1);
+        double[] lblRhXy1 = { turbXOrig + 0.95 * turbWidth,
+                turbYOrig + 35 * yMagFactor };
+        // turbYOrig - 30 * yMagFactor };
+        lNLabelShape.addLabel("TURBULENCE", lblRhXy1);
         double[] lblRhXy2 = { turbXOrig + 0.5 * turbWidth,
-                turbYEnd + 10 * yMagFactor };
+                turbYEnd - 25 * yMagFactor };
         lNLabelShape.addLabel("LN(RICHARDSON NUMBER)", lblRhXy2);
         double[][] lineRH = { { 0, 0 }, { 0, 0 } };
         // add dummy line
@@ -163,7 +167,7 @@ public class NsharpTurbulencePaneBackground
         }
         // wind shear label
         double[] lblTXy = { turbXOrig + 0.5 * turbWidth,
-                turbYEnd + 35 * yMagFactor };
+                turbYEnd + 2 * yMagFactor };
         windShearLabelShape
                 .addLabel("WIND SHEAR TKE PRODUCTION x 1E3 joules/sec", lblTXy);
         double[][] lineT = { { 0, 0 }, { 0, 0 } };
@@ -359,14 +363,14 @@ public class NsharpTurbulencePaneBackground
         yMagFactor = yMagFactor * (paneHeight / prevHeight);
         labelSpace = defaultLabelSpace * yMagFactor;
         turbXOrig = (int) (ext.getMinX());
-        turbYOrig = (int) (ext.getMinY()) + (int) labelSpace;
+        turbYOrig = (int) (ext.getMinY()) + 2;
         turbXEnd = turbXOrig + (int) (ext.getWidth());
-        turbYEnd = turbYOrig + (int) (ext.getHeight()) - 2 * (int) labelSpace;
+        turbYEnd = turbYOrig + (int) (ext.getHeight()) - 15;
         float prevWidth = turbWidth;
         turbWidth = (int) (ext.getWidth());
         xMagFactor = xMagFactor * (turbWidth / prevWidth);
-        this.rectangle = new Rectangle(turbXOrig, turbYOrig, turbWidth,
-                (int) ext.getHeight() - 2 * (int) labelSpace);
+        this.rectangle = new Rectangle(turbXOrig, turbYOrig + 2, turbWidth,
+                (int) ext.getHeight() - 20);
         pe = new PixelExtent(this.rectangle);
         world = new NsharpWGraphics(this.rectangle);
 

@@ -4,7 +4,9 @@
 ! This table contains the identifiers for the CAVE->PGEN contours graph-to-grid
 ! processing and the associated "restore" tables.
 ! 
-! The first entry in this table will be the default presented to the user.
+! If the ACTIVITY_TYPE is available and match with current configured activity
+! displayed, that will be the default presented to the user, otherwise the first
+! entry in this table will be the default presented to the user.
 !
 !*******************************************************************************
 !
@@ -58,9 +60,11 @@
 ! Log:
 ! D.W.Plummer/NCEP	 3/00	
 ! J. Wu				 10/11	updated for CAVE localization	
+! smanoj             5/5/21  Add Activity_Type for the table
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-!NAME		RESTORE_FILENAME
+!NAME		RESTORE_FILENAME/ACTIVITY_TYPE
 !
-QPF_CED		qpf.tbl
-QPF_STR		str.tbl
+MEDR		medrpress.tbl/MedrP
+QPF_CED		qpf.tbl/HPC_QPF
+QPP_STR		str.tbl/HPC_QPP

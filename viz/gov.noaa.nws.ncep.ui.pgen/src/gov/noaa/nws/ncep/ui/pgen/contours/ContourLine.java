@@ -1,11 +1,18 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.contours.ContourLine
- * 
+ *
  * october 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.contours;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import com.vividsolutions.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
@@ -19,21 +26,15 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Class for a ContourLine element - simple DECollection with one line, and zero
  * or more labels.
- * 
+ *
  * Important note: when "numOfLabels" is 0, there is still at least one Text
  * that will be created to store the value of the line so graph-to-grid can use
  * the value for calculation. But the Text object's "hide" flag is set to "true"
  * so the label won't be displayed.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
  * Date         Ticket#       Engineer     Description
@@ -41,14 +42,16 @@ import org.locationtech.jts.geom.Coordinate;
  * 10/09        #167          J. Wu        Initial Creation.
  * 07/13        TTR765        J. Wu        DEL_PART between vertexes.
  * 07/28/2016   R16077        J. Wu        Allow numOfLabels to be 0 to hide labels.
- * 
+ * 08/26/2021   86161         S. Russell   Updated updateNumOfLabels()
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
  */
 public class ContourLine extends DECollection {
 
     private String[] labelString;
+
     private int numOfLabels;
 
     /**
@@ -69,8 +72,7 @@ public class ContourLine extends DECollection {
 
         Line cline = new Line(null, new Color[] { Color.red }, 2.0f, 1.0,
                 closed, false, linePoints, 2, FillPattern.SOLID,
-                PgenConstant.CATEGORY_LINES,
-                "LINE_SOLID");
+                PgenConstant.CATEGORY_LINES, "LINE_SOLID");
 
         cline.setParent(this);
 
@@ -111,8 +113,7 @@ public class ContourLine extends DECollection {
 
         Line cline = new Line(null, new Color[] { Color.red }, 2.0f, 1.0,
                 closed, false, linePoints, 2, FillPattern.SOLID,
-                PgenConstant.CATEGORY_LINES,
-                "LINE_SOLID");
+                PgenConstant.CATEGORY_LINES, "LINE_SOLID");
 
         cline.setParent(this);
 
@@ -203,7 +204,6 @@ public class ContourLine extends DECollection {
             cline.labelString[ii] = new String(this.labelString[ii]);
         }
 
-
         Iterator<DrawableElement> iterator = this.createDEIterator();
 
         while (iterator.hasNext()) {
@@ -222,7 +222,7 @@ public class ContourLine extends DECollection {
 
         Iterator<DrawableElement> iterator = this.createDEIterator();
 
-        ArrayList<Text> labels = new ArrayList<Text>();
+        ArrayList<Text> labels = new ArrayList<>();
         while (iterator.hasNext()) {
             DrawableElement de = iterator.next();
             if (de instanceof Text) {
@@ -254,7 +254,7 @@ public class ContourLine extends DECollection {
      */
     public void updateLabelString(String[] label) {
 
-        setLabelString( label );
+        setLabelString(label);
 
         for (Text lbl : getLabels()) {
             lbl.setText(labelString);
@@ -278,7 +278,7 @@ public class ContourLine extends DECollection {
              */
             if (nlabels == 0) {
                 for (Text lbl : getLabels()) {
-                    lbl.setHide(true);
+                    this.remove(lbl);
                 }
             } else {
                 updateExistingLabels(nlabels, false);
@@ -289,9 +289,9 @@ public class ContourLine extends DECollection {
              * Create "nlabels" if no labels exist. Otherwise create from
              * existing ones.
              */
-            if ( getLabels().size() == 0  ) {
+            if (getLabels().size() == 0) {
 
-              for (int ii = 0; ii < nlabels; ii++) {
+                for (int ii = 0; ii < nlabels; ii++) {
 
                     Text lbl = new Text(null, "Courier", 14.0f,
                             TextJustification.CENTER, null, 0.0,
@@ -331,7 +331,7 @@ public class ContourLine extends DECollection {
                 cline = (Line) de;
                 break;
             }
-        } 
+        }
 
         return cline;
 
@@ -343,7 +343,7 @@ public class ContourLine extends DECollection {
      */
     public ArrayList<ContourLine> split(int start, int end) {
 
-        ArrayList<ContourLine> newContourlines = new ArrayList<ContourLine>();
+        ArrayList<ContourLine> newContourlines = new ArrayList<>();
 
         ArrayList<Line> newLines = splitLine(getLine(), start, end);
 
@@ -363,7 +363,7 @@ public class ContourLine extends DECollection {
      */
     public ArrayList<ContourLine> split(Coordinate start, Coordinate end) {
 
-        ArrayList<ContourLine> newContourlines = new ArrayList<ContourLine>();
+        ArrayList<ContourLine> newContourlines = new ArrayList<>();
 
         Line ln = getLine();
         ArrayList<Coordinate> pts = ln.getPoints();
@@ -381,7 +381,6 @@ public class ContourLine extends DECollection {
         return newContourlines;
 
     }
-
 
     /**
      * Removes a part from a line.
@@ -406,7 +405,7 @@ public class ContourLine extends DECollection {
     private ArrayList<Line> removePartFromOpenLine(Line line, int pt1Index,
             int pt2Index) {
 
-        ArrayList<Line> newLines = new ArrayList<Line>();
+        ArrayList<Line> newLines = new ArrayList<>();
         Line element1 = null, element2 = null;
 
         List<Coordinate> points = line.getPoints();
@@ -417,9 +416,9 @@ public class ContourLine extends DECollection {
 
             // remove part from one end
             element1 = (Line) line.copy();
-            ArrayList<Coordinate> newPts = new ArrayList<Coordinate>(points);
+            ArrayList<Coordinate> newPts = new ArrayList<>(points);
 
-           if ( pt1Index == 0 ){
+            if (pt1Index == 0) {
                 newPts.subList(pt1Index, pt2Index).clear();
             } else if (pt2Index == points.size() - 1) {
                 newPts.subList(pt1Index + 1, pt2Index + 1).clear();
@@ -432,12 +431,12 @@ public class ContourLine extends DECollection {
 
             // remove part in the middle
             element1 = (Line) line.copy();
-            element1.setPoints(new ArrayList<Coordinate>(points.subList(0,
-                    pt1Index + 1)));
+            element1.setPoints(
+                    new ArrayList<>(points.subList(0, pt1Index + 1)));
 
             element2 = (Line) line.copy();
-            element2.setPoints(new ArrayList<Coordinate>(points.subList(
-                    pt2Index, points.size())));
+            element2.setPoints(
+                    new ArrayList<>(points.subList(pt2Index, points.size())));
 
             newLines.add(element1);
             newLines.add(element2);
@@ -449,10 +448,10 @@ public class ContourLine extends DECollection {
     /**
      * Removes part from a closed line
      */
-    private ArrayList<Line> removePartFromClosedLine(Line element,
-            int pt1Index, int pt2Index) {
+    private ArrayList<Line> removePartFromClosedLine(Line element, int pt1Index,
+            int pt2Index) {
 
-        ArrayList<Line> newLines = new ArrayList<Line>();
+        ArrayList<Line> newLines = new ArrayList<>();
         Line element1 = null;
 
         List<Coordinate> points = element.getPoints();
@@ -461,8 +460,8 @@ public class ContourLine extends DECollection {
         element1.setClosed(false);
         element1.getPoints().clear();
 
-        if (pt2Index - pt1Index + 1 > (points.size()
-                - (pt2Index - pt1Index + 1) + 2)) {
+        if (pt2Index - pt1Index
+                + 1 > (points.size() - (pt2Index - pt1Index + 1) + 2)) {
             // if there are more points between pt1 and pt2, remove the other
             // part.
             element1.getPoints().addAll(points.subList(pt1Index, pt2Index + 1));
@@ -478,13 +477,12 @@ public class ContourLine extends DECollection {
 
     }
 
-   /*
-    *  Sets the number of labels
-    */
+    /*
+     * Sets the number of labels
+     */
     public void setNumOfLabels(int nlabels) {
         numOfLabels = nlabels;
     }
-
 
     /*
      * Sets the label string
@@ -506,11 +504,11 @@ public class ContourLine extends DECollection {
     /*
      * Update labels in a contour line by removing old labels and creating new
      * labels from old ones.
-     * 
+     *
      * @param nlabels - number of new labels to create
-     * 
+     *
      * @param hide - if new labels should be hidden
-     * 
+     *
      * @return
      */
     private void updateExistingLabels(int nlabels, boolean hide) {
