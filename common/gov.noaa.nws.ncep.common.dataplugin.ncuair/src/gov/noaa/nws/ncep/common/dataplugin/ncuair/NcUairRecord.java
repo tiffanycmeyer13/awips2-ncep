@@ -9,13 +9,14 @@ import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlElement;
 
-import org.hibernate.annotations.Index;
+import org.locationtech.jts.geom.Geometry;
 
 import com.raytheon.uf.common.dataplugin.PluginDataObject;
 import com.raytheon.uf.common.dataplugin.annotations.DataURI;
@@ -27,18 +28,17 @@ import com.raytheon.uf.common.pointdata.PointDataView;
 import com.raytheon.uf.common.pointdata.spatial.SurfaceObsLocation;
 import com.raytheon.uf.common.serialization.annotations.DynamicSerialize;
 import com.raytheon.uf.common.serialization.annotations.DynamicSerializeElement;
-import org.locationtech.jts.geom.Geometry;
 
 /**
  * NcUairRecord
- * 
+ *
  * <pre>
  * The java class defines the parameters in the postgres table and
  * the for HDF5 dataset for the upper air data.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * 
+ *
  * Date         Ticket#         Engineer    Description
  * ------------ ----------      ----------- --------------------------
  * 03/2010      210             L. Lin      Initial creation
@@ -47,8 +47,8 @@ import org.locationtech.jts.geom.Geometry;
  * 09/2011                      Chin Chen   support batch decoding methods for better performance and
  *                                          remove xml serialization as well
  * 10/2011                      S. Gurung   Replace slat/slon/selv with location of type SurfaceObsLocation
- * Apr 4, 2013        1846 bkowal      Added an index on refTime and forecastTime
- * 04/2013      1293            bkowal      Removed references to hdffileid. 
+ * Apr 4, 2013  1846            bkowal      Added an index on refTime and forecastTime
+ * 04/2013      1293            bkowal      Removed references to hdffileid.
  * Apr 12, 2013 1857            bgonzale    Added SequenceGenerator annotation.
  * May 07, 2013 1869            bsteffen    Remove dataURI column from
  *                                          PluginDataObject.
@@ -56,27 +56,30 @@ import org.locationtech.jts.geom.Geometry;
  * Feb 11, 2014 2784            rferrel     Remove override of setIdentifier.
  * Jun 11, 2014 2061            bsteffen    Remove IDecoderGettable
  * Aug 03, 2015 4360            rferrel     Name unique constraint.
- * 
- * 
+ * Aug 08, 2022 8892            tjensen     Update indexes for Hibernate 5
+ *
+ *
  * </pre>
- * 
+ *
  * This code has been developed by the SIB for use in the AWIPS2 system.
- * 
+ *
  * @author L. Lin
- * @version 1.0
  */
 @Entity
 @SequenceGenerator(initialValue = 1, name = PluginDataObject.ID_GEN, sequenceName = "ncuairseq")
-@Table(name = "ncuair", uniqueConstraints = { @UniqueConstraint(name = "uk_ncuair_datauri_fields", columnNames = { "dataURI" }) })
 /*
  * Both refTime and forecastTime are included in the refTimeIndex since
  * forecastTime is unlikely to be used.
  */
-@org.hibernate.annotations.Table(appliesTo = "ncuair", indexes = { @Index(name = "ncuair_refTimeIndex", columnNames = {
-        "refTime", "forecastTime" }) })
+@Table(name = "ncuair", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_ncuair_datauri_fields", columnNames = {
+                "dataURI" }) }, indexes = {
+                        @Index(name = "%TABLE%_refTimeIndex", columnList = "refTime, forecastTime"),
+                        @Index(name = "%TABLE%_stationIndex", columnList = "stationId") })
+
 @DynamicSerialize
-public class NcUairRecord extends PersistablePluginDataObject implements
-        ISpatialEnabled, IPointData, IPersistable {
+public class NcUairRecord extends PersistablePluginDataObject
+        implements ISpatialEnabled, IPointData, IPersistable {
 
     private static final long serialVersionUID = 1L;
 
@@ -154,28 +157,28 @@ public class NcUairRecord extends PersistablePluginDataObject implements
      */
     @DynamicSerializeElement
     @Transient
-    private Set<NcUairObsLevels> obsLevels = new HashSet<NcUairObsLevels>();
+    private Set<NcUairObsLevels> obsLevels = new HashSet<>();
 
     /**
      * Uair tropopause data
      */
     @DynamicSerializeElement
     @Transient
-    private Set<NcUairTropopause> tropopause = new HashSet<NcUairTropopause>();
+    private Set<NcUairTropopause> tropopause = new HashSet<>();
 
     /**
      * Uair maxwind data
      */
     @DynamicSerializeElement
     @Transient
-    private Set<NcUairMaxWind> maxwind = new HashSet<NcUairMaxWind>();
+    private Set<NcUairMaxWind> maxwind = new HashSet<>();
 
     /**
      * Uair lifted index data
      */
     @DynamicSerializeElement
     @Transient
-    private Set<NcUairLiftedIndex> liftedindex = new HashSet<NcUairLiftedIndex>();
+    private Set<NcUairLiftedIndex> liftedindex = new HashSet<>();
 
     @Embedded
     @DynamicSerializeElement
@@ -196,7 +199,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
     /**
      * Constructor for DataURI construction through base class. This is used by
      * the notification service.
-     * 
+     *
      * @param uri
      *            A data uri applicable to this class.
      * @param tableDef
@@ -227,7 +230,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the report correction indicator.
-     * 
+     *
      * @return The corr
      */
     public String getCorr() {
@@ -236,7 +239,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /**
      * Set the report correction indicator.
-     * 
+     *
      * @param corr
      *            The corr.
      */
@@ -246,7 +249,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the observation report type.
-     * 
+     *
      * @return the reportType
      */
     public String getReportType() {
@@ -255,7 +258,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /**
      * Set the observation report type.
-     * 
+     *
      * @param reportType
      *            the reportType to set
      */
@@ -273,7 +276,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /*
      * Get this observation's geometry.
-     * 
+     *
      * @return The geometry for this observation.
      */
     public Geometry getGeometry() {
@@ -282,7 +285,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the geometry latitude.
-     * 
+     *
      * @return The geometry latitude.
      */
     public double getLatitude() {
@@ -291,7 +294,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the geometry longitude.
-     * 
+     *
      * @return The geometry longitude.
      */
     public double getLongitude() {
@@ -300,7 +303,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the station identifier for this observation.
-     * 
+     *
      * @return the stationId
      */
     public String getStationId() {
@@ -309,7 +312,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /**
      * Get the elevation, in meters, of the observing platform or location.
-     * 
+     *
      * @return The observation elevation, in meters.
      */
     public Integer getElevation() {
@@ -318,7 +321,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /**
      * Get whether the location for this observation is defined.
-     * 
+     *
      * @return Is this location defined.
      */
     public Boolean getLocationDefined() {
@@ -495,7 +498,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.raytheon.uf.common.pointdata.IPointData#getPointDataView()
      */
     @Override
@@ -505,7 +508,7 @@ public class NcUairRecord extends PersistablePluginDataObject implements
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * com.raytheon.uf.common.pointdata.IPointData#setPointDataView(com.raytheon
      * .uf.common.pointdata.PointDataView)
