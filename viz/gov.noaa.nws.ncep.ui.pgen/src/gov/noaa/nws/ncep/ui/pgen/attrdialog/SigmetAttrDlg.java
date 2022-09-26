@@ -3529,8 +3529,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     }
 
-    }
-
     private void populateIdList(String issueOffice) {
 
         // IF "INTL", the ID values are different for different Issue.
