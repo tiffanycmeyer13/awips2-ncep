@@ -25,6 +25,7 @@ import gov.noaa.nws.ncep.common.dataplugin.pgen.PgenRecord;
  * Mar 29, 2021  8374     randerso  Renamed IDataRecord.get/setProperties to
  *                                  get/setProps
  * Sep 23, 2021  8608     mapeters  Pass metadata ids to datastore
+ * Jun 22, 2022  8865     mapeters  Update populateDataStore to return boolean
  *
  * </pre>
  *
@@ -37,8 +38,8 @@ public class PgenDao extends PluginDao {
     }
 
     @Override
-    protected IDataStore populateDataStore(IDataStore dataStore,
-            IPersistable obj) throws Exception {
+    protected boolean populateDataStore(IDataStore dataStore, IPersistable obj)
+            throws Exception {
 
         AbstractStorageRecord storageRecord = null;
         PgenRecord record = (PgenRecord) obj;
@@ -53,6 +54,6 @@ public class PgenDao extends PluginDao {
         dataStore.addDataRecord(storageRecord,
                 new DataUriMetadataIdentifier(record));
 
-        return dataStore;
+        return true;
     }
 }
