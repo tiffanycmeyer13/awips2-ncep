@@ -24,7 +24,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Class for a ContourLine element - simple DECollection with one line, and zero
  * or more labels.

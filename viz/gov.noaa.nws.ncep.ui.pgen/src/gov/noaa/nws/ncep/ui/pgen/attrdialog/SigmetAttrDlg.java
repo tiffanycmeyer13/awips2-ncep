@@ -235,7 +235,6 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Nov 01, 2021  93036      smanoj       Additional QC validation for INTL SIGMET.
  * Nov 11, 2021  93036      smanoj       QC validation for Lat/Lon fields.
  * Nov 11, 2021  97247      achalla      Int'l SigmetT GUI modified and Input validation for width value
- * Dec 07, 2021  8653       tjensen      Fix ClassCastExceptions during init()
  *
  * </pre>
  *
@@ -2833,251 +2832,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
 
         txtFcstPheLat.addListener(SWT.Modify, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                String fcstLat = txtFcstPheLat.getText().trim();
-                SigmetAttrDlg.this.setEditableAttrFcstPhenomLat(fcstLat);
-                if ((fcstLat.length() != 5)
-                        || !validateLatLonText(fcstLat.trim(), true)) {
-                    SigmetAttrDlg.this.setEditableAttrFcstPhenomLat(null);
                 }
             }
         });
 
-        txtFcstPheLat.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                setBackgroundColor(txtFcstPheLat, Color.WHITE);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if ((SigmetConstant.TRUE.equals(
-                        SigmetAttrDlg.this.getEditableAttrFcstAvail()))) {
-                    if (getEditableAttrFcstPhenomLat() != null) {
-                        txtFcstPheLat.setText(getEditableAttrFcstPhenomLat());
-                        setBackgroundColor(txtFcstPheLat, rightFormatColor);
-
-                        SigmetAttrDlg.this
-                                .setEditableAttrFcstCntr(String.format("%s %s",
-                                        StringUtils.isEmpty(SigmetAttrDlg.this
-                                                .getEditableAttrFcstPhenomLat())
-                                                        ? ""
-                                                        : SigmetAttrDlg.this
-                                                                .getEditableAttrFcstPhenomLat(),
-                                        StringUtils.isEmpty(SigmetAttrDlg.this
-                                                .getEditableAttrFcstPhenomLon())
-                                                        ? ""
-                                                        : SigmetAttrDlg.this
-                                                                .getEditableAttrFcstPhenomLon()));
-                        fcstCenterText.setText(
-                                SigmetAttrDlg.this.getEditableAttrFcstCntr());
-
-                    } else {
-                        /*
-                         * "???" causes inconvenience for copy/paste. Instead,
-                         * use Color as hint.
-                         */
-                        txtFcstPheLat.setText("");
-                        setBackgroundColor(txtFcstPheLat, wrongFormatColor);
-                    }
-                }
-            }
-        });
-
-        Label lblFcstPheLon = new Label(topSecPhenomlatLon, SWT.LEFT);
-        lblFcstPheLon.setText("Fcst Phenom\nLon: ");
-        Text txtFcstPheLon = new Text(topSecPhenomlatLon,
-                SWT.LEFT | SWT.BORDER);
-        if (SigmetAttrDlg.this.getEditableAttrFcstPhenomLon() != null) {
-            txtFcstPheLon
-                    .setText(SigmetAttrDlg.this.getEditableAttrFcstPhenomLon());
-        }
-
-        txtFcstPheLon.addListener(SWT.Modify, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                String fcstLon = txtFcstPheLon.getText().trim();
-                SigmetAttrDlg.this.setEditableAttrFcstPhenomLon(fcstLon);
-                if ((fcstLon.length() != 6)
-                        || !validateLatLonText(fcstLon.trim(), false)) {
-                    SigmetAttrDlg.this.setEditableAttrFcstPhenomLon(null);
-                }
-            }
-        });
-
-        txtFcstPheLon.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                setBackgroundColor(txtFcstPheLon, Color.WHITE);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if ((SigmetConstant.TRUE.equals(
-                        SigmetAttrDlg.this.getEditableAttrFcstAvail()))) {
-                    if (getEditableAttrFcstPhenomLon() != null) {
-                        txtFcstPheLon.setText(getEditableAttrFcstPhenomLon());
-                        setBackgroundColor(txtFcstPheLon, rightFormatColor);
-
-                        SigmetAttrDlg.this
-                                .setEditableAttrFcstCntr(String.format("%s %s",
-                                        StringUtils.isEmpty(SigmetAttrDlg.this
-                                                .getEditableAttrFcstPhenomLat())
-                                                        ? ""
-                                                        : SigmetAttrDlg.this
-                                                                .getEditableAttrFcstPhenomLat(),
-                                        StringUtils.isEmpty(SigmetAttrDlg.this
-                                                .getEditableAttrFcstPhenomLon())
-                                                        ? ""
-                                                        : SigmetAttrDlg.this
-                                                                .getEditableAttrFcstPhenomLon()));
-                        if (SigmetAttrDlg.this.getEditableAttrFcstCntr().trim()
-                                .split(" ").length > 1) {
-                            fcstCenterText.setText(SigmetAttrDlg.this
-                                    .getEditableAttrFcstCntr());
-                            setBackgroundColor(fcstCenterText,
-                                    rightFormatColor);
-                        }
-
-                    } else {
-                        /*
-                         * "???" causes inconvenience for copy/paste. Instead,
-                         * use Color as hint.
-                         */
-                        txtFcstPheLon.setText("");
-                        setBackgroundColor(txtFcstPheLon, wrongFormatColor);
-                    }
-                }
-            }
-        });
-
-        fcstCenterText.addListener(SWT.Modify, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                SigmetAttrDlg.this.setEditableAttrFcstCntr(
-                        (fcstCenterText.getText()).trim());
-
-            }
-        });
-
-        fcstCenterText.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                setBackgroundColor(fcstCenterText, Color.WHITE);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                String inValid = validateFcstCenter();
-                if (!StringUtils.isEmpty(inValid)) {
-                    (new SigmetAttrValidateDlg(getShell(), inValid)).open();
-                }
-            }
-        });
-
-    }
-
-    public void createLevelAltitudesVolcAsh(Group topLbl) {
-
-        Label lblLevelInfoVA = new Label(topLbl, SWT.LEFT);
-        lblLevelInfoVA.setText("Level Info: ");
-
-        final Combo comboLevelVA = new Combo(topLbl, SWT.READ_ONLY);
-        comboLevelVA.setItems(SigmetInfo.LEVEL_ARRAY);
-        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL, comboLevelVA);
-        setControl(comboLevelVA, EDITABLE_ATTR_ALT_LEVEL);
-
-        final Combo comboLevelInfo1VA = new Combo(topLbl, SWT.READ_ONLY);
-        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_INFO1, comboLevelInfo1VA);
-        comboLevelInfo1VA.setItems(SigmetInfo.LEVEL_INFO_ARRAY);
-        setControl(comboLevelInfo1VA, EDITABLE_ATTR_ALT_LEVEL_INFO1);
-
-        final Text txtLevelInfo1VA = new Text(topLbl, SWT.SINGLE | SWT.BORDER);
-        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_TEXT1, txtLevelInfo1VA);
-        txtLevelInfo1VA.setLayoutData(
-                new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
-
-        txtLevelInfo1VA.addListener(SWT.Verify, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                e.doit = validateNumInput(e);
-            }
-        });
-
-        GridData gdText1VA = new GridData();
-        gdText1VA.widthHint = 66;
-        gdText1VA.grabExcessHorizontalSpace = true;
-
-        txtLevelInfo1VA.setLayoutData(gdText1VA);
-
-        final Combo comboLevelInfo2VA = new Combo(topLbl, SWT.READ_ONLY);
-        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_INFO2, comboLevelInfo2VA);
-        comboLevelInfo2VA.setItems(SigmetInfo.LEVEL_INFO_2_ARRAY);
-        setControl(comboLevelInfo2VA, EDITABLE_ATTR_ALT_LEVEL_INFO2);
-
-        comboLevelInfo2VA.addListener(SWT.Selection, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                SigmetAttrDlg.this.setEditableAttrAltLevelInfo2(
-                        comboLevelInfo2VA.getText());
-            }
-        });
-
-        final Text txtLevelInfo2VA = new Text(topLbl, SWT.SINGLE | SWT.BORDER);
-        attrControlMap.put(EDITABLE_ATTR_ALT_LEVEL_TEXT2, txtLevelInfo2VA);
-        txtLevelInfo2VA.setLayoutData(
-                new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
-
-        txtLevelInfo2VA.addListener(SWT.Verify, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                e.doit = validateNumInput(e);
-            }
-        });
-        txtLevelInfo2VA.setLayoutData(gdText1VA);
-
-        txtLevelInfo2VA.addListener(SWT.Modify, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                qualityCheckForLevelInfo(txtLevelInfo2VA.getText());
-                SigmetAttrDlg.this.setEditableAttrAltLevelText2(
-                        txtLevelInfo2VA.getText());
-            }
-        });
-
-        comboLevelVA.addListener(SWT.Selection, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                setEditableAttrAltLevel(comboLevelVA.getText());
-                if (NONE.equals(comboLevelVA.getText())) {
-                    txtLevelInfo1VA.setText("");
-                    txtLevelInfo2VA.setText("");
-                    txtFreeText.setText("");
-                    comboLevelInfo2VA.select(0);
-                }
-            }
-        });
-
-        comboLevelInfo1VA.addListener(SWT.Selection, new Listener() {
-            @Override
-            public void handleEvent(Event e) {
-                SigmetAttrDlg.this.setEditableAttrAltLevelInfo1(
-                        comboLevelInfo1VA.getText());
-                switch (comboLevelInfo1VA.getText()) {
-                case PgenConstant.LEVEL_INFO_TO:
-                case PgenConstant.LEVEL_INFO_ABV:
-                case PgenConstant.LEVEL_INFO_BLW:
-                    comboLevelInfo2VA.setVisible(false);
-                    comboLevelInfo2VA.select(0);
-                    setEditableAttrAltLevelInfo2(comboLevelInfo2VA.getText());
-                    txtLevelInfo2VA.setVisible(false);
-                    break;
-                default:
-                    comboLevelInfo2VA.setVisible(true);
-                    comboLevelInfo2VA.select(1);
-                    setEditableAttrAltLevelInfo2(comboLevelInfo2VA.getText());
-                    txtLevelInfo2VA.setVisible(true);
                 }
             }
         });
@@ -3768,6 +3526,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         } else {
             return java.lang.Float.NaN;
         }
+
+    }
 
     }
 
