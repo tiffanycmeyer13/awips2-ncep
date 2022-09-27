@@ -62,14 +62,14 @@ import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Polygon;
 
 import com.raytheon.uf.common.status.IUFStatusHandler;
 import com.raytheon.uf.common.status.UFStatus;
 import com.raytheon.uf.common.time.util.TimeUtil;
 import com.raytheon.uf.common.util.StringUtil;
 import com.raytheon.uf.viz.core.map.IMapDescriptor;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Polygon;
 
 import gov.noaa.nws.ncep.edex.common.stationTables.Station;
 import gov.noaa.nws.ncep.ui.pgen.Activator;
@@ -411,7 +411,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     protected ColorButtonSelector cs = null;
 
-    private Combo comboISU, comboMWO, comboID = null;
+    private Combo comboISU, comboMWO;
+
+    private Combo comboID = null;
 
     private boolean withExpandedArea = false;
 
@@ -602,7 +604,6 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private boolean isObsLatLonInVor = false;
 
     private Button radBtn, areaBtn, lineBtn, vorBtn;
-   
 
     /**
      * Constructor.
@@ -850,9 +851,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                         sigmetCnlDlg = new SigmetCancelDlg(
                                 getInstance(getShell()), getShell(), sigmet);
                     } catch (Exception ee) {
-                        statusHandler
-                                .warn("Unable to create SIGMET Cancellation Dialog: "
-                                        + ee.getLocalizedMessage(), ee);
+                        statusHandler.warn(
+                                "Unable to create SIGMET Cancellation Dialog: "
+                                        + ee.getLocalizedMessage(),
+                                ee);
                     }
                     if (sigmetCnlDlg != null) {
                         sigmetCnlDlg.open();
@@ -887,7 +889,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     private String validateTimePeriod() {
         String phenomType = SigmetAttrDlg.this.getEditableAttrPhenom() == null
-                ? "" : SigmetAttrDlg.this.getEditableAttrPhenom();
+                ? ""
+                : SigmetAttrDlg.this.getEditableAttrPhenom();
         StringBuffer errors = new StringBuffer();
 
         // Validations by Phenom Type
@@ -1039,7 +1042,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             }
             return;
         }
-        
+
         if (getEditableAttrFcstVADesc() == null) {
             if (SigmetConstant.TRUE
                     .equals(SigmetAttrDlg.this.getEditableAttrFcstAvail())) {
@@ -1156,7 +1159,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
     private String validateSigmetEntries() {
         // Validation for NPE
         String phenomType = SigmetAttrDlg.this.getEditableAttrPhenom() == null
-                ? "" : SigmetAttrDlg.this.getEditableAttrPhenom();
+                ? ""
+                : SigmetAttrDlg.this.getEditableAttrPhenom();
         String levelInfo1 = editableAttrLevelInfo1 == null ? ""
                 : editableAttrLevelInfo1;
         String level = getEditableAttrLevel() == null ? ""
@@ -1436,28 +1440,24 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         } else {
             int levelVal = Integer.parseInt(levelInfo.trim());
             if (!levelInfo.trim().matches("^\\d{3}$")) {
-                errors.append(prefix)
-                        .append(String.format(
-                                "The Flight Level Info should be a 3-digit value. Value entered is %s.%n%n",
-                                levelInfo));
+                errors.append(prefix).append(String.format(
+                        "The Flight Level Info should be a 3-digit value. Value entered is %s.%n%n",
+                        levelInfo));
             } else {
                 if (levelVal < minFlightLevel) {
-                    errors.append(prefix)
-                            .append(String.format(
-                                    "The value entered %s should be greater than lower limit %s.%n%n",
-                                    levelVal, minFlightLevel));
+                    errors.append(prefix).append(String.format(
+                            "The value entered %s should be greater than lower limit %s.%n%n",
+                            levelVal, minFlightLevel));
                 }
                 if (levelVal > maxFlightLevel) {
-                    errors.append(prefix)
-                            .append(String.format(
-                                    "The value entered %s should be less than the upper limit %s.%n%n",
-                                    levelVal, maxFlightLevel));
+                    errors.append(prefix).append(String.format(
+                            "The value entered %s should be less than the upper limit %s.%n%n",
+                            levelVal, maxFlightLevel));
                 }
                 if (minFlightLevel > 0 && levelVal == minFlightLevel) {
-                    errors.append(prefix)
-                            .append(String.format(
-                                    "The value entered %s should be greater than the lower limit %s.%n%n",
-                                    levelVal, minFlightLevel));
+                    errors.append(prefix).append(String.format(
+                            "The value entered %s should be greater than the lower limit %s.%n%n",
+                            levelVal, minFlightLevel));
                 }
             }
         }
@@ -1664,9 +1664,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                                         getInstance(getShell()), getShell(),
                                         sigmet);
                             } catch (Exception ee) {
-                                statusHandler
-                                        .warn("Unable to create SIGMET Cancellation Dialog: "
-                                                + ee.getLocalizedMessage(), ee);
+                                statusHandler.warn(
+                                        "Unable to create SIGMET Cancellation Dialog: "
+                                                + ee.getLocalizedMessage(),
+                                        ee);
                             }
                             if (sigmetCnlDlg != null) {
                                 sigmetCnlDlg.open();
@@ -1759,7 +1760,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         attrControlMap.put("editableAttrEndTime", txtTo);
         String endTime;
         endTime = StringUtil.isEmptyString(editableAttrEndTime)
-                ? this.getTimeStringPlusHourInHMS(4) : this.editableAttrEndTime;
+                ? this.getTimeStringPlusHourInHMS(4)
+                : this.editableAttrEndTime;
         txtTo.setText(endTime);
         setEditableAttrEndTime(txtTo.getText());
 
@@ -1993,7 +1995,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         attrControlMap.put("editableAttrPhenomLon", txtPheLon);
 
         txtPheLon.setText(txtInfo.getText().split(" ").length > 1
-                ? txtInfo.getText().split(" ")[1] : "");
+                ? txtInfo.getText().split(" ")[1]
+                : "");
 
         setEditableAttrPhenomLon(
                 getPhenomLatLon(txtPheLon.getText().trim(), false));
@@ -2336,6 +2339,15 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             @Override
             public void handleEvent(Event e) {
                 setEditableAttrMovement("MVG");
+            }
+        });
+        attrButtonMap.put(EDITABLE_ATTR_MOVEMENT,
+                new Button[] { btnSTNRY, btnMVG });
+
+        Label lblSpeed = new Label(top4, SWT.LEFT);
+        lblSpeed.setText("Speed: ");
+        final Combo comboSpeed = new Combo(top4, SWT.READ_ONLY);
+        attrControlMap.put(EDITABLE_ATTR_PHENOM_SPEED, comboSpeed);
         comboSpeed.setItems(PgenConstant.TYPE_VOLCANIC_ASH.equals(
                 this.getEditableAttrPhenom()) ? SigmetInfo.VOL_ASH_SPEED_ARRAY
                         : SigmetInfo.SPEED_ARRAY);
@@ -2343,9 +2355,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             comboSpeed.select(0);
             this.setEditableAttrPhenomSpeed(comboSpeed.getText());
         }
-        /*When CARSAM Backup Mode is enabled and  Intl SIGMET 
-        Edit GUI closes and reopens save Speed Info*/
-        else if(iscarSamEnabled() && editableAttrPhenomSpeed != null){
+        /*
+         * When CARSAM Backup Mode is enabled and Intl SIGMET Edit GUI closes
+         * and reopens save Speed Info
+         */
+        else if (iscarSamEnabled() && editableAttrPhenomSpeed != null) {
             comboSpeed.setText(editableAttrPhenomSpeed);
 
         }
@@ -2369,9 +2383,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             comboDirection.select(0);
             this.setEditableAttrPhenomDirection(comboDirection.getText());
         }
-        /*When CARSAM Backup Mode is enabled and  Intl SIGMET 
-        Edit GUI closes and reopens save  Direction toward Info*/
-        else if(iscarSamEnabled() && editableAttrPhenomDirection != null){
+        /*
+         * When CARSAM Backup Mode is enabled and Intl SIGMET Edit GUI closes
+         * and reopens save Direction toward Info
+         */
+        else if (iscarSamEnabled() && editableAttrPhenomDirection != null) {
             comboDirection.setText(editableAttrPhenomDirection);
         }
         copyEditableAttrToSigmet((Sigmet) getSigmet());
@@ -2393,9 +2409,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                 comboTrend.select(0);
                 this.setEditableAttrTrend(comboTrend.getText());
             }
-            /*When CARSAM Backup Mode is enabled and  Intl SIGMET 
-            Edit GUI closes and reopens save Trend Info*/
-            else if(iscarSamEnabled() && editableAttrTrend != null){
+            /*
+             * When CARSAM Backup Mode is enabled and Intl SIGMET Edit GUI
+             * closes and reopens save Trend Info
+             */
+            else if (iscarSamEnabled() && editableAttrTrend != null) {
                 comboTrend.setText(editableAttrTrend);
             }
             copyEditableAttrToSigmet((Sigmet) getSigmet());
@@ -2433,11 +2451,13 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         attrControlMap.put(EDITABLE_ATTR_LEVEL_TEXT1, txtLevelInfo1);
         txtLevelInfo1.setLayoutData(
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1));
-        /*When CARSAM Backup Mode is enabled and  Intl SIGMET 
-          Edit GUI closes and reopens save Level Info text*/
-        if(iscarSamEnabled() && editableAttrLevelText1 != null){
+        /*
+         * When CARSAM Backup Mode is enabled and Intl SIGMET Edit GUI closes
+         * and reopens save Level Info text
+         */
+        if (iscarSamEnabled() && editableAttrLevelText1 != null) {
             txtLevelInfo1.setText(editableAttrLevelText1);
-         }
+        }
         txtLevelInfo1.addListener(SWT.Verify, new Listener() {
             @Override
             public void handleEvent(Event e) {
@@ -2638,11 +2658,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             firButtonMap.put(s, new Button[] { btnAtlantic });
             btnAtlantic.addSelectionListener(new SelectionAdapter() {
 
-            	@Override
+                @Override
                 public void widgetSelected(SelectionEvent event) {
                     setNewFirID(btnAtlantic);
                 }
-            	
             });
 
             if (editableFirID != null) {
@@ -2770,9 +2789,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     carSamFirEnabled(firValues);
                     // select MWO value corresponding to fir region
                     carSamFirMWOSelection(firValues);
-                    populateIdList(editableAttrArea); 
-                    /* CarSamBackup is disabled, select the default regular
-                     regions*/
+                    populateIdList(editableAttrArea);
+                    /*
+                     * CarSamBackup is disabled, select the default regular
+                     * regions
+                     */
                 } else {
                     unCheckFirButtons();
                     editableFirID = null;
@@ -2791,8 +2812,10 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     }
                 }
             }
+
         });
     }
+
     public void unCheckFirButtons() {
         for (String buttonName : firButtonMap.keySet()) {
             int i = 0;
@@ -2801,6 +2824,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             i++;
         }
     }
+
     public void carSamFirEnabled(String[] firValues) {
         for (String firVal : firValues) {
             for (String buttonName : firButtonMap.keySet()) {
@@ -2819,6 +2843,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
          */
         uncheckMultipleFir(firValues);
     }
+
     public void carSamFirMWOSelection(String[] firValues) {
         String[] mwoItems = SigmetInfo.AREA_MAP
                 .get(SigmetInfo.getSigmetTypeString(pgenType));
@@ -2854,6 +2879,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
         this.setEditableAttrArea(idSelected);
     }
+
     public void uncheckMultipleFir(String[] firValues) {
         for (String firVal : firValues) {
             for (String other : SigmetInfo.FIR_OTHER) {
@@ -3870,6 +3896,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         }
         setWidthStr(entry);
     }
+
     private void createDialogAreaSelect(Composite parent) {
         String[] mwoItems = SigmetInfo.AREA_MAP
                 .get(SigmetInfo.getSigmetTypeString(pgenType));
@@ -3908,19 +3935,21 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         comboMWO = new Combo(top2, SWT.READ_ONLY);
         attrControlMap.put("editableAttrArea", comboMWO);
         comboMWO.setItems(mwoItems);
-        /*save value when edit attribute is pressed or when 
-         sigmet info dialog is applied and is closed*/
-        if ( iscarSamEnabled()) {
+        /*
+         * save value when edit attribute is pressed or when sigmet info dialog
+         * is applied and is closed
+         */
+        if (iscarSamEnabled()) {
             int mwoIndex = 0;
-            for(String  strVal:   mwoItems){
-                  if(editableAttrArea.equals(strVal)){
-                      break;
-                  }
-                  mwoIndex++;
+            for (String strVal : mwoItems) {
+                if (editableAttrArea.equals(strVal)) {
+                    break;
+                }
+                mwoIndex++;
             }
             comboMWO.select(mwoIndex);
 
-        }else{
+        } else {
             comboMWO.select(0);
 
         }
@@ -4168,19 +4197,18 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
      */
     public float getSpinnerLineWidth() {
         if (chkBoxLineWidth.getSelection()) {
-
             return lineWidthSpinSlide.getSelection();
         } else {
             return java.lang.Float.NaN;
         }
 
     }
-  
-    private void populateIdListCarSam(String issueOffice){
+
+    private void populateIdListCarSam(String issueOffice) {
 
         boolean includeABlankSeriesId = SigmetInfo
                 .getIncludeBlankSeriesIdFlag(issueOffice);
-        
+
         if (SigmetInfo.SIGMET_TYPES[0]
                 .equals(SigmetInfo.getSigmetTypeString(pgenType))) {
             comboID.setItems(SigmetInfo.getSeriesIDs(issueOffice));
@@ -4188,49 +4216,51 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             comboID.setItems(SigmetInfo.ID_MAP
                     .get(SigmetInfo.getSigmetTypeString(pgenType)));
         }
-        /*Save the Selected ID when Edit Attributes 
-          in the International SIGMET is closed*/
-             if(includeABlankSeriesId){
-                 comboID.add(" ", 0);
-                 comboID.setText(this.editableAttrId);
-                 //set the Default SeriesID to " " if no selection is made
-                 if(comboID.getSelectionIndex() == -1){
-                     comboID.select(0);
-                 }
-                 
-             }else{
-                 comboID.setText(this.editableAttrId);
-             }
-  
-}
+        /*
+         * Save the Selected ID when Edit Attributes in the International SIGMET
+         * is closed
+         */
+        if (includeABlankSeriesId) {
+            comboID.add(" ", 0);
+            comboID.setText(this.editableAttrId);
+            // set the Default SeriesID to " " if no selection is made
+            if (comboID.getSelectionIndex() == -1) {
+                comboID.select(0);
+            }
+
+        } else {
+            comboID.setText(this.editableAttrId);
+        }
+    }
+
     private void populateIdList(String issueOffice) {
-        //only if backup mode is enabled
-        if ( iscarSamEnabled()) {
+        // only if backup mode is enabled
+        if (iscarSamEnabled()) {
             issueOffice = editableAttrArea;
             populateIdListCarSam(issueOffice);
-            
-        }else{
-            
-        boolean includeABlankSeriesId = SigmetInfo
-                .getIncludeBlankSeriesIdFlag(issueOffice);
 
-        // IF "INTL", the ID values are different for different Issue.
-        if (SigmetInfo.SIGMET_TYPES[0]
-                .equals(SigmetInfo.getSigmetTypeString(pgenType))) {
-            comboID.setItems(SigmetInfo.getSeriesIDs(issueOffice));
         } else {
-            comboID.setItems(SigmetInfo.ID_MAP
-                    .get(SigmetInfo.getSigmetTypeString(pgenType)));
-        }
 
-        // Offer a blank Series ID (aka editableAttrId ) choice at the
-        // top of the "ID" menu.
-        if (includeABlankSeriesId) {
-            // Blank, not empty,zero length
-            comboID.add(" ", 0);
-        }
+            boolean includeABlankSeriesId = SigmetInfo
+                    .getIncludeBlankSeriesIdFlag(issueOffice);
 
-        comboID.select(0);
+            // IF "INTL", the ID values are different for different Issue.
+            if (SigmetInfo.SIGMET_TYPES[0]
+                    .equals(SigmetInfo.getSigmetTypeString(pgenType))) {
+                comboID.setItems(SigmetInfo.getSeriesIDs(issueOffice));
+            } else {
+                comboID.setItems(SigmetInfo.ID_MAP
+                        .get(SigmetInfo.getSigmetTypeString(pgenType)));
+            }
+
+            // Offer a blank Series ID (aka editableAttrId ) choice at the
+            // top of the "ID" menu.
+            if (includeABlankSeriesId) {
+                // Blank, not empty,zero length
+                comboID.add(" ", 0);
+            }
+
+            comboID.select(0);
         }
     }
 
@@ -4546,8 +4576,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
         String string = e.text;
         char[] chars = new char[string.length()];
         string.getChars(0, chars.length, chars, 0);
-        for (int i = 0; i < chars.length; i++) {
-            if (!('0' <= chars[i] && chars[i] <= '9')) {
+        for (char element : chars) {
+            if (!('0' <= element && element <= '9')) {
                 result = false;
             }
         }
@@ -4629,7 +4659,8 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
 
     public String getEditableAttrSeqNum() {
         return (editableAttrSeqNum == null || editableAttrSeqNum.length() == 0)
-                ? "1" : editableAttrSeqNum;
+                ? "1"
+                : editableAttrSeqNum;
     }
 
     public void setEditableAttrSeqNum(String editableAttrSeqNum) {
@@ -5469,8 +5500,9 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                     sb.append(" ").append(editableAttrId);
                     sb.append(" ");
                 }
-                
-                sb.append(" ").append(SigmetAttrDlg.this.getEditableAttrSeqNum());
+
+                sb.append(" ")
+                        .append(SigmetAttrDlg.this.getEditableAttrSeqNum());
                 sb.append(" ")
                         .append(SigmetAttrDlg.this.getEditableAttrStartTime());
                 sb.append("/")
@@ -5810,6 +5842,11 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
                             sb.append(SigmetConstant.AREA_BOUNDED_BY);
                         }
                     }
+
+                    if (SigmetAttrDlg.this
+                            .getEditableAttrFcstVADesc() != null) {
+                        String lineInfo = SigmetAttrDlg.this
+                                .getEditableAttrFcstVADesc();
                         if (isRadDescInVor) {
                             sb.append(" ").append(lineInfo);
                         } else {
@@ -6227,7 +6264,7 @@ public class SigmetAttrDlg extends AttrDlg implements ISigmet {
             if (sigmet.getEditableAttrIssueOffice() != null) {
                 if (!comboID.isDisposed()) {
                     populateIdList(sigmet.getEditableAttrIssueOffice());
-             
+
                 }
             }
         }

@@ -16,9 +16,9 @@ import java.util.Calendar;
 import org.eclipse.ui.PlatformUI;
 import org.geotools.referencing.GeodeticCalculator;
 import org.geotools.referencing.datum.DefaultEllipsoid;
+import org.locationtech.jts.geom.Coordinate;
 
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import org.locationtech.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
@@ -353,7 +353,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                     || "NCON_SIGMET".equalsIgnoreCase(pgenTypeString)
                     || "AIRM_SIGMET".equalsIgnoreCase(pgenTypeString)
                     || "OUTL_SIGMET".equalsIgnoreCase(pgenTypeString)
-                    || "CCFP_SIGMET".equalsIgnoreCase(pgenTypeString))
+                    || "CCFP_SIGMET".equalsIgnoreCase(pgenTypeString)) {
                 return DrawableType.CONV_SIGMET;
             } else if (VolcanoAshCloud.SIGMET_PGEN_TYPE
                     .equalsIgnoreCase(pgenTypeString)) {
@@ -433,8 +433,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
 
             if (points != null && points.size() >= 1) {
 
-                ArrayList<Coordinate> ghostPts = new ArrayList<>(
-                        points);
+                ArrayList<Coordinate> ghostPts = new ArrayList<>(points);
                 ghostPts.add(loc);
                 Line ln = (Line) ghostline;
                 ln.setLinePoints(new ArrayList<>(ghostPts));
@@ -510,8 +509,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                     || (getSigmetLineType(attrDlg).contains("Text"))
                     || points != null && points.size() >= 1) {
 
-                ArrayList<Coordinate> ghostPts = new ArrayList<>(
-                        points);
+                ArrayList<Coordinate> ghostPts = new ArrayList<>(points);
                 ghostPts.add(loc);
                 MultiPointElement ln = (MultiPointElement) ghost;
                 ln.setLinePoints(new ArrayList<>(ghostPts));

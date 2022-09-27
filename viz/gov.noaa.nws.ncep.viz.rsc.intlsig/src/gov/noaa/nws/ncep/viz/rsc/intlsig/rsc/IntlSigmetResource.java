@@ -351,6 +351,8 @@ public class IntlSigmetResource extends
 
                 boolean enabled = false;
                 int weatherHarzardListSize = (weatherHarzardList != null)
+                        ? weatherHarzardList.size()
+                        : 0;
 
                 for (int i = 0; i < weatherHarzardListSize; i++) {
 

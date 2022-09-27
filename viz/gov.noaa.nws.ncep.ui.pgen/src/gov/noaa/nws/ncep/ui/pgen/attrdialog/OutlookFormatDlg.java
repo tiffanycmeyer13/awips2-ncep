@@ -311,6 +311,10 @@ public class OutlookFormatDlg extends CaveJFACEDialog {
 
     }
 
+    /**
+     * Get Activity/Product Type object. Incoming Product Type map is created
+     * from outlooktimes.xml.
+     *
      * @return OutlookTimeProduct
      */
     private OutlookTimeProduct getProductType() {
