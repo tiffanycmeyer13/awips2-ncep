@@ -13,7 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.locationtech.jts.geom.Coordinate;
-
 import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.display.FillPatternList.FillPattern;

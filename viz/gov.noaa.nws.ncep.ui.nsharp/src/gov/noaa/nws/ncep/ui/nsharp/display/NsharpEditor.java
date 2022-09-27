@@ -83,6 +83,7 @@ import gov.noaa.nws.ncep.viz.ui.display.NCLoopProperties;
  * Sep 28, 2018  7479        bsteffen   Ensure reused panes have valid extents.
  * Nov 05, 2018  6800        bsteffen   Use a new handler when a procedure is loaded.
  * Apr 22, 2019  6660        bsteffen   Apply background color to all panes.
+ * Apr 01, 2022  89212       smanoj     Fix some Nsharp display issues.
  * 
  * </pre>
  * 
@@ -181,6 +182,8 @@ public class NsharpEditor extends AbstractEditor
 
     protected InputManager spcGraphsInputManager;
 
+    protected InputManager witoInputManager;
+
     private NsharpSkewTPaneMouseHandler skewtPaneMouseHandler = null;
 
     private NsharpHodoPaneMouseHandler hodoPaneMouseHandler = null;
@@ -189,9 +192,11 @@ public class NsharpEditor extends AbstractEditor
 
     private NsharpDataPaneMouseHandler dataPaneMouseHandler = null;
 
-    private NsharpAbstractMouseHandler insetPaneMouseHandler = null;
+    private NsharpInsetPaneMouseHandler insetPaneMouseHandler = null;
 
-    private NsharpAbstractMouseHandler spcGraphsPaneMouseHandler = null;
+    private NsharpSpcGraphsPaneMouseHandler spcGraphsPaneMouseHandler = null;
+
+    private NsharpWitoPaneMouseHandler witoPaneMouseHandler = null;
 
     protected VizDisplayPane displayPanes[];
 
@@ -352,6 +357,8 @@ public class NsharpEditor extends AbstractEditor
             createLiteD2DConfig();
         }
         skewtInputManager = new InputManager(this);
+        witoInputManager = new InputManager(this);
+        hodoInputManager = new InputManager(this);
         timeStnInputManager = new InputManager(this);
         dataInputManager = new InputManager(this);
         insetInputManager = new InputManager(this);
@@ -836,8 +843,12 @@ public class NsharpEditor extends AbstractEditor
                             this, pane);
                     mouseHandler = skewtPaneMouseHandler;
                     inputMgr = skewtInputManager;
+                } else if (i == DISPLAY_WITO) {
+                    witoPaneMouseHandler = new NsharpWitoPaneMouseHandler(this,
+                            pane);
+                    mouseHandler = witoPaneMouseHandler;
+                    inputMgr = witoInputManager;
                 } else if (i == DISPLAY_HODO) {
-                    hodoInputManager = new InputManager(this);
                     hodoPaneMouseHandler = new NsharpHodoPaneMouseHandler(this,
                             pane);
                     mouseHandler = hodoPaneMouseHandler;
@@ -848,12 +859,12 @@ public class NsharpEditor extends AbstractEditor
                     mouseHandler = timeStnPaneMouseHandler;
                     inputMgr = timeStnInputManager;
                 } else if (i == DISPLAY_INSET) {
-                    insetPaneMouseHandler = new NsharpAbstractMouseHandler(this,
-                            pane);
+                    insetPaneMouseHandler = new NsharpInsetPaneMouseHandler(
+                            this, pane);
                     mouseHandler = insetPaneMouseHandler;
                     inputMgr = insetInputManager;
                 } else if (i == DISPLAY_SPC_GRAPHS) {
-                    spcGraphsPaneMouseHandler = new NsharpAbstractMouseHandler(
+                    spcGraphsPaneMouseHandler = new NsharpSpcGraphsPaneMouseHandler(
                             this, pane);
                     mouseHandler = spcGraphsPaneMouseHandler;
                     inputMgr = spcGraphsInputManager;
@@ -977,6 +988,12 @@ public class NsharpEditor extends AbstractEditor
                 skewtPaneMouseHandler = null;
                 skewtInputManager = null;
             }
+            if (witoPaneMouseHandler != null && witoInputManager != null) {
+                witoPaneMouseHandler.setEditor(null);
+                witoInputManager.unregisterMouseHandler(witoPaneMouseHandler);
+                witoPaneMouseHandler = null;
+                witoInputManager = null;
+            }
             if (hodoPaneMouseHandler != null && hodoInputManager != null) {
                 hodoPaneMouseHandler.setEditor(null);
                 hodoInputManager.unregisterMouseHandler(hodoPaneMouseHandler);
@@ -1041,6 +1058,12 @@ public class NsharpEditor extends AbstractEditor
             skewtInputManager.unregisterMouseHandler(skewtPaneMouseHandler);
             skewtPaneMouseHandler = null;
             skewtInputManager = null;
+        }
+        if (witoPaneMouseHandler != null && witoInputManager != null) {
+            witoPaneMouseHandler.setEditor(null);
+            witoInputManager.unregisterMouseHandler(witoPaneMouseHandler);
+            witoPaneMouseHandler = null;
+            witoInputManager = null;
         }
         if (hodoPaneMouseHandler != null && hodoInputManager != null) {
             hodoPaneMouseHandler.setEditor(null);

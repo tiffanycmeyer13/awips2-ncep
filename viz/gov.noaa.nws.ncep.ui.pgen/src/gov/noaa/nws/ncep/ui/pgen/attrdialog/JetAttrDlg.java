@@ -65,7 +65,10 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * 12/10         366      B. Yin    Added "AddHash" and "DelHash" buttons
  * Mar 03, 2016  13557    J. Beck   Some field names have changed due to
  *                                  re-factored VectorAttrDlg.java
- * Jul 26, 2019  66393    mapeters  Handle {@link AttrSettings#getSettings} change
+ * Jul 26, 2019  66393    mapeters  Handle {@link AttrSettings#getSettings}
+ *                                  change
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
  *
@@ -102,7 +105,7 @@ public class JetAttrDlg extends LineAttrDlg {
     /**
      * Barb and flight level info input dialog
      */
-    private BarbDlg barbDlg;
+    private final BarbDlg barbDlg;
 
     /**
      * 'Add Barb' button
@@ -489,7 +492,7 @@ public class JetAttrDlg extends LineAttrDlg {
      */
     private void openAttrDlg(AttrDlg dlg) {
         dlg.setBlockOnOpen(false);
-        dlg.setDrawingLayer(drawingLayer);
+        dlg.setDrawingLayers(drawingLayers);
         dlg.setMapEditor(mapEditor);
         dlg.open();
         dlg.enableButtons();

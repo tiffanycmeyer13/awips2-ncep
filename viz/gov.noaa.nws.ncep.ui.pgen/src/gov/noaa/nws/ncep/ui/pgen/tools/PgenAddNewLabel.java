@@ -23,22 +23,22 @@ package gov.noaa.nws.ncep.ui.pgen.tools;
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
 
 /**
-*
-* Add New label to contour line in the PGEN tool.
-*
-* <pre>
-*
-* SOFTWARE HISTORY
-*
-* Date          Ticket#  Engineer  Description
-* ------------- -------- --------- -----------------
-* Sep 01, 2020   81798    smanoj    Initial creation
-* 
-* 
-* </pre>
-*
-* @author smanoj
-*/
+ *
+ * Add New label to contour line in the PGEN tool.
+ *
+ * <pre>
+ * SOFTWARE HISTORY
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * Sep 01, 2020  81798    smanoj    Initial creation
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
+ * </pre>
+ *
+ * @author smanoj
+ */
 public class PgenAddNewLabel extends AbstractPgenTool {
 
     /**
@@ -52,16 +52,15 @@ public class PgenAddNewLabel extends AbstractPgenTool {
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.addNewLblHandler == null
-                || this.mapEditor != ((PgenAddNewLabelHandler) addNewLblHandler)
-                        .getMapEditor()
-                || this.drawingLayer != ((PgenAddNewLabelHandler) addNewLblHandler)
-                        .getPgenrsc()) {
+                || this.mapEditor != addNewLblHandler.getMapEditor()
+                || !this.drawingLayers.matches(addNewLblHandler.getPgenrsc())) {
             this.addNewLblHandler = new PgenAddNewLabelHandler(this);
         }
 

@@ -21,8 +21,6 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableType;
 import gov.noaa.nws.ncep.ui.pgen.elements.Vector;
 
 import org.locationtech.jts.geom.Coordinate;
-//import gov.noaa.nws.ncep.ui.display.InputHandlerDefaultImpl;
-
 /**
  * Implements a modal map tool for PGEN vector drawing.
  *
@@ -36,6 +34,7 @@ import org.locationtech.jts.geom.Coordinate;
  *                                  for Wind Barb and Wind Arrow
  * Jul 26, 2019  66393    mapeters  Handle {@link AttrSettings#getSettings}
  *                                  change
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support multi-panel displays
  *
  * </pre>
  *
@@ -116,23 +115,23 @@ public class PgenVectorDrawingTool extends AbstractPgenDrawingTool {
          * Left mouse button initializes drawing, and sets an attribute like
          * direction, depending on drawing tool.
          */
-        private int LEFT_MOUSE_BUTTON_CLICK = 1;
+        private final int LEFT_MOUSE_BUTTON_CLICK = 1;
 
         /**
          * Left mouse click, followed by right mouse click, finalizes editing.
          */
-        private int RIGHT_MOUSE_BUTTON_CLICK = 3;
+        private final int RIGHT_MOUSE_BUTTON_CLICK = 3;
 
         /**
          * Points of the new element.
          */
-        private ArrayList<Coordinate> points = new ArrayList<>();
+        private final ArrayList<Coordinate> points = new ArrayList<>();
 
         /**
          * An instance of DrawableElementFactory, which is used to create new
          * elements.
          */
-        private DrawableElementFactory def = new DrawableElementFactory();
+        private final DrawableElementFactory def = new DrawableElementFactory();
 
         /**
          * Current element.
@@ -164,14 +163,14 @@ public class PgenVectorDrawingTool extends AbstractPgenDrawingTool {
 
                     elem = def.create(DrawableType.VECTOR, attrDlg,
                             pgenCategory, pgenType, points.get(0),
-                            drawingLayer.getActiveLayer());
+                            drawingLayers.getActiveLayer());
                 } else {
 
-                    drawingLayer.removeElement(elem);
+                    drawingLayers.removeElement(elem);
 
                     elem = def.create(DrawableType.VECTOR, attrDlg,
                             pgenCategory, pgenType, points.get(0),
-                            drawingLayer.getActiveLayer());
+                            drawingLayers.getActiveLayer());
 
                     double dir = ((Vector) elem).vectorDirection(points.get(0),
                             loc);
@@ -184,21 +183,15 @@ public class PgenVectorDrawingTool extends AbstractPgenDrawingTool {
 
                 // add the product to the PGEN resource and repaint.
                 if (elem != null) {
-                    drawingLayer.addElement(elem);
+                    drawingLayers.addElement(elem);
                     mapEditor.refresh();
                     AttrSettings.getInstance().setSettings(elem);
                 }
-
                 return true;
-
             } else if (button == RIGHT_MOUSE_BUTTON_CLICK) {
-
                 return true;
-
             } else {
-
                 return false;
-
             }
         }
 
@@ -224,7 +217,8 @@ public class PgenVectorDrawingTool extends AbstractPgenDrawingTool {
                 AbstractDrawableComponent ghost = null;
 
                 ghost = def.create(DrawableType.VECTOR, attrDlg, pgenCategory,
-                        pgenType, points.get(0), drawingLayer.getActiveLayer());
+                        pgenType, points.get(0),
+                        drawingLayers.getActiveLayer());
 
                 double dir = ((Vector) ghost).vectorDirection(points.get(0),
                         loc);
@@ -232,7 +226,7 @@ public class PgenVectorDrawingTool extends AbstractPgenDrawingTool {
                 ((Vector) ghost).setDirection(dir);
                 ((VectorAttrDlg) attrDlg).setDirection(dir);
 
-                drawingLayer.setGhostLine(ghost);
+                drawingLayers.setGhostLine(ghost);
                 mapEditor.refresh();
             }
 
@@ -241,7 +235,7 @@ public class PgenVectorDrawingTool extends AbstractPgenDrawingTool {
 
         @Override
         public boolean handleMouseUp(int x, int y, int button) {
-            if (!drawingLayer.isEditable() || shiftDown) {
+            if (!drawingLayers.isEditable() || shiftDown) {
                 return false;
             }
 
@@ -251,7 +245,7 @@ public class PgenVectorDrawingTool extends AbstractPgenDrawingTool {
             }
 
             if (button == RIGHT_MOUSE_BUTTON_CLICK) {
-                drawingLayer.removeGhostLine();
+                drawingLayers.removeGhostLine();
                 mapEditor.refresh();
 
                 if (points.size() > 0) {

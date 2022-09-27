@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenLineDrawingFlipElement
- * 
+ *
  * 28 April 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -19,19 +19,23 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.elements.labeledlines.Cloud;
 import gov.noaa.nws.ncep.ui.pgen.filter.OperationFilter;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 
 /**
  * Implements a modal map tool for the PGEN flip element function.
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * -----------  --------    ----------- --------------------------
- * 04/28        ??          M. Gao      Initial Creation.
- * 04/29        103         B. Yin      Extends from AbstractPgenTool
- * 09/30        169         G. Hull     NCMapEditor
- * 09/09/2019   68192       K. Sunil    Implement deactivateTool, set fliphanlder to null when Pgen is closed.
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 04/28         ??       M. Gao    Initial Creation.
+ * 04/29         103      B. Yin    Extends from AbstractPgenTool
+ * 09/30         169      G. Hull   NCMapEditor
+ * Sep 09, 2019  68192    K. Sunil  Implement deactivateTool, set fliphanlder to
+ *                                  null when Pgen is closed.
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
  *
@@ -46,9 +50,7 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
     protected IInputHandler flipHandler;
 
     public PgenFlipDrawingElement() {
-
         super();
-
     }
 
     /**
@@ -56,9 +58,10 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
      *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
         if (this.flipHandler == null) {
-            this.flipHandler = new PgenFlipHandler(drawingLayer, mapEditor);
+            this.flipHandler = new PgenFlipHandler(drawingLayers, mapEditor);
         }
         return this.flipHandler;
     }
@@ -82,33 +85,35 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
      */
     public class PgenFlipHandler extends InputHandlerDefaultImpl {
 
-        private PgenResource flipPgenSource;
+        private final PgenResourceList flipPgenSources;
 
-        private AbstractEditor flipNCMapEditor;
+        private final AbstractEditor flipNCMapEditor;
 
         private boolean preempt;
 
-        private OperationFilter flipFilter;
+        private final OperationFilter flipFilter;
 
-        public PgenFlipHandler(PgenResource _flipPgenSource,
+        public PgenFlipHandler(PgenResourceList _flipPgenSources,
                 AbstractEditor _flipNCMapEditor) {
-            flipPgenSource = _flipPgenSource;
+            flipPgenSources = _flipPgenSources;
             flipNCMapEditor = _flipNCMapEditor;
             flipFilter = new OperationFilter(Operation.FLIP);
         }
 
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             preempt = false;
             // Check if mouse is in geographic extent
             Coordinate loc = flipNCMapEditor.translateClick(anX, aY);
-            if (loc == null || shiftDown)
+            if (loc == null || shiftDown) {
                 return false;
+            }
 
-            AbstractDrawableComponent selectedDrawableElement = flipPgenSource
+            AbstractDrawableComponent selectedDrawableElement = flipPgenSources
                     .getSelectedComp();
 
             if (button == 1) {
@@ -119,7 +124,7 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
                 AbstractDrawableComponent reversedDrawableElement = null;
                 if (selectedDrawableElement instanceof Cloud) {
                     reversedDrawableElement = selectedDrawableElement.copy();
-                    DrawableElement de = flipPgenSource.getNearestElement(loc,
+                    DrawableElement de = flipPgenSources.getNearestElement(loc,
                             (Cloud) reversedDrawableElement);
                     if (de != null && de instanceof Line) {
                         ((Cloud) reversedDrawableElement).add(PgenToolUtils
@@ -134,11 +139,12 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
                                     selectedDrawableElement);
                 }
 
-                leftMouseButtonDownHandler(flipPgenSource,
+                leftMouseButtonDownHandler(flipPgenSources,
                         selectedDrawableElement, reversedDrawableElement, loc);
                 flipNCMapEditor.refresh();
-                if (selectedDrawableElement != null)
+                if (selectedDrawableElement != null) {
                     preempt = true;
+                }
             } else if (button == 3) {
                 return true;
             }
@@ -147,8 +153,9 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
 
         @Override
         public boolean handleMouseDownMove(int x, int y, int mouseButton) {
-            if (!isResourceEditable() || shiftDown)
+            if (!isResourceEditable() || shiftDown) {
                 return false;
+            }
             return preempt;
         }
 
@@ -157,13 +164,14 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
          */
         @Override
         public boolean handleMouseUp(int x, int y, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             if (button == 3) {
-                AbstractDrawableComponent selectedDrawableElement = flipPgenSource
+                AbstractDrawableComponent selectedDrawableElement = flipPgenSources
                         .getSelectedComp();
-                rightMouseButtonDownHandler(flipPgenSource,
+                rightMouseButtonDownHandler(flipPgenSources,
                         selectedDrawableElement, flipNCMapEditor);
 
                 return true;
@@ -187,7 +195,7 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
          *
          * @return
          */
-        private void leftMouseButtonDownHandler(PgenResource thePgenSource,
+        private void leftMouseButtonDownHandler(PgenResourceList thePgenSource,
                 AbstractDrawableComponent selectedDrawableElement,
                 AbstractDrawableComponent reversedDrawableElement,
                 Coordinate currentMouselocation) {
@@ -195,8 +203,9 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
                 // Get the nearest element and set it as the selected element.
                 selectedDrawableElement = thePgenSource.getNearestComponent(
                         currentMouselocation, flipFilter, true);
-                if (selectedDrawableElement == null)
+                if (selectedDrawableElement == null) {
                     return;
+                }
                 thePgenSource.setSelected(selectedDrawableElement);
             } else {
                 thePgenSource.replaceElement(selectedDrawableElement,
@@ -218,7 +227,8 @@ public class PgenFlipDrawingElement extends AbstractPgenTool {
          *
          * @return
          */
-        private void rightMouseButtonDownHandler(PgenResource thePpgenSource,
+        private void rightMouseButtonDownHandler(
+                PgenResourceList thePpgenSource,
 
                 AbstractDrawableComponent selectedDrawableElement,
                 AbstractEditor theNCMapEditor) {

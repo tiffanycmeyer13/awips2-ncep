@@ -33,7 +33,12 @@ import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
  * Feb 05, 2021 87538       smanoj      Added FCST Lat/Lon for Tropical Cyclone.
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
- *
+ * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
+ * Jan 24, 2022 99344       smanoj      Updates for additional requirements from
+ *                                      NWS for Int'l Sigmet for Volcanic Ash.
+ * Feb 02, 2022 99344       smanoj      Volcanic Ash LatLon values are converted to VOR
+ *                                      coordinates in Fcst Radial/Area/Line description.
+ * 
  * </pre>
  *
  * @author gzhang
@@ -100,8 +105,6 @@ public class Sigmet extends AbstractSigmet {
 
     private String editableAttrLevelText2;
 
-    private String editableAttrAltLevel;
-
     private String editableAttrAltLevelInfo1;
 
     private String editableAttrAltLevelInfo2;
@@ -125,6 +128,10 @@ public class Sigmet extends AbstractSigmet {
     private String editableAttrFcstPhenomLon;
 
     private String editableAttrFcstVADesc;
+
+    private String editableAttrFcstVADescVor;
+
+    private String editableAttrFcstVADescRoundToVal;
 
     private String editableAttrRALSelection;
 
@@ -171,7 +178,6 @@ public class Sigmet extends AbstractSigmet {
         this.editableAttrLevelInfo2 = fSig.getEditableAttrLevelInfo2();
         this.editableAttrLevelText1 = fSig.getEditableAttrLevelText1();
         this.editableAttrLevelText2 = fSig.getEditableAttrLevelText2();
-        this.editableAttrAltLevel = fSig.getEditableAttrAltLevel();
         this.editableAttrAltLevelInfo1 = fSig.getEditableAttrAltLevelInfo1();
         this.editableAttrAltLevelInfo2 = fSig.getEditableAttrAltLevelInfo2();
         this.editableAttrAltLevelText1 = fSig.getEditableAttrAltLevelText1();
@@ -185,6 +191,9 @@ public class Sigmet extends AbstractSigmet {
         this.editableAttrFcstPhenomLat = fSig.getEditableAttrFcstPhenomLat();
         this.editableAttrFcstPhenomLon = fSig.getEditableAttrFcstPhenomLon();
         this.editableAttrFcstVADesc = fSig.getEditableAttrFcstVADesc();
+        this.editableAttrFcstVADescVor = fSig.getEditableAttrFcstVADescVor();
+        this.editableAttrFcstVADescRoundToVal = fSig
+                .getEditableAttrFcstVADescRoundToVal();
         this.editableAttrRALSelection = fSig.getEditableAttrRALSelection();
         this.editableAttrAltLevelText = fSig.getEditableAttrAltLevelText();
         this.editableAttrAltitudeSelection = fSig
@@ -271,7 +280,6 @@ public class Sigmet extends AbstractSigmet {
         newSigmet.setEditableAttrLevelInfo2(this.getEditableAttrLevelInfo2());
         newSigmet.setEditableAttrLevelText1(this.getEditableAttrLevelText1());
         newSigmet.setEditableAttrLevelText2(this.getEditableAttrLevelText2());
-        newSigmet.setEditableAttrAltLevel(this.getEditableAttrAltLevel());
         newSigmet.setEditableAttrAltLevelInfo1(
                 this.getEditableAttrAltLevelInfo1());
         newSigmet.setEditableAttrAltLevelInfo2(
@@ -284,6 +292,10 @@ public class Sigmet extends AbstractSigmet {
         newSigmet.setEditableAttrCarSamBackupMode(
                 this.getEditableAttrCarSamBackupMode());
         newSigmet.setEditableAttrFcstVADesc(this.getEditableAttrFcstVADesc());
+        newSigmet.setEditableAttrFcstVADescVor(
+                this.getEditableAttrFcstVADescVor());
+        newSigmet.setEditableAttrFcstVADescRoundToVal(
+                this.getEditableAttrFcstVADescRoundToVal());
         newSigmet.setEditableAttrRALSelection(
                 this.getEditableAttrRALSelection());
         newSigmet.setEditableAttrAltLevelText(
@@ -463,14 +475,6 @@ public class Sigmet extends AbstractSigmet {
         this.editableAttrLevelText2 = editableAttrLevelText2;
     }
 
-    public String getEditableAttrAltLevel() {
-        return editableAttrAltLevel;
-    }
-
-    public void setEditableAttrAltLevel(String editableAttrLevel) {
-        this.editableAttrAltLevel = editableAttrLevel;
-    }
-
     public String getEditableAttrAltLevelInfo1() {
         return editableAttrAltLevelInfo1;
     }
@@ -553,6 +557,23 @@ public class Sigmet extends AbstractSigmet {
 
     public void setEditableAttrFcstVADesc(String editableAttrFcstVADesc) {
         this.editableAttrFcstVADesc = editableAttrFcstVADesc;
+    }
+
+    public String getEditableAttrFcstVADescVor() {
+        return editableAttrFcstVADescVor;
+    }
+
+    public void setEditableAttrFcstVADescVor(String editableAttrFcstVADescVor) {
+        this.editableAttrFcstVADescVor = editableAttrFcstVADescVor;
+    }
+
+    public String getEditableAttrFcstVADescRoundToVal() {
+        return editableAttrFcstVADescRoundToVal;
+    }
+
+    public void setEditableAttrFcstVADescRoundToVal(
+            String editableAttrFcstVADescRoundToVal) {
+        this.editableAttrFcstVADescRoundToVal = editableAttrFcstVADescRoundToVal;
     }
 
     public String getEditableAttrFir() {

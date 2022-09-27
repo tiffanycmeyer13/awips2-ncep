@@ -1,5 +1,7 @@
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
+import com.raytheon.viz.ui.editor.AbstractEditor;
+
 import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
@@ -7,9 +9,7 @@ import gov.noaa.nws.ncep.ui.pgen.attrdialog.LabeledSymbolAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
 import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
-
-import com.raytheon.viz.ui.editor.AbstractEditor;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 
 /**
  * Action ("event" ) handler for the context menu of a non-met, non-contour
@@ -18,26 +18,27 @@ import com.raytheon.viz.ui.editor.AbstractEditor;
  * pressing a button for a symbol. A met contour symbol is chosen from the Pgen
  * palette by pressing the "Met" button, then the contour button, then choosing
  * a symbol from that dialog box
- * 
+ *
  * <pre>
- * 
+ *
  * SOFTWARE HISTORY
- * 
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * Jul 8, 2015  R8198      srussell    Initial creation
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * Jul 08, 2015  8198     srussell  Initial creation
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author srussell
- * @version 1.0
  */
 
 public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
 
     protected AbstractEditor mapEditor = null;
 
-    protected PgenResource pgenrsc = null;
+    protected PgenResourceList pgenrscs = null;
 
     protected AbstractPgenTool tool = null;
 
@@ -45,13 +46,13 @@ public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
 
     /**
      * Constructor
-     * 
+     *
      * @param AbstractPgenTool
      *            tool
      */
     public PgenAddSymbolLabelHandler(AbstractPgenTool tool) {
         this.tool = tool;
-        pgenrsc = tool.getDrawingLayer();
+        pgenrscs = tool.getDrawingLayers();
         mapEditor = tool.mapEditor;
 
         if (tool instanceof AbstractPgenDrawingTool) {
@@ -66,7 +67,7 @@ public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
     @Override
     public void preprocess() {
 
-        if (pgenrsc.getSelectedComp() != null) {
+        if (pgenrscs.getSelectedComp() != null) {
             doAdd();
         }
     }
@@ -76,7 +77,7 @@ public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
      */
     private void doAdd() {
 
-        AbstractDrawableComponent adc = pgenrsc.getSelectedComp();
+        AbstractDrawableComponent adc = pgenrscs.getSelectedComp();
         boolean useSymbolColor = ((LabeledSymbolAttrDlg) attrDlg)
                 .useSymbolColor();
 
@@ -102,13 +103,13 @@ public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
      * object that holds both the symbol and the label. The DECollection object
      * holds the symbol as a DrawableElement object and the label as a String[]
      * in a Text object
-     * 
+     *
      * @param AbstractDrawableComponent
      *            adc - the currently selected symbol
      * @return AbstractDrawableComponent adc - the currently selected symbol
      *         converted into a DECollection obj which is capable of recieving a
      *         label
-     * 
+     *
      */
 
     public AbstractDrawableComponent wrapDEInADECollection(
@@ -124,7 +125,7 @@ public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
         // DrawableElement object into a "labeledSymbol" as a DECollection obj.
         // To do this it needs to see the DECollection obj as the "prevElem",
         // previous element. So replace adc, with dec.
-        pgenrsc.replaceElement(adc, dec);
+        pgenrscs.replaceElement(adc, dec);
         adc = dec;
 
         return adc;
@@ -132,7 +133,7 @@ public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
 
     /**
      * Handle a mouse down event
-     * 
+     *
      * @param x
      *            the x screen coordinate
      * @param y
@@ -148,7 +149,7 @@ public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
 
     /**
      * Handle a mouse down move event
-     * 
+     *
      * @param x
      *            the x screen coordinate
      * @param y
@@ -164,7 +165,7 @@ public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
 
     /**
      * Get the mapEditor object
-     * 
+     *
      * @return AbstractEditor mapEditor
      */
     public AbstractEditor getMapEditor() {
@@ -173,11 +174,11 @@ public class PgenAddSymbolLabelHandler extends InputHandlerDefaultImpl {
 
     /**
      * Get the PgenResource object
-     * 
+     *
      * @return PgenResource pgenrsc
      */
-    public PgenResource getPgenrsc() {
-        return pgenrsc;
+    public PgenResourceList getPgenrsc() {
+        return pgenrscs;
     }
 
 }

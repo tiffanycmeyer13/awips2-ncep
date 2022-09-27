@@ -111,7 +111,11 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  * Aug 18, 2020  81809    mroos       Remove States list duplication
  * 02/01/2021    87515    wkwock      Remove CWA
  * Jul 21, 2021  93981    tjensen     Make SaveDlg block. Fix polygon updates
- *
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ * Mar 04, 2022  100402   smanoj      Bug fix to support multi-panel
+ *                                    display refactor.
+ * 
  * </pre>
  *
  * @author gzhang
@@ -239,7 +243,9 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
     @Override
     public void enableButtons() {
 
-        this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
+        if (this.getButton(IDialogConstants.CANCEL_ID) != null) {
+            this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
+        }
 
     }
 
@@ -586,7 +592,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
             final StringBuilder coorsLatLon = new StringBuilder();
             final AbstractDrawableComponent elSelected = PgenSession
-                    .getInstance().getPgenResource().getSelectedComp();
+                    .getInstance().getCurrentResource().getSelectedComp();
             final Coordinate[] coors = (elSelected == null) ? null
                     : elSelected.getPoints().toArray(new Coordinate[] {});
 
@@ -642,89 +648,86 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
     private void init() {
         if (this.asig == null) {
             return;
-        } else {
-            Button[] btns = attrButtonMap.get("lineType");
-            if (btns != null) {
-                if (lineType.equals(AREA)
-                        || PgenConstant.TYPE_NCON_SIGMET
-                                .equalsIgnoreCase(pgenType)
-                        || PgenConstant.TYPE_AIRM_SIGMET
-                                .equalsIgnoreCase(pgenType)
-                        || PgenConstant.TYPE_OUTL_SIGMET
-                                .equalsIgnoreCase(pgenType)) {
-                    btns[0].setSelection(true);
-                    btns[1].setSelection(false);
-                    btns[2].setSelection(false);
-                } else if (lineType.contains(LINE)) {
-                    btns[0].setSelection(false);
-                    btns[1].setSelection(true);
-                    btns[2].setSelection(false);
-
-                    attrControlMap.get("lineType").setEnabled(true);
-                    attrControlMap.get("width").setEnabled(true);
-                } else if (lineType.equals(ISOLATED)) {
-                    btns[0].setSelection(false);
-                    btns[1].setSelection(false);
-                    btns[2].setSelection(true);
-
-                    attrControlMap.get("width").setEnabled(true);
-                }
-            }
-
-            Combo comboLine = (Combo) attrControlMap.get("lineType");
-            String lt = this.getLineType();
-            if (comboLine != null && !comboLine.isDisposed() && lt != null
-                    && lt.contains(this.LINE_SEPERATER)) {
-                if (lt.length() > 7) {
-                    comboLine.setText(lt.substring(7));
-                } else {
-                    comboLine.select(0);
-                }
-            }
-
-            Text txtWidth = (Text) attrControlMap.get("width");
-            String width = this.width == null ? "10.00" : this.width;
-            if (txtWidth != null && !txtWidth.isDisposed()) {
-                txtWidth.setText(width);
-            }
-
-            Combo comboMWO = (Combo) attrControlMap.get("editableAttrArea");
-            if (comboMWO != null && !comboMWO.isDisposed()
-                    && this.getEditableAttrArea() != null) {
-                String area = this.getEditableAttrArea();
-                if (area != null && area.length() > 0) {
-                    comboMWO.setText(area);
-                } else {
-                    comboMWO.select(0);
-                }
-            }
-
-            Combo comboId = (Combo) attrControlMap.get("editableAttrId");
-            if (comboId != null && !comboId.isDisposed()
-                    && this.getEditableAttrId() != null) {
-                String id = this.getEditableAttrId();
-                if (id != null && id.length() > 0) {
-                    comboId.setText(id);
-                } else {
-                    comboId.select(0);
-                }
-            }
-
-            Spinner seq = (Spinner) attrControlMap.get("editableAttrSeqNum");
-            if (seq != null && !seq.isDisposed()
-                    && this.getEditableAttrSequence() != null) {
-                String seqAttr = this.getEditableAttrSequence();
-                int i = 0;
-                try {
-                    i = Integer.parseInt(seqAttr);
-                } catch (Exception e) {
-                    statusHandler.debug(e.getLocalizedMessage(), e);
-                    i = 0;
-                }
-                seq.setSelection(i);
-            }
-
         }
+        Button[] btns = attrButtonMap.get("lineType");
+        if (btns != null) {
+            if (lineType.equals(AREA)
+                    || PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(pgenType)
+                    || PgenConstant.TYPE_AIRM_SIGMET.equalsIgnoreCase(pgenType)
+                    || PgenConstant.TYPE_OUTL_SIGMET
+                            .equalsIgnoreCase(pgenType)) {
+                btns[0].setSelection(true);
+                btns[1].setSelection(false);
+                btns[2].setSelection(false);
+            } else if (lineType.contains(LINE)) {
+                btns[0].setSelection(false);
+                btns[1].setSelection(true);
+                btns[2].setSelection(false);
+
+                attrControlMap.get("lineType").setEnabled(true);
+                attrControlMap.get("width").setEnabled(true);
+            } else if (lineType.equals(ISOLATED)) {
+                btns[0].setSelection(false);
+                btns[1].setSelection(false);
+                btns[2].setSelection(true);
+
+                attrControlMap.get("width").setEnabled(true);
+            }
+        }
+
+        Combo comboLine = (Combo) attrControlMap.get("lineType");
+        String lt = this.getLineType();
+        if (comboLine != null && !comboLine.isDisposed() && lt != null
+                && lt.contains(this.LINE_SEPERATER)) {
+            if (lt.length() > 7) {
+                comboLine.setText(lt.substring(7));
+            } else {
+                comboLine.select(0);
+            }
+        }
+
+        Text txtWidth = (Text) attrControlMap.get("width");
+        String width = this.width == null ? "10.00" : this.width;
+        if (txtWidth != null && !txtWidth.isDisposed()) {
+            txtWidth.setText(width);
+        }
+
+        Combo comboMWO = (Combo) attrControlMap.get("editableAttrArea");
+        if (comboMWO != null && !comboMWO.isDisposed()
+                && this.getEditableAttrArea() != null) {
+            String area = this.getEditableAttrArea();
+            if (area != null && area.length() > 0) {
+                comboMWO.setText(area);
+            } else {
+                comboMWO.select(0);
+            }
+        }
+
+        Combo comboId = (Combo) attrControlMap.get("editableAttrId");
+        if (comboId != null && !comboId.isDisposed()
+                && this.getEditableAttrId() != null) {
+            String id = this.getEditableAttrId();
+            if (id != null && id.length() > 0) {
+                comboId.setText(id);
+            } else {
+                comboId.select(0);
+            }
+        }
+
+        Spinner seq = (Spinner) attrControlMap.get("editableAttrSeqNum");
+        if (seq != null && !seq.isDisposed()
+                && this.getEditableAttrSequence() != null) {
+            String seqAttr = this.getEditableAttrSequence();
+            int i = 0;
+            try {
+                i = Integer.parseInt(seqAttr);
+            } catch (Exception e) {
+                statusHandler.debug(e.getLocalizedMessage(), e);
+                i = 0;
+            }
+            seq.setSelection(i);
+        }
+
     }
 
     public String getEditableAttrArea() {
@@ -785,8 +788,13 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
         @Override
         public void enableButtons() {
-            this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
-            this.getButton(IDialogConstants.OK_ID).setEnabled(true);
+            if (this.getButton(IDialogConstants.CANCEL_ID) != null) {
+                this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
+            }
+
+            if (this.getButton(IDialogConstants.OK_ID) != null) {
+                this.getButton(IDialogConstants.OK_ID).setEnabled(true);
+            }
         }
 
         @Override
@@ -811,7 +819,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
             setReturnCode(OK);
             close();
-            SigmetCommAttrDlg.this.drawingLayer.removeSelected();
+            SigmetCommAttrDlg.this.drawingLayers.removeSelected();
             SigmetCommAttrDlg.this.close();
             PgenUtil.setSelectingMode();
 
@@ -822,7 +830,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
             Layer defaultLayer = new Layer();
             defaultLayer.addElement(
-                    SigmetCommAttrDlg.this.drawingLayer.getSelectedDE());
+                    SigmetCommAttrDlg.this.drawingLayers.getSelectedDE());
             ArrayList<Layer> layerList = new ArrayList<>();
             layerList.add(defaultLayer);
 
@@ -835,10 +843,10 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
                     SigmetCommAttrDlg.this.pgenType, forecaster, null, refTime,
                     layerList);
 
-            String plabel = SigmetCommAttrDlg.this.drawingLayer
+            String plabel = SigmetCommAttrDlg.this.drawingLayers
                     .getActiveProduct().getOutputFile();
             if (plabel == null) {
-                plabel = SigmetCommAttrDlg.this.drawingLayer
+                plabel = SigmetCommAttrDlg.this.drawingLayers
                         .buildActivityLabel(defaultProduct);
             }
 
@@ -964,7 +972,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
         Polygon cSigPoly = null;
         com.raytheon.uf.viz.core.map.IMapDescriptor mapDescriptor = PgenSession
-                .getInstance().getPgenResource().getDescriptor();
+                .getInstance().getCurrentResource().getDescriptor();
         if (c1 != null) {
 
             double width = Double.parseDouble(SigmetCommAttrDlg.this.width);
@@ -1012,8 +1020,8 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
             this.asig.setEditableAttrFromLine(newEditableLine);
         }
 
-        if (drawingLayer != null) {
-            adcList = drawingLayer.getAllSelected();
+        if (drawingLayers != null) {
+            adcList = drawingLayers.getAllSelected();
             if (adcList != null && !adcList.isEmpty()) {
 
                 for (AbstractDrawableComponent adc : adcList) {
@@ -1036,13 +1044,13 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
                 List<AbstractDrawableComponent> oldList = new ArrayList<>(
                         adcList);
-                drawingLayer.replaceElements(oldList, newList);
+                drawingLayers.replaceElements(oldList, newList);
             }
 
             // set the new elements as selected.
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             for (AbstractDrawableComponent adc : newList) {
-                drawingLayer.addSelected(adc);
+                drawingLayers.addSelected(adc);
             }
         }
 

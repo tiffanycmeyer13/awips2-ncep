@@ -117,6 +117,7 @@ import systems.uom.common.USCustomary;;
  * Nov 05, 2015  5070       randerso    Adjust font sizes for dpi scaling
  * Apr 28, 2020  77667      smanoj      Flight Information Region (FIR) update.
  * Jul 15, 2020  8191       randerso    Updated for changes to LatLonPoint
+ * Apr 28, 2020  77667      smanoj      Flight Information Region (FIR) update.
  * 
  * </pre>
  *
@@ -126,22 +127,20 @@ import systems.uom.common.USCustomary;;
 public class IntlSigmetResource extends
         AbstractNatlCntrsResource<IntlSigmetResourceData, NCMapDescriptor>
         implements INatlCntrsResource {
-
     private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(IntlSigmetResource.class);
 
-    private IntlSigmetResourceData intlSigmetResourceDataObj;
+    private final IntlSigmetResourceData intlSigmetResourceDataObj;
 
     private static final UnitConverter mToNM = SI.METRE
             .getConverterTo(USCustomary.NAUTICAL_MILE);
 
     private IFont font = null;
 
+    private final float baseFontSize = 12;
 
 
 
-
-    private float baseFontSize = 12;
 
     private enum WeatherHazardType {
         /** Thunder Storm */
@@ -209,14 +208,7 @@ public class IntlSigmetResource extends
         /** WiDe SPRead Dust Storm */
         WDSPR_DS,
         /** WiDe SPRead Sand Storm */
-        WDSPR_SS,
-        WIND,
-        FZRA,
-        TEST,
-        CANCEL,
-        OTHER,
-        UNKNOWN,
-        NIL
+        WDSPR_SS, WIND, FZRA, TEST, CANCEL, OTHER, UNKNOWN, NIL
     }
 
     /**
@@ -359,8 +351,6 @@ public class IntlSigmetResource extends
 
                 boolean enabled = false;
                 int weatherHarzardListSize = (weatherHarzardList != null)
-                        ? weatherHarzardList.size()
-                        : 0;
 
                 for (int i = 0; i < weatherHarzardListSize; i++) {
 
@@ -482,7 +472,6 @@ public class IntlSigmetResource extends
                              * Get the centroid of the polygon in world
                              * coordinates to render the symbol
                              */
-
                             tempSymbolLocationWorldCoord = condensedISIG
                                     .getCentroidInWorldCoordinates(
                                             polygonCoordinatesList,
@@ -656,10 +645,6 @@ public class IntlSigmetResource extends
                                      */
                                     if (weatherHarzardList
                                             .get(i) == WeatherHazardType.MW
-                                            || weatherHarzardList.get(
-                                                    i) == WeatherHazardType.WS
-                                            || weatherHarzardList.get(
-                                                    i) == WeatherHazardType.WIND
                                             || weatherHarzardList.get(
                                                     i) == WeatherHazardType.WTSPT) {
                                         isDrawText = true;
@@ -1771,6 +1756,8 @@ public class IntlSigmetResource extends
                             arrayLatLonPoints[0].getLatitude());
                     coordinates[coordinateArrayLength
                             - 1] = startingPointCoordinate;
+                    coordinates[coordinateArrayLength
+                            - 1] = startingPointCoordinate;
                 }
 
                 return coordinates;
@@ -1934,10 +1921,9 @@ public class IntlSigmetResource extends
                  * instead?
                  */
                 stnLongitude = (double) IDecoderConstantsN.FLOAT_MISSING;
-                statusHandler.debug(
-                        "Unable to retrieve the latitude and longitude of "
-                                + sigmetIssueOffice + " from the database",
-                        e);
+                statusHandler
+                        .debug("Unable to retrieve the latitude and longitude of "
+                                + sigmetIssueOffice + " from the database", e);
             }
         }
 
@@ -2792,7 +2778,7 @@ public class IntlSigmetResource extends
      *
      */
     private class FrameData extends AbstractFrameData {
-        private HashMap<String, IntlSigmetRscDataObj> condensedIntligLinkedHashMap;
+        private final HashMap<String, IntlSigmetRscDataObj> condensedIntligLinkedHashMap;
 
         /**
          * Constructor
@@ -2822,8 +2808,8 @@ public class IntlSigmetResource extends
         @Override
         public boolean updateFrameData(IRscDataObject rscDataObj) {
             if (!(rscDataObj instanceof IntlSigmetRscDataObj)) {
-                statusHandler.debug(
-                        "IntlSigmetResource:updateFrameData() processing.....\n"
+                statusHandler
+                        .debug("IntlSigmetResource:updateFrameData() processing.....\n"
                                 + "Data belongs to a different class :"
                                 + rscDataObj.getClass().toString());
                 return false;
@@ -2864,17 +2850,17 @@ public class IntlSigmetResource extends
      */
     @SuppressWarnings("hiding")
     private class SymbolAttributesSubSet<RGB, Integer, Float, Boolean, String> {
-        private RGB symbolColor;
+        private final RGB symbolColor;
 
-        private Integer lineWidth;
+        private final Integer lineWidth;
 
-        private Float symbolSize;
+        private final Float symbolSize;
 
-        private Integer symbolWidth;
+        private final Integer symbolWidth;
 
-        private Boolean symbolEnable;
+        private final Boolean symbolEnable;
 
-        private String symbolType;
+        private final String symbolType;
 
         public SymbolAttributesSubSet(RGB inSymbolColor, Integer symbolWidth,
                 Float symbolSize, Boolean symbolEnable, String symbolType,
