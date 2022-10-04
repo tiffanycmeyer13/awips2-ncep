@@ -31,6 +31,9 @@ package gov.noaa.nws.ncep.ui.pgen.attrdialog;
  * ------------ ---------- ----------- --------------------------
  * Jun 16, 2020  79243     smanoj      Initial creation
  * Aug 19, 2020  81314     smanoj      Additional constants for Volc Ash GUI.
+ * Oct 18, 2021  93036     smanoj      Additionalconstants for QC alerts.
+ * Feb 02, 2022  99344     smanoj      Additional Constants.
+ * .
  * 
  * </pre>
  * 
@@ -92,6 +95,8 @@ public final class SigmetConstant {
 
     public static final String TOP = "TOP";
 
+    public static final String TO = "TO";
+
     public static final String ABV = "ABV";
 
     public static final String BLW = "BLW";
@@ -119,6 +124,8 @@ public final class SigmetConstant {
     public static final String TC_CENTER = "TC CENTER";
 
     public static final String TRUE = "true";
+
+    public static final String FALSE = "false";
 
     public static final String LAT_LON = "LATLON";
 

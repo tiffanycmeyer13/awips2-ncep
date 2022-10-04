@@ -1,19 +1,12 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.attrDialog.WatchCoordDlg
- * 
+ *
  * 20 January 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
-
-import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.elements.WatchBox;
-import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductConfigureDialog;
-import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
-import gov.noaa.nws.ncep.ui.pgen.tools.PgenToolUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -45,23 +38,38 @@ import org.eclipse.ui.PlatformUI;
 
 import com.raytheon.viz.ui.dialogs.CaveJFACEDialog;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.elements.WatchBox;
+import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductConfigureDialog;
+import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
+import gov.noaa.nws.ncep.ui.pgen.tools.PgenToolUtils;
+
 /**
  * Singleton for a watch coordination dialog.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 01/10		#159		B. Yin   	Initial Creation.
- * 03/06/11     #707        Q.Zhou      Changed FORECASTER text to combo. Load from forecaster.xml.
- * 03/12		#703		B. Yin		Generate product text from style sheet
- * 05/12		#769, 776	B. Yin		Added UTC time. Carry over info to WatchFormat dialog.
- * 04/13        #977        S. Gilbert  PGEN Database support
- * 08/13		TTR 795		B. Yin		Remember forecaster name, set issue time.
- * 08/13		TTR 794		B. Yin		Load phone# and passcode from table.
- * 08/13		TTR 796		B. Yin		Added drop down list for expiration time.
+ *
+ * Date          Ticket#    Engineer    Description
+ * ------------- ---------- ----------- ----------------------------------------
+ * 01/10         159        B. Yin      Initial Creation.
+ * Mar 06, 2011  707        Q.Zhou      Changed FORECASTER text to combo. Load
+ *                                      from forecaster.xml.
+ * 03/12         703        B. Yin      Generate product text from style sheet
+ * 05/12         #769, 776  B. Yin      Added UTC time. Carry over info to
+ *                                      WatchFormat dialog.
+ * 04/13         977        S. Gilbert  PGEN Database support
+ * 08/13         TTR 795    B. Yin      Remember forecaster name, set issue
+ *                                      time.
+ * 08/13         TTR 794    B. Yin      Load phone# and passcode from table.
+ * 08/13         TTR 796    B. Yin      Added drop down list for expiration
+ *                                      time.
+ * Dec 01, 2021  95362      tjensen     Refactor PGEN Resource management to
+ *                                      support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
@@ -78,10 +86,10 @@ public class WatchCoordDlg extends CaveJFACEDialog {
     private static final String[] ID_LIST = new String[] { "A", "B", "C", "D",
             "E", "F", "G", "H", "I", "J" };
 
-    private SpcPhoneList phoneList;
+    private final SpcPhoneList phoneList;
 
     // instance of the watch box attribute dialog
-    private WatchBoxAttrDlg wbDlg;
+    private final WatchBoxAttrDlg wbDlg;
 
     // top level container of all widgets
     private Composite top;
@@ -118,7 +126,7 @@ public class WatchCoordDlg extends CaveJFACEDialog {
     private Composite wfoPane;
 
     // WFO check boxes
-    private List<Button> wfoBtns;
+    private final List<Button> wfoBtns;
 
     private String dirPath;
 
@@ -128,7 +136,7 @@ public class WatchCoordDlg extends CaveJFACEDialog {
 
     /**
      * Protected constructor
-     * 
+     *
      * @param parentShell
      */
     protected WatchCoordDlg(Shell parentShell, WatchBoxAttrDlg wbDlg) {
@@ -137,7 +145,7 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         this.setShellStyle(SWT.TITLE | SWT.MODELESS | SWT.CLOSE);
 
         this.wbDlg = wbDlg;
-        wfoBtns = new ArrayList<Button>();
+        wfoBtns = new ArrayList<>();
 
         forecasterTbl = readForecasterTbl();
         FORECASTERS = getForecasters();
@@ -147,7 +155,7 @@ public class WatchCoordDlg extends CaveJFACEDialog {
 
     /**
      * Return the instance of the singleton.
-     * 
+     *
      * @param parShell
      * @return
      */
@@ -236,7 +244,7 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         // validTime = new DateTime(dt, SWT.BORDER | SWT.TIME | SWT.SHORT );
 
         Calendar expTime = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-		expTime.add(Calendar.HOUR, 8);
+        expTime.add(Calendar.HOUR, 8);
 
         validDate.setYear(expTime.get(Calendar.YEAR));
         validDate.setMonth(expTime.get(Calendar.MONTH));
@@ -245,26 +253,27 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         Composite c1 = new Composite(dt, SWT.NONE);
         c1.setLayout(new FormLayout());
 
-		validTime = new Combo( c1, SWT.DROP_DOWN | SWT.MULTI );;
+        validTime = new Combo(c1, SWT.DROP_DOWN | SWT.MULTI);
+        ;
 
         FormData fd = new FormData();
-        // fd.top = new FormAttachment(watchNumber,2, SWT.BOTTOM);
         fd.left = new FormAttachment(validDate, 5, SWT.RIGHT);
-        fd.width = 80;;
+        fd.width = 80;
+        ;
         validTime.setLayoutData(fd);
 
-		for ( String hrStr : WatchFormatDlg.HOURS ) {
-			validTime.add( hrStr );
-		}
-		
-		WatchFormatDlg.setUTCTimeTextField(c1, validTime,  expTime, wType, 5);
-        
+        for (String hrStr : WatchFormatDlg.HOURS) {
+            validTime.add(hrStr);
+        }
+
+        WatchFormatDlg.setUTCTimeTextField(c1, validTime, expTime, wType, 5);
+
         // create phone list combo
         Label phoneLbl = new Label(panel1, SWT.LEFT);
         phoneLbl.setText("Phone Number:");
 
         phoneCombo = new Combo(panel1, SWT.DROP_DOWN | SWT.READ_ONLY);
-        for (SpcPhone phone :  phoneList.getSpcPhones()){
+        for (SpcPhone phone : phoneList.getSpcPhones()) {
             phoneCombo.add(phone.getPhoneNumber());
         }
 
@@ -278,9 +287,9 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         for (String str : FORECASTERS) {
             forecasterCombo.add(str);
         }
-    	if ( wbDlg.getWatchBox().getForecaster() != null ){
-			forecasterCombo.setText(wbDlg.getWatchBox().getForecaster());
-    	}
+        if (wbDlg.getWatchBox().getForecaster() != null) {
+            forecasterCombo.setText(wbDlg.getWatchBox().getForecaster());
+        }
 
         // Create replace watch number text
         Label replaceLbl = new Label(panel1, SWT.LEFT);
@@ -296,8 +305,8 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         pwfoLabel.setText("Proposed WFOs:");
         proposedWFOs = new Text(panel2, SWT.MULTI);
         proposedWFOs.setEditable(false);
-        proposedWFOs.setText(WatchInfoDlg.formatWfoStr(wbDlg.getWatchBox()
-                .getWFOs()));
+        proposedWFOs.setText(
+                WatchInfoDlg.formatWfoStr(wbDlg.getWatchBox().getWFOs()));
 
         Label rwfoLabel = new Label(panel2, SWT.NONE);
         rwfoLabel.setText("Replaced WFOs:");
@@ -334,7 +343,7 @@ public class WatchCoordDlg extends CaveJFACEDialog {
 
     /**
      * Create wfo list and check boxes
-     * 
+     *
      * @param wfos
      */
     private void createWfoChkBoxes(List<String> wfos) {
@@ -378,8 +387,9 @@ public class WatchCoordDlg extends CaveJFACEDialog {
 
             String msg = "Please select weather type!";
 
-            MessageDialog confirmDlg = new MessageDialog(PlatformUI
-                    .getWorkbench().getActiveWorkbenchWindow().getShell(),
+            MessageDialog confirmDlg = new MessageDialog(
+                    PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                            .getShell(),
                     "Watch Information", null, msg, MessageDialog.INFORMATION,
                     new String[] { "OK" }, 0);
             confirmDlg.open();
@@ -387,17 +397,19 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         } else if (forecasterCombo.getText().isEmpty()) {
             String msg = "Please type in forecaster name!";
 
-            MessageDialog confirmDlg = new MessageDialog(PlatformUI
-                    .getWorkbench().getActiveWorkbenchWindow().getShell(),
+            MessageDialog confirmDlg = new MessageDialog(
+                    PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                            .getShell(),
                     "Watch Information", null, msg, MessageDialog.INFORMATION,
                     new String[] { "OK" }, 0);
             confirmDlg.open();
         } else {
-            String pdName = wbDlg.drawingLayer.getActiveProduct().getType();
-            ProductType pt = ProductConfigureDialog.getProductTypes().get(
-                    pdName);
-            if (pt != null)
+            String pdName = wbDlg.drawingLayers.getActiveProduct().getType();
+            ProductType pt = ProductConfigureDialog.getProductTypes()
+                    .get(pdName);
+            if (pt != null) {
                 pdName = pt.getType();
+            }
 
             String pd1 = pdName.replaceAll(" ", "_");
 
@@ -423,26 +435,27 @@ public class WatchCoordDlg extends CaveJFACEDialog {
             // if anything wrong, don't set the watch replace number
         }
         wb.setExpTime(this.getExpirationTime());
-		wb.setIssueTime(Calendar.getInstance( TimeZone.getTimeZone("GMT") ));
+        wb.setIssueTime(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
     }
 
     /**
      * Get weather type string
-     * 
+     *
      * @return
      */
     private String getWeatherType() {
         String weatherType = "";
-        if (stormBtn.getSelection())
+        if (stormBtn.getSelection()) {
             weatherType = "SEVERE THUNDERSTORM";
-        else if (tornadoBtn.getSelection())
+        } else if (tornadoBtn.getSelection()) {
             weatherType = "TORNADO";
+        }
         return weatherType;
     }
 
     /**
      * Get expiration time
-     * 
+     *
      * @return
      */
     private Calendar getExpirationTime() {
@@ -466,21 +479,19 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         Calendar expiration = getExpirationTime();
 
         // wcc text
-        String wccText = String
-                .format("THERE WILL BE A MEET-ME CONFERENCE CALL WITH THE STORM PREDICTION CENTER AT %1$02d%2$02d UTC %3$02d %4$s %5$4d TO COORDINATE A POTENTIAL %6$s WATCH VALID THROUGH %7$02d%8$02d UTC %9$02d %10$s %11$04d.",
-                        meetMe.get(Calendar.HOUR_OF_DAY),
-                        meetMe.get(Calendar.MINUTE),
-                        meetMe.get(Calendar.DAY_OF_MONTH),
-                        meetMe.getDisplayName(Calendar.MONTH, Calendar.LONG,
-                                Locale.US).toUpperCase(),
-                        meetMe.get(Calendar.YEAR),
-                        getWeatherType(),
-                        expiration.get(Calendar.HOUR_OF_DAY),
-                        expiration.get(Calendar.MINUTE),
-                        expiration.get(Calendar.DAY_OF_MONTH),
-                        expiration.getDisplayName(Calendar.MONTH,
-                                Calendar.LONG, Locale.US).toUpperCase(),
-                        expiration.get(Calendar.YEAR));
+        String wccText = String.format(
+                "THERE WILL BE A MEET-ME CONFERENCE CALL WITH THE STORM PREDICTION CENTER AT %1$02d%2$02d UTC %3$02d %4$s %5$4d TO COORDINATE A POTENTIAL %6$s WATCH VALID THROUGH %7$02d%8$02d UTC %9$02d %10$s %11$04d.",
+                meetMe.get(Calendar.HOUR_OF_DAY), meetMe.get(Calendar.MINUTE),
+                meetMe.get(Calendar.DAY_OF_MONTH),
+                meetMe.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.US)
+                        .toUpperCase(),
+                meetMe.get(Calendar.YEAR), getWeatherType(),
+                expiration.get(Calendar.HOUR_OF_DAY),
+                expiration.get(Calendar.MINUTE),
+                expiration.get(Calendar.DAY_OF_MONTH),
+                expiration.getDisplayName(Calendar.MONTH, Calendar.LONG,
+                        Locale.US).toUpperCase(),
+                expiration.get(Calendar.YEAR));
 
         wccText += "\n\nTHE FOLLOWING NATIONAL WEATHER SERVICE FORECAST OFFICES ARE NEEDED ON THE CONFERENCE CALL:\n\n";
         String wfoList = WatchInfoDlg
@@ -493,12 +504,14 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         String nearbyWFOs = "";
         for (Button btn : wfoBtns) {
             if (btn.getSelection()) {
-                if (!nearby)
+                if (!nearby) {
                     nearby = true;
-                if (nearbyWFOs.isEmpty())
+                }
+                if (nearbyWFOs.isEmpty()) {
                     nearbyWFOs += btn.getText();
-                else
+                } else {
                     nearbyWFOs += "..." + btn.getText();
+                }
             }
         }
 
@@ -507,7 +520,8 @@ public class WatchCoordDlg extends CaveJFACEDialog {
             wccText += "\n\n   " + nearbyWFOs;
         }
 
-        SpcPhone phone =  phoneList.getSpcPhones().get(phoneCombo.getSelectionIndex());
+        SpcPhone phone = phoneList.getSpcPhones()
+                .get(phoneCombo.getSelectionIndex());
         wccText += "\n\nPhone Number: " + phone.getPhoneNumber();
         wccText += "\nPassword: " + phone.getPasscode();
         wccText += "\n\nIF PASSWORD IS NOT AVAILABLE, CONTACT SPC LEAD FORECASTER.";
@@ -519,9 +533,8 @@ public class WatchCoordDlg extends CaveJFACEDialog {
 
         String wfoLaunch = "None";
         if (!wbDlg.getWatchBox().getWFOs().isEmpty()) {
-            wfoLaunch = WatchInfoDlg
-                    .formatWfoStr(wbDlg.getWatchBox().getWFOs()).substring(3)
-                    .replaceAll("\n", "");
+            wfoLaunch = WatchInfoDlg.formatWfoStr(wbDlg.getWatchBox().getWFOs())
+                    .substring(3).replaceAll("\n", "");
             wfoLaunch = wfoLaunch.replaceAll("\\.\\.\\.", ",") + ",WNAW,WNAR";
         }
 
@@ -565,8 +578,8 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         }
         String attn = PgenToolUtils.wrapWatchText("ATTN...WFO"
                 + WatchInfoDlg.formatWfoStr(wbDlg.getWatchBox().getWFOs())
-                        .replaceAll("\n", ""), LINE_LEN)
-                + "\n";
+                        .replaceAll("\n", ""),
+                LINE_LEN) + "\n";
         wclText += attn;
 
         String msg = wclText;
@@ -591,10 +604,9 @@ public class WatchCoordDlg extends CaveJFACEDialog {
         if (FORECASTERS == null) {
             try {
                 String forecasterFile = PgenStaticDataProvider.getProvider()
-                        .getFileAbsolutePath(
-                                PgenStaticDataProvider.getProvider()
-                                        .getPgenLocalizationRoot()
-                                        + PGEN_FORECASTER);
+                        .getFileAbsolutePath(PgenStaticDataProvider
+                                .getProvider().getPgenLocalizationRoot()
+                                + PGEN_FORECASTER);
 
                 SAXReader reader = new SAXReader();
                 forecasterTbl = reader.read(forecasterFile);
@@ -607,10 +619,11 @@ public class WatchCoordDlg extends CaveJFACEDialog {
     }
 
     public static String[] getForecasters() {
-        if (forecasterTbl == null)
-            FORECASTERS = new String[] { "BALDWIN", "BIRCH", "EVANS", "GALLINA" };
-        else {
-            List<String> list = new ArrayList<String>();
+        if (forecasterTbl == null) {
+            FORECASTERS = new String[] { "BALDWIN", "BIRCH", "EVANS",
+                    "GALLINA" };
+        } else {
+            List<String> list = new ArrayList<>();
             List<Node> nodes = forecasterTbl.selectNodes(FORECASTER_XPATH);
 
             for (Node node : nodes) {
@@ -626,7 +639,7 @@ public class WatchCoordDlg extends CaveJFACEDialog {
 
     /**
      * Get Watch type
-     * 
+     *
      * @return string - watch type
      */
     private String getWatchType() {

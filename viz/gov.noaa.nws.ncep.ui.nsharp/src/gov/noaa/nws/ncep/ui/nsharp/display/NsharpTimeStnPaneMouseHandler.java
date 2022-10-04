@@ -20,6 +20,7 @@
 package gov.noaa.nws.ncep.ui.nsharp.display;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Event;
 import org.locationtech.jts.geom.Coordinate;
 
 import com.raytheon.uf.viz.core.IDisplayPane;
@@ -42,16 +43,35 @@ import gov.noaa.nws.ncep.ui.nsharp.view.NsharpShowTextDialog;
  * -------      -------     --------    -----------
  * 05/22/2012   229         Chin Chen   Initial coding for multiple Panes implementations
  * 04/16/2020   73571       smanoj      NSHARP D2D port refactor
- *
+ * 04/01/2022   89212       smanoj      Fix some Nsharp display issues.
+ * 
  * </pre>
  * 
  * @author Chin Chen
  */
 public class NsharpTimeStnPaneMouseHandler extends NsharpAbstractMouseHandler {
-
     public NsharpTimeStnPaneMouseHandler(NsharpEditor editor,
             IDisplayPane pane) {
         super(editor, pane);
+    }
+    @Override
+    public boolean handleMouseWheel(Event event, int x, int y) {
+
+        if (editor == null || cursorInPane == false) {
+            return false;
+        }
+
+        com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_FORWARD = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_FORWARD;
+        com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_BACK = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_BACK;
+        if ((event.count < 0
+                && prefManager.handleEvent(ZOOMIN_PREF, SCROLL_FORWARD))
+                || (event.count > 0 && prefManager.handleEvent(ZOOMOUT_PREF,
+                        SCROLL_BACK))) {
+            currentPane.zoom(event.count, event.x, event.y);
+
+            editor.refresh();
+        }
+        return true;
     }
 
     @Override
@@ -76,6 +96,7 @@ public class NsharpTimeStnPaneMouseHandler extends NsharpAbstractMouseHandler {
                 this.mode = Mode.SNDTYPE_DOWN;
             }
             editor.refresh();
+            
         }
 
         return false;

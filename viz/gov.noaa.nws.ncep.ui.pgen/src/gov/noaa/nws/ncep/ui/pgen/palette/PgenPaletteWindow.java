@@ -95,6 +95,7 @@ import gov.noaa.nws.ncep.ui.pgen.gfa.PreloadGfaDataThread;
 import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductDialogStarter;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceData;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenCycleTool;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenSelectingTool;
 import gov.noaa.nws.ncep.viz.common.display.NcDisplayName;
@@ -164,6 +165,8 @@ import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
  * Dec 27, 2016  27572       B. Yin      Fixed an undo/redo exception.
  * Jun 24, 2019  65204       tjensen     Moved setEditable call to on button
  *                                       clicks instead of on focus
+ * Dec 01, 2021  95362       tjensen     Refactor PGEN Resource management to
+ *                                       support multi-panel displays
  *
  * </pre>
  *
@@ -433,7 +436,7 @@ public class PgenPaletteWindow extends ViewPart
         // Check current editor for a PgenResource. If found, register it with
         // the PgenSession
 
-        PgenResource current = PgenUtil.findPgenResource(null);
+        PgenResourceList current = PgenUtil.findPgenResources(null);
         if (current != null) {
             PgenSession.getInstance().setResource(current);
             PgenUtil.setSelectingMode();
@@ -836,8 +839,8 @@ public class PgenPaletteWindow extends ViewPart
                             elem.getAttribute(PgenConstant.NAME));
                 } else {
                     // clean up
-                    PgenResource pgen = PgenUtil
-                            .findPgenResource((AbstractEditor) editor);
+                    PgenResourceList pgen = PgenUtil
+                            .findPgenResources((AbstractEditor) editor);
                     if (pgen != null) {
                         pgen.removeGhostLine();
                         pgen.removeSelected();
@@ -951,18 +954,20 @@ public class PgenPaletteWindow extends ViewPart
                 return;
             }
 
-            PgenResource rsc = PgenUtil.findPgenResource((AbstractEditor) part);
+            PgenResourceList rscs = PgenUtil
+                    .findPgenResources((AbstractEditor) part);
 
-            if ((rsc == null) && (PgenUtil.getPgenMode() == PgenMode.SINGLE)) {
-                rsc = PgenUtil.createNewResource();
+            if ((rscs == null || rscs.isEmpty())
+                    && (PgenUtil.getPgenMode() == PgenMode.SINGLE)) {
+                rscs = new PgenResourceList(PgenUtil.createNewResource());
             }
 
-            if (rsc != null) {
-                rsc.setCatFilter(new CategoryFilter((currentCategory == null)
+            if (rscs != null) {
+                rscs.setCatFilter(new CategoryFilter((currentCategory == null)
                         ? PgenConstant.CATEGORY_ANY : currentCategory));
             }
 
-            PgenSession.getInstance().setResource(rsc);
+            PgenSession.getInstance().setResource(rscs);
 
             AbstractEditor editor = (AbstractEditor) part;
             if (PgenUtil.getNumberofPanes(editor) > 1) {
@@ -989,8 +994,8 @@ public class PgenPaletteWindow extends ViewPart
 
         if (PgenUtil.isNatlCntrsEditor(part) || part instanceof VizMapEditor) {
             AbstractEditor editor = (AbstractEditor) part;
-            PgenResource rsc = PgenUtil.findPgenResource((AbstractEditor) part);
-
+            PgenResourceList rsc = PgenUtil
+                    .findPgenResources((AbstractEditor) part);
             if ((rsc != null) && (PgenUtil.getPgenMode() == PgenMode.SINGLE)
                     && (PgenUtil.doesLayerLink())) {
 
@@ -1058,8 +1063,8 @@ public class PgenPaletteWindow extends ViewPart
                 }
             });
         } else if (PgenUtil.isNatlCntrsEditor(part)) {
-            PgenResource pgen = PgenUtil
-                    .findPgenResource((AbstractEditor) part);
+            PgenResourceList pgen = PgenUtil
+                    .findPgenResources((AbstractEditor) part);
             if (pgen != null) {
                 pgen.closeDialogs();
 
@@ -1076,23 +1081,9 @@ public class PgenPaletteWindow extends ViewPart
 
         if (PgenUtil.isNatlCntrsEditor(part)) {
 
-            PgenResource pgen = PgenUtil
-                    .findPgenResource((AbstractEditor) part);
+            PgenResourceList pgen = PgenUtil
+                    .findPgenResources((AbstractEditor) part);
             if (pgen != null) {
-
-                // Comment out the following three lines to keep the drawing
-                // tool and to keep the attribute dialog up
-                // when user clicks on the blank space on PGEN pallete.
-                // --bingfan 4/20/12
-
-                // pgen.removeGhostLine();
-                // pgen.removeSelected();
-                // pgen.deactivatePgenTools();
-
-                // not sure why closeDialogs() is put here and not sure why it's
-                // commented out. --bingfan
-                // pgen.closeDialogs();
-
                 deactivatePGENContext();
                 ((AbstractEditor) part).refresh();
             }
@@ -1102,10 +1093,7 @@ public class PgenPaletteWindow extends ViewPart
                 currentIsMultiPane = null;
                 PgenUtil.removeSelectedPaneChangedListener(editor, this);
             }
-
-        }
-
-        else if (part instanceof PgenPaletteWindow) {
+        } else if (part instanceof PgenPaletteWindow) {
             deactivatePGENContext();
         }
 
@@ -1124,8 +1112,8 @@ public class PgenPaletteWindow extends ViewPart
         IWorkbenchPart part = partRef.getPart(false);
 
         if (PgenUtil.isNatlCntrsEditor(part) || part instanceof VizMapEditor) {
-            PgenResource pgen = PgenUtil
-                    .findPgenResource((AbstractEditor) part);
+            PgenResourceList pgen = PgenUtil
+                    .findPgenResources((AbstractEditor) part);
             if (pgen != null) {
                 pgen.closeDialogs();
                 pgen.deactivatePgenTools();
@@ -1500,7 +1488,7 @@ public class PgenPaletteWindow extends ViewPart
         /*
          * Update category filter
          */
-        PgenResource rsc = PgenSession.getInstance().getPgenResource();
+        PgenResource rsc = PgenSession.getInstance().getCurrentResource();
         if (rsc != null) {
             String catg = PgenConstant.CATEGORY_ANY;
             if (currentCategory != null) {
@@ -1660,7 +1648,7 @@ public class PgenPaletteWindow extends ViewPart
         if (pgenSession == null) {
             return false;
         }
-        PgenResource pgenResource = pgenSession.getPgenResource();
+        PgenResource pgenResource = pgenSession.getCurrentResource();
         if (pgenResource == null) {
             return false;
         }
@@ -1692,7 +1680,7 @@ public class PgenPaletteWindow extends ViewPart
         BufferedImage screenshot = editor.getActiveDisplayPane().getTarget()
                 .screenshot();
 
-        PgenResourceData prd = PgenSession.getInstance().getPgenResource()
+        PgenResourceData prd = PgenSession.getInstance().getCurrentResource()
                 .getResourceData();
 
         // if this editor actually has any elements drawn, need to save
@@ -1726,8 +1714,7 @@ public class PgenPaletteWindow extends ViewPart
             returnCode = ISaveablePart2.YES;
             break;
         case IDialogConstants.NO_ID:
-            PgenSession.getInstance().getPgenResource().getResourceData()
-                    .setNeedsSaving(false);
+            prd.setNeedsSaving(false);
             returnCode = ISaveablePart2.NO;
             break;
         case IDialogConstants.CANCEL_ID:

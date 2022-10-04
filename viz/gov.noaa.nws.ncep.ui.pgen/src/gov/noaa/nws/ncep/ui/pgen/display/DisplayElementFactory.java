@@ -122,57 +122,101 @@ import gov.noaa.nws.ncep.viz.common.SnapUtil;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 03/10        #223        M.Laryukhin Gfa added.
- * 11/10        ?           B. Yin      Added an option to draw one column mid-level cloud text
- * 11/10        #345        J. Wu       Added an option to not drawing a Text element
- * 12/10        #321        J. Wu       Auto-adjust label positions for Contours.
- * 01/11        #235D       B. Hebbard  Added grouping Vectors in few display elements for faster performance
- * 02/11        ?           B. Yin      Combine WatchBox counties to fill the area
- * 04/11        ?           B. Yin      Use Geometry instead of MultiPolygon for county shapes
- * 04/11        #?          B. Yin      Re-factor IAttribute, changed ISinglePoint to ISymbol
- * 07/11        #?          J. Wu       Allow more than 1 labels for closed contour lines.
- * 02/12        #597        S. Gurung   Moved snap functionalities to SnapUtil from SigmetInfo.
- * 03/12        #697        Q. Zhou     Fixed line arrow head size for line & gfa
- * 07/12        #834        J. Wu       Fixed fuzzy text display.
- * 08/12        #760        B. Yin      Modify line factory to apply world wrap.
- * 09/12                    B. Hebbard  Merge out RTS changes from OB12.9.1 - adds reset()
- * 11/12        #901/917    J. Wu       Set the symbol in GFA text box in proper location/size
- * 05/13                    Chin Chen   use IDescriptor instead of IMapDescriptor for used by Nsharp wind barb drawing
- * 07/13        #988        Archana     added createDisplayElements() to add all symbols in the same color to a single wire-frame.
- * 09/23/13                 Chin Chen   changed several private variables/methods to protected, for NsharpDisplayElementFactory now extend from
- *                                      this class
- * 11/13        TTR 752     J. Wu       added methods to compute an element's range record.
- * 12/13        #1089       B. Yin      Modify watch to display county list
- * 02/14        #2819       R. Anderson Removed unnecessary .clone() call
- * 05/14        TTR 995     J. Wu       Make contour label auto-placement an option.
- * 07/14        ?           B. Yin      Added support for dashed-line circle for TCM 12 feet sea.
- * 08/14        ?           B. Yin      Fixed world wrap for TCM track and zero circle issues.
- * 08/14        TTR972      J. Wu       Draw filled object as filled only if either its layer's "filled" flag
- *                                      "true" or they are on the active layer,  .
- * 09/14        TTR750      J. Wu       Draw track label with specified font styles.
- * 12/14        R5413       B. Yin      Dispose image and font in find*Ranges methods
- * 03/15        R4862       M. Kean     changes related to new point reduced data
- * 04/15        R6520       J. Wu       Adjust front's width/pattern size to match NMAP2.
- * 08/15        R7757       B. Hebbard  Upgrade createDisplayElements(List<IVector>,--) to handle heterogeneous
- *                                      collection of vector types (i.e., more than one of arrow/barb/hash)
- * 09/29/2015   R12832      J. Wu       Fix direction-change when moving hash marks.
- * 12/17/2015   R12990      J. Wu       Added user control for spacing between contour symbols & labels.
- * Nov 05, 2015 5070       randerso     Adjust font sizes for dpi scaling
- * Apr 28, 2016 5542       tgurney      Performance improvement in createDisplayElements(ILine, ...)
- * 01/27/2016   R13166      J. Wu       Add symbol only & label only for ContourMinmax.
- * 04/15/2016   R13556      J. Lopez    Fixed world wrap issue when an end point is on 180 longitude.
- *                                      Moved world wrap code and smoothing code to its own function.
- * 04/05/2016   R17006      J. Wu       Correct the drawing of five-knot wind barb.
- * 11/07/2016   R23252      S. Russell  Updated createArrows() to support OPEN
+ *
+ * Date          Ticket#   Engineer     Description
+ * ------------- --------- ------------ ----------------------------------------
+ * 03/10         223       M.Laryukhin  Gfa added.
+ * 11/10         ?         B. Yin       Added an option to draw one column
+ *                                      mid-level cloud text
+ * 11/10         345       J. Wu        Added an option to not drawing a Text
+ *                                      element
+ * 12/10         321       J. Wu        Auto-adjust label positions for
+ *                                      Contours.
+ * 01/11         #235D     B. Hebbard   Added grouping Vectors in few display
+ *                                      elements for faster performance
+ * 02/11         ?         B. Yin       Combine WatchBox counties to fill the
+ *                                      area
+ * 04/11         ?         B. Yin       Use Geometry instead of MultiPolygon for
+ *                                      county shapes
+ * 04/11         #?        B. Yin       Re-factor IAttribute, changed
+ *                                      ISinglePoint to ISymbol
+ * 07/11         #?        J. Wu        Allow more than 1 labels for closed
+ *                                      contour lines.
+ * 02/12         597       S. Gurung    Moved snap functionalities to SnapUtil
+ *                                      from SigmetInfo.
+ * 03/12         697       Q. Zhou      Fixed line arrow head size for line &
+ *                                      gfa
+ * 07/12         834       J. Wu        Fixed fuzzy text display.
+ * 08/12         760       B. Yin       Modify line factory to apply world wrap.
+ * 09/12                   B. Hebbard   Merge out RTS changes from OB12.9.1 -
+ *                                      adds reset()
+ * 11/12         #901/917  J. Wu        Set the symbol in GFA text box in proper
+ *                                      location/size
+ * 05/13                   Chin Chen    use IDescriptor instead of
+ *                                      IMapDescriptor for used by Nsharp wind
+ *                                      barb drawing
+ * 07/13         988       Archana      added createDisplayElements() to add all
+ *                                      symbols in the same color to a single
+ *                                      wire-frame.
+ * Sep 23, 2013            Chin Chen    changed several private
+ *                                      variables/methods to protected, for
+ *                                      NsharpDisplayElementFactory now extend
+ *                                      from this class
+ * 11/13         TTR 752   J. Wu        added methods to compute an element's
+ *                                      range record.
+ * 12/13         1089      B. Yin       Modify watch to display county list
+ * 02/14         2819      R. Anderson  Removed unnecessary .clone() call
+ * 05/14         TTR 995   J. Wu        Make contour label auto-placement an
+ *                                      option.
+ * 07/14         ?         B. Yin       Added support for dashed-line circle for
+ *                                      TCM 12 feet sea.
+ * 08/14         ?         B. Yin       Fixed world wrap for TCM track and zero
+ *                                      circle issues.
+ * 08/14         TTR972    J. Wu        Draw filled object as filled only if
+ *                                      either its layer's "filled" flag "true"
+ *                                      or they are on the active layer,  .
+ * 09/14         TTR750    J. Wu        Draw track label with specified font
+ *                                      styles.
+ * 12/14         5413      B. Yin       Dispose image and font in find*Ranges
+ *                                      methods
+ * 03/15         4862      M. Kean      changes related to new point reduced
+ *                                      data
+ * 04/15         6520      J. Wu        Adjust front's width/pattern size to
+ *                                      match NMAP2.
+ * 08/15         7757      B. Hebbard   Upgrade
+ *                                      createDisplayElements(List<IVector>,--)
+ *                                      to handle heterogeneous collection of
+ *                                      vector types (i.e., more than one of
+ *                                      arrow/barb/hash)
+ * Sep 29, 2015  12832     J. Wu        Fix direction-change when moving hash
+ *                                      marks.
+ * Dec 17, 2015  12990     J. Wu        Added user control for spacing between
+ *                                      contour symbols & labels.
+ * Nov 05, 2015  5070      randerso     Adjust font sizes for dpi scaling
+ * Apr 28, 2016  5542      tgurney      Performance improvement in
+ *                                      createDisplayElements(ILine, ...)
+ * Jan 27, 2016  13166     J. Wu        Add symbol only & label only for
+ *                                      ContourMinmax.
+ * Apr 15, 2016  13556     J. Lopez     Fixed world wrap issue when an end point
+ *                                      is on 180 longitude. Moved world wrap
+ *                                      code and smoothing code to its own
+ *                                      function.
+ * Apr 05, 2016  17006     J. Wu        Correct the drawing of five-knot wind
+ *                                      barb.
+ * Nov 07, 2016  23252     S. Russell   Updated createArrows() to support OPEN
  *                                      arrowheads.
- * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
- * 02/12/2020   74776       smanoj      Fixed a NullPointerException when deleting MET Contour Label
- *                                      using keyboard delete key.
- * 02/24/2021   86827       srussell    Updated createDisplayElements() to
+ * Jan 07, 2020  71971     smanoj       Modified code to use PgenConstants
+ * Feb 12, 2020  74776     smanoj       Fixed a NullPointerException when
+ *                                      deleting MET Contour Label using
+ *                                      keyboard delete key.
+ * Feb 24, 2021  86827     srussell     Updated createDisplayElements() to
  *                                      account for update of units in
  *                                      SigmetInfo.getIsolated()
+ * May 03, 2021  90330     srahimi      Return Warning for Invalid Coordinates
+ *                                      found for Isolated Sigmet Point & Return
+ *                                      Valid Coordinate
+ * Dec 01, 2021  95362     tjensen      Refactor PGEN Resource management to
+ *                                      support multi-panel displays
  *
  * </pre>
  *
@@ -207,7 +251,7 @@ public class DisplayElementFactory {
      */
     protected IDescriptor/* IMapDescriptor */ iDescriptor;
 
-    private GeometryFactory gf;
+    private final GeometryFactory gf;
 
     /**
      * Array of WireframeShapes used to hold all line segments to be drawn
@@ -225,7 +269,7 @@ public class DisplayElementFactory {
 
     protected double deviceScale = 25.0; // default scale factor for GL device
 
-    private double symbolScale = 0.65;
+    private final double symbolScale = 0.65;
 
     private double screenToExtent = 1.0;
 
@@ -262,15 +306,15 @@ public class DisplayElementFactory {
             .getActivePerspectiveInstance();
 
     class SymbolImageCallback implements IRenderedImageCallback {
-        private String patternName;
+        private final String patternName;
 
-        private double scale;
+        private final double scale;
 
-        private float lineWidth;
+        private final float lineWidth;
 
-        private boolean mask;
+        private final boolean mask;
 
-        private Color color;
+        private final Color color;
 
         public SymbolImageCallback(String patternName, double scale,
                 float lineWidth, boolean mask, Color color) {
@@ -890,8 +934,8 @@ public class DisplayElementFactory {
         Coordinate[] points = watchBox.getLinePoints();
         ArrayList<Coordinate> ptsList = new ArrayList<>();
 
-        for (int ii = 0; ii < points.length; ii++) {
-            ptsList.add(points[ii]);
+        for (Coordinate point : points) {
+            ptsList.add(point);
         }
 
         // get displayElements for the watch box.
@@ -5155,19 +5199,29 @@ public class DisplayElementFactory {
 
             slist.addAll(createDisplayElements(centerSign, paintProps));
 
+            Coordinate vertex = locs[locs.length - 1];
+
+            if (Double.isNaN(vertex.x) || Double.isNaN(vertex.y)) {
+                handler.warn(
+                        "Invalid Coordinates Found for Isolated Sigmet Point");
+                return slist;
+            }
+
             try {
-                arcpts.addLineSegment(
-                        SigmetInfo.getIsolated(locs[locs.length - 1],
-                                widthInNautical, (IMapDescriptor) iDescriptor));
+
+                arcpts.addLineSegment(SigmetInfo.getIsolated(vertex,
+                        widthInNautical, (IMapDescriptor) iDescriptor));
             } catch (Throwable e) {
-                handler.error("Isolated: " + e.getCause());
-            } // OutOfMemoryError
+                handler.error("ERROR getting isolated SIGMET", e);
+            }
 
             arcpts.compile();
             slist.add(new LineDisplayElement(arcpts, dspClr[0],
+
                     sigmet.getLineWidth()));
 
             addTopText(sigmet, locs, dspClr, paintProps, slist);
+
             return slist;
         } else if (lineType.contains("Text")) {
 
@@ -5422,7 +5476,7 @@ public class DisplayElementFactory {
 
                 org.geotools.referencing.GeodeticCalculator gc = new org.geotools.referencing.GeodeticCalculator(
                         gov.noaa.nws.ncep.ui.pgen.PgenSession.getInstance()
-                                .getPgenResource()
+                                .getCurrentResource()
                                 .getCoordinateReferenceSystem());
 
                 Coordinate loc2;
@@ -6426,8 +6480,8 @@ public class DisplayElementFactory {
              */
             if (vect.getSpeed() < 0.5) {
                 double[][] pts = calculateCircle(start, sfactor * 0.1);
-                for (int ii = 0; ii < pts.length; ii++) {
-                    allpts.add(new Coordinate(pts[ii][0], pts[ii][1]));
+                for (double[] pt : pts) {
+                    allpts.add(new Coordinate(pt[0], pt[1]));
                 }
                 break;
             }

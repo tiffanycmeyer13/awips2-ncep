@@ -19,24 +19,21 @@
  **/
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
 
-import com.raytheon.uf.common.status.IUFStatusHandler;
-import com.raytheon.uf.common.status.UFStatus;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.TimeZone;
 
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
-import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
-import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
-
-import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.swt.widgets.Shell;
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -44,13 +41,15 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Spinner;
+import org.eclipse.swt.widgets.Text;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.text.DateFormat;
-import java.util.TimeZone;
+import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
+import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.CarSamBackupWmoHeader;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
 
 /**
  *
@@ -62,20 +61,30 @@ import java.util.TimeZone;
  * SOFTWARE HISTORY
  *
  * Date          Ticket#  Engineer  Description
- * ------------- -------- --------- -----------------
- * Jun 01, 2020  78215    smanoj   Initial creation
- * Jun 16, 2020  79243    smanoj   Added Caribbean and South American FIRs.
- *
+ * ------------- -------- --------- --------------------------------------------
+ * Jun 01, 2020  78215    smanoj    Initial creation
+ * Jun 16, 2020  79243    smanoj    Added Caribbean and South American FIRs.
+ * Mar 15, 2021  88217    smanoj    Added capability to SAVE CANCEL file.
+ * Apr 07, 2021  88217    smanoj    Remove Hazard Type from Cancellation
+ *                                  Information Text. Also remove unused
+ *                                  buttons.
+ * Apr 09, 2021  90325    smanoj    CARSAM Backup WMO headers update.
+ * Jun 04, 2021  91845    smanoj    Fixing some issues with Backupmode and
+ *                                  CANCEL.
+ * Jun 15, 2021  91845    smanoj    Remove duplicate text from Cancellation
+ *                                  Information Text.
+ * Nov 18, 2021  98546    achalla   Modified CAR/SAM SIGMET Id and Sequence
+ *                                  number in GUI and xml file
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ * May 17, 2022  103690   achalla   PGEN functionality CarSam Enhancement.
  * </pre>
  *
  * @author smanoj
  */
 public class SigmetCancelDlg extends AttrDlg {
 
-    private static final IUFStatusHandler statusHandler = UFStatus
-            .getHandler(SigmetAttrDlg.class);
-
-    private Sigmet sigmet;
+    private final Sigmet sigmet;
 
     private String firID;
 
@@ -127,15 +136,27 @@ public class SigmetCancelDlg extends AttrDlg {
 
     private static final int CHECK_ID = IDialogConstants.CLIENT_ID + 1;
 
-    private static final int TEST_XML_ID = IDialogConstants.CLIENT_ID + 2;
+    private static final int PARENT_SAVE_ID = IDialogConstants.CLIENT_ID + 2;
 
-    private static final int SEND_ID = IDialogConstants.OK_ID;
+    private static final int SAVE_ID = IDialogConstants.OK_ID;
 
     private static final int CANCEL_ID = IDialogConstants.CANCEL_ID;
 
-    public SigmetCancelDlg(Shell parShell, Sigmet sigmet) {
+    private static final String INTL_SIGMET = "INTL_SIGMET";
+
+    private static final String STATUS_CANCEL = "2";
+
+    private Button btnCarSamBackUp;
+
+    private boolean isCarSamBackup = false;
+
+    private SigmetAttrDlg parentDlg = null;
+
+    public SigmetCancelDlg(SigmetAttrDlg parentDlg, Shell parShell,
+            Sigmet sigmet) {
         super(parShell);
         this.sigmet = sigmet;
+        this.parentDlg = parentDlg;
     }
 
     @Override
@@ -169,8 +190,28 @@ public class SigmetCancelDlg extends AttrDlg {
 
         seqNumInt = Integer.parseInt(seqNum);
 
-        // Incremented series number to reference the SIGMET to be canceled.
-        seriesNumber = seqNumInt + 1;
+        if (sigmet.getEditableAttrStatus() != null) {
+            if (STATUS_CANCEL.equals(sigmet.getEditableAttrStatus())) {
+                // In the case of opening a cancelled SIGMET (existing *.xml)
+                // so the Cancel Dialog is populated with the correct Series
+                // Number.
+                String fileName = parentDlg.drawingLayers.getActiveProduct()
+                        .getInputFile();
+                if (fileName != null && fileName.startsWith(INTL_SIGMET)
+                        && fileName.endsWith(".xml")) {
+                    char serNum = fileName.charAt(fileName.length() - 5);
+                    seriesNumber = Integer.parseInt(Character.toString(serNum));
+                }
+            }
+        } else {
+            // Incremented series number to reference the SIGMET to be canceled.
+            seriesNumber = seqNumInt + 1;
+        }
+
+        // Series Number for Cancel should be higher than Sequence Number
+        if (seriesNumber <= seqNumInt) {
+            seriesNumber = seqNumInt + 1;
+        }
 
         seriesNum = Integer.toString(seriesNumber);
 
@@ -231,7 +272,7 @@ public class SigmetCancelDlg extends AttrDlg {
                 }
             }
         }
-        
+
         Group firCarSAmericanGrp = new Group(firRegGrp, SWT.LEFT);
         firCarSAmericanGrp.setLayoutData(
                 new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
@@ -251,7 +292,7 @@ public class SigmetCancelDlg extends AttrDlg {
                 }
             }
         }
-        
+
         Group firOtherGrp = new Group(firCarSAmericanGrp, SWT.TOP);
         firOtherGrp.setLayoutData(
                 new GridData(SWT.LEFT, SWT.CENTER, true, false, 4, 1));
@@ -267,6 +308,38 @@ public class SigmetCancelDlg extends AttrDlg {
             }
         }
 
+        // CARSAM Backup Mode
+        Group backupGrp = new Group(firCarSAmericanGrp, SWT.TOP);
+        backupGrp.setLayoutData(
+                new GridData(SWT.RIGHT, SWT.CENTER, true, false, 1, 1));
+        backupGrp.setLayout(new GridLayout(8, false));
+        btnCarSamBackUp = new Button(backupGrp, SWT.CHECK);
+        btnCarSamBackUp.setText("CARSAM Backup Mode");
+        btnCarSamBackUp.setEnabled(false);
+        // CARSAM back mode only editable if Fir Region checked is
+        // one of the CARSAM sites
+        if (firID != null) {
+            for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
+                    .getCarSamBackupWmoHeader()) {
+                if (firID.contains(carsamWmo.getFirID())) {
+                    btnCarSamBackUp.setEnabled(true);
+                    break;
+                }
+            }
+        }
+        if (parentDlg.isCarSamBackupMode()) {
+            isCarSamBackup = true;
+            btnCarSamBackUp.setSelection(true);
+            updateCancelText();
+        }
+        btnCarSamBackUp.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                Button btn = (Button) event.getSource();
+                isCarSamBackup = btn.getSelection();
+                updateCancelText();
+            }
+        });
     }
 
     private void createSeriesTimeWMOArea(Composite topComposite) {
@@ -506,37 +579,73 @@ public class SigmetCancelDlg extends AttrDlg {
     }
 
     private void updateCancelText() {
-        cancelText.clearSelection();
-        String updatedTxt = getFileContent();
-        if (updatedTxt != null) {
-            cancelText.setText(getFileContent());
+        if (cancelText != null) {
+            cancelText.clearSelection();
+            String updatedTxt = getFileContent();
+            if (updatedTxt != null) {
+                cancelText.setText(getFileContent());
+            }
         }
     }
 
     private String getFileContent() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(area);
-        sb.append(" ").append(getTimeStringPlusHourInHMS(0));
-        sb.append("\n");
+        boolean isCarSamFir = false;
+        if (this.firID != null) {
+            for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
+                    .getCarSamBackupWmoHeader()) {
+                if (this.firID.contains(carsamWmo.getFirID())) {
+                    isCarSamFir = true;
+                    break;
+                }
+            }
+        }
+
+        if (isCarSamFir && isCarSamBackup) {
+            sb.append(getWmoForCarSamBackup());
+            sb.append("\n");
+        } else {
+            sb.append(getWmo());
+            sb.append("\n");
+
+            sb.append(getAfospil());
+            sb.append("\n");
+        }
 
         sb.append(firID);
         sb.append(" ").append(SigmetConstant.SIGMET);
-        sb.append(" ").append(attrId);
-        sb.append(" ").append(seriesNumber);
+        //if attrID == " "/ cut one space
+        if(attrId.length() == 1){
+            sb.append(attrId.substring(0, 1));
+        }else{
+        sb.append(" ").append(attrId.substring(0, 1));
+        }
+        sb.append(seriesNumber);
         sb.append(" ").append(SigmetConstant.VALID).append(" ");
         sb.append(getTimeStringPlusHourInHMS(0)).append("/").append(endTime);
         sb.append(" ").append(area).append("-");
         sb.append("\n");
 
-        sb.append(firName.replace('_', ' ')).append(" ")
-                .append(SigmetConstant.FIR).append(" ");
-        sb.append(qualifier.replace('_', ' '));
-        sb.append(" ").append(SigmetConstant.CNL);
+        for (String s : SigmetInfo.FIR_ARRAY) {
+            if (firID.contains(s.substring(0, 4))) {
+                firName = s.substring(5, s.length());
+                sb.append(firName.replace('_', ' ')).append(" ")
+                        .append(SigmetConstant.FIR).append(" ");
+            }
+        }
+        sb.append(SigmetConstant.CNL);
 
         sb.append(" ").append(SigmetConstant.SIGMET);
-        sb.append(" ").append(attrId);
-        sb.append(" ").append(seqNum);
+       
+        //if attrID == " "/ cut one space
+        if(attrId.length() == 1){
+            sb.append(attrId); 
+            sb.append(seqNum);
+        }else{
+            sb.append(" ").append(attrId); 
+            sb.append(" ").append(seqNum);
+        }
         sb.append(" ").append(startTime).append("/").append(endTime);
         sb.append(".\n");
 
@@ -567,12 +676,7 @@ public class SigmetCancelDlg extends AttrDlg {
     public void createButtonsForButtonBar(Composite parent) {
         createButton(parent, CHECK_ID, "CHECK", true);
 
-        // TODO Keeping it disabled for now according to direction from site.
-        // Will update as soon as we get more information from site.
-        Button testXMLbtn = createButton(parent, TEST_XML_ID, "TEST XML", true);
-        testXMLbtn.setEnabled(false);
-        Button testSendbtn = createButton(parent, SEND_ID, "SEND", true);
-        testSendbtn.setEnabled(false);
+        createButton(parent, SAVE_ID, "SAVE", true);
 
         createButton(parent, CANCEL_ID, "CLOSE", true);
     }
@@ -589,12 +693,6 @@ public class SigmetCancelDlg extends AttrDlg {
             }
             break;
 
-        case TEST_XML_ID:
-            break;
-
-        case SEND_ID:
-            break;
-
         default:
             break;
         }
@@ -608,7 +706,8 @@ public class SigmetCancelDlg extends AttrDlg {
 
     @Override
     public void okPressed() {
-        setReturnCode(OK);
+        // Invoke the same Save Dialog from the SigmetAttrDlg
+        parentDlg.buttonPressed(PARENT_SAVE_ID);
         close();
     }
 
@@ -637,11 +736,152 @@ public class SigmetCancelDlg extends AttrDlg {
         }
     }
 
+    private String getWmoForCarSamBackup() {
+        StringBuilder sb = new StringBuilder();
+        String firStr = this.firID;
+        String phen = this.qualifier;
+
+        for (CarSamBackupWmoHeader carsamWmo : SigmetInfo.awcBackupCarSamWmoHeaders
+                .getCarSamBackupWmoHeader()) {
+            if (firStr.contains(carsamWmo.getFirID())) {
+                if (PgenConstant.TYPE_VOLCANIC_ASH.equals(phen)) {
+                    sb.append(carsamWmo.getWmoHeaderForVA());
+                } else if (PgenConstant.TYPE_TROPICAL_CYCLONE.equals(phen)) {
+                    sb.append(carsamWmo.getWmoHeaderForTC());
+                } else {
+                    sb.append(carsamWmo.getWmoHeaderForOther());
+                }
+                sb.append(" ").append(carsamWmo.getWmoID());
+                break;
+            }
+        }
+        sb.append(" ").append(getTimeStringPlusHourInHMS(0));
+        return sb.toString();
+    }
+
+    private String getWmo() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("W");
+        sb.append(getWmoPhen());
+        sb.append(getOcnWmoAwpHeaders()[1]);
+        sb.append(getInum());
+        sb.append(" ").append(parentDlg.getEditableAttrArea());
+        sb.append(" ").append(getTimeStringPlusHourInHMS(0));
+
+        return sb.toString();
+    }
+
+    private String getAfospil() {
+        StringBuilder sb = new StringBuilder();
+
+        if ("PAWU".equals(parentDlg.getEditableAttrArea())) {
+            sb.append(getAwpPhen());
+            sb.append(getOcnWmoAwpHeaders()[2]);
+            sb.append(getInum());
+            sb.append("\n").append(getIdnode());
+            sb.append(parentDlg.getEditableAttrId().charAt(0));
+            sb.append(" WS ").append(getTimeStringPlusHourInHMS(0));
+        } else {
+            sb.append(getAwpPhen());
+            sb.append(getOcnWmoAwpHeaders()[2]);
+            sb.append(parentDlg.getEditableAttrId().substring(0, 1));
+        }
+
+        return sb.toString();
+    }
+
+    private String getWmoPhen() {
+        String phen = parentDlg.getEditableAttrPhenom();
+        if (phen != null) {
+            phen = phen.trim();
+        }
+        if (PgenConstant.TYPE_VOLCANIC_ASH.equals(phen)) {
+            return "V";
+        }
+        if (PgenConstant.TYPE_TROPICAL_CYCLONE.equals(phen)) {
+            return "C";
+        }
+        return "S";
+    }
+
+    private String getAwpPhen() {
+        String wmophen = getWmoPhen();
+        if ("S".equals(wmophen)) {
+            return "SIG";
+        }
+        if ("V".equals(wmophen)) {
+            return "WSV";
+        }
+        return "WST";
+    }
+
+    private String getInum() {
+        char firstIdChar = parentDlg.getEditableAttrId().charAt(0);
+
+        if ("PHFO".equals(parentDlg.getEditableAttrArea())) {
+            int inum = firstIdChar - 77;
+            return inum < 0 || inum > 9 ? Integer.toString(inum) : "0" + inum;
+        } else if ("PAWU".equals(parentDlg.getEditableAttrArea())) {
+            int inum = firstIdChar - 72;
+            return inum < 0 || inum > 9 ? Integer.toString(inum) : "0" + inum;
+        }
+        int inum = firstIdChar - 64;
+        return inum < 0 || inum > 9 ? Integer.toString(inum) : "0" + inum;
+    }
+
+    private String getIdnode() {
+        String area = parentDlg.getEditableAttrArea();
+
+        if ("KKCI".equals(area)) {
+            return "MKC";
+        }
+        if ("KNHC".equals(area)) {
+            return "NHC";
+        }
+        if ("PHFO".equals(area)) {
+            return "HFO";
+        }
+        // PAWU
+        return "ANC";
+    }
+
+    private String[] getOcnWmoAwpHeaders() {
+        String area = parentDlg.getEditableAttrArea();
+        // 0:hdrocn, 1:hdrwmo, 2:hdrawp
+        String[] headers = new String[3];
+        headers[0] = headers[1] = headers[2] = "";
+
+        if ("PAWU".equals(area)) {
+            headers[1] = "AK";
+            headers[2] = "AK";
+        } else if ("PHFO".equals(area)) {
+            headers[1] = "PA";
+            headers[2] = "PA";
+        } else {
+            // area is KKCI or KNHC
+            String fir = parentDlg.getFirs();
+            if (!(fir == null || fir.length() == 0)) {
+                if (fir.contains("KZHU") || fir.contains("KZMA")
+                        || fir.contains("KZWY") || fir.contains("TJZS")) {
+                    headers[0] = "NT";
+                    headers[1] = "NT";
+                    headers[2] = "A0";
+                } else if (fir.contains("KZAK") || fir.contains("PAZA")) {
+                    headers[0] = "PN";
+                    headers[1] = "PN";
+                    headers[2] = "P0";
+                }
+            }
+        }
+
+        return headers;
+    }
+
     private class SigmetCancelErrorDlg extends AttrDlg {
 
         private Text txtError;
 
-        private String errorMsg;
+        private final String errorMsg;
 
         SigmetCancelErrorDlg(Shell parShell, String errorMsg) {
             super(parShell);

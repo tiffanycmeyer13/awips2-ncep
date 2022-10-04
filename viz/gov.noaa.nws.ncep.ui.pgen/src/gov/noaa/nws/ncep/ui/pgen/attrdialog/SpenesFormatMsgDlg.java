@@ -1,20 +1,12 @@
 /*
  * SpenesFormatMsgDlg
- * 
+ *
  * Date created: June 2012
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
-
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
-import gov.noaa.nws.ncep.ui.pgen.elements.Product;
-import gov.noaa.nws.ncep.ui.pgen.elements.ProductTime;
-import gov.noaa.nws.ncep.ui.pgen.elements.Spenes;
-import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
-import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
 
 import java.util.ArrayList;
 
@@ -38,17 +30,29 @@ import org.eclipse.swt.widgets.Text;
 
 import com.raytheon.viz.ui.dialogs.CaveJFACEDialog;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
+import gov.noaa.nws.ncep.ui.pgen.elements.Product;
+import gov.noaa.nws.ncep.ui.pgen.elements.ProductTime;
+import gov.noaa.nws.ncep.ui.pgen.elements.Spenes;
+import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
+import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
+
 /**
  * Singleton for a Spenes format message dialog.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 05/12		    #734		J. Zeng   	Initial Creation.
- * 04/29        #977        S. Gilbert  PGEN Database support
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 05/12         734      J. Zeng     Initial Creation.
+ * 04/29         977      S. Gilbert  PGEN Database support
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Zeng
  */
 public class SpenesFormatMsgDlg extends CaveJFACEDialog {
@@ -59,9 +63,9 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
     // text message to display
     private String spenesMsg;
 
-    private Spenes spenes;
+    private final Spenes spenes;
 
-    private SpenesFormatDlg sfDlg;
+    private final SpenesFormatDlg sfDlg;
 
     private Text txtFileLabel;
 
@@ -81,13 +85,12 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
 
     /**
      * get the file name
-     * 
+     *
      * @return
      */
     private String getTxtFileName() {
         String connector = "_";
         StringBuilder sb = new StringBuilder();
-        // sb.append(PgenUtil.getPgenActivityTextProdPath()+ File.separator);
         sb.append(spenes.getName());
         sb.append(connector);
         String initDataTime = spenes.getInitDateTime().replace(" ", connector)
@@ -118,10 +121,10 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
         /*
          * Create a text box for the WCL message
          */
-        Text messageBox = new Text(top, SWT.MULTI | SWT.BORDER | SWT.V_SCROLL
-                | SWT.WRAP);
-        messageBox.setFont(new Font(messageBox.getDisplay(), "Courier", 12,
-                SWT.NORMAL));
+        Text messageBox = new Text(top,
+                SWT.MULTI | SWT.BORDER | SWT.V_SCROLL | SWT.WRAP);
+        messageBox.setFont(
+                new Font(messageBox.getDisplay(), "Courier", 12, SWT.NORMAL));
         GridData gd = new GridData(GridData.FILL_HORIZONTAL);
 
         // Calculate approximate size of text box to display 25 lines at 80
@@ -176,21 +179,13 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
     private class TxtModifyListener implements ModifyListener {
         @Override
         public void modifyText(ModifyEvent e) {
-            // String txt = "";
             if (e.widget instanceof Text) {
-                // txt =((Text)e.widget).getText();
             } else if (e.widget instanceof Combo) {
             }
 
         }
     }
 
-    /*
-     * 
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.dialogs.Dialog#buttonPressed(int)
-     */
     @Override
     protected void okPressed() {
 
@@ -209,7 +204,6 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
                 StorageUtils.showError(e);
             }
         }
-        // FileTools.writeFile(txtFileName, spenesMsg);
 
         super.okPressed();
     }
@@ -219,7 +213,7 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
 
         Layer defaultLayer = new Layer();
         defaultLayer.addElement(spenes);
-        ArrayList<Layer> layerList = new ArrayList<Layer>();
+        ArrayList<Layer> layerList = new ArrayList<>();
         layerList.add(defaultLayer);
 
         String forecaster = System.getProperty("user.name");
@@ -227,8 +221,7 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
 
         Product defaultProduct = new Product("", "NESDIS SPENES", forecaster,
                 null, refTime, layerList);
-        // defaultProduct.addLayer(defaultLayer);
-        defaultProduct.setOutputFile(sfDlg.getSpDlg().drawingLayer
+        defaultProduct.setOutputFile(sfDlg.getSpDlg().drawingLayers
                 .buildActivityLabel(defaultProduct));
         defaultProduct.setCenter(PgenUtil.getCurrentOffice());
 
@@ -244,7 +237,7 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
 
     /**
      * Set spenes text
-     * 
+     *
      * @param spenes
      *            message
      */
@@ -261,7 +254,6 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
         if (this.getShell() == null) {
             this.create();
         }
-        // this.getShell().setLocation(this.getShell().getParent().getLocation());
         this.getButton(IDialogConstants.OK_ID).setText("Save");
         this.getButtonBar().pack();
         return super.open();
@@ -270,7 +262,7 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
 
     /**
      * generate spenes text message
-     * 
+     *
      * @param sp
      * @return
      */
@@ -284,11 +276,10 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
         sb.append(sp.getStateZ000());
         // issue time
         sb.append("\n.\n\nSATELLITE PRECIPITATION ESTIMATES..DATE/TIME ");
-        // sb.append(String.format("%1$tm/%1$td/%1$ty %1$tH%1$tMZ",
-        // getInitTime()));
         sb.append(sp.getInitDateTime());
 
-        sb.append("\n\nSATELLITE ANALYSIS BRANCH/NESDIS---NPPU---TEL.301-763-8678\n\nLATEST DATA USED:");
+        sb.append(
+                "\n\nSATELLITE ANALYSIS BRANCH/NESDIS---NPPU---TEL.301-763-8678\n\nLATEST DATA USED:");
         sb.append(sp.getLatestDataUsed());
         sb.append("   " + sp.getObsHr() + "00Z");
         sb.append("   " + sp.getForecasters());
@@ -306,16 +297,21 @@ public class SpenesFormatMsgDlg extends CaveJFACEDialog {
         sb.append("\n\n.\n\nSATELLITE ANALYSIS AND TRENDS...");
         sb.append(" " + sp.getSatAnalysisTrend());
         sb.append("\n\n.\n\n");
-        sb.append("AN ANNOTATED SATELLITE GRAPHIC SHOWING THE HEAV PERCIPITATION THREAT AREA\n\n");
-        sb.append("SHOULD BE AVAILABLE ON THE INTERNET ADDRESS LISTED BELOW IN APPROXIMATELY\n\n10-15 MINUTES.\n\n.\n\n");
+        sb.append(
+                "AN ANNOTATED SATELLITE GRAPHIC SHOWING THE HEAV PERCIPITATION THREAT AREA\n\n");
+        sb.append(
+                "SHOULD BE AVAILABLE ON THE INTERNET ADDRESS LISTED BELOW IN APPROXIMATELY\n\n10-15 MINUTES.\n\n.\n\n");
         sb.append("SHORT TERM OUTLOOK VALID ");
-        sb.append(sp.getShortTermBegin() + "00-" + sp.getShortTermEnd() + "00Z");
+        sb.append(
+                sp.getShortTermBegin() + "00-" + sp.getShortTermEnd() + "00Z");
         sb.append("... " + sp.getOutlookLevel());
         sb.append(" CONFIDENCE FACTOR IN SHORT TERM OUTLOOK...");
         sb.append(sp.getAddlInfo());
         sb.append("\n\n.\n\n");
-        sb.append("SEE NCEP HPC DISCUSSION AND QPF/S FOR FORECAST.\n\n....NESDIS IS A MEMBER OF 12 PLANET....\n\n.\n\n");
-        sb.append("SSD\\SAB WEB ADDRESS FOR PRECIP ESTIMATES:\n\nHTTP://WWW.SSD.NOAA.GOV/PS/PCPN/\n\n");
+        sb.append(
+                "SEE NCEP HPC DISCUSSION AND QPF/S FOR FORECAST.\n\n....NESDIS IS A MEMBER OF 12 PLANET....\n\n.\n\n");
+        sb.append(
+                "SSD\\SAB WEB ADDRESS FOR PRECIP ESTIMATES:\n\nHTTP://WWW.SSD.NOAA.GOV/PS/PCPN/\n\n");
         sb.append("...ALL LOWER CASE EXCEPT /PS/PCPN/\n\n.\n\n");
 
         // lat/lon

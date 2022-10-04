@@ -5,7 +5,6 @@ Bundle-SymbolicName: gov.noaa.nws.ncep.common.dataplugin.nctaf
 Bundle-Version: 1.19.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: com.raytheon.uf.common.status,
- net.sf.cglib,
  javax.measure,
  gov.noaa.nws.ncep.common,
  org.apache.commons.lang,

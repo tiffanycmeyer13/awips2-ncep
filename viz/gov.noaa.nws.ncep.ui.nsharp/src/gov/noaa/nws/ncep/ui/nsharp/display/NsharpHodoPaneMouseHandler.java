@@ -20,6 +20,7 @@
 package gov.noaa.nws.ncep.ui.nsharp.display;
 
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Event;
 import org.locationtech.jts.geom.Coordinate;
 
 import com.raytheon.uf.viz.core.IDisplayPane;
@@ -44,16 +45,33 @@ import gov.noaa.nws.ncep.ui.nsharp.view.NsharpShowTextDialog;
  * 04/23/2012   229         Chin Chen   Initial coding
  * 03/15/2018   6792        bsteffen    Stop stealing focus from other windows.
  * 04/16/2020   73571       smanoj      NSHARP D2D port refactor
- *
+ * 04/01/2022   89212       smanoj      Fix some Nsharp display issues.
+ * 
  * </pre>
  * 
  * @author Chin Chen
  */
 public class NsharpHodoPaneMouseHandler extends NsharpAbstractMouseHandler {
     private boolean cursorInHodo = false;
-
     public NsharpHodoPaneMouseHandler(NsharpEditor editor, IDisplayPane pane) {
         super(editor, pane);
+    }
+    @Override
+    public boolean handleMouseWheel(Event event, int x, int y) {
+        if (editor == null || cursorInPane == false) {
+            return false;
+        }
+        com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_FORWARD = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_FORWARD;
+        com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_BACK = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_BACK;
+        if ((event.count < 0
+                && prefManager.handleEvent(ZOOMIN_PREF, SCROLL_FORWARD))
+                || (event.count > 0 && prefManager.handleEvent(ZOOMOUT_PREF,
+                        SCROLL_BACK))) {
+            currentPane.zoom(event.count, event.x, event.y);
+
+            editor.refresh();
+        }
+        return true;
     }
 
     @Override

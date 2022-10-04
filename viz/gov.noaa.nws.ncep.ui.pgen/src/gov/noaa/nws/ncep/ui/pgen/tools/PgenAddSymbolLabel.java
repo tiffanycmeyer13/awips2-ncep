@@ -4,19 +4,20 @@ import com.raytheon.uf.viz.core.rsc.IInputHandler;
 
 /**
  * Action handler routing for adding labels to non-met, non-contour symbols
- * 
+ *
  * <pre>
- * 
+ *
  * SOFTWARE HISTORY
- * 
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * Jul 8, 2015  R8198      srussell     Initial creation
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * Jul 08, 2015  8198     srussell  Initial creation
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author Steve Russell
- * @version 1.0
  */
 
 public class PgenAddSymbolLabel extends AbstractPgenTool {
@@ -33,17 +34,19 @@ public class PgenAddSymbolLabel extends AbstractPgenTool {
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return IInputHandler the current mouse handler
      */
 
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.addLabelHandler == null
                 || this.mapEditor != ((PgenAddSymbolLabelHandler) addLabelHandler)
                         .getMapEditor()
-                || this.drawingLayer != ((PgenAddSymbolLabelHandler) addLabelHandler)
-                        .getPgenrsc()) {
+                || !this.drawingLayers
+                        .matches(((PgenAddSymbolLabelHandler) addLabelHandler)
+                                .getPgenrsc())) {
             this.addLabelHandler = new PgenAddSymbolLabelHandler(this);
 
         }

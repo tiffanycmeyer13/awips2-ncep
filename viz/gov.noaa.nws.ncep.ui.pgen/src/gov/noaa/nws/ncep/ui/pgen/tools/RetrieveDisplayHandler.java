@@ -34,10 +34,13 @@ import gov.noaa.nws.ncep.ui.pgen.controls.RetrieveActivityDialog;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * Dec 18, 2017 7180        njensen     Initial Creation
- * Mar 05, 2019 7752        tjensen     Removed btnName from dialog constructor
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * Dec 18, 2017  7180     njensen   Initial Creation
+ * Mar 05, 2019  7752     tjensen   Removed btnName from dialog constructor
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
  *
@@ -47,7 +50,7 @@ public class RetrieveDisplayHandler extends AbstractTool {
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
         Shell shell = HandlerUtil.getActiveShell(event);
-        PgenSession.getInstance().getPgenResource().setEditable(false);
+        PgenSession.getInstance().getCurrentResource().setEditable(false);
 
         RetrieveActivityDialog retrieveDlg = new RetrieveActivityDialog(shell);
         retrieveDlg.setBlockOnOpen(true);

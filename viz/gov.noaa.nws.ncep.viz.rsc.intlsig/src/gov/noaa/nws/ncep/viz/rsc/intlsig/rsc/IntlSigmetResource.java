@@ -117,7 +117,8 @@ import systems.uom.common.USCustomary;;
  * Nov 05, 2015  5070       randerso    Adjust font sizes for dpi scaling
  * Apr 28, 2020  77667      smanoj      Flight Information Region (FIR) update.
  * Jul 15, 2020  8191       randerso    Updated for changes to LatLonPoint
- *
+ * Apr 28, 2020  77667      smanoj      Flight Information Region (FIR) update.
+ * 
  * </pre>
  *
  * @author Archana
@@ -126,22 +127,20 @@ import systems.uom.common.USCustomary;;
 public class IntlSigmetResource extends
         AbstractNatlCntrsResource<IntlSigmetResourceData, NCMapDescriptor>
         implements INatlCntrsResource {
-
     private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(IntlSigmetResource.class);
 
-    private IntlSigmetResourceData intlSigmetResourceDataObj;
+    private final IntlSigmetResourceData intlSigmetResourceDataObj;
 
     private static final UnitConverter mToNM = SI.METRE
             .getConverterTo(USCustomary.NAUTICAL_MILE);
 
     private IFont font = null;
 
+    private final float baseFontSize = 12;
 
 
 
-
-    private float baseFontSize = 12;
 
     private enum WeatherHazardType {
         /** Thunder Storm */
@@ -209,14 +208,7 @@ public class IntlSigmetResource extends
         /** WiDe SPRead Dust Storm */
         WDSPR_DS,
         /** WiDe SPRead Sand Storm */
-        WDSPR_SS,
-        WIND,
-        FZRA,
-        TEST,
-        CANCEL,
-        OTHER,
-        UNKNOWN,
-        NIL
+        WDSPR_SS, WIND, FZRA, TEST, CANCEL, OTHER, UNKNOWN, NIL
     }
 
     /**
@@ -465,8 +457,6 @@ public class IntlSigmetResource extends
                                 .isLocationLookUpFailed();
                         if (polygonVertexPixelCoordListSize > 1
                                 && !isLocationLookUpFailed) {
-                            // this.drawPolygon(graphicsTarget,condensedISIG.polygonVertexPixelCoordList,polygonLineColor,polygonLineWidth,lineStyle);
-
                             Coordinate[] polygonCoordinatesList = condensedISIG
                                     .getPolygonLatLonCoordinates();
                             this.drawPolygon(polygonCoordinatesList,
@@ -484,13 +474,6 @@ public class IntlSigmetResource extends
                              * Get the centroid of the polygon in world
                              * coordinates to render the symbol
                              */
-                            /*
-                             * tempSymbolLocationWorldCoord =
-                             * condensedISIG.getCentroidInWorldCoordinates(
-                             * condensedISIG, this.getDescriptor(),
-                             * condensedISIG.polygonVertexPixelCoordList);
-                             */
-
                             tempSymbolLocationWorldCoord = condensedISIG
                                     .getCentroidInWorldCoordinates(
                                             polygonCoordinatesList,
@@ -665,10 +648,6 @@ public class IntlSigmetResource extends
                                     if (weatherHarzardList
                                             .get(i) == WeatherHazardType.MW
                                             || weatherHarzardList.get(
-                                                    i) == WeatherHazardType.WS
-                                            || weatherHarzardList.get(
-                                                    i) == WeatherHazardType.WIND
-                                            || weatherHarzardList.get(
                                                     i) == WeatherHazardType.WTSPT) {
                                         isDrawText = true;
                                         switch (weatherHarzardList.get(i)) {
@@ -725,10 +704,9 @@ public class IntlSigmetResource extends
                                                 .get(i).getSymbolType();
                                         Symbol symbol = new Symbol(null,
                                                 symbolColor, symbolWidth,
-                                                // scale per NMAP
-                                                symbolSize * 0.60, false,
-                                                symbolCoordinate, "Symbol",
-                                                symbolType);
+                                                symbolSize * 0.60, 
+                                                false, symbolCoordinate,
+                                                "Symbol", symbolType);
                                         displayEls = df.createDisplayElements(
                                                 symbol, paintProps);
                                     }
@@ -952,30 +930,6 @@ public class IntlSigmetResource extends
                                 arrayOfVerticesOnEitherSide[1]);
 
                 /*
-                 * (Non-Javadoc) Ideally, it should be easy to just use the
-                 * existing IntlSigmetResource.drawPolygon() method coupled with
-                 * the IGraphicsTarget.drawArc() method. However when doing
-                 * this, it was observed that given the multiple conversions
-                 * that take place between the world and pixel coordinates, the
-                 * arc does not get drawn correctly. Hence the code to render
-                 * the polygon and its arc point-by-point have been added here.
-                 */
-                /*
-                 * PixelCoordinate prevLoc = null; for (Coordinate
-                 * currCoordinate :
-                 * arrayOfVerticesOnEitherSideForPolygonWithArc[0]) { double[]
-                 * latLon = { currCoordinate.x, currCoordinate.y };
-                 * PixelCoordinate currLoc = new
-                 * PixelCoordinate(descriptor.worldToPixel(latLon)); if (prevLoc
-                 * != null) { graphicsTarget.drawLine(prevLoc.getX(),
-                 * prevLoc.getY(), prevLoc.getZ(), currLoc.getX(),
-                 * currLoc.getY(), currLoc.getZ(), polygonLineColor,
-                 * polygonLineWidth, lineStyle); }
-                 *
-                 * prevLoc = currLoc; }
-                 */
-
-                /*
                  * (Non-Javadoc) prevLoc is set to the last element of the first
                  * side of the polygon The second side is drawn from its last
                  * vertex to the first, thereby allowing the line in-between the
@@ -1062,14 +1016,6 @@ public class IntlSigmetResource extends
                         drawPolygon(graphicsTarget, sideOfLinePixCoordlist,
                                 polygonLineColor, polygonLineWidth, lineStyle);
 
-                        // The following method should be used if we want the
-                        // polygons that span the edges to be clipped
-                        // Seems this case is extremely rare. No test cases were
-                        // found. So for now not using the new drawPolygon
-                        // method for this case.
-                        // this.drawPolygon(sideOfLineArrInLatLonCoordinates,
-                        // graphicsTarget, polygonLineColor, polygonLineWidth,
-                        // lineStyle);
                     }
                 }
 
@@ -1091,7 +1037,7 @@ public class IntlSigmetResource extends
 
     /**
      * Converts a list of world coordinates to a list of pixel coordinates.
-     *
+     * 
      * @param listOfVerticesOnSide1
      *            - the list of Coordinate objects
      * @return an array-list of PixelCoordinate objects
@@ -1812,6 +1758,8 @@ public class IntlSigmetResource extends
                             arrayLatLonPoints[0].getLatitude());
                     coordinates[coordinateArrayLength
                             - 1] = startingPointCoordinate;
+                    coordinates[coordinateArrayLength
+                            - 1] = startingPointCoordinate;
                 }
 
                 return coordinates;
@@ -1975,10 +1923,9 @@ public class IntlSigmetResource extends
                  * instead?
                  */
                 stnLongitude = (double) IDecoderConstantsN.FLOAT_MISSING;
-                statusHandler.debug(
-                        "Unable to retrieve the latitude and longitude of "
-                                + sigmetIssueOffice + " from the database",
-                        e);
+                statusHandler
+                        .debug("Unable to retrieve the latitude and longitude of "
+                                + sigmetIssueOffice + " from the database", e);
             }
         }
 
@@ -2833,7 +2780,7 @@ public class IntlSigmetResource extends
      *
      */
     private class FrameData extends AbstractFrameData {
-        private HashMap<String, IntlSigmetRscDataObj> condensedIntligLinkedHashMap;
+        private final HashMap<String, IntlSigmetRscDataObj> condensedIntligLinkedHashMap;
 
         /**
          * Constructor
@@ -2863,8 +2810,8 @@ public class IntlSigmetResource extends
         @Override
         public boolean updateFrameData(IRscDataObject rscDataObj) {
             if (!(rscDataObj instanceof IntlSigmetRscDataObj)) {
-                statusHandler.debug(
-                        "IntlSigmetResource:updateFrameData() processing.....\n"
+                statusHandler
+                        .debug("IntlSigmetResource:updateFrameData() processing.....\n"
                                 + "Data belongs to a different class :"
                                 + rscDataObj.getClass().toString());
                 return false;
@@ -2905,17 +2852,17 @@ public class IntlSigmetResource extends
      */
     @SuppressWarnings("hiding")
     private class SymbolAttributesSubSet<RGB, Integer, Float, Boolean, String> {
-        private RGB symbolColor;
+        private final RGB symbolColor;
 
-        private Integer lineWidth;
+        private final Integer lineWidth;
 
-        private Float symbolSize;
+        private final Float symbolSize;
 
-        private Integer symbolWidth;
+        private final Integer symbolWidth;
 
-        private Boolean symbolEnable;
+        private final Boolean symbolEnable;
 
-        private String symbolType;
+        private final String symbolType;
 
         public SymbolAttributesSubSet(RGB inSymbolColor, Integer symbolWidth,
                 Float symbolSize, Boolean symbolEnable, String symbolType,

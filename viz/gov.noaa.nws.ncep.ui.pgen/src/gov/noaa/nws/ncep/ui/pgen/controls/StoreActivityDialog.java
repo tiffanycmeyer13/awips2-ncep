@@ -62,22 +62,28 @@ import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * --------------------------------------------------------------------------------------
- * 03/13        #977        S. Gilbert  Initial creation
- * 01/14        #1105       J. Wu       Pre-fill for each activity info.
- * 05/14        TTR 963     J. Wu       Change activity Info to Activity Label.
- * 01/7/2016    R13162      J. Lopez    Added a combo box to save the file using the Default name
- * 04/14/2016   R13245      B. Yin      Changed reference time to 24 hour format.
- *                                      Added a drop down list for reference time.
- * 05/02/2016   R16076      J. Wu       change type/subtype/site/desk to pulldown menu.
- * 07/28/2016   R17954      B. Yin      return CANCEL when Cancel button is pressed.
- * 01/19/2021   86162       S. Russell  Updated setDialogFields() to use GMT
- *                                      for the reftime.
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 03/13         977      S. Gilbert  Initial creation
+ * 01/14         1105     J. Wu       Pre-fill for each activity info.
+ * 05/14         TTR 963  J. Wu       Change activity Info to Activity Label.
+ * Jan 07, 2016  13162    J. Lopez    Added a combo box to save the file using
+ *                                    the Default name
+ * Apr 14, 2016  13245    B. Yin      Changed reference time to 24 hour format.
+ *                                    Added a drop down list for reference time.
+ * May 02, 2016  16076    J. Wu       change type/subtype/site/desk to pulldown
+ *                                    menu.
+ * Jul 28, 2016  17954    B. Yin      return CANCEL when Cancel button is
+ *                                    pressed.
+ * Jan 19, 2021  86162    S. Russell  Updated setDialogFields() to use GMT for
+ *                                    the reftime.
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ *
  * </pre>
  *
  * @author
- * @version 1
  */
 public class StoreActivityDialog extends CaveJFACEDialog {
     private static final transient IUFStatusHandler statusHandler = UFStatus
@@ -134,9 +140,9 @@ public class StoreActivityDialog extends CaveJFACEDialog {
 
     private Button autoSaveOnBtn;
 
-    private PgenResource rsc;
+    private final PgenResource rsc;
 
-    private Product activity;
+    private final Product activity;
 
     private LinkedHashMap<String, ProductType> prdTyps = null;
 
@@ -150,7 +156,7 @@ public class StoreActivityDialog extends CaveJFACEDialog {
 
         super(parShell);
         setStoreMode(btnName);
-        rsc = PgenSession.getInstance().getPgenResource();
+        rsc = PgenSession.getInstance().getCurrentResource();
         activity = rsc.getActiveProduct();
     }
 

@@ -100,6 +100,7 @@ import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductConfigureDialog;
 import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceData;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.Ccfp;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
 import gov.noaa.nws.ncep.ui.pgen.sigmet.Volcano;
@@ -115,57 +116,77 @@ import gov.noaa.nws.ncep.viz.common.display.NcDisplayType;
  *
  *    SOFTWARE HISTORY
  *
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- *
- * 04/22/09       #99       Greg Hull     Moved some methods to NmapUiUtils
- * 05/15/09       #116      B. Yin        Added validateLatLonTextField
- * 05/15/09       #116      B. Yin        Added text/symbol drawing mode methods
- * 08/03/09       #116      B. Yin        changed validateLatLonTextField
- *                                          to  validateNumberTextField
- * 09/30/09       #169      Greg Hull     NCMapEditor
- * 10/15/09       #160      G. Zhang      INTL Sigmet LatLonPre/Post pend
- * 12/10/09       #167      J. Wu         Added contours drawing method
- * 05/04/10       #267      B.  Yin       Added a method to load 'SetCont' tool for outlook
- * 03/10          #223      M.Laryukhin   Added Gfa
- * 04/10          #165      G.Zhang       Modified LatLonPre/Post pend formatting
- * 07/10          #215      J. Wu         Added calendarToGempakDattim()
- * 09/10          #63       J. Wu         Added CURRENT_WORKING_DIRCTORY
- * 09/10          #304      B. Yin        Added a method to load a tool editing LabeledLine
- * 10/10          #310      S. Gilbert    Added PgenMode
- * 02/11          #405      J. Wu         Set CURRENT_WORKING_DIRCTORY to user-defined directory
- *                                          in the PGEN preference page
- * 03/11                    J. Wu         Added getSphPolyArea() && getPolyArea()
- * 05/11                    J. Wu         Added methods to setup/covert between lat/lon
- *                                          and a custom coordinate.
- * 08/11                    J. Wu         Added getPgenOprDirectory()
- * 03/12         #611       S. Gurung     Added computePoint()
- * 03/12         #704       B. Yin        Move applyStylesheet() here from ProdType
- * 05/12         #708       J. Wu         Add methods to retrieve current data frame time.
- * 05/12         #769       B. Yin        Moved the creation of UTC time from TCA dialog to here.
- * 03/13         #972       G. Hull       add isNatlCntrsEditor()
- * 03/13         #927       B. Yin        Moved isUnmovable from the PgenSelectTool class.
- * 06/13         #1000      J. Wu         Added utility function writePgenFile().
- * 07/26         TTR        J. Wu         Extract "DEL_PART" in DeletePartCommand into deleteLinePart().
- * 12/13         #1089      B. Yin        Removed the UTC time functions to a new class.
- * 12/13         #1091      J. Wu         Added getLayerMergeOption()
- * 05/14         TTR 995    J. Wu         Added getContourLabelAutoPlacement().
- * 05/14         TTR998     J. Wu         Added pixelToLatlon().
- * 07/14                    Chin Chen     In latlonToPixel(), make sure not to add null pixel to its return pixel array
- * 08/14         TTR962     J. Wu         Add replaceWithDate to format output file with DD, MM, YYYY, HH.
- * 12/14     R5197/TTR1056  J. Wu         Make setCommandMode public.
- * 12/14        R5413       B. Yin        Add a listener for D2D swapping pane
- * 12/14        R5413       B. Yin        Check null in findResource
- * 12/17/2015   R12990      J. Wu         Added getContourSymbolLabelSpacing()
- * 01/12/2016   R13168      J. Wu         Added getOneContourperLayer()
- * 04/14/2016   R13245      B. Yin        Added UTC time validation methods.
- * 05/02/2016   R16076      J. Wu         Add buildPrdFileName().
- * May 16, 2016 5640        bsteffen      Pass triggering component to handlers
+ * Date          Ticket#     Engineer     Description
+ * ------------- ----------- ------------ --------------------------------------
+ * Apr 22, 2009  99          Greg Hull    Moved some methods to NmapUiUtils
+ * May 15, 2009  116         B. Yin       Added validateLatLonTextField
+ * May 15, 2009  116         B. Yin       Added text/symbol drawing mode methods
+ * Aug 03, 2009  116         B. Yin       changed validateLatLonTextField to
+ *                                        validateNumberTextField
+ * Sep 30, 2009  169         Greg Hull    NCMapEditor
+ * Oct 15, 2009  160         G. Zhang     INTL Sigmet LatLonPre/Post pend
+ * Dec 10, 2009  167         J. Wu        Added contours drawing method
+ * May 04, 2010  267         B.  Yin      Added a method to load 'SetCont' tool
+ *                                        for outlook
+ * 03/10         223         M.Laryukhin  Added Gfa
+ * 04/10         165         G.Zhang      Modified LatLonPre/Post pend
+ *                                        formatting
+ * 07/10         215         J. Wu        Added calendarToGempakDattim()
+ * 09/10         63          J. Wu        Added CURRENT_WORKING_DIRCTORY
+ * 09/10         304         B. Yin       Added a method to load a tool editing
+ *                                        LabeledLine
+ * 10/10         310         S. Gilbert   Added PgenMode
+ * 02/11         405         J. Wu        Set CURRENT_WORKING_DIRCTORY to
+ *                                        user-defined directory in the PGEN
+ *                                        preference page
+ * 03/11                     J. Wu        Added getSphPolyArea() &&
+ *                                        getPolyArea()
+ * 05/11                     J. Wu        Added methods to setup/covert between
+ *                                        lat/lon and a custom coordinate.
+ * 08/11                     J. Wu        Added getPgenOprDirectory()
+ * 03/12         611         S. Gurung    Added computePoint()
+ * 03/12         704         B. Yin       Move applyStylesheet() here from
+ *                                        ProdType
+ * 05/12         708         J. Wu        Add methods to retrieve current data
+ *                                        frame time.
+ * 05/12         769         B. Yin       Moved the creation of UTC time from
+ *                                        TCA dialog to here.
+ * 03/13         972         G. Hull      add isNatlCntrsEditor()
+ * 03/13         927         B. Yin       Moved isUnmovable from the
+ *                                        PgenSelectTool class.
+ * 06/13         1000        J. Wu        Added utility function
+ *                                        writePgenFile().
+ * 07/26         TTR         J. Wu        Extract "DEL_PART" in
+ *                                        DeletePartCommand into
+ *                                        deleteLinePart().
+ * 12/13         1089        B. Yin       Removed the UTC time functions to a
+ *                                        new class.
+ * 12/13         1091        J. Wu        Added getLayerMergeOption()
+ * 05/14         TTR 995     J. Wu        Added getContourLabelAutoPlacement().
+ * 05/14         TTR998      J. Wu        Added pixelToLatlon().
+ * 07/14                     Chin Chen    In latlonToPixel(), make sure not to
+ *                                        add null pixel to its return pixel
+ *                                        array
+ * 08/14         TTR962      J. Wu        Add replaceWithDate to format output
+ *                                        file with DD, MM, YYYY, HH.
+ * 12/14     R5  97/TTR1056  J. Wu        Make setCommandMode public.
+ * 12/14         5413        B. Yin       Add a listener for D2D swapping pane
+ * 12/14         5413        B. Yin       Check null in findResource
+ * Dec 17, 2015  12990       J. Wu        Added getContourSymbolLabelSpacing()
+ * Jan 12, 2016  13168       J. Wu        Added getOneContourperLayer()
+ * Apr 14, 2016  13245       B. Yin       Added UTC time validation methods.
+ * May 02, 2016  16076       J. Wu        Add buildPrdFileName().
+ * May 16, 2016  5640        bsteffen     Pass triggering component to handlers
  *                                        through the evaluation context
- * 06/15/2016   R13559      bkowal        Removed simulated mouse click.
- * 06/28/2016   R10233      J. Wu         Add parameter to loadContoursTool().
- * 06/18/2020   79252       pbutler       PGEN function fixes for null pointers when working w/ Airmets.
- * 03/25/2022   8790        mapeters      Handle pane manager refactor, cleanup
+ * Jun 15, 2016  13559       bkowal       Removed simulated mouse click.
+ * Jun 28, 2016  10233       J. Wu        Add parameter to loadContoursTool().
+ * Jun 18, 2020  79252       pbutler      PGEN function fixes for null pointers
+ *                                        when working w/ Airmets.
+ * Dec 01, 2021  95362       tjensen      Refactor PGEN Resource management to
+ *                                        support multi-panel displays
+ * Feb 07, 2022  100402      smanoj       Check against null pointer.
+ * Mar 25, 2022  8790        mapeters     Handle pane manager refactor, cleanup
+ *
  * </pre>
  *
  * @author
@@ -243,8 +264,23 @@ public class PgenUtil {
      * @param editor
      * @return reference to a PgenResource
      */
-    public static final PgenResource findPgenResource(AbstractEditor editor) {
-        return (PgenResource) findResource(PgenResource.class, editor);
+    public static final PgenResourceList findPgenResources(
+            AbstractEditor editor) {
+        if (editor == null) {
+            return null;
+        }
+        PgenResourceList prl = new PgenResourceList();
+
+        for (IDisplayPane pane : editor.getDisplayPanes()) {
+            PgenResource pr = findPgenResourceInPane(pane);
+            if (pr != null) {
+                prl.add(pr);
+            }
+        }
+        if (prl.isEmpty()) {
+            return null;
+        }
+        return prl;
     }
 
     /**
@@ -259,10 +295,18 @@ public class PgenUtil {
             return null;
         }
 
+        if (pane.getDescriptor() == null) {
+            return null;
+        }
+
         ResourceList rscList = pane.getDescriptor().getResourceList();
 
         for (ResourcePair rp : rscList) {
             AbstractVizResource<?, ?> rsc = rp.getResource();
+
+            if (rsc == null) {
+                return null;
+            }
 
             if (rsc.getClass() == PgenResource.class) {
                 return (PgenResource) rsc;
@@ -684,9 +728,9 @@ public class PgenUtil {
                         if (idesc.getResourceList().size() > 0) {
 
                             if (PgenSession.getInstance()
-                                    .getPgenResource() != null) {
+                                    .getCurrentResource() != null) {
                                 drawingLayer = PgenSession.getInstance()
-                                        .getPgenResource();
+                                        .getCurrentResource();
                             } else {
                                 drawingLayer = rscData
                                         .construct(new LoadProperties(), idesc);
@@ -1163,7 +1207,7 @@ public class PgenUtil {
      *            - map editor
      */
     public static LabeledLine mergeLabels(LabeledLine ll, Label testLbl,
-            Coordinate loc, AbstractEditor mapEditor, PgenResource rsc) {
+            Coordinate loc, AbstractEditor mapEditor, PgenResourceList rsc) {
 
         // label close to testLbl
         Label mergeLbl = null;
@@ -1591,7 +1635,7 @@ public class PgenUtil {
      * @return
      */
     public static String getPgenActivityPath() {
-        String pdName = PgenSession.getInstance().getPgenResource()
+        String pdName = PgenSession.getInstance().getCurrentResource()
                 .getActiveProduct().getType();
         ProductType pt = ProductConfigureDialog.getProductTypes().get(pdName);
         if (pt != null) {

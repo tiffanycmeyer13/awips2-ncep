@@ -11,12 +11,14 @@ package gov.noaa.nws.ncep.ui.nsharp.display.map;
  * SOFTWARE HISTORY
  * 
  * Date         Ticket#     Engineer    Description
- * -------      -------     --------    -----------
+ * -------      -------     --------    --------------------------------------
  * 10/2010      229         Chin Chen   Initial coding
  * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own
  *                                      thread to avoid gui locked out during load
  * 04/06/2020   73571       smanoj      NSHARP D2D port refactor
  * 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
+ * 09/24/2021   93047       smanoj      Load NSHARP Observed and PFC Soundings
+ *                                      from multiple Stations.
  * 
  * </pre>
  * 
@@ -61,17 +63,17 @@ public class NsharpSoundingQueryCommon {
                 if (NsharpEditor.getActiveNsharpEditor() != null) {
                     NsharpEditor.getActiveNsharpEditor().refresh();
                 }
+
                 if (soundingLysLstMap.size() <= 0) {
                     statusHandler.handle(Priority.WARN,
                             "No sounding data returned from DB for this station!!");
                 } else {
                     NsharpResourceHandler rscHdr = NsharpEditor
                             .createOrOpenEditor().getRscHandler();
-                    rscHdr.deleteRscAll();
                     rscHdr.addRsc(soundingLysLstMap, currentStnInfo);
-
                     NsharpEditor.bringEditorToTop();
                 }
+
                 return Status.OK_STATUS;
             }
 

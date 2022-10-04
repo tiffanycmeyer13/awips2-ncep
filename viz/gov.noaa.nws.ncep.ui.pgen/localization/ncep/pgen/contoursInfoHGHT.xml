@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+
+   Date         Ticket#     Engineer     Description
+   ......       ........    .........    ...........
+   
+   08/01/2015   8213        P.           CAVE>PGEN 
+                            Chowdhuri    Refinements to contoursInfo.xml
+   04/23/2021   89949       smanoj       Adding more forecast hours.
+   
+   @author pchowdhuri
+ 
+  This xml file is used to provide PRES Contours attributes information, including
+  the parameter name, level, forecast hour, and cint.
+  
+  It is also used to select a list of line types, and a list of symbols/markers that will 
+  show up in the Contours attributes GUI.
+ 
+  If the user links this parameter "PRES" with a layer configured in an activity via the 
+  Activity Configuration Tool "Layer" tab, the default values for "PRES"s meta info, including
+  level, forecast hour, and cint could be set via "default" in this table. So each time the
+  user switch to such a layer to draw a "PRES" contour, these defaults will be used.
+  
+  Please comment the entries you don't wish to use as shown below. -->
+<!-- label text="f072"/ -->
+<!--    
+-->
+
+<root>
+
+	<contoursInfo name="Height" parm="HGHT">
+		<!-- CINT for a given parameter and/or level, in format of: (1) contourInterval/minimumContourValue/maximumContourValue 
+			OR (2) contourVal1;contourVal2;...;contourValn See $GEMPAK/help/hlx/cint.hl2 
+			When in format (1), the number of decimal points is decided by the maximum 
+			number of decimal points found in the cint, e.g., if cint = 10/0/100, then 
+			the all contour value will be integer; if cint = 10/0/100.00, then the all 
+			contour value will have two decimal points (0.00, 10.00, ....) You can specify 
+			a cint value for a parm for all its levels with {level = ""}. -->
+		<level value="0" coord="HGHT" cint="4/920/1040" />
+		<fhrs name="ForecastHour">
+			<label text="f000" />
+			<label text="f024" />
+			<label text="f036" />
+			<label text="f048" />
+			<label text="f060" />
+			<label text="f072" />
+			<label text="f084" />
+			<label text="f096" />
+			<label text="f108" />
+			<label text="f120" />
+			<label text="f132" />
+			<label text="f144" />
+			<label text="f156" />
+			<label text="f168" />
+			<label text="f180" />
+		</fhrs>
+		<buttons name="Buttons">
+			<object name="LOW_X_FILLED" label="LowX (filled)" className="Symbol" />
+			<object name="FILLED_HIGH_PRESSURE_H" label="High Presure H(filled)"
+				className="Symbol" />
+			<object name="TROPICAL_STORM_NH" label="Tropical Storm (Northern Hemisphere)"
+				className="Symbol" />
+			<object name="HURRICANE_NH" label="Hurricane (Northern Hemisphere)"
+				className="Symbol" />
+		</buttons>
+		<markers name="Markers">
+
+		</markers>
+		<lines name="Lines">
+			<object name="LINE_SOLID" label="Solid Line" />
+			<object name="LINE_DASHED_3" label="Dashed Line" />
+		</lines>
+	</contoursInfo>
+</root>

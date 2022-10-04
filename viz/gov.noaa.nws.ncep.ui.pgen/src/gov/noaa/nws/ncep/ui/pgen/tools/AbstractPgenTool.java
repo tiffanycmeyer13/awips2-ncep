@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.AbstractPgenTool
- * 
+ *
  * 29 April 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -8,36 +8,40 @@
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
-
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
 import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.raytheon.viz.ui.tools.AbstractModalTool;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
+
 /**
  * The abstract super class for all PGEN tools.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 04/09                    B. Yin      Initial Creation.
- * 05/09        79          B. Yin      Added 'delete obj' flag
- *                                      Set the flag in the execute method
- * 29/09        169         Greg Hull   Use AbstractNCModalMapTool
- * 03/13        927         B. Yin      Added setHandler, getDefaultMouseHandler,
- *                                      resetMouseHandler, and setWorkingComponent
- * 12/13        TTR899      J. Wu       Set delObjFlag to false when any Pgen Action 
- *                                      button is clicked
- * 04/2014      TTR900      pswamy      R-click cannot return to SELECT from Rotate and DEL_OBJ
- * 12/2014      R5413       B. Yin      Set PGEN tool in PGEN session
- * 06/15/2016   R13559      bkowal      File cleanup. Removed commented code.
- * 
+ *
+ * Date          Ticket#  Engineer   Description
+ * ------------- -------- ---------- -------------------------------------------
+ * 04/09                  B. Yin     Initial Creation.
+ * 05/09         79       B. Yin     Added 'delete obj' flag Set the flag in the
+ *                                   execute method
+ * 29/09         169      Greg Hull  Use AbstractNCModalMapTool
+ * 03/13         927      B. Yin     Added setHandler, getDefaultMouseHandler,
+ *                                   resetMouseHandler, and setWorkingComponent
+ * 12/13         TTR899   J. Wu      Set delObjFlag to false when any Pgen
+ *                                   Action button is clicked
+ * 04/2014       TTR900   pswamy     R-click cannot return to SELECT from Rotate
+ *                                   and DEL_OBJ
+ * 12/2014       5413     B. Yin     Set PGEN tool in PGEN session
+ * Jun 15, 2016  13559    bkowal     File cleanup. Removed commented code.
+ * Dec 01, 2021  95362    tjensen    Refactor PGEN Resource management to
+ *                                   support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
@@ -54,13 +58,8 @@ public abstract class AbstractPgenTool extends AbstractModalTool {
     /**
      * A handler to the current drawing layer.
      */
-    protected PgenResource drawingLayer;
+    protected PgenResourceList drawingLayers;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.viz.ui.tools.AbstractTool#runTool()
-     */
     @Override
     protected void activateTool() {
         if (PgenSession.getInstance().getPgenPalette() == null) {
@@ -73,14 +72,15 @@ public abstract class AbstractPgenTool extends AbstractModalTool {
 
         String param;
         param = event.getParameter("name");
-        if (param != null)
+        if (param != null) {
             buttonName = param;
+        }
 
         // Set "active" icon for the palette button corresponding to this tool
         PgenSession.getInstance().getPgenPalette().setActiveIcon(buttonName);
 
         // Get a PGEN Resource
-        drawingLayer = PgenSession.getInstance().getPgenResource();
+        drawingLayers = PgenSession.getInstance().getPgenResources();
 
         if (this instanceof PgenDeleteObj) {
             delObjFlag = true;
@@ -88,9 +88,8 @@ public abstract class AbstractPgenTool extends AbstractModalTool {
                 || !(this instanceof AbstractPgenDrawingTool)) {
             delObjFlag = false;
         } else {
-            if (buttonName != null
-                    && PgenSession.getInstance().getPgenPalette()
-                            .getActionNames().contains(buttonName)) {
+            if (buttonName != null && PgenSession.getInstance().getPgenPalette()
+                    .getActionNames().contains(buttonName)) {
                 delObjFlag = false;
             }
         }
@@ -118,18 +117,20 @@ public abstract class AbstractPgenTool extends AbstractModalTool {
     /**
      * Clean up: remove ghost line and handle bars.
      */
+    @Override
     public void deactivateTool() {
 
         // Reset the original icon for the palette button corresponding to this
         // tool
         if (buttonName != null
-                && PgenSession.getInstance().getPgenPalette() != null)
+                && PgenSession.getInstance().getPgenPalette() != null) {
             PgenSession.getInstance().getPgenPalette().resetIcon(buttonName);
+        }
 
-        if (drawingLayer != null) {
+        if (drawingLayers != null) {
 
-            drawingLayer.removeGhostLine();
-            drawingLayer.removeSelected();
+            drawingLayers.removeGhostLine();
+            drawingLayers.removeSelected();
             PgenUtil.refresh();
 
         }
@@ -143,7 +144,7 @@ public abstract class AbstractPgenTool extends AbstractModalTool {
 
     /**
      * Check if the 'delete obj' flag is set
-     * 
+     *
      * @return the 'delete obj' flag
      */
     protected boolean isDelObj() {
@@ -154,43 +155,43 @@ public abstract class AbstractPgenTool extends AbstractModalTool {
 
     /**
      * Get the PGEN resource
-     * 
+     *
      * @return
      */
-    public PgenResource getDrawingLayer() {
-        return drawingLayer;
+    public PgenResourceList getDrawingLayers() {
+        return drawingLayers;
     }
 
     /**
      * Set the PGEN resource
-     * 
-     * @param drawingLayer
+     *
+     * @param drawingLayers
      */
-    public void setDrawingLayer(PgenResource drawingLayer) {
-        this.drawingLayer = drawingLayer;
+    public void setDrawingLayers(PgenResourceList drawingLayers) {
+        this.drawingLayers = drawingLayers;
     }
 
     /**
      * Check if the PGEN resource is editable.
-     * 
+     *
      * @return
      */
     protected boolean isResourceEditable() {
-        if (drawingLayer == null) {
+        if (drawingLayers == null) {
             return false;
         } else {
-            return drawingLayer.isEditable();
+            return drawingLayers.isEditable();
         }
     }
 
     protected boolean isResourceVisible() {
-        return (drawingLayer == null || drawingLayer.getProperties() == null) ? false
-                : drawingLayer.getProperties().isVisible();
+        return (drawingLayers == null || drawingLayers.getProperties() == null)
+                ? false : drawingLayers.getProperties().isVisible();
     }
 
     /**
      * Sets mouse handler.
-     * 
+     *
      * @param handler
      */
     public void setHandler(IInputHandler handler) {
@@ -198,7 +199,7 @@ public abstract class AbstractPgenTool extends AbstractModalTool {
 
     /**
      * Gets the default mouse handler.
-     * 
+     *
      * @return
      */
     protected IInputHandler getDefaultMouseHandler() {
@@ -221,7 +222,7 @@ public abstract class AbstractPgenTool extends AbstractModalTool {
 
     /**
      * Sets the working component.
-     * 
+     *
      * @param adc
      */
     protected void setWorkingComponent(AbstractDrawableComponent adc) {
