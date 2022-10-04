@@ -55,19 +55,25 @@ import gov.noaa.nws.ncep.ui.pgen.tools.ILabeledLine;
  *
  * SOFTWARE HISTORY
  *
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * Sep 2010      #322      G. Zhang     Initial creation
- * Apr 2011                B. Yin       Re-factor IAttribute
- * Mar 2012      #625,#611 S. Gurung    Change default CCFP polygon colors: Purple for Hi
- *                                      confidence Area, Line and Line(Med)
- *                                      Added ability to change SIGMET type (from Area to
- *                                      Line/LineMed and back and forth)
- * Mar 2013      #928      B. Yin       Made the button bar smaller.
- * Mar 20, 2019  #7572     dgilling     Code cleanup.
- *
- * Aug 26, 2021  #95470    omoncayo     Set default attributes consistent with NMAP PGEN,
- *                                      updating initialization variables.
+ * Date          Ticket#    Engineer   Description
+ * ------------- ---------- ---------- -----------------------------------------
+ * Sep 2010      322        G. Zhang   Initial creation
+ * Apr 2011                 B. Yin     Re-factor IAttribute
+ * Mar 2012      #625,#611  S. Gurung  Change default CCFP polygon colors:
+ *                                     Purple for Hi confidence Area, Line and
+ *                                     Line(Med) Added ability to change SIGMET
+ *                                     type (from Area to Line/LineMed and back
+ *                                     and forth)
+ * Mar 2013      928        B. Yin     Made the button bar smaller.
+ * Mar 20, 2019  7572       dgilling   Code cleanup.
+ * Aug 26, 2021  95470      omoncayo   Set default attributes consistent with
+ *                                     NMAP PGEN, updating initialization
+ *                                     variables.
+ * Dec 01, 2021  95362      tjensen    Refactor PGEN Resource management to
+ *                                     support multi-panel displays
+ * Dec 09, 2021  99347      smanoj     Remove Line(Med) radio button and 75-100% option
+ *                                     from coverage for Area Type in the Collaborative
+ *                                     Convective GUI.
  *
  * </pre>
  *
@@ -86,8 +92,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
     // 20100903 type changed from AbstractSigmet to Sigmet
     private Sigmet asig = null;
 
-    public static final String AREA = "Area", LINE = "Line",
-            LINE_MED = "LineMed";
+    public static final String AREA = "Area", LINE = "Line";
 
     public static final String LINE_SEPERATER = ":::";
 
@@ -101,8 +106,8 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
     private static final Color LIGHT_BLUE = new Color(30, 144, 255);
 
-    private static final String[] ITEMS_CVRG = new String[] { "75-100%",
-            "40-74%", "25-39%" };
+    private static final String[] ITEMS_CVRG = new String[] { "40-74%",
+            "25-39%" };
 
     private static final String[] ITEMS_TOPS = new String[] { "400+", "350-390",
             "300-340", "250-290" };
@@ -118,15 +123,13 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
     private static final String[] ITEMS_DIR = SigmetInfo.DIRECT_ARRAY;
 
-    private Color[] colors = new Color[] { LIGHT_BLUE, PURPLE };
+    private final Color[] colors = new Color[] { LIGHT_BLUE, PURPLE };
 
     private Group top_3;
 
     private Button btnArea;
 
     private Button btnLine;
-
-    private Button btnLineMed;
 
     protected Composite top = null;
 
@@ -146,7 +149,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
     private static boolean NotFirstOpen = false;
 
-    private HashMap<String, Button[]> attrButtonMap = new HashMap<>();
+    private final HashMap<String, Button[]> attrButtonMap = new HashMap<>();
 
     private String editableAttrArea = "";
 
@@ -163,9 +166,9 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
     private String ccfpValidTime = "";
 
     // editableAttrPhenom;
-    private String ccfpCvrg = ITEMS_CVRG[2];
-    // editableAttrPhenom2;
+    private String ccfpCvrg = ITEMS_CVRG[1];
 
+    // editableAttrPhenom2;
     private String ccfpTops = ITEMS_TOPS[3];
     // editableAttrPhenomLat;
 
@@ -193,12 +196,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
     @Override
     public String getCcfpLineType() {
-
-        if (CcfpAttrDlg.LINE_MED.equalsIgnoreCase(lineType)) {
-            return "LINE_DASHED_4";
-        } else {
-            return "LINE_SOLID";
-        }
+        return "LINE_SOLID";
     }
 
     @Override
@@ -331,7 +329,7 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
     @Override
     public Color[] getColors() {
         if (!AREA.equalsIgnoreCase(lineType)) {
-            // Line/LineMed ONLY use purple
+            // Line ONLY use purple
             return new Color[] { PURPLE };
         } else {
 
@@ -400,11 +398,8 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
         this.fillSpaces(top, SWT.LEFT, 2, false);
 
-        btnLineMed = new Button(top, SWT.RADIO);
-        btnLineMed.setText("Line(Med)  ");
-
         attrButtonMap.put("lineType",
-                new Button[] { btnArea, btnLine, btnLineMed });
+                new Button[] { btnArea, btnLine });
 
         addBtnListeners();
 
@@ -459,8 +454,8 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
         ArrayList<AbstractDrawableComponent> adcList = null;
         ArrayList<AbstractDrawableComponent> newList = new ArrayList<>();
 
-        if (drawingLayer != null) {
-            adcList = (ArrayList<AbstractDrawableComponent>) drawingLayer
+        if (drawingLayers != null) {
+            adcList = (ArrayList<AbstractDrawableComponent>) drawingLayers
                     .getAllSelected();
         }
 
@@ -485,12 +480,12 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
             ArrayList<AbstractDrawableComponent> oldList = new ArrayList<>(
                     adcList);
-            drawingLayer.replaceElements(oldList, newList);
+            drawingLayers.replaceElements(oldList, newList);
         }
 
-        drawingLayer.removeSelected();
+        drawingLayers.removeSelected();
         for (AbstractDrawableComponent adc : newList) {
-            drawingLayer.addSelected(adc);
+            drawingLayers.addSelected(adc);
         }
 
         if (mapEditor != null) {
@@ -691,21 +686,6 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
             }
         });
 
-        btnLineMed.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                if (!btnLineMed.getSelection()) {
-                    return;
-                }
-
-                if (top_3 != null) {
-                    disposeAreaInfo();
-                }
-
-                CcfpAttrDlg.this.setLineType(LINE_MED);
-            }
-        });
     }
 
     /*
@@ -802,16 +782,9 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
             if (lineType.equals(AREA)) {
                 btns[0].setSelection(true);
                 btns[1].setSelection(false);
-                btns[2].setSelection(false);
             } else if (lineType.equals(LINE)) {
                 btns[0].setSelection(false);
                 btns[1].setSelection(true);
-                btns[2].setSelection(false);
-
-            } else if (lineType.equals(LINE_MED)) {
-                btns[0].setSelection(false);
-                btns[1].setSelection(false);
-                btns[2].setSelection(true);
             }
         }
 
@@ -1066,15 +1039,15 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
             Line pln = (Line) ll.getPrimaryDE();
 
-            // Line & LineMed NO attributes changes and NOT from them converting
+            // Line- NO attributes changes and NOT from them converting
             // to Area
             if (!pln.isClosedLine()) {
                 return;
             }
 
-            // NOT from Area converting to Line, LineMed
+            // NOT from Area converting to Line
             if (pln.isClosedLine()
-                    && (LINE.equals(lineType) || LINE_MED.equals(lineType))) {
+                    && (LINE.equals(lineType) )) {
                 return;
             }
 
@@ -1105,14 +1078,14 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
                 }
             }
 
-            drawingLayer.replaceElement(ll, newll);
+            drawingLayers.replaceElement(ll, newll);
             ccfpTool.setLabeledLine(newll);
 
             // reset handle bar
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             Iterator<DrawableElement> iterator = newll.createDEIterator();
             while (iterator.hasNext()) {
-                drawingLayer.addSelected(iterator.next());
+                drawingLayers.addSelected(iterator.next());
             }
 
             // make sure the arrow line won't go through the text box.
@@ -1146,21 +1119,14 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
         if (AREA.equalsIgnoreCase(lineType)) {
             btnLine.setEnabled(false);
-            btnLineMed.setEnabled(false);
             return;
         }
 
         if (LINE.equalsIgnoreCase(lineType)) {
-            btnLineMed.setEnabled(false);
             btnArea.setEnabled(false);
             return;
         }
 
-        if (LINE_MED.equalsIgnoreCase(lineType)) {
-            btnArea.setEnabled(false);
-            btnLine.setEnabled(false);
-            return;
-        }
     }
 
     public void convertType() {
@@ -1175,14 +1141,14 @@ public class CcfpAttrDlg extends AttrDlg implements ICcfp {
 
             newll = createLabeledLine(newll);
 
-            drawingLayer.replaceElement(ll, newll);
+            drawingLayers.replaceElement(ll, newll);
             ccfpTool.setLabeledLine(newll);
 
             // reset handle bar
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             Iterator<DrawableElement> iterator = newll.createDEIterator();
             while (iterator.hasNext()) {
-                drawingLayer.addSelected(iterator.next());
+                drawingLayers.addSelected(iterator.next());
             }
             mapEditor.refresh();
         }

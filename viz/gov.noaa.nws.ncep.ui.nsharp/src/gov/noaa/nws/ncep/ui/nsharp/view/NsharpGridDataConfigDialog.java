@@ -26,6 +26,7 @@ import gov.noaa.nws.ncep.ui.nsharp.NsharpConstants;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
+
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -56,6 +57,8 @@ import com.raytheon.uf.viz.core.exception.VizException;
  *                                      data interpolation and nearest point option
  * 04/22/2020   76580       smanoj      Allow user to interact with NsharpEditor while
  *                                      the dialog is open.
+ * 03/21/2022   89212       smanoj      Configuration Dialog display issues.
+ * 
  * </pre>
  * 
  * @author Chin Chen
@@ -212,12 +215,19 @@ public class NsharpGridDataConfigDialog extends Dialog {
 
     @Override
     public int open() {
+
         if (this.getShell() == null) {
             this.create();
+        } else {
+            try {
+                this.getShell().setLocation(
+                        this.getShell().getParent().getLocation().x + 1100,
+                        this.getShell().getParent().getLocation().y + 200);
+            } catch (Exception e) {
+                // if widget disposed
+                this.create();
+            }
         }
-        this.getShell().setLocation(
-                this.getShell().getParent().getLocation().x + 1100,
-                this.getShell().getParent().getLocation().y + 200);
         return super.open();
 
     }

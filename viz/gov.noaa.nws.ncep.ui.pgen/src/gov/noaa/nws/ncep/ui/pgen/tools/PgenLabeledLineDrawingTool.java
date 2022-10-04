@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenLabeledLineDrawingTool
- * 
+ *
  * 5 September 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -8,13 +8,19 @@
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import org.locationtech.jts.geom.Coordinate;
+
+import com.raytheon.uf.viz.core.rsc.IInputHandler;
+
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrSettings;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.CloudAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.TurbAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.vaadialog.CcfpAttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.DisplayType;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.FontStyle;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.TextJustification;
@@ -27,28 +33,25 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 import gov.noaa.nws.ncep.ui.pgen.elements.labeledlines.Label;
 import gov.noaa.nws.ncep.ui.pgen.elements.labeledlines.LabeledLine;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import com.raytheon.uf.viz.core.rsc.IInputHandler;
-import org.locationtech.jts.geom.Coordinate;
-
 /**
  * Implements a modal map tool for PGEN labeled line drawing.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 09/10		304			B. Yin   	Initial Creation.
- * 09/10		305/306		B. Yin		Added Cloud and Turbulence
- * 12/11		?			B. Yin		Added open/close line functions
- * 08/12		?			B. Yin		One Cloud/Turb per layer
- * 11/13        ?           J. Wu       Add auto placement of CCFP text
- * Nov 05, 2015 5070       randerso     Adjust font sizes for dpi scaling
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 09/10         304      B. Yin    Initial Creation.
+ * 09/10         305/306  B. Yin    Added Cloud and Turbulence
+ * 12/11         ?        B. Yin    Added open/close line functions
+ * 08/12         ?        B. Yin    One Cloud/Turb per layer
+ * 11/13         ?        J. Wu     Add auto placement of CCFP text
+ * Nov 05, 2015  5070     randerso  Adjust font sizes for dpi scaling
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
@@ -59,17 +62,13 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
 
     CcfpAttrDlg ccdlg = null;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.viz.ui.tools.AbstractTool#runTool()
-     */
     @Override
     protected void activateTool() {
 
         super.activateTool();
-        if (super.isDelObj())
+        if (super.isDelObj()) {
             return;
+        }
 
         if (attrDlg instanceof CloudAttrDlg) {
             ((CloudAttrDlg) attrDlg).setCloudDrawingTool(this);
@@ -92,11 +91,6 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
         super();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.viz.ui.tools.AbstractModalTool#deactivateTool()
-     */
     @Override
     public void deactivateTool() {
 
@@ -105,17 +99,19 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
         labeledLine = null;
         if (mouseHandler instanceof PgenLabeledLineDrawingHandler) {
             PgenLabeledLineDrawingHandler cdh = (PgenLabeledLineDrawingHandler) mouseHandler;
-            if (cdh != null)
+            if (cdh != null) {
                 cdh.clearPoints();
+            }
         }
 
     }
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
@@ -129,12 +125,13 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
 
-    private class PgenLabeledLineDrawingHandler extends InputHandlerDefaultImpl {
+    private class PgenLabeledLineDrawingHandler
+            extends InputHandlerDefaultImpl {
         /**
          * flag for CCFP.
          */
@@ -143,7 +140,7 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
         /**
          * Points of the new element.
          */
-        protected ArrayList<Coordinate> points = new ArrayList<Coordinate>();
+        protected ArrayList<Coordinate> points = new ArrayList<>();
 
         /**
          * Current element.
@@ -156,21 +153,17 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
          */
         protected DrawableElementFactory def = new DrawableElementFactory();
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(anX, aY);
-            if (loc == null || shiftDown)
+            if (loc == null || shiftDown) {
                 return false;
+            }
 
             if (button == 1) {
 
@@ -191,27 +184,25 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
             }
         }
 
-        private void closeAttrDlg(AttrDlg attrDlgObject, String pgenTypeString) {
-            if (attrDlgObject == null)
+        private void closeAttrDlg(AttrDlg attrDlgObject,
+                String pgenTypeString) {
+            if (attrDlgObject == null) {
                 return;
+            }
             attrDlgObject.close();
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseMove(int,
-         * int)
-         */
         @Override
         public boolean handleMouseMove(int x, int y) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(x, y);
-            if (loc == null)
+            if (loc == null) {
                 return false;
+            }
 
             String lineType = "LINE_DASHED_4";
             if (pgenType.equalsIgnoreCase("Cloud")) {
@@ -224,22 +215,21 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
 
             // create the ghost element and put it in the drawing layer
             AbstractDrawableComponent ghost = def.create(DrawableType.LINE,
-                    (IAttribute) attrDlg, "Lines", lineType, points,
-                    drawingLayer.getActiveLayer());
+                    attrDlg, "Lines", lineType, points,
+                    drawingLayers.getActiveLayer());
 
             if (points != null && points.size() >= 1) {
 
-                ArrayList<Coordinate> ghostPts = new ArrayList<Coordinate>(
-                        points);
+                ArrayList<Coordinate> ghostPts = new ArrayList<>(points);
                 ghostPts.add(loc);
                 Line ln = (Line) ghost;
-                ln.setLinePoints(new ArrayList<Coordinate>(ghostPts));
+                ln.setLinePoints(new ArrayList<>(ghostPts));
 
                 if ("CCFP_SIGMET".equalsIgnoreCase(pgenType)) {
                     ln.setClosed(ccdlg.isAreaType());
                     ln.setFilled(ccdlg.isAreaType());
                 }
-                drawingLayer.setGhostLine(ghost);
+                drawingLayers.setGhostLine(ghost);
                 mapEditor.refresh();
 
             }
@@ -250,26 +240,24 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
 
         @Override
         public boolean handleMouseDownMove(int x, int y, int mouseButton) {
-            if (!isResourceEditable() || shiftDown)
+            if (!isResourceEditable() || shiftDown) {
                 return false;
-            else
+            } else {
                 return true;
+            }
         }
 
         private void clearPoints() {
             points.clear();
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseUp(int, int, int)
-         */
         @Override
         public boolean handleMouseUp(int x, int y, int mouseButton) {
-            if (  !isResourceEditable() || shiftDown ) return false;
+            if (!isResourceEditable() || shiftDown) {
+                return false;
+            }
 
-            if ( mouseButton == 3 ){
+            if (mouseButton == 3) {
                 if (points.size() == 0) {
 
                     if (attrDlg.isAddLineMode()) {
@@ -286,7 +274,7 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
 
                 } else if (points.size() < 2) {
 
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
                     points.clear();
 
                     mapEditor.refresh();
@@ -296,10 +284,10 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
                     // add the labeled line to PGEN resource
                     if (attrDlg.isAddLineMode()) {
                         elem = def.createLabeledLine(pgenCategory, pgenType,
-                                (IAttribute) attrDlg, points, null,
-                                drawingLayer.getActiveLayer());
+                                attrDlg, points, null,
+                                drawingLayers.getActiveLayer());
 
-                        drawingLayer.addElement(elem);
+                        drawingLayers.addElement(elem);
                         labeledLine = (LabeledLine) elem;
                         AttrSettings.getInstance().setSettings(elem);
                     }
@@ -307,10 +295,10 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
                     if ("CCFP_SIGMET".equals(pgenType)) {
 
                         elem = def.createLabeledLine(pgenCategory, pgenType,
-                                (IAttribute) attrDlg, points, null,
-                                drawingLayer.getActiveLayer());
+                                attrDlg, points, null,
+                                drawingLayers.getActiveLayer());
 
-                        drawingLayer.addElement(elem);
+                        drawingLayers.addElement(elem);
                         labeledLine = (LabeledLine) elem;
 
                         if (ccdlg.isAreaType()) {// avoid 2 Sigmet elements
@@ -327,40 +315,39 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
                                 Text t = new Text();
                                 Label lbl = new Label(t);
                                 lbl.setParent(labeledLine);
-                                setCcfpText(
-                                        labeledLine,
+                                setCcfpText(labeledLine,
                                         ((gov.noaa.nws.ncep.ui.pgen.sigmet.Ccfp) labeledLine)
-                                                .getAreaLine(), t, lbl);
+                                                .getAreaLine(),
+                                        t, lbl);
 
                                 labeledLine.addLabel(lbl);
                             }
                         }
                     }
 
-                    drawingLayer.removeGhostLine();
-                    if (!ccfpTxtFlag)
+                    drawingLayers.removeGhostLine();
+                    if (!ccfpTxtFlag) {
                         points.clear();
+                    }
 
                     mapEditor.refresh();
 
                 }
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
-        
-        
+
         /**
          * Returns the Labeled Line in the current layer with input
          * type(Turb/Cloud).
-         * 
+         *
          * @param type
          * @return
          */
         private LabeledLine getLabeledLineInCurrentLayer(String type) {
-            Iterator<AbstractDrawableComponent> it = drawingLayer
+            Iterator<AbstractDrawableComponent> it = drawingLayers
                     .getActiveLayer().getComponentIterator();
             while (it.hasNext()) {
                 AbstractDrawableComponent adc = it.next();
@@ -374,27 +361,31 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
 
     }
 
+    @Override
     public void setLabeledLine(LabeledLine labeledLine) {
         this.labeledLine = labeledLine;
     }
 
+    @Override
     public LabeledLine getLabeledLine() {
         return labeledLine;
     }
 
+    @Override
     public void resetMouseHandler() {
         setHandler(new PgenLabeledLineDrawingHandler());
     }
 
+    @Override
     public void setAddingLabelHandler() {
-        setHandler(new PgenAddLabelHandler(mapEditor, drawingLayer, this,
+        setHandler(new PgenAddLabelHandler(mapEditor, drawingLayers, this,
                 attrDlg));
     }
 
     @Override
     public void setDeleteHandler(boolean delLine, boolean flipFlag,
             boolean openClose) {
-        setHandler(new PgenLabeledLineDelHandler(mapEditor, drawingLayer, this,
+        setHandler(new PgenLabeledLineDelHandler(mapEditor, drawingLayers, this,
                 attrDlg, delLine, flipFlag, openClose));
     }
 
@@ -413,9 +404,8 @@ public class PgenLabeledLineDrawingTool extends AbstractPgenDrawingTool
         txt.setStyle(FontStyle.REGULAR);
         txt.setJustification(TextJustification.CENTER);
 
-        txt.setText(gov.noaa.nws.ncep.ui.pgen.sigmet.CcfpInfo
-                .getCcfpTxt2(((gov.noaa.nws.ncep.ui.pgen.sigmet.Ccfp) ll)
-                        .getSigmet()));
+        txt.setText(gov.noaa.nws.ncep.ui.pgen.sigmet.CcfpInfo.getCcfpTxt2(
+                ((gov.noaa.nws.ncep.ui.pgen.sigmet.Ccfp) ll).getSigmet()));
         txt.setRotationRelativity(TextRotation.SCREEN_RELATIVE);
         txt.setColors(ln.getColors());
 

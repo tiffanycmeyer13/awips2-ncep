@@ -40,18 +40,25 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- -----------------------------------
- * 03/13        #977        S.gilbert   Modified from PgenFileManageDialog1
- * 01/2014      #1105       jwu         Use "subtype" for query as well.
- * 08/2014      TTR867      jwu         Add "time stamp" for activities with same label.
- * 08/2014      ?           jwu         Preserve "outputFile" name when opening an activity.
- * 06/24/2015   R7806       A. Su       Added two pull-down menus (site & desk), and a list (subtype).
- *                                      Rearranged three sets of two-choice radio buttons.
- *                                      Implemented new logic for selecting activity labels.
- * 04/14/2016   R13245      B. Yin      Changed the format of date/time string.
- * Feb 28, 2019 7752        tjensen     Moved ActivityElement to its own class
- * 8/27/2019    67216       ksunil      Code re-factored into PgenRetrieveCommonDialogArea
+ *
+ * Date          Ticket#  Engineer   Description
+ * ------------- -------- ---------- -------------------------------------------
+ * 03/13         977      S.gilbert  Modified from PgenFileManageDialog1
+ * 01/2014       1105     jwu        Use "subtype" for query as well.
+ * 08/2014       TTR867   jwu        Add "time stamp" for activities with same
+ *                                   label.
+ * 08/2014       ?        jwu        Preserve "outputFile" name when opening an
+ *                                   activity.
+ * Jun 24, 2015  7806     A. Su      Added two pull-down menus (site & desk),
+ *                                   and a list (subtype). Rearranged three sets
+ *                                   of two-choice radio buttons. Implemented
+ *                                   new logic for selecting activity labels.
+ * Apr 14, 2016  13245    B. Yin     Changed the format of date/time string.
+ * Feb 28, 2019  7752     tjensen    Moved ActivityElement to its own class
+ * Aug 27, 2019  67216    ksunil     Code re-factored into
+ *                                   PgenRetrieveCommonDialogArea
+ * Dec 01, 2021  95362    tjensen    Refactor PGEN Resource management to
+ *                                   support multi-panel displays
  *
  * </pre>
  *
@@ -194,7 +201,7 @@ public class RetrieveActivityDialog extends CaveJFACEDialog {
         /*
          * Confirm the action
          */
-        PgenResource pgen = PgenSession.getInstance().getPgenResource();
+        PgenResource pgen = PgenSession.getInstance().getCurrentResource();
 
         // Force all product/layer display onOff flag to be false at the start.
         if (replace) {
@@ -228,11 +235,6 @@ public class RetrieveActivityDialog extends CaveJFACEDialog {
          * Replace the active product or add the product to the end
          */
         if (replace) {
-            // Reset the output file name.
-            // for (gov.noaa.nws.ncep.ui.pgen.elements.Product pp : pgenProds) {
-            // pp.setOutputFile(null);
-            // }
-
             PgenFileNameDisplay.getInstance().setFileName(fullName);
             pgen.replaceProduct(pgenProds);
         } else {
@@ -276,7 +278,7 @@ public class RetrieveActivityDialog extends CaveJFACEDialog {
             return;
         }
 
-        PgenResource pgen = PgenSession.getInstance().getPgenResource();
+        PgenResource pgen = PgenSession.getInstance().getCurrentResource();
 
         PgenLayerMergeDialog layerMergeDlg = null;
         try {
@@ -333,7 +335,7 @@ public class RetrieveActivityDialog extends CaveJFACEDialog {
             java.util.List<gov.noaa.nws.ncep.ui.pgen.elements.Product> prods) {
 
         PgenSnapJet st = new PgenSnapJet(
-                PgenSession.getInstance().getPgenResource().getDescriptor(),
+                PgenSession.getInstance().getCurrentResource().getDescriptor(),
                 PgenUtil.getActiveEditor(), null);
 
         for (gov.noaa.nws.ncep.ui.pgen.elements.Product prod : prods) {
@@ -345,12 +347,10 @@ public class RetrieveActivityDialog extends CaveJFACEDialog {
                     AbstractDrawableComponent adc = iterator.next();
                     if (adc instanceof Jet) {
                         ((Jet) adc).setSnapTool(st);
-                        // st.snapJet((Jet)adc);
                     }
                 }
             }
         }
-
     }
 
 }

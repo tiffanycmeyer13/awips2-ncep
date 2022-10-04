@@ -55,8 +55,9 @@ import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpResourceHandler;
  * 10/26/2018   DR20904   mgamazaychikov Changed parcel indices from 
  *                                       NsharpNativeConstants to NsharpLibSndglib
  * Dec 20, 2018  7575     bsteffen       Use Parcel numbers from NsharpLibSndglib
- * Apr 22, 2020  76580    smanoj         Allow user to interact with NsharpEditor while
- *                                       the dialog is open.
+ * Apr 22, 2020  76580    smanoj         Allow user to interact with NsharpEditor
+ *                                       while the dialog is open.
+ * Mar 21 2022   89212    smanoj         Configuration Dialog display issues.
  * 
  * </pre>
  * 
@@ -330,12 +331,19 @@ public class NsharpParcelDialog extends Dialog {
 
     @Override
     public int open() {
+
         if (this.getShell() == null) {
             this.create();
+        } else {
+            try {
+                this.getShell().setLocation(
+                        this.getShell().getParent().getLocation().x + 1100,
+                        this.getShell().getParent().getLocation().y + 200);
+            } catch (Exception e) {
+                // if widget disposed
+                this.create();
+            }
         }
-        this.getShell().setLocation(
-                this.getShell().getParent().getLocation().x + 1100,
-                this.getShell().getParent().getLocation().y + 200);
         return super.open();
     }
 

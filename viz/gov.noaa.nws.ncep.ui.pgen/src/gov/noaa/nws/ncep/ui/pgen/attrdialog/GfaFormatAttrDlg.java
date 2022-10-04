@@ -49,14 +49,17 @@ import gov.noaa.nws.ncep.ui.pgen.tools.PgenGfaFormatTool;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * 06/10        #223        M.Laryukhin Initial creation
- * 07/11        ?           B. Yin      Use fixed font for text message.
- * 04/29        #977        S. Gilbert  PGEN Database support
- * 07/13        ?           J. Wu       Reposition "Generate" and "Cancel".
- * 03/20/2019   #7572       dgilling    Don't enable Generate button unless all necessary
- *                                      options have been selected.
+ *
+ * Date          Ticket#  Engineer     Description
+ * ------------- -------- ------------ -----------------------------------------
+ * 06/10         223      M.Laryukhin  Initial creation
+ * 07/11         ?        B. Yin       Use fixed font for text message.
+ * 04/29         977      S. Gilbert   PGEN Database support
+ * 07/13         ?        J. Wu        Reposition "Generate" and "Cancel".
+ * Mar 20, 2019  7572     dgilling     Don't enable Generate button unless all
+ *                                     necessary options have been selected.
+ * Dec 01, 2021  95362    tjensen      Refactor PGEN Resource management to
+ *                                     support multi-panel displays
  *
  * </pre>
  *
@@ -99,8 +102,7 @@ public class GfaFormatAttrDlg extends AttrDlg {
 
     private boolean lastWest, lastSlc, lastSfo, lastCentral, lastChi, lastDfw;
 
-    private boolean lastEast, lastBos, lastMia, lastSierra, lastTango,
-            lastZulu;
+    private boolean lastEast, lastBos, lastMia, lastSierra, lastTango, lastZulu;
 
     // text area
     private Text text;
@@ -205,7 +207,8 @@ public class GfaFormatAttrDlg extends AttrDlg {
         miaBtn = createCheckBtn(comp, Gfa.MIA, lastMia);
     }
 
-    private Button createCheckBtn(Composite comp, String str, boolean lastUsed) {
+    private Button createCheckBtn(Composite comp, String str,
+            boolean lastUsed) {
         Button btn = new Button(comp, SWT.CHECK);
         btn.setText(str);
         btn.setSelection(lastUsed);
@@ -280,8 +283,8 @@ public class GfaFormatAttrDlg extends AttrDlg {
 
         List<AbstractDrawableComponent> all = new ArrayList<>();
         Product prod = null;
-        if (drawingLayer != null) {
-            prod = drawingLayer.getActiveProduct();
+        if (drawingLayers != null) {
+            prod = drawingLayers.getActiveProduct();
             for (Layer layer : prod.getLayers()) {
                 // formatting each layer separately
                 all.addAll(layer.getDrawables());
@@ -291,7 +294,7 @@ public class GfaFormatAttrDlg extends AttrDlg {
         String dataURI = null;
         if (prod != null) {
             try {
-                prod.setOutputFile(drawingLayer.buildActivityLabel(prod));
+                prod.setOutputFile(drawingLayers.buildActivityLabel(prod));
                 dataURI = StorageUtils.storeProduct(prod);
             } catch (PgenStorageException e) {
                 StorageUtils.showError(e);
@@ -308,8 +311,8 @@ public class GfaFormatAttrDlg extends AttrDlg {
 
         // tool
         try {
-            StringBuilder sb = pgenGfaFormatTool.generate(drawingLayer, allGfa,
-                    getChecked(), getSelectedCategories(), dataURI);
+            StringBuilder sb = pgenGfaFormatTool.generate(allGfa, getChecked(),
+                    getSelectedCategories(), dataURI);
             text.setText(sb.toString());
         } catch (IOException e) {
             text.setText("I/O Error");
@@ -445,11 +448,11 @@ public class GfaFormatAttrDlg extends AttrDlg {
      */
     private class ChkBtnSelectionListener extends SelectionAdapter {
 
-        private Button b1;
+        private final Button b1;
 
-        private Button b2;
+        private final Button b2;
 
-        private Button b3;
+        private final Button b3;
 
         public ChkBtnSelectionListener(Button b1, Button b2, Button b3) {
             this.b1 = b1;

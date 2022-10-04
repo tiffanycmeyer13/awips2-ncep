@@ -77,17 +77,21 @@ import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
  *
  * SOFTWARE HISTORY
  *
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * Jan 2010      #165      G. Zhang     Initial creation
- * Apr 2011                B. Yin       Re-factor IAttribute
- * Jul 2011      #450      G. Hull      NcPathManager
- * Nov 2012      #889      B. Yin       Don't save XML file before saving text file.
- * Nov 2012      #890      B. Yin       Allow lower cases and numbers in the correction text field.
- * Mar 2013      #928      B. Yin       Made the button bar smaller.
- * Apr 2013      #977      S. Gilbert   PGEN Database support
- * Nov 2013      #1067     B. Yin       Check PGEN resource in the close method.
- * Mar 20, 2019  #7572     dgilling     Code cleanup.
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * Jan 2010      165      G. Zhang    Initial creation
+ * Apr 2011               B. Yin      Re-factor IAttribute
+ * Jul 2011      450      G. Hull     NcPathManager
+ * Nov 2012      889      B. Yin      Don't save XML file before saving text
+ *                                    file.
+ * Nov 2012      890      B. Yin      Allow lower cases and numbers in the
+ *                                    correction text field.
+ * Mar 2013      928      B. Yin      Made the button bar smaller.
+ * Apr 2013      977      S. Gilbert  PGEN Database support
+ * Nov 2013      1067     B. Yin      Check PGEN resource in the close method.
+ * Mar 20, 2019  7572     dgilling    Code cleanup.
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
  *
  * </pre>
  *
@@ -231,7 +235,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
     /**
      * product types from this dialog: NORMAL, QUICK, etc
      */
-    private String[] type = VaaInfo.ProductInfo.getProduct(VaaInfo.LOCS[0]);
+    private final String[] type = VaaInfo.ProductInfo
+            .getProduct(VaaInfo.LOCS[0]);
 
     /**
      * Volcano elevation text.
@@ -241,12 +246,12 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
     /**
      * GridData for layout of this dialog parts
      */
-    private GridData singleTxtGridData = new GridData(58, 16);
+    private final GridData singleTxtGridData = new GridData(58, 16);
 
     /**
      * helper class for verifying input texts.
      */
-    private TxtVerifyListener tvl = new TxtVerifyListener();
+    private final TxtVerifyListener tvl = new TxtVerifyListener();
 
     /**
      * Fhr 6 Ash Cloud info of user manual inputs
@@ -354,7 +359,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
     /**
      * button listener method overridden from super class.
      *
-     * @param int: button id for buttons.
+     * @param int:
+     *            button id for buttons.
      */
     @Override
     protected void buttonPressed(int buttonId) {
@@ -385,7 +391,7 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
      */
     @Override
     public void cancelPressed() {
-        if (drawingLayer == null) {
+        if (drawingLayers == null) {
             setReturnCode(CANCEL);
             close();
         } else {
@@ -405,9 +411,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
         smDlg.setVolcano(volcano);
 
         String xsltFile = PgenStaticDataProvider.getProvider()
-                .getFileAbsolutePath(
-                        PgenStaticDataProvider.getProvider()
-                                .getPgenLocalizationRoot() + PGEN_VAA_XSLT);
+                .getFileAbsolutePath(PgenStaticDataProvider.getProvider()
+                        .getPgenLocalizationRoot() + PGEN_VAA_XSLT);
 
         List<Product> prds = new ArrayList<>();
         Product volProd = getVaaProduct(volcano);
@@ -511,22 +516,26 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
         top.setLayout(mainLayout);
 
         Group top1 = new Group(top, SWT.LEFT);
-        top1.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
+        top1.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
         top1.setLayout(new GridLayout(8, false));
         createArea1(top1);
 
         Group top2 = new Group(top, SWT.LEFT);
-        top2.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
+        top2.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
         top2.setLayout(new GridLayout(8, false));
         createArea2(top2);
 
         Group top3 = new Group(top, SWT.LEFT);
-        top3.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
+        top3.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
         top3.setLayout(new GridLayout(8, false));
         createArea3(top3);
 
         Group top4 = new Group(top, SWT.LEFT);
-        top4.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
+        top4.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, true, 8, 1));
         top4.setLayout(new GridLayout(8, false));
         createArea4(top4);
 
@@ -550,8 +559,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
         lblArea.setText("Area: ");
 
         lblAreaText = new Label(top, SWT.LEFT);
-        lblAreaText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-                false, 5, 1));
+        lblAreaText.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, false, 5, 1));
         lblAreaText.setText(getAreaText());
 
         Label lblElev = new Label(top, SWT.LEFT);
@@ -572,34 +581,35 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
         lblOrig.setText("Orig Stn/VAAC: ");
 
         comboStn = new Combo(top, SWT.READ_ONLY);
-        comboStn.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false,
-                5, 1));
+        comboStn.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, false, 5, 1));
         comboStn.setItems(this.getStnIdNumArray(null, null));
         comboStn.select(1);
 
-        Label lblDummy1 = new Label(top, SWT.LEFT), lblDummy2 = new Label(top,
-                SWT.LEFT);
+        Label lblDummy1 = new Label(top, SWT.LEFT),
+                lblDummy2 = new Label(top, SWT.LEFT);
 
         Label lblId = new Label(top, SWT.LEFT);
         lblId.setText("WMO ID: ");
 
         comboId = new Combo(top, SWT.READ_ONLY);
-        comboId.setItems(this.getStnIdNumArray(true, comboStn.getText().trim()));
+        comboId.setItems(
+                this.getStnIdNumArray(true, comboStn.getText().trim()));
         comboId.select(0);
 
         Label lblHdr = new Label(top, SWT.LEFT);
         lblHdr.setText("Hdr Number: ");
 
         comboHdr = new Combo(top, SWT.READ_ONLY);
-        comboHdr.setItems(this.getStnIdNumArray(false, comboStn.getText()
-                .trim()));
+        comboHdr.setItems(
+                this.getStnIdNumArray(false, comboStn.getText().trim()));
         comboHdr.select(0);
 
         comboType = new Combo(top, SWT.READ_ONLY);
         comboType.setItems(type);
         comboType.select(0);
-        comboType.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true,
-                false, 2, 1));
+        comboType.setLayoutData(
+                new GridData(SWT.RIGHT, SWT.CENTER, true, false, 2, 1));
         comboType.setEnabled(isFromSelection());
 
         comboStn.addListener(SWT.Selection, new Listener() {
@@ -680,8 +690,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
 
         Button btnInfoSour = new Button(top, SWT.PUSH);
         btnInfoSour.setText("Information Source:");
-        btnInfoSour.setLayoutData(new GridData(
-                GridData.VERTICAL_ALIGN_BEGINNING));
+        btnInfoSour
+                .setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
 
         txtInfoSour = new Text(top, SWT.BORDER | SWT.MULTI | SWT.WRAP);
         GC gc = new GC(txtInfoSour);
@@ -712,8 +722,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
 
         Label lblAddInfoSour = new Label(top, SWT.LEFT);
         lblAddInfoSour.setText("Add'l Info Source: ");
-        lblAddInfoSour.setLayoutData(new GridData(
-                GridData.VERTICAL_ALIGN_BEGINNING));
+        lblAddInfoSour
+                .setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
 
         txtAddInfoSour = new Text(top, SWT.BORDER | SWT.MULTI | SWT.WRAP);
         gData = new GridData(SWT.FILL, SWT.FILL, true, false);
@@ -730,8 +740,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
 
         comboAviColoCode = new Combo(top, SWT.READ_ONLY);
         comboAviColoCode.setItems(getAviColoCode());
-        comboAviColoCode.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-                false, 7, 1));
+        comboAviColoCode.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, false, 7, 1));
         // TODO: ONLY for Washington VAAC ???
         comboAviColoCode.setEnabled(false);
 
@@ -787,15 +797,15 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
             }
         });
 
-        Label lblDummyNil = new Label(top, SWT.LEFT), lblDummyNil2 = new Label(
-                top, SWT.LEFT);
+        Label lblDummyNil = new Label(top, SWT.LEFT),
+                lblDummyNil2 = new Label(top, SWT.LEFT);
 
         // ------------------ Cloud Info
 
         Button btnCloudInfo = new Button(top, SWT.PUSH);
         btnCloudInfo.setText("Observed and Forecast Ash Cloud Inormation...");
-        btnCloudInfo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-                false, 8, 1));
+        btnCloudInfo.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, false, 8, 1));
         btnCloudInfo.addListener(SWT.Selection, new Listener() {
             @Override
             public void handleEvent(Event e) {
@@ -833,8 +843,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
 
         comboNextAdv = new Combo(top, SWT.DROP_DOWN);
         comboNextAdv.setItems(getNextAdvText());
-        comboNextAdv.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-                false, 7, 1));
+        comboNextAdv.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, false, 7, 1));
         comboNextAdv.addModifyListener(new TxtModifyListener());
 
         // ------------------ Forecasters
@@ -843,8 +853,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
 
         comboForecaster = new Combo(top, SWT.READ_ONLY | SWT.DROP_DOWN);
         comboForecaster.setItems(getForecastersName());
-        comboForecaster.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-                false, 7, 1));
+        comboForecaster.setLayoutData(
+                new GridData(SWT.FILL, SWT.CENTER, true, false, 7, 1));
 
         // --- set the contents after finishing layout
         // --- TEST/RESUME have rmks without a volcano
@@ -937,11 +947,11 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
         if (isId == null) {
             return map.keySet().toArray(new String[] {});
         } else if (isId) {
-            return stn == null ? new String[] {} : map.get(stn)[0].substring(1)
-                    .split(";");
+            return stn == null ? new String[] {}
+                    : map.get(stn)[0].substring(1).split(";");
         } else {
-            return stn == null ? new String[] {} : map.get(stn)[1].substring(1)
-                    .split(";");
+            return stn == null ? new String[] {}
+                    : map.get(stn)[1].substring(1).split(";");
         }
     }
 
@@ -1079,20 +1089,17 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
         volcano.setNil("" + btnNil.isEnabled());
 
         // TODO: obs & fcst 00,6,12,18
-        volcano.setObsFcstAshCloudInfo(VaaInfo.getAshCloudInfo("00")); // VaaInfo.LAYERS[1]
-                                                                       // "OBS"
-                                                                       // NOT
-                                                                       // F00
+        // VaaInfo.LAYERS[1] "OBS" NOT F00
+        volcano.setObsFcstAshCloudInfo(VaaInfo.getAshCloudInfo("00"));
         String[] fhrDT = VaaInfo.getFhrTimes(txtAshDate.getText().trim(),
                 txtAshTime.getText().trim());
-        volcano.setObsFcstAshCloudInfo6(getVacInfoFhr6(fhrDT));// VaaInfo.getAshCloudInfo("06"));
-        volcano.setObsFcstAshCloudInfo12(getVacInfoFhr12(fhrDT));// VaaInfo.getAshCloudInfo("12"));
-        volcano.setObsFcstAshCloudInfo18(getVacInfoFhr18(fhrDT));// VaaInfo.getAshCloudInfo("18"));
-
-        // volcano.setObsFcstAshCloudInfo()
+        volcano.setObsFcstAshCloudInfo6(getVacInfoFhr6(fhrDT));
+        volcano.setObsFcstAshCloudInfo12(getVacInfoFhr12(fhrDT));
+        volcano.setObsFcstAshCloudInfo18(getVacInfoFhr18(fhrDT));
 
         volcano.setRemarks(getTxtNoRsrvWord(txtRemark.getText()));
-        volcano.setNextAdv(getTxtNoRsrvWord(getNxtAdvTxt(comboNextAdv.getText())));
+        volcano.setNextAdv(
+                getTxtNoRsrvWord(getNxtAdvTxt(comboNextAdv.getText())));
         volcano.setForecasters(comboForecaster.getText());
 
     }
@@ -1238,8 +1245,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
             // Allow A-Z as first char and decrement advNo
             // Allow a-z and numbers for TTR632
             if (((myChar >= 65 && myChar <= 90)
-                    || (myChar >= 97 && myChar <= 122) || Character
-                        .isDigit(myChar)) && text.length() == 0) {
+                    || (myChar >= 97 && myChar <= 122)
+                    || Character.isDigit(myChar)) && text.length() == 0) {
                 event.doit = true;
                 setTxtChange(txtAdNo, false);
             }
@@ -1282,8 +1289,9 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
      * layer's clouds info same for fhr12/18
      */
     public String getVacInfoFhr6(String[] fhrDT) {
-        return vacInfoFhr6 == null ? fhrDT[0] + "  "
-                + VaaInfo.getAshCloudInfo(VaaInfo.LAYERS[2]) : vacInfoFhr6;
+        return vacInfoFhr6 == null
+                ? fhrDT[0] + "  " + VaaInfo.getAshCloudInfo(VaaInfo.LAYERS[2])
+                : vacInfoFhr6;
     }
 
     public void setVacInfoFhr6(String vacInfoFhr6) {
@@ -1291,8 +1299,9 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
     }
 
     public String getVacInfoFhr12(String[] fhrDT) {
-        return vacInfoFhr12 == null ? fhrDT[1] + "  "
-                + VaaInfo.getAshCloudInfo(VaaInfo.LAYERS[3]) : vacInfoFhr12;
+        return vacInfoFhr12 == null
+                ? fhrDT[1] + "  " + VaaInfo.getAshCloudInfo(VaaInfo.LAYERS[3])
+                : vacInfoFhr12;
     }
 
     public void setVacInfoFhr12(String vacInfoFhr12) {
@@ -1300,8 +1309,9 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
     }
 
     public String getVacInfoFhr18(String[] fhrDT) {
-        return vacInfoFhr18 == null ? fhrDT[2] + "  "
-                + VaaInfo.getAshCloudInfo(VaaInfo.LAYERS[4]) : vacInfoFhr18;
+        return vacInfoFhr18 == null
+                ? fhrDT[2] + "  " + VaaInfo.getAshCloudInfo(VaaInfo.LAYERS[4])
+                : vacInfoFhr18;
     }
 
     public void setVacInfoFhr18(String vacInfoFhr18) {
@@ -1441,8 +1451,7 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
                 MessageDialog confirmDlg = new MessageDialog(
                         PlatformUI.getWorkbench().getActiveWorkbenchWindow()
                                 .getShell(),
-                        "Warning",
-                        null,
+                        "Warning", null,
                         " ::: IS A RESERVED WORD AND WILL BE REMOVED FROM THE TEXT!",
                         MessageDialog.WARNING, new String[] { "OK" }, 0);
 
@@ -1554,8 +1563,8 @@ public class VolcanoVaaAttrDlg extends AttrDlg implements ISigmet {
 
     @Override
     public boolean close() {
-        if ( drawingLayer != null ) {
-            drawingLayer.removeSelected();
+        if (drawingLayers != null) {
+            drawingLayers.removeSelected();
         }
         SaveMsgDlg.getInstance(this.getParentShell()).close();
         return super.close();

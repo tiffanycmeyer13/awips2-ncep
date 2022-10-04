@@ -95,7 +95,13 @@ import javax.xml.bind.annotation.XmlType;
  * Feb 08, 2021 87538       smanoj      Added FCST Lat/Lon for Tropical Cyclone.
  * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
  * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
- *
+ * Jan 10, 2022 99344       smanoj      Added VolcAsh Description coordinate RoundTo Value.
+ * Jan 24, 2022 99344       smanoj      Updates for additional requirements from
+ *                                      NWS for Int'l Sigmet for Volcanic Ash.
+ * Feb 02, 2022 99344       smanoj      Volcanic Ash LatLon values are converted to VOR
+ *                                      coordinates in Fcst Radial/Area/Line description.
+ * 
+ * 
  * </pre>
  *
  */
@@ -220,9 +226,6 @@ public class Sigmet {
     protected String editableAttrLevelText2;
 
     @XmlAttribute
-    protected String editableAttrAltLevel;
-
-    @XmlAttribute
     protected String editableAttrAltLevelInfo1;
 
     @XmlAttribute
@@ -265,6 +268,12 @@ public class Sigmet {
     protected String editableAttrFcstVADesc;
 
     @XmlAttribute
+    protected String editableAttrFcstVADescVor;
+
+    @XmlAttribute
+    protected String editableAttrFcstVADescRoundToVal;
+
+    @XmlAttribute
     protected String editableAttrRALSelection;
 
     @XmlAttribute
@@ -301,6 +310,23 @@ public class Sigmet {
 
     public void setEditableAttrFcstVADesc(String editableAttrFcstVADesc) {
         this.editableAttrFcstVADesc = editableAttrFcstVADesc;
+    }
+
+    public String getEditableAttrFcstVADescVor() {
+        return editableAttrFcstVADescVor;
+    }
+
+    public void setEditableAttrFcstVADescVor(String editableAttrFcstVADescVor) {
+        this.editableAttrFcstVADescVor = editableAttrFcstVADescVor;
+    }
+
+    public String getEditableAttrFcstVADescRoundToVal() {
+        return editableAttrFcstVADescRoundToVal;
+    }
+
+    public void setEditableAttrFcstVADescRoundToVal(
+            String editableAttrFcstVADescRoundToVal) {
+        this.editableAttrFcstVADescRoundToVal = editableAttrFcstVADescRoundToVal;
     }
 
     public String getEditableAttrFcstAvail() {
@@ -1134,27 +1160,6 @@ public class Sigmet {
      */
     public void setEditableAttrLevelText2(String value) {
         this.editableAttrLevelText2 = value;
-    }
-
-    /**
-     * Gets the value of the editableAttrAltLevel property.
-     *
-     * @return possible object is {@link String }
-     *
-     */
-    public String getEditableAttrAltLevel() {
-        return editableAttrAltLevel;
-    }
-
-    /**
-     * Sets the value of the editableAttrAltLevel property.
-     *
-     * @param value
-     *            allowed object is {@link String }
-     *
-     */
-    public void setEditableAttrAltLevel(String value) {
-        this.editableAttrAltLevel = value;
     }
 
     /**

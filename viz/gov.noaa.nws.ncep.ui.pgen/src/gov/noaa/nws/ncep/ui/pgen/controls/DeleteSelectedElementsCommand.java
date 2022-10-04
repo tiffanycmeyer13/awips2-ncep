@@ -23,100 +23,83 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Product;
  * 
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 05/09			79		B. Yin   	Initial Creation.
- * 06/09			116		B. Yin		Changed DrawableElement to 
- * 										AbstractDrawableComponent
- *
+ * Date           Ticket#        Engineer      Description
+ * ------------   ----------    -----------   -----------------------------
+ * 05/09          79             B. Yin       Initial Creation.
+ * 06/09          116            B. Yin       Changed DrawableElement to
+ *                                            AbstractDrawableComponent
+ * Feb 18, 2022   100402         smanoj       Bug fix to support multi-panel
+ *                                            display refactor.
  * </pre>
  * 
- * @author	B. Yin
+ * @author B. Yin
  */
 
 public class DeleteSelectedElementsCommand extends PgenCommand {
 
-	/*
-	 * The Product list.
-	 */
-	private List<Product> prodList;
-	
-	/*
-	 * Elements selected
-	 */
-	private List<AbstractDrawableComponent> elSelected;
-	
-	/*
-	 * Saved version of the elements selected
-	 */
-	private List<AbstractDrawableComponent> saveEl;
-	
-	/*
-	 * Element-layer map for selected elements
-	 */
-	private HashMap<AbstractDrawableComponent, DECollection> elMap;
+    // The Product list.
+    private List<Product> prodList;
 
-	/**
-	 * Constructor
-	 * @param list
-	 * @param elements
-	 */
-	public DeleteSelectedElementsCommand(List<Product> list, 
-			List<AbstractDrawableComponent>elements) {
-		
-		this.prodList = list;
-		elSelected = elements;
-		saveEl = new ArrayList<AbstractDrawableComponent>(elements);
-		elMap = new HashMap<AbstractDrawableComponent, DECollection>();
+    // Elements selected
+    private List<AbstractDrawableComponent> elSelected;
 
-	}
+    // Saved version of the elements selected
+    private List<AbstractDrawableComponent> saveEl;
 
-	/**
-	 * Remove selected elements and save the layer info for each removed el to a map. 
-	 * @see gov.noaa.nws.ncep.ui.pgen.controls.PgenCommand#execute()
-	 */
-	@Override
-	public void execute() throws PGenException {
-		
-		for ( AbstractDrawableComponent comp : saveEl ){
-			
-			for ( Product prod : prodList ) {
+    // Element-layer map for selected elements
+    private HashMap<AbstractDrawableComponent, DECollection> elMap;
 
-				for ( Layer layer : prod.getLayers() ) {
+    /**
+     * Constructor
+     * 
+     * @param list
+     * @param elements
+     */
+    public DeleteSelectedElementsCommand(List<Product> list,
+            List<AbstractDrawableComponent> elements) {
 
-					DECollection dec = layer.search(comp);
-					if ( dec != null ){
-						
-						dec.removeElement(comp);
-						elMap.put(comp,dec);
-					}
-				}
-			}
-		}
+        this.prodList = list;
+        elSelected = elements;
+        saveEl = new ArrayList<AbstractDrawableComponent>(elements);
+        elMap = new HashMap<AbstractDrawableComponent, DECollection>();
 
-		elSelected.clear();
-	}
+    }
 
-	/**
-	 * Add back all removed elements into the layers they belong to. 
-	 * @see gov.noaa.nws.ncep.ui.pgen.controls.PgenCommand#undo()
-	 */
-	@Override
-	public void undo() throws PGenException {
-		
-		for ( AbstractDrawableComponent comp : saveEl ){
-			
-			DECollection dec = elMap.get(comp);
-			
-			if (dec != null ){
-				dec.addElement(comp);
-			}
-			else {
-				throw new PGenException("Coulnd't find the collection when restoring objects!");
-			}
-			
-		}
-		
-	}
+    /**
+     * Remove selected elements and save the layer info for each removed el to a
+     * map.
+     */
+    @Override
+    public void execute() throws PGenException {
+
+        for (AbstractDrawableComponent comp : saveEl) {
+            for (Product prod : prodList) {
+                for (Layer layer : prod.getLayers()) {
+                    DECollection dec = layer.search(comp);
+                    if (dec != null) {
+                        dec.removeElement(comp);
+                        elMap.put(comp, dec);
+                    }
+                }
+            }
+        }
+
+        elSelected.clear();
+    }
+
+    /**
+     * Add back all removed elements into the layers they belong to.
+     */
+    @Override
+    public void undo() throws PGenException {
+
+        for (AbstractDrawableComponent comp : saveEl) {
+            DECollection dec = elMap.get(comp);
+            if (dec != null) {
+                dec.addElement(comp);
+            }
+        }
+
+    }
 
 }

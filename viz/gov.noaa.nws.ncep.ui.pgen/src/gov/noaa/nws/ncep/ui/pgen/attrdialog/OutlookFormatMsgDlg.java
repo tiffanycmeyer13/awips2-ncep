@@ -51,23 +51,25 @@ import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- -------------------------
- * 02/10        ?           B. Yin      Initial Creation.
- * 03/12        #703        B. Yin      Generate product text from style sheet
- * 06/12        #786        B. Yin      Close all dialogs after text is saved.
- * 04/29/13     #977        S. Gilbert  PGEN Database support
- * 08/13        TTR 770     B. Yin      Handle no outlook, fixed the file name.
- * 2021 Jan 14  86162       S. Russell  Updated storeProduct() to use current
- *                                      date and time for refTime in PGEN tbl
- * 2021 Jan 19  86162       S. Russell  Updated storeProduct() to use the
- *                                      current time for reftime. Also updated
- *                                      to set the OUTLOOK to have the subtype
- *                                      and activityname as the parent PGen
- *                                      activity active on the screen. If an
- *                                      OutLook has no polygons, but there
- *                                      is a Text product on the screen, it
- *                                      is now saved to the OUTLOOK
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 02/10         ?        B. Yin      Initial Creation.
+ * 03/12         703      B. Yin      Generate product text from style sheet
+ * 06/12         786      B. Yin      Close all dialogs after text is saved.
+ * Apr 29, 2013  977      S. Gilbert  PGEN Database support
+ * 08/13         TTR 770  B. Yin      Handle no outlook, fixed the file name.
+ * Jan 14, 2021  86162    S. Russell  Updated storeProduct() to use current date
+ *                                    and time for refTime in PGEN tbl
+ * Jan 19, 2021  86162    S. Russell  Updated storeProduct() to use the current
+ *                                    time for reftime. Also updated to set the
+ *                                    OUTLOOK to have the subtype and
+ *                                    activityname as the parent PGen activity
+ *                                    active on the screen. If an OutLook has no
+ *                                    polygons, but there is a Text product on
+ *                                    the screen, it is now saved to the OUTLOOK
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
  *
  * </pre>
  *
@@ -85,7 +87,7 @@ public class OutlookFormatMsgDlg extends Dialog {
     private String message;
 
     // instance of outlook format dialog
-    private OutlookFormatDlg ofd;
+    private final OutlookFormatDlg ofd;
 
     private Outlook otlk;
 
@@ -178,7 +180,7 @@ public class OutlookFormatMsgDlg extends Dialog {
      */
     private void savePressed() {
 
-        String pdName = ofd.getOtlkDlg().drawingLayer.getActiveProduct()
+        String pdName = ofd.getOtlkDlg().drawingLayers.getActiveProduct()
                 .getType();
         ProductType pt = ProductConfigureDialog.getProductTypes().get(pdName);
         if (pt != null) {
@@ -401,8 +403,8 @@ public class OutlookFormatMsgDlg extends Dialog {
             forecaster = ofd.getForecaster();
         }
 
-        Product activePgenActivity = PgenSession.getInstance().getPgenResource()
-                .getActiveProduct();
+        Product activePgenActivity = PgenSession.getInstance()
+                .getCurrentResource().getActiveProduct();
 
         if (layerList.size() == 1) {
             int iDrawables = 0;

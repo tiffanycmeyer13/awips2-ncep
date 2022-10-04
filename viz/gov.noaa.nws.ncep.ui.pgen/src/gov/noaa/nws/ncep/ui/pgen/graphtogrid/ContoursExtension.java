@@ -1,11 +1,16 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.graphToGrid.ContoursExtension
- * 
+ *
  * March 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.graphtogrid;
+
+import java.awt.Color;
+import java.util.ArrayList;
+
+import org.locationtech.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.gempak.parameters.core.categorymap.CatMap;
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
@@ -16,27 +21,24 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.Line;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 
-import java.awt.Color;
-import java.util.ArrayList;
-
-import org.locationtech.jts.geom.Coordinate;
-
 /**
  * Class for Graph-to-Grid to extend contour lines to an given boundary and
  * prepare data for later calculation in grid space.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ---------- ----------- ---------------------------------------
- * 03/10        #215        J. Wu       Initial Creation.
- * 06/15/2021   91162       smanoj      Added Null Pointer check.
- * 08/03/2021   94798       smanoj      Removed parametric curve fitting
- *                                      performed on the set of points
- *                                      in the contour line.
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 03/10         215      J. Wu     Initial Creation.
+ * Jun 15, 2021  91162    smanoj    Added Null Pointer check.
+ * Aug 03, 2021  94798    smanoj    Removed parametric curve fitting performed
+ *                                  on the set of points in the contour line.
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
  */
 
@@ -317,7 +319,7 @@ public class ContoursExtension {
         fi_ext = new float[nlines][];
         fj_ext = new float[nlines][];
 
-        extLines = new ArrayList<AbstractDrawableComponent>();
+        extLines = new ArrayList<>();
 
         int ii = 0;
         for (ContourLine cline : clines) {
@@ -365,7 +367,7 @@ public class ContoursExtension {
         if (ln != null) {
 
             PgenResource drawingLayer = PgenSession.getInstance()
-                    .getPgenResource();
+                    .getCurrentResource();
 
             /*
              * Find the visible part of the contour line in the current view.
@@ -441,13 +443,14 @@ public class ContoursExtension {
 
                         Line firstSeg = (Line) ln.copy();
 
-                        ArrayList<Coordinate> twoPts = new ArrayList<Coordinate>();
+                        ArrayList<Coordinate> twoPts = new ArrayList<>();
                         twoPts.add(p0);
                         twoPts.add(ln.getLinePoints()[0]);
 
                         firstSeg.setPointsOnly(twoPts);
-                        if (extColors != null)
+                        if (extColors != null) {
                             firstSeg.setColors(extColors);
+                        }
 
                         extLines.add(firstSeg);
                     }
@@ -471,15 +474,16 @@ public class ContoursExtension {
 
                         Line secondSeg = (Line) ln.copy();
 
-                        ArrayList<Coordinate> seg2 = new ArrayList<Coordinate>();
+                        ArrayList<Coordinate> seg2 = new ArrayList<>();
                         seg2.add(p1);
 
                         int np1 = ln.getLinePoints().length;
                         seg2.add(ln.getLinePoints()[np1 - 1]);
 
                         secondSeg.setPointsOnly(seg2);
-                        if (extColors != null)
+                        if (extColors != null) {
                             secondSeg.setColors(extColors);
+                        }
 
                         extLines.add(secondSeg);
                     }
@@ -491,10 +495,12 @@ public class ContoursExtension {
              * Save the points (in map coordinate).
              */
             int extPts = fi_orig[index].length;
-            if (p0 != null)
+            if (p0 != null) {
                 extPts++;
-            if (p1 != null)
+            }
+            if (p1 != null) {
                 extPts++;
+            }
 
             nExtPts[index] = extPts;
 
@@ -526,7 +532,7 @@ public class ContoursExtension {
     /**
      * Calculate the intersection point of a directional line segment (p2->p1)
      * with a given rectangle boundary.
-     * 
+     *
      * Note: the input is assumed in a Cartesian coordinate (X-axis should be
      * W->E and Y-axis should be S->N)
      */
@@ -587,7 +593,7 @@ public class ContoursExtension {
     /**
      * Ensure a closed line is closed by adding the first point to the end when
      * necessary.
-     * 
+     *
      * @param ln
      * @return A closed line if the line is defined as closed.
      */

@@ -19,23 +19,21 @@
  **/
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
 
-import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
-import gov.noaa.nws.ncep.ui.pgen.sigmet.CarSamBackupWmoHeader;
-import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
-import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.TimeZone;
 
-import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.swt.widgets.Shell;
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -43,13 +41,15 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Spinner;
+import org.eclipse.swt.widgets.Text;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.text.DateFormat;
-import java.util.TimeZone;
+import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
+import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.CarSamBackupWmoHeader;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.SigmetInfo;
 
 /**
  *
@@ -61,23 +61,30 @@ import java.util.TimeZone;
  * SOFTWARE HISTORY
  *
  * Date          Ticket#  Engineer  Description
- * ------------- -------- --------- -----------------
- * Jun 01, 2020  78215    smanoj   Initial creation
- * Jun 16, 2020  79243    smanoj   Added Caribbean and South American FIRs.
- * Mar 15, 2021  88217    smanoj   Added capability to SAVE CANCEL file.
- * Apr 07, 2021  88217    smanoj   Remove Hazard Type from Cancellation Information Text.
- *                                 Also remove unused buttons.
- * Apr 09, 2021  90325    smanoj   CARSAM Backup WMO headers update.
- * Jun 04, 2021  91845    smanoj   Fixing some issues with Backupmode and CANCEL.
- * Jun 15, 2021  91845    smanoj   Remove duplicate text from Cancellation Information Text.
- * 
+ * ------------- -------- --------- --------------------------------------------
+ * Jun 01, 2020  78215    smanoj    Initial creation
+ * Jun 16, 2020  79243    smanoj    Added Caribbean and South American FIRs.
+ * Mar 15, 2021  88217    smanoj    Added capability to SAVE CANCEL file.
+ * Apr 07, 2021  88217    smanoj    Remove Hazard Type from Cancellation
+ *                                  Information Text. Also remove unused
+ *                                  buttons.
+ * Apr 09, 2021  90325    smanoj    CARSAM Backup WMO headers update.
+ * Jun 04, 2021  91845    smanoj    Fixing some issues with Backupmode and
+ *                                  CANCEL.
+ * Jun 15, 2021  91845    smanoj    Remove duplicate text from Cancellation
+ *                                  Information Text.
+ * Nov 18, 2021  98546    achalla   Modified CAR/SAM SIGMET Id and Sequence
+ *                                  number in GUI and xml file
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ * May 17, 2022  103690   achalla   PGEN functionality CarSam Enhancement.
  * </pre>
  *
  * @author smanoj
  */
 public class SigmetCancelDlg extends AttrDlg {
 
-    private Sigmet sigmet;
+    private final Sigmet sigmet;
 
     private String firID;
 
@@ -188,7 +195,7 @@ public class SigmetCancelDlg extends AttrDlg {
                 // In the case of opening a cancelled SIGMET (existing *.xml)
                 // so the Cancel Dialog is populated with the correct Series
                 // Number.
-                String fileName = parentDlg.drawingLayer.getActiveProduct()
+                String fileName = parentDlg.drawingLayers.getActiveProduct()
                         .getInputFile();
                 if (fileName != null && fileName.startsWith(INTL_SIGMET)
                         && fileName.endsWith(".xml")) {
@@ -608,8 +615,13 @@ public class SigmetCancelDlg extends AttrDlg {
 
         sb.append(firID);
         sb.append(" ").append(SigmetConstant.SIGMET);
-        sb.append(" ").append(attrId);
-        sb.append(" ").append(seriesNumber);
+        //if attrID == " "/ cut one space
+        if(attrId.length() == 1){
+            sb.append(attrId.substring(0, 1));
+        }else{
+        sb.append(" ").append(attrId.substring(0, 1));
+        }
+        sb.append(seriesNumber);
         sb.append(" ").append(SigmetConstant.VALID).append(" ");
         sb.append(getTimeStringPlusHourInHMS(0)).append("/").append(endTime);
         sb.append(" ").append(area).append("-");
@@ -625,8 +637,15 @@ public class SigmetCancelDlg extends AttrDlg {
         sb.append(SigmetConstant.CNL);
 
         sb.append(" ").append(SigmetConstant.SIGMET);
-        sb.append(" ").append(attrId);
-        sb.append(" ").append(seqNum);
+       
+        //if attrID == " "/ cut one space
+        if(attrId.length() == 1){
+            sb.append(attrId); 
+            sb.append(seqNum);
+        }else{
+            sb.append(" ").append(attrId); 
+            sb.append(" ").append(seqNum);
+        }
         sb.append(" ").append(startTime).append("/").append(endTime);
         sb.append(".\n");
 
@@ -687,7 +706,7 @@ public class SigmetCancelDlg extends AttrDlg {
 
     @Override
     public void okPressed() {
-        //Invoke the same Save Dialog from the SigmetAttrDlg
+        // Invoke the same Save Dialog from the SigmetAttrDlg
         parentDlg.buttonPressed(PARENT_SAVE_ID);
         close();
     }
@@ -862,7 +881,7 @@ public class SigmetCancelDlg extends AttrDlg {
 
         private Text txtError;
 
-        private String errorMsg;
+        private final String errorMsg;
 
         SigmetCancelErrorDlg(Shell parShell, String errorMsg) {
             super(parShell);

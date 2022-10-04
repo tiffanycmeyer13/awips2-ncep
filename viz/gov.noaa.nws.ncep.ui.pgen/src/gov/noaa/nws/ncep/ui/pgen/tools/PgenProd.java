@@ -1,21 +1,12 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.PgenProd
- * 
+ *
  * 12 January 2011
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.tools;
-
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.elements.Product;
-import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductConfigureDialog;
-import gov.noaa.nws.ncep.ui.pgen.producttypes.ProdType;
-import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
-import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
-import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
 
 import java.io.File;
 import java.util.HashMap;
@@ -41,19 +32,34 @@ import org.eclipse.ui.PlatformUI;
 
 import com.raytheon.uf.viz.core.rsc.IInputHandler;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.elements.Product;
+import gov.noaa.nws.ncep.ui.pgen.productmanage.ProductConfigureDialog;
+import gov.noaa.nws.ncep.ui.pgen.producttypes.ProdType;
+import gov.noaa.nws.ncep.ui.pgen.producttypes.ProductType;
+import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
+import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
+
 /**
  * Implements PGEN "Prod" tool to generate products
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 01/11			?		B. Yin   	Initial Creation.
- * 11/11			? 		B. Yin		Write the text products to a predefined location 
- * 03/12		#616		B. Yin		Write the product to activity/prod/prod type/file
- * 04/13        #977        S. Gilbert  PGEN Database support
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 01/11         ?        B. Yin      Initial Creation.
+ * 11/11         ?        B. Yin      Write the text products to a predefined
+ *                                    location
+ * 03/12         616      B. Yin      Write the product to activity/prod/prod
+ *                                    type/file
+ * 04/13         977      S. Gilbert  PGEN Database support
+ * Dec 02, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
@@ -65,11 +71,6 @@ public class PgenProd extends AbstractPgenTool {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.viz.ui.tools.AbstractTool#runTool()
-     */
     @Override
     protected void activateTool() {
 
@@ -78,23 +79,19 @@ public class PgenProd extends AbstractPgenTool {
         ProdDialog dlg = new ProdDialog();
         dlg.open();
 
-        // NmapUiUtils.setPanningMode();
-
     }
 
     /**
      * Dialog that contains a list of check boxes of ProdTypes for the active
      * product.
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
     private class ProdDialog extends Dialog {
 
-        // private ProductType curType;
-
         // Map between check box in the GUI and ProdType
-        private HashMap<Button, ProdType> typeMap;
+        private final HashMap<Button, ProdType> typeMap;
 
         /**
          * Constructor
@@ -102,7 +99,7 @@ public class PgenProd extends AbstractPgenTool {
         private ProdDialog() {
             super(PlatformUI.getWorkbench().getActiveWorkbenchWindow()
                     .getShell());
-            typeMap = new LinkedHashMap<Button, ProdType>();
+            typeMap = new LinkedHashMap<>();
         }
 
         /**
@@ -123,9 +120,9 @@ public class PgenProd extends AbstractPgenTool {
             top.setLayout(mainLayout);
 
             // Initialize all of the menus, controls, and layouts
-            String typeName = drawingLayer.getActiveProduct().getType();
-            ProductType curType = ProductConfigureDialog.getProductTypes().get(
-                    typeName);
+            String typeName = drawingLayers.getActiveProduct().getType();
+            ProductType curType = ProductConfigureDialog.getProductTypes()
+                    .get(typeName);
 
             // create a list of check boxes
             if (curType != null) {
@@ -184,16 +181,11 @@ public class PgenProd extends AbstractPgenTool {
         @Override
         public boolean close() {
             // remove the all PGEN tool from tool manager list
-            PgenSession.getInstance().getPgenResource().deactivatePgenTools();
+            PgenSession.getInstance().getCurrentResource()
+                    .deactivatePgenTools();
             return super.close();
         }
 
-        /*
-         * 
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.jface.dialogs.Dialog#buttonPressed(int)
-         */
         @Override
         public void okPressed() {
             for (Button btn : typeMap.keySet()) {
@@ -203,13 +195,14 @@ public class PgenProd extends AbstractPgenTool {
                             ProdDialog.this.getShell(), typeMap.get(btn));
 
                     msgDlg.setBlockOnOpen(true);
-                    Product prod = drawingLayer.getActiveProduct();
+                    Product prod = drawingLayers.getActiveProduct();
                     msgDlg.setProduct(prod);
                     msgDlg.message = typeMap.get(btn).generateProd(prod);
 
                     int rt = msgDlg.open();
-                    if (rt == Dialog.CANCEL)
+                    if (rt == Dialog.CANCEL) {
                         return;
+                    }
                 }
             }
         }
@@ -217,9 +210,9 @@ public class PgenProd extends AbstractPgenTool {
 
     /**
      * Window that displays the contents of a PGEN product.
-     * 
+     *
      * @author bingfan
-     * 
+     *
      */
     private class ProdTextDlg extends Dialog {
 
@@ -330,13 +323,13 @@ public class PgenProd extends AbstractPgenTool {
             if (pt.getOutputFile() != null && !pt.getOutputFile().isEmpty()) {
 
                 String pd = ProductConfigureDialog.getProductTypes()
-                        .get(drawingLayer.getActiveProduct().getType())
+                        .get(drawingLayers.getActiveProduct().getType())
                         .getType();
                 String pd1 = pd.replaceAll(" ", "_");
 
-                String dirPath = PgenUtil.getPgenOprDirectory()
-                        + File.separator + pd1 + File.separator + "prod"
-                        + File.separator + pt.getType().replaceAll(" ", "_");
+                String dirPath = PgenUtil.getPgenOprDirectory() + File.separator
+                        + pd1 + File.separator + "prod" + File.separator
+                        + pt.getType().replaceAll(" ", "_");
 
                 String filePath = dirPath + File.separator + pt.getOutputFile();
                 String name = pt.getOutputFile();
@@ -356,29 +349,6 @@ public class PgenProd extends AbstractPgenTool {
                         StorageUtils.showError(e);
                     }
                 }
-                // File out = new File(filePath);
-                //
-                // int code = MessageDialog.OK;
-                //
-                // if (out.exists()) {
-                // String msg = "File " + out
-                // + " exists. Do you want to overwrite it?";
-                //
-                // MessageDialog confirmDlg = new MessageDialog(PlatformUI
-                // .getWorkbench().getActiveWorkbenchWindow()
-                // .getShell(), "Output PGEN Products", null, msg,
-                // MessageDialog.QUESTION,
-                // new String[] { "Yes", "No" }, 0);
-                //
-                // code = confirmDlg.open();
-                //
-                // }
-                //
-                // if (code == MessageDialog.OK) {
-                //
-                // FileTools.writeFile(filePath, message);
-                //
-                // }
             }
 
             super.okPressed();
