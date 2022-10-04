@@ -22,8 +22,10 @@ import com.raytheon.uf.common.status.UFStatus;
 import com.raytheon.uf.common.status.UFStatus.Priority;
 import com.raytheon.uf.viz.core.IDisplayPane;
 import com.raytheon.uf.viz.core.IDisplayPaneContainer;
+import com.raytheon.uf.viz.core.IPane.CanvasType;
 import com.raytheon.uf.viz.core.IRenderableDisplayChangedListener;
 import com.raytheon.uf.viz.core.IRenderableDisplayChangedListener.DisplayChangeType;
+import com.raytheon.uf.viz.core.InputManager;
 import com.raytheon.uf.viz.core.datastructure.LoopProperties;
 import com.raytheon.uf.viz.core.drawables.IDescriptor;
 import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
@@ -33,7 +35,7 @@ import com.raytheon.viz.ui.color.BackgroundColor;
 import com.raytheon.viz.ui.color.IBackgroundColorChangedListener.BGColorMode;
 import com.raytheon.viz.ui.editor.ISelectedPanesChangedListener;
 import com.raytheon.viz.ui.input.InputAdapter;
-import com.raytheon.viz.ui.input.InputManager;
+import com.raytheon.viz.ui.panes.LegacyPane;
 import com.raytheon.viz.ui.panes.PaneManager;
 import com.raytheon.viz.ui.panes.VizDisplayPane;
 
@@ -88,7 +90,6 @@ public abstract class AbstractNcPaneManager extends PaneManager
 
     protected NcDisplayType displayType;
 
-    // protected int displayId;
     protected NcDisplayName displayName;
 
     // a flag to indicate that resources other than those in the default RBD
@@ -207,8 +208,9 @@ public abstract class AbstractNcPaneManager extends PaneManager
     @Override
     public IPaneLayoutable getPane(INcPaneID pid) {
         if (paneLayout.containsPaneId(pid)
-                && paneLayout.getPaneIndex(pid) < displayPanes.size()) {
-            VizDisplayPane vdp = displayPanes.get(paneLayout.getPaneIndex(pid));
+                && paneLayout.getPaneIndex(pid) < mainCanvasToPaneMap.size()) {
+            IDisplayPane vdp = mainCanvasToPaneMap.asList()
+                    .get(paneLayout.getPaneIndex(pid));
             if (vdp != null
                     && vdp.getRenderableDisplay() instanceof IPaneLayoutable) {
                 return (IPaneLayoutable) vdp.getRenderableDisplay();
@@ -341,7 +343,7 @@ public abstract class AbstractNcPaneManager extends PaneManager
 
     @Override
     public int getNumberofPanes() {
-        return displayPanes.size();
+        return mainCanvasToPaneMap.size();
     }
 
     //
@@ -371,7 +373,7 @@ public abstract class AbstractNcPaneManager extends PaneManager
         // since we only have 1 kind of selection (NC_PANE_SELECT_ACTION) but
         // multiple panes can be selected at once.
         if (!selectedPanes.containsValue(pane)) {
-            String keyStr = Integer.toString(displayPanes.indexOf(pane));
+            String keyStr = Integer.toString(mainCanvasToPaneMap.indexOf(pane));
             if (selectedPanes.containsKey(keyStr)) {
                 statusHandler.warn(
                         "Sanity check in NcPaneManager.setSelectedPane. A non-unique key was created? "
@@ -465,16 +467,16 @@ public abstract class AbstractNcPaneManager extends PaneManager
         // sanity check
         // the pane id index should match the index into the displayPanes array.
         if (pid != null
-                && paneLayout.getPaneIndex(pid) != displayPanes.size()) {
+                && paneLayout.getPaneIndex(pid) != mainCanvasToPaneMap.size()) {
             statusHandler.warn("Pane index (" + paneLayout.getPaneIndex(pid)
                     + ") doesn't match the index in displayPanes array ("
-                    + displayPanes.size() + ")");
+                    + mainCanvasToPaneMap.size() + ")");
         }
 
         VizDisplayPane pane = null;
         try {
             pane = new VizDisplayPane(paneContainer, canvasComp,
-                    renderableDisplay, contextualMenusEnabled);
+                    CanvasType.MAIN, renderableDisplay, contextualMenusEnabled);
             // register the inputManager and the mouse listener for pane
             // selection
             registerHandlers(pane);
@@ -519,10 +521,10 @@ public abstract class AbstractNcPaneManager extends PaneManager
                 if (activatedPane == null) {
                     activatedPane = pane;
                 }
-                // ++displayedPaneCount; // not hiding panes...
-                if (displayPanes.size() > 0) {
-                    pane.getRenderableDisplay().setBackgroundColor(
-                            displayPanes.get(0).getRenderableDisplay()
+                if (!mainCanvasToPaneMap.isEmpty()) {
+                    pane.getRenderableDisplay()
+                            .setBackgroundColor(mainCanvasToPaneMap.firstKey()
+                                    .getRenderableDisplay()
                                     .getBackgroundColor());
                 } else {
                     BackgroundColor.getActivePerspectiveInstance().setColor(
@@ -530,12 +532,12 @@ public abstract class AbstractNcPaneManager extends PaneManager
                             pane.getRenderableDisplay().getBackgroundColor());
                 }
 
-                if (!displayPanes.isEmpty()) {
+                if (!mainCanvasToPaneMap.isEmpty()) {
                     pane.getDescriptor().synchronizeTimeMatching(
-                            displayPanes.get(0).getDescriptor());
+                            mainCanvasToPaneMap.firstKey().getDescriptor());
                 }
 
-                displayPanes.add(pane);
+                mainCanvasToPaneMap.put(pane, new LegacyPane(pane));
 
             } catch (Throwable t) {
                 statusHandler.handle(Priority.PROBLEM, "Error adding pane", t);
@@ -594,7 +596,7 @@ public abstract class AbstractNcPaneManager extends PaneManager
     // now all panes are shown.
     @Override
     public int displayedPaneCount() {
-        return displayPanes.size();
+        return mainCanvasToPaneMap.size();
     }
 
     @Override
@@ -604,7 +606,7 @@ public abstract class AbstractNcPaneManager extends PaneManager
 
     @Override
     public IDisplayPane[] getDisplayPanes() {
-        return displayPanes.toArray(new VizDisplayPane[displayPanes.size()]);
+        return mainCanvasToPaneMap.keySet().toArray(IDisplayPane[]::new);
     }
 
     @Override
@@ -620,7 +622,8 @@ public abstract class AbstractNcPaneManager extends PaneManager
     @Override
     public IDisplayPane getActiveDisplayPane() {
         if (activatedPane == null) {
-            activatedPane = displayPanes.size() > 0 ? displayPanes.get(0)
+            activatedPane = !mainCanvasToPaneMap.isEmpty()
+                    ? mainCanvasToPaneMap.firstKey()
                     : null;
         }
         return activatedPane;
@@ -628,7 +631,7 @@ public abstract class AbstractNcPaneManager extends PaneManager
 
     @Override
     public void refresh() {
-        for (IDisplayPane pane : displayPanes) {
+        for (IDisplayPane pane : mainCanvasToPaneMap.keySet()) {
             pane.refresh();
         }
     }

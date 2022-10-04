@@ -22,12 +22,15 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
+import org.locationtech.jts.geom.Coordinate;
 
 import com.raytheon.uf.common.status.IUFStatusHandler;
 import com.raytheon.uf.common.status.UFStatus;
 import com.raytheon.uf.common.status.UFStatus.Priority;
 import com.raytheon.uf.viz.core.IDisplayPane;
+import com.raytheon.uf.viz.core.IPane.CanvasType;
 import com.raytheon.uf.viz.core.IRenderableDisplayChangedListener;
+import com.raytheon.uf.viz.core.InputManager;
 import com.raytheon.uf.viz.core.PixelExtent;
 import com.raytheon.uf.viz.core.datastructure.LoopProperties;
 import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
@@ -37,10 +40,8 @@ import com.raytheon.uf.viz.core.rsc.ResourceList;
 import com.raytheon.viz.ui.EditorUtil;
 import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.raytheon.viz.ui.editor.EditorInput;
-import com.raytheon.viz.ui.input.InputManager;
 import com.raytheon.viz.ui.panes.PaneManager;
 import com.raytheon.viz.ui.panes.VizDisplayPane;
-import org.locationtech.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigManager;
 import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigStore;
@@ -55,15 +56,15 @@ import gov.noaa.nws.ncep.ui.pgen.tools.InputHandlerDefaultImpl;
 import gov.noaa.nws.ncep.viz.ui.display.NCLoopProperties;
 
 /**
- * 
+ *
  * gov.noaa.nws.ncep.ui.nsharp.skewt.NsharpEditor
- * 
+ *
  * This java class performs the NSHARP NsharpEditor functions. This code has
  * been developed by the NCEP-SIB for use in the AWIPS2 system.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * 
+ *
  * Date          Ticket#     Engineer   Description
  * ------------- ----------- ---------- ----------------------------------------
  * Mar 23, 2010  229         Chin Chen  Initial coding Reused some software from
@@ -84,9 +85,10 @@ import gov.noaa.nws.ncep.viz.ui.display.NCLoopProperties;
  * Nov 05, 2018  6800        bsteffen   Use a new handler when a procedure is loaded.
  * Apr 22, 2019  6660        bsteffen   Apply background color to all panes.
  * Apr 01, 2022  89212       smanoj     Fix some Nsharp display issues.
- * 
+ * Oct 07, 2022  8792        mapeters   Updated for tracking of LegacyPanes
+ *
  * </pre>
- * 
+ *
  * @author Chin Chen
  */
 public class NsharpEditor extends AbstractEditor
@@ -367,7 +369,7 @@ public class NsharpEditor extends AbstractEditor
             for (int i = 0; i < displayPanes.length; i++) {
                 if (displayPanes[i] == null && nsharpComp[i] != null) {
                     displayPanes[i] = new VizDisplayPane(this, nsharpComp[i],
-                            displaysToLoad[i]);
+                            CanvasType.MAIN, displaysToLoad[i]);
 
                     displayPanes[i].setRenderableDisplay(displaysToLoad[i]);
                 }
@@ -1117,7 +1119,7 @@ public class NsharpEditor extends AbstractEditor
 
     /**
      * Perform a refresh asynchronously
-     * 
+     *
      */
     @Override
     public void refresh() {
@@ -1184,7 +1186,7 @@ public class NsharpEditor extends AbstractEditor
 
     /**
      * Register a mouse handler to a map
-     * 
+     *
      * @param handler
      *            the handler to register
      */
@@ -1208,7 +1210,7 @@ public class NsharpEditor extends AbstractEditor
 
     /**
      * Unregister a mouse handler to a map
-     * 
+     *
      * @param handler
      *            the handler to unregister
      */
@@ -1442,9 +1444,8 @@ public class NsharpEditor extends AbstractEditor
      * be called before calling this function
      */
     private void createPaneResource() {
-        for (int i = 0; i < displayArray.length; i += 1) {
-            ResourceList resources = displayArray[i].getDescriptor()
-                    .getResourceList();
+        for (IRenderableDisplay element : displayArray) {
+            ResourceList resources = element.getDescriptor().getResourceList();
             List<NsharpAbstractPaneResource> nsharpResources = resources
                     .getResourcesByTypeAsType(NsharpAbstractPaneResource.class);
             for (NsharpAbstractPaneResource nsharpResource : nsharpResources) {
