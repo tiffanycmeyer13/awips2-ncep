@@ -1,44 +1,46 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.controls.PgenFileManageHandler
- * 
+ *
  * 11 February 2009
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.controls.PgenFileManageDialog;
-import gov.noaa.nws.ncep.ui.pgen.controls.PgenFileManageDialog1;
-import gov.noaa.nws.ncep.ui.pgen.palette.PgenPaletteWindow;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
-
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.handlers.HandlerUtil;
 
 import com.raytheon.uf.viz.core.exception.VizException;
 import com.raytheon.viz.ui.tools.AbstractTool;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.controls.PgenFileManageDialog;
+import gov.noaa.nws.ncep.ui.pgen.palette.PgenPaletteWindow;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+
 /**
  * Define a handler for PGEN file open/save controls.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 02/09		#63			J. Wu   	Initial Creation.
- * 04/09		#103		B. Yin		Extends from AbstractPgenTool
- * 08/09		#335		J. Wu		Redefined "Save"/"Save As"/"Save All".
- * 01/16/2016   5054        randerso    Use proper parent shell
- * May 16, 2016 5640        bsteffen    Access button name through command parameter.
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 02/09         63       J. Wu     Initial Creation.
+ * 04/09         103      B. Yin    Extends from AbstractPgenTool
+ * 08/09         335      J. Wu     Redefined "Save"/"Save As"/"Save All".
+ * Jan 16, 2016  5054     randerso  Use proper parent shell
+ * May 16, 2016  5640     bsteffen  Access button name through command
+ *                                  parameter.
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
- * 
- * @author	J. Wu
- * @version	0.0.1
+ *
+ * @author J. Wu
+ * @version 0.0.1
  */
 public class PgenFileManageHandler extends AbstractTool {
 
@@ -46,7 +48,7 @@ public class PgenFileManageHandler extends AbstractTool {
     public Object execute(ExecutionEvent event) throws ExecutionException {
         Shell shell = HandlerUtil.getActiveShell(event);
         PgenSession session = PgenSession.getInstance();
-        PgenResource resource = session.getPgenResource();
+        PgenResource resource = session.getCurrentResource();
         PgenPaletteWindow palette = session.getPgenPalette();
 
         String btnName = event.getParameter("name");
@@ -68,8 +70,8 @@ public class PgenFileManageHandler extends AbstractTool {
             }
         } else { /* "Save As" */
             try {
-                PgenFileManageDialog1 file_dlg = new PgenFileManageDialog1(
-                        shell, btnName);
+                PgenFileManageDialog file_dlg = new PgenFileManageDialog(shell,
+                        btnName);
                 file_dlg.setBlockOnOpen(true);
                 file_dlg.open();
             } catch (VizException e) {

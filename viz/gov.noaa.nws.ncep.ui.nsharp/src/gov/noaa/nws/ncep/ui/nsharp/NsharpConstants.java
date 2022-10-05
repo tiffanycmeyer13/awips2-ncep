@@ -43,17 +43,21 @@ import gov.noaa.nws.ncep.viz.localization.NcPathManager.NcPathConstants;
  * Aug 02, 2019  7893     bhurley         Changed constants to allow wind barbs
  *                                        to be fully displayed at the top and
  *                                        bottom pressure levels.
+ * 07/06/2021   93845       omoncayo    Configure Similar to NSHARP Skew-T Display
+ *                                      and Enable Sampling Features for Turbulence
+ *                                      and Icing Displays
+ *                                      ( Chnage ICING_PRESSURE_LEVEL_TOP to 100 )
  * 
  * </pre>
  *
  * @author Chin Chen
  */
 public class NsharpConstants {
-    public static final Rectangle NSHARP_SkewTRectangle = new Rectangle(0, 0,
-            3200, 1850);
+    public static Rectangle NSHARP_SkewTRectangle = new Rectangle(0, 0, 3200,
+            1850);
 
-    public static final Rectangle NSHARP_HodoRectangle = new Rectangle(0, 0,
-            100, 100);
+    public static Rectangle NSHARP_HodoRectangle = new Rectangle(0, 0, 100,
+            100);
 
     public static final int DEFAULT_CANVAS_HEIGHT = 700;
 
@@ -96,10 +100,10 @@ public class NsharpConstants {
     public static final int[] PRESSURE_NUMBERING_LEVELS = { 1000, 850, 700, 500,
             300, 200, 150, 100 };
 
-    // Icing pressure level 1000, 900,800,700,600, 500,400, 300
+    // Icing pressure level from 100 to 1000 increments by 100
     public static final double ICING_PRESSURE_LEVEL_BOTTOM = 1000;
 
-    public static final double ICING_PRESSURE_LEVEL_TOP = 300;
+    public static final double ICING_PRESSURE_LEVEL_TOP = 100;
 
     public static final double ICING_PRESSURE_LEVEL_INC = 100;
 

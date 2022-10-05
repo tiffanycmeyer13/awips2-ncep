@@ -57,7 +57,8 @@ import org.eclipse.swt.widgets.Shell;
 * 11/13/2018   7576        bsteffen    Unify activation dialogs.
 * 04/22/2020   76580       smanoj      Allow user to interact with NsharpEditor while
 *                                      the dialog is open.
-*
+* 03/21/2022   89212       smanoj      Configuration Dialog display issues.
+* 
 * </pre>
 *
 * @author Chin Chen
@@ -81,6 +82,7 @@ public class NsharpConfigDialog extends Dialog {
     public NsharpConfigDialog(Shell parentShell) {
         super(parentShell);
         this.setShellStyle(SWT.MODELESS);
+       
     }
 
     public NsharpConfigDialog(IShellProvider parentShell) {
@@ -310,5 +312,35 @@ public class NsharpConfigDialog extends Dialog {
         int x = parentBounds.x + parentBounds.width - initialSize.x;
         int y = parentBounds.y + (parentBounds.height / 2) - initialSize.y;
         return new Point(x, y);
+    }
+
+    @Override
+    public boolean close() {
+        // close all the child dialog windows
+        if (parameterSelDialog != null) {
+            parameterSelDialog.close();
+        }
+
+        if (dataDisplayDialog != null) {
+            dataDisplayDialog.close();
+        }
+
+        if (dataPageDialog != null) {
+            dataPageDialog.close();
+        }
+
+        if (paneCfgDialog != null) {
+            paneCfgDialog.close();
+        }
+
+        if (mdlDataDialog != null) {
+            mdlDataDialog.close();
+        }
+
+        if (windBarbDialog != null) {
+            windBarbDialog.close();
+        }
+
+        return (super.close());
     }
 }

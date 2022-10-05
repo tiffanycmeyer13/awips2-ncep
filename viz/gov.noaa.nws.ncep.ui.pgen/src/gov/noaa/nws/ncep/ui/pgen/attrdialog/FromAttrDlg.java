@@ -1,17 +1,11 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.FromDlg
- * 
+ *
  * March 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.attrdialog;
-
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
-import gov.noaa.nws.ncep.ui.pgen.gfa.Gfa;
-import gov.noaa.nws.ncep.ui.pgen.gfa.GfaFormat;
 
 import java.util.HashMap;
 
@@ -32,301 +26,317 @@ import org.eclipse.ui.PlatformUI;
 
 import com.raytheon.uf.viz.core.exception.VizException;
 
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
+import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
+import gov.noaa.nws.ncep.ui.pgen.gfa.Gfa;
+import gov.noaa.nws.ncep.ui.pgen.gfa.GfaFormat;
+
 /**
  * Create a dialog for PGEN cycle action.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 03/10		#223		M.Laryukhin	Initial creation
- * 02/11		   			J. Wu		Added confirmation message.
- * 03/11		   			J. Wu		Implemented "Format Tag".
- * 
+ *
+ * Date          Ticket#  Engineer     Description
+ * ------------- -------- ------------ -----------------------------------------
+ * 03/10         223      M.Laryukhin  Initial creation
+ * 02/11                  J. Wu        Added confirmation message.
+ * 03/11                  J. Wu        Implemented "Format Tag".
+ * Dec 01, 2021  95362    tjensen      Refactor PGEN Resource management to
+ *                                     support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author M.Laryukhin
- * @version 1
  */
 public class FromAttrDlg extends AttrDlg {
 
-	private static FromAttrDlg instance;
+    private static FromAttrDlg instance;
 
-	private Composite top;
-	
-	private	boolean formatByTag = false;
+    private Composite top;
 
-	/**
-	 * Private constructor
-	 * 
-	 * @param parShell
-	 * @throws VizException
-	 */
-	private FromAttrDlg(Shell parShell) throws VizException {
+    private boolean formatByTag = false;
 
-		super(parShell);
+    /**
+     * Private constructor
+     * 
+     * @param parShell
+     * @throws VizException
+     */
+    private FromAttrDlg(Shell parShell) throws VizException {
 
-	}
+        super(parShell);
 
-	/**
-	 * Creates an extrapolation dialog if the dialog does not exist and returns
-	 * the instance. If the dialog exists, return the instance.
-	 * 
-	 * @param parShell
-	 * @return
-	 */
-	public static FromAttrDlg getInstance(Shell parShell) {
+    }
 
-		if (instance == null) {
-			try {
-				instance = new FromAttrDlg(parShell);
-			} catch (VizException e) {
-				e.printStackTrace();
-			}
-		}
-		return instance;
-	}
+    /**
+     * Creates an extrapolation dialog if the dialog does not exist and returns
+     * the instance. If the dialog exists, return the instance.
+     * 
+     * @param parShell
+     * @return
+     */
+    public static FromAttrDlg getInstance(Shell parShell) {
 
-	/*
-	 * (non-Javadoc) Create all of the widgets on the Dialog
-	 * 
-	 * @see
-	 * org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets
-	 * .Composite)
-	 */
-	@Override
-	public Control createDialogArea(Composite parent) {
+        if (instance == null) {
+            try {
+                instance = new FromAttrDlg(parShell);
+            } catch (VizException e) {
+                e.printStackTrace();
+            }
+        }
+        return instance;
+    }
 
-		top = (Composite) super.createDialogArea(parent);
+    /*
+     * (non-Javadoc) Create all of the widgets on the Dialog
+     * 
+     * @see
+     * org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets
+     * .Composite)
+     */
+    @Override
+    public Control createDialogArea(Composite parent) {
 
-		// Create the main layout for the shell.
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 1;
-		top.setLayout(layout);
+        top = (Composite) super.createDialogArea(parent);
 
-		// Initialize all of the menus, controls, and layouts
-		initializeComponents();
+        // Create the main layout for the shell.
+        GridLayout layout = new GridLayout();
+        layout.numColumns = 1;
+        top.setLayout(layout);
 
-		return top;
-	}
+        // Initialize all of the menus, controls, and layouts
+        initializeComponents();
 
-	/**
-	 * Creates buttons, menus, and other controls in the dialog area
-	 * 
-	 * @param listener
-	 */
-	private void initializeComponents() {
+        return top;
+    }
 
-		this.getShell().setText("Generate FROM");
+    /**
+     * Creates buttons, menus, and other controls in the dialog area
+     * 
+     * @param listener
+     */
+    private void initializeComponents() {
 
-		createButton("Format All", new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent event) {
-				formatAllPressed();
-			}
-		});
+        this.getShell().setText("Generate FROM");
 
-		createButton("Format Layer", new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent event) {
-				formatLayerPressed();
-			}
-		});
+        createButton("Format All", new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                formatAllPressed();
+            }
+        });
 
-		createButton("Format Tag", new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent event) {
-				formatTagPressed();
-			}
-		});
+        createButton("Format Layer", new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                formatLayerPressed();
+            }
+        });
 
-		createButton("Cancel", new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent event) {
-				formatByTag = false;
-				cancelPressed();
-			}
-		});
-	}
+        createButton("Format Tag", new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                formatTagPressed();
+            }
+        });
 
-	private Button createButton(String label, SelectionListener listener) {
-		Button btn = new Button(top, SWT.PUSH);
+        createButton("Cancel", new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                formatByTag = false;
+                cancelPressed();
+            }
+        });
+    }
 
-		GridData gridData = new GridData();
-		gridData.horizontalAlignment = GridData.FILL;
-		gridData.grabExcessHorizontalSpace = true;
-		btn.setLayoutData(gridData);
-		btn.setText(label);
-		btn.addSelectionListener(listener);
-		return btn;
-	}
+    private Button createButton(String label, SelectionListener listener) {
+        Button btn = new Button(top, SWT.PUSH);
 
-	@Override
-	public Control createButtonBar(Composite parent) {
-		// no button bar
-		return null;
-	}
+        GridData gridData = new GridData();
+        gridData.horizontalAlignment = GridData.FILL;
+        gridData.grabExcessHorizontalSpace = true;
+        btn.setLayoutData(gridData);
+        btn.setText(label);
+        btn.addSelectionListener(listener);
+        return btn;
+    }
 
-	@Override
-	public void createButtonsForButtonBar(Composite parent) {
-		// no other buttons
-	}
+    @Override
+    public Control createButtonBar(Composite parent) {
+        // no button bar
+        return null;
+    }
 
-	/**
-	 * Set the location of the dialog
-	 */
-	public int open() {
+    @Override
+    public void createButtonsForButtonBar(Composite parent) {
+        // no other buttons
+    }
 
-		if (this.getShell() == null) {
-			this.create();
-		}
+    /**
+     * Set the location of the dialog
+     */
+    @Override
+    public int open() {
 
-		if (shellLocation == null) {
-			shellLocation = initialLocation();
-		}
-        
-		formatByTag = false;
-		
-		return super.open();
-	}
+        if (this.getShell() == null) {
+            this.create();
+        }
 
-	public Point initialLocation() {
-		Rectangle parentSize = getParentShell().getBounds();
-		Rectangle mySize = getShell().getBounds();
+        if (shellLocation == null) {
+            shellLocation = initialLocation();
+        }
 
-		int locationX, locationY;
-		locationX = mySize.width * 2 + parentSize.x;
-		locationY = (parentSize.height - mySize.height) / 2 + parentSize.y;
+        formatByTag = false;
 
-		return new Point(locationX, locationY);
-	}
+        return super.open();
+    }
 
-	@Override
-	public void cancelPressed() {
-		super.cancelPressed();
-		PgenUtil.setSelectingMode();
-	}
+    public Point initialLocation() {
+        Rectangle parentSize = getParentShell().getBounds();
+        Rectangle mySize = getShell().getBounds();
 
-	/**
-	 * Gets values of all attributes of the dialog.
-	 */
-	public HashMap<String, Object> getAttrFromDlg() {
+        int locationX, locationY;
+        locationX = mySize.width * 2 + parentSize.x;
+        locationY = (parentSize.height - mySize.height) / 2 + parentSize.y;
 
-		HashMap<String, Object> attr = new HashMap<String, Object>();
+        return new Point(locationX, locationY);
+    }
 
-		return attr;
-	}
+    @Override
+    public void cancelPressed() {
+        super.cancelPressed();
+        PgenUtil.setSelectingMode();
+    }
 
-	/**
-	 * Sets values of all attributes of the dialog.
-	 */
-	public void setAttrForDlg(IAttribute attr) {
-	}
+    /**
+     * Gets values of all attributes of the dialog.
+     */
+    public HashMap<String, Object> getAttrFromDlg() {
 
-	/**
-	 * Pop ups a dialog to confirm the chosen action.
-	 */
-	private boolean formatConfirmed( String msg ) {
-		
-		StringBuilder allmsg = new StringBuilder("This will delete and regenerate ALL AIRMETs and OUTLOOKs");
-		if ( msg != null ) {
-			allmsg = allmsg.append( msg );
-		}
-		allmsg.append( ".\nOk to continue?" );
+        HashMap<String, Object> attr = new HashMap<>();
 
-    	MessageDialog confirmDlg = new MessageDialog( 
-    			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), 
-        		"Confirm", null, allmsg.toString(),
-        		MessageDialog.QUESTION, new String[]{"OK", "Cancel"}, 0);
+        return attr;
+    }
+
+    /**
+     * Sets values of all attributes of the dialog.
+     */
+    @Override
+    public void setAttrForDlg(IAttribute attr) {
+    }
+
+    /**
+     * Pop ups a dialog to confirm the chosen action.
+     */
+    private boolean formatConfirmed(String msg) {
+
+        StringBuilder allmsg = new StringBuilder(
+                "This will delete and regenerate ALL AIRMETs and OUTLOOKs");
+        if (msg != null) {
+            allmsg = allmsg.append(msg);
+        }
+        allmsg.append(".\nOk to continue?");
+
+        MessageDialog confirmDlg = new MessageDialog(
+                PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+                "Confirm", null, allmsg.toString(), MessageDialog.QUESTION,
+                new String[] { "OK", "Cancel" }, 0);
         confirmDlg.open();
-        
-        return ( confirmDlg.getReturnCode() == MessageDialog.OK ) ? true : false;
-        
-	}
 
-	/**
-	 * Execute when "Format All" button is pressed.
-	 */
-	private void formatAllPressed() {
-		formatByTag = false;        
-        if ( formatConfirmed( null ) ) {
+        return (confirmDlg.getReturnCode() == MessageDialog.OK) ? true : false;
 
-		    GfaFormat format = new GfaFormat(drawingLayer);
-        		
-		    format.formatAllPressed();
+    }
 
-		    refreshSelect();
-		
+    /**
+     * Execute when "Format All" button is pressed.
+     */
+    private void formatAllPressed() {
+        formatByTag = false;
+        if (formatConfirmed(null)) {
+
+            GfaFormat format = new GfaFormat(drawingLayers);
+
+            format.formatAllPressed();
+
+            refreshSelect();
+
         }
-	}
+    }
 
-	/**
-	 * Execute when "Format Layer" button is pressed.
-	 */
-	private void formatLayerPressed() {
-		formatByTag = false;        
-       
-		String msg = null;
-		if ( drawingLayer != null && drawingLayer.getProductManageDlg() != null ) {
-			msg = " for layer - " + drawingLayer.getActiveLayer().getName();
-		}
-		
-		if ( formatConfirmed( msg ) ) {
-		    GfaFormat format = new GfaFormat(drawingLayer);
+    /**
+     * Execute when "Format Layer" button is pressed.
+     */
+    private void formatLayerPressed() {
+        formatByTag = false;
 
-		    format.formatLayerPressed();
-
-		    refreshSelect();
+        String msg = null;
+        if (drawingLayers != null
+                && drawingLayers.getProductManageDlg() != null) {
+            msg = " for layer - " + drawingLayers.getActiveLayer().getName();
         }
-	}
 
-	/**
-	 * Executes when "Format Tag" button is pressed then a GFA is selected..
-	 */
-	public void formatTagPressed() {
-		
-		formatByTag = true;        
-		
-		String msg = null;
-		if ( drawingLayer != null ) {
-	        DrawableElement de = drawingLayer.getSelectedDE();
-			if ( de instanceof Gfa ) {			
-			    msg = " \nwith hazard type " + ((Gfa)de).getGfaHazard() + 
-			          " and tag " + ((Gfa)de).getGfaTag() + ((Gfa)de).getGfaDesk();
-			
-				if (mapEditor != null) {
-					mapEditor.refresh();
-				}
-				
-				if ( formatConfirmed( msg ) ) {
-					
-				    GfaFormat format = new GfaFormat(drawingLayer);
+        if (formatConfirmed(msg)) {
+            GfaFormat format = new GfaFormat(drawingLayers);
 
-				    format.formatTagPressed();
-		        }
-				
-				drawingLayer.removeSelected();
-				
-				if (mapEditor != null) {
-					mapEditor.refresh();
-				}
-			}
-		}
-				
-	}
+            format.formatLayerPressed();
 
-	private void refreshSelect() {
-		if (mapEditor != null) {
-			mapEditor.refresh();
-		}
-		close();		
-		PgenUtil.setSelectingMode();
-	}
+            refreshSelect();
+        }
+    }
 
-	
-	/**
-	 * Getter isFormatByTag.
-	 * 
-	 * @return
-	 */
-	public boolean isFormatByTag() {
-		return formatByTag;
-	}
+    /**
+     * Executes when "Format Tag" button is pressed then a GFA is selected..
+     */
+    public void formatTagPressed() {
+
+        formatByTag = true;
+
+        String msg = null;
+        if (drawingLayers != null) {
+            DrawableElement de = drawingLayers.getSelectedDE();
+            if (de instanceof Gfa) {
+                msg = " \nwith hazard type " + ((Gfa) de).getGfaHazard()
+                        + " and tag " + ((Gfa) de).getGfaTag()
+                        + ((Gfa) de).getGfaDesk();
+
+                if (mapEditor != null) {
+                    mapEditor.refresh();
+                }
+
+                if (formatConfirmed(msg)) {
+
+                    GfaFormat format = new GfaFormat(drawingLayers);
+
+                    format.formatTagPressed();
+                }
+
+                drawingLayers.removeSelected();
+
+                if (mapEditor != null) {
+                    mapEditor.refresh();
+                }
+            }
+        }
+
+    }
+
+    private void refreshSelect() {
+        if (mapEditor != null) {
+            mapEditor.refresh();
+        }
+        close();
+        PgenUtil.setSelectingMode();
+    }
+
+    /**
+     * Getter isFormatByTag.
+     * 
+     * @return
+     */
+    public boolean isFormatByTag() {
+        return formatByTag;
+    }
 
 }

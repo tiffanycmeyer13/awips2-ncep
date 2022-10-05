@@ -44,6 +44,8 @@ import gov.noaa.nws.ncep.viz.rsc.plotdata.parameters.PlotParameterDefnsMngr;
  * 04/2012      #615       S. Gurung   Initial Creation.
  * 12/10/2019   72281      K Sunil     Added perspective in the mix (NCP or D2D). Code is different for each
  *                                      perspective
+ * 09/15/2021   93101      smanoj      Conditional Filter AND/OR update
+ * 
  * </pre>
  *
  * @author sgurung
@@ -62,6 +64,12 @@ public class EditConditionalFilterComposite extends Composite {
     private List<Combo> consTypeComboList = null;
 
     private List<Text> valueTFList = null;
+
+    private List<Button> andBtnList = null;
+
+    private List<Button> orBtnList = null;
+
+    private List<String> connValList = null;
 
     private Text descTF = null;
 
@@ -149,7 +157,7 @@ public class EditConditionalFilterComposite extends Composite {
         });
 
         cfConditionsGrp = new Group(cfAttrGrp, SWT.SHADOW_NONE);
-        GridLayout gl2 = new GridLayout(4, false);
+        GridLayout gl2 = new GridLayout(6, false);
         gl2.marginTop = 7;
         gl2.marginBottom = 8;
         gl2.marginRight = 8;
@@ -180,16 +188,23 @@ public class EditConditionalFilterComposite extends Composite {
         new Label(cfConditionsGrp, SWT.NONE).setText("Parameter Name");
         new Label(cfConditionsGrp, SWT.NONE).setText("Constraint Type");
         new Label(cfConditionsGrp, SWT.NONE).setText("Value");
+        new Label(cfConditionsGrp, SWT.NONE).setText("AND");
+        new Label(cfConditionsGrp, SWT.NONE).setText("OR");
 
         delBtnList = new ArrayList<Button>();
         paramNameComboList = new ArrayList<Combo>();
         consTypeComboList = new ArrayList<Combo>();
         valueTFList = new ArrayList<Text>();
+        andBtnList = new ArrayList<Button>();
+        orBtnList = new ArrayList<Button>();
+        connValList = new ArrayList<String>();
 
         Button delBtn = null;
         Combo paramNameCombo = null;
         Combo consTypeCombo = null;
         Text valueTF = null;
+        Button btnAND = null;
+        Button btnOR = null;
 
         for (int i = 0; i < editedConditionalFilter.getSize(); i++) {
 
@@ -212,6 +227,13 @@ public class EditConditionalFilterComposite extends Composite {
             valueTF = new Text(cfConditionsGrp, SWT.BORDER);
             valueTF.setLayoutData(gd);
             valueTFList.add(valueTF);
+
+            btnAND = new Button(cfConditionsGrp, SWT.CHECK);
+            andBtnList.add(btnAND);
+
+            btnOR = new Button(cfConditionsGrp, SWT.CHECK);
+            orBtnList.add(btnOR);
+            connValList.add("");
         }
 
     }
@@ -263,6 +285,18 @@ public class EditConditionalFilterComposite extends Composite {
 
                 valueTFList.get(i).setText(editedConditionalFilter
                         .getConditionalFilterElement(i).getValue());
+
+                if (editedConditionalFilter.getConditionalFilterElement(i)
+                        .getConnectValue().contains("AND")) {
+                    andBtnList.get(i).setSelection(true);
+                    connValList.add("AND");
+                } else if (editedConditionalFilter
+                        .getConditionalFilterElement(i).getConnectValue()
+                        .contains("OR")) {
+                    orBtnList.get(i).setSelection(true);
+                    connValList.add("OR");
+                }
+
             }
         }
 
@@ -306,6 +340,33 @@ public class EditConditionalFilterComposite extends Composite {
             });
         }
 
+        for (int i = 0; i < andBtnList.size(); i++) {
+            int lineIndx = i;
+            andBtnList.get(i).addSelectionListener(new SelectionAdapter() {
+                public void widgetSelected(SelectionEvent event) {
+                    if (andBtnList.get(lineIndx).getSelection()) {
+                        updateCfeConnectValue("AND", lineIndx);
+                        orBtnList.get(lineIndx).setSelection(false);
+                    } else {
+                        updateCfeConnectValue("", lineIndx);
+                    }
+                }
+            });
+        }
+
+        for (int i = 0; i < orBtnList.size(); i++) {
+            int lineIndx = i;
+            orBtnList.get(i).addSelectionListener(new SelectionAdapter() {
+                public void widgetSelected(SelectionEvent event) {
+                    if (orBtnList.get(lineIndx).getSelection()) {
+                        updateCfeConnectValue("OR", lineIndx);
+                        andBtnList.get(lineIndx).setSelection(false);
+                    } else {
+                        updateCfeConnectValue("", lineIndx);
+                    }
+                }
+            });
+        }
     }
 
     private Button createDeleteBtn() {
@@ -351,6 +412,20 @@ public class EditConditionalFilterComposite extends Composite {
         }
     }
 
+    public void updateCfeConnectValue(String val) {
+        for (int i = 0; i < editedConditionalFilter.getSize(); i++) {
+            editedConditionalFilter.getConditionalFilterElement(i)
+                    .setConnectValue(val);
+        }
+    }
+
+    public void updateCfeConnectValue(String val, int Indx) {
+        for (int i = 0; i < editedConditionalFilter.getSize(); i++) {
+            editedConditionalFilter.getConditionalFilterElement(Indx)
+                    .setConnectValue(val);
+        }
+    }
+
     public void deleteCfe() {
         for (int i = 0; i < editedConditionalFilter.getSize(); i++) {
 
@@ -362,11 +437,15 @@ public class EditConditionalFilterComposite extends Composite {
                 paramNameComboList.get(i).dispose();
                 consTypeComboList.get(i).dispose();
                 valueTFList.get(i).dispose();
+                andBtnList.get(i).dispose();
+                orBtnList.get(i).dispose();
 
                 delBtnList.remove(i);
                 paramNameComboList.remove(i);
                 consTypeComboList.remove(i);
                 valueTFList.remove(i);
+                andBtnList.remove(i);
+                orBtnList.remove(i);
             }
         }
 
@@ -412,6 +491,26 @@ public class EditConditionalFilterComposite extends Composite {
             @Override
             public void modifyText(ModifyEvent e) {
                 updateCfeValue();
+            }
+        });
+
+        Button btnAND = new Button(cfConditionsGrp, SWT.CHECK);
+        andBtnList.add(btnAND);
+        btnAND.addSelectionListener(new SelectionAdapter() {
+            public void widgetSelected(SelectionEvent event) {
+                if (btnAND.getSelection()) {
+                    updateCfeConnectValue("AND");
+                }
+            }
+        });
+
+        Button btnOR = new Button(cfConditionsGrp, SWT.CHECK);
+        orBtnList.add(btnOR);
+        btnOR.addSelectionListener(new SelectionAdapter() {
+            public void widgetSelected(SelectionEvent event) {
+                if (btnOR.getSelection()) {
+                    updateCfeConnectValue("OR");
+                }
             }
         });
 

@@ -8,6 +8,7 @@ import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -16,8 +17,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import org.hibernate.annotations.Index;
 
 import com.raytheon.uf.common.dataplugin.PluginDataObject;
 import com.raytheon.uf.common.dataplugin.annotations.DataURI;
@@ -32,13 +31,13 @@ import com.raytheon.uf.common.serialization.annotations.DynamicSerializeElement;
 /**
  * NcPafmRecord is the Data Access component for PAFM Point/Area Forecast
  * Matrices data. This contains getters and setters for the main table "ncpafm".
- * 
+ *
  * This code has been developed by the SIB for use in the AWIPS2 system.
- * 
+ *
  * <pre>
- * 
+ *
  * SOFTWARE HISTORY
- * 
+ *
  * Date         Ticket#    Engineer    Description
  * ------------ ---------- ----------- --------------------------
  * Aug 05, 2009 126        F. J. Yen   Initial creation
@@ -66,26 +65,30 @@ import com.raytheon.uf.common.serialization.annotations.DynamicSerializeElement;
  * Feb 11, 2014 2784       rferrel     Remove override of setIdentifier.
  * Jun 11, 2014 2061       bsteffen    Remove IDecoderGettable
  * Aug 03, 2015 4360       rferrel     Name unique constraint.
- * 
+ * Aug 08, 2022 8892       tjensen     Update indexes for Hibernate 5
+ *
  * </pre>
- * 
+ *
  * @author F. J. Yen, SIB
- * @version 1.0
  */
 @Entity
 @SequenceGenerator(initialValue = 1, name = PluginDataObject.ID_GEN, sequenceName = "ncpafmseq")
-@Table(name = "ncpafm", uniqueConstraints = { @UniqueConstraint(name = "uk_ncpafm_datauri_fields", columnNames = { "dataURI" }) })
 /*
  * Both refTime and forecastTime are included in the refTimeIndex since
  * forecastTime is unlikely to be used.
  */
-@org.hibernate.annotations.Table(appliesTo = "ncpafm", indexes = { @Index(name = "ncpafm_refTimeIndex", columnNames = {
-        "refTime", "forecastTime" }) })
+@Table(name = "ncpafm", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_ncpafm_datauri_fields", columnNames = {
+                "dataURI" }) }, indexes = {
+                        @Index(name = "%TABLE%_refTimeIndex", columnList = "refTime, forecastTime"),
+                        @Index(name = "%TABLE%_stationIndex", columnList = "stationId") })
+
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.NONE)
 @DynamicSerialize
 public class NcPafmRecord extends PersistablePluginDataObject implements
-// TODO: Make absolutely sure this is NO LONGER required... ISpatialEnabled,
+        // TODO: Make absolutely sure this is NO LONGER required...
+        // ISpatialEnabled,
         IPointData, IPersistable {
 
     private static final long serialVersionUID = 1L;
@@ -191,7 +194,7 @@ public class NcPafmRecord extends PersistablePluginDataObject implements
 
     /**
      * Constructs a pafm record from a dataURI
-     * 
+     *
      * @param uri
      *            The dataURI
      */
@@ -355,7 +358,7 @@ public class NcPafmRecord extends PersistablePluginDataObject implements
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.raytheon.uf.common.pointdata.IPointData#getPointDataView()
      */
     @Override
@@ -365,7 +368,7 @@ public class NcPafmRecord extends PersistablePluginDataObject implements
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * com.raytheon.uf.common.pointdata.IPointData#setPointDataView(com.raytheon
      * .uf.common.pointdata.PointDataView)
