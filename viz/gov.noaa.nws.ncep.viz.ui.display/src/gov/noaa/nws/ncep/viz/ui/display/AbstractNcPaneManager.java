@@ -1,16 +1,6 @@
 package gov.noaa.nws.ncep.viz.ui.display;
 
-import gov.noaa.nws.ncep.viz.common.display.INatlCntrsDescriptor;
-import gov.noaa.nws.ncep.viz.common.display.INatlCntrsPaneManager;
-import gov.noaa.nws.ncep.viz.common.display.INatlCntrsRenderableDisplay;
-import gov.noaa.nws.ncep.viz.common.display.INcPaneID;
-import gov.noaa.nws.ncep.viz.common.display.INcPaneLayout;
-import gov.noaa.nws.ncep.viz.common.display.IPaneLayoutable;
-import gov.noaa.nws.ncep.viz.common.display.NcDisplayName;
-import gov.noaa.nws.ncep.viz.common.display.NcDisplayType;
-
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,15 +15,17 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
+import org.locationtech.jts.geom.Coordinate;
 
 import com.raytheon.uf.common.status.IUFStatusHandler;
 import com.raytheon.uf.common.status.UFStatus;
 import com.raytheon.uf.common.status.UFStatus.Priority;
 import com.raytheon.uf.viz.core.IDisplayPane;
 import com.raytheon.uf.viz.core.IDisplayPaneContainer;
+import com.raytheon.uf.viz.core.IPane.CanvasType;
 import com.raytheon.uf.viz.core.IRenderableDisplayChangedListener;
 import com.raytheon.uf.viz.core.IRenderableDisplayChangedListener.DisplayChangeType;
+import com.raytheon.uf.viz.core.InputManager;
 import com.raytheon.uf.viz.core.datastructure.LoopProperties;
 import com.raytheon.uf.viz.core.drawables.IDescriptor;
 import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
@@ -43,53 +35,61 @@ import com.raytheon.viz.ui.color.BackgroundColor;
 import com.raytheon.viz.ui.color.IBackgroundColorChangedListener.BGColorMode;
 import com.raytheon.viz.ui.editor.ISelectedPanesChangedListener;
 import com.raytheon.viz.ui.input.InputAdapter;
-import com.raytheon.viz.ui.input.InputManager;
+import com.raytheon.viz.ui.panes.LegacyPane;
 import com.raytheon.viz.ui.panes.PaneManager;
 import com.raytheon.viz.ui.panes.VizDisplayPane;
-import org.locationtech.jts.geom.Coordinate;
+
+import gov.noaa.nws.ncep.viz.common.display.INatlCntrsDescriptor;
+import gov.noaa.nws.ncep.viz.common.display.INatlCntrsPaneManager;
+import gov.noaa.nws.ncep.viz.common.display.INatlCntrsRenderableDisplay;
+import gov.noaa.nws.ncep.viz.common.display.INcPaneID;
+import gov.noaa.nws.ncep.viz.common.display.INcPaneLayout;
+import gov.noaa.nws.ncep.viz.common.display.IPaneLayoutable;
+import gov.noaa.nws.ncep.viz.common.display.NcDisplayName;
+import gov.noaa.nws.ncep.viz.common.display.NcDisplayType;
 
 /**
  * Natl Cntrs extention of PaneManager.
- * 
+ *
  * Note that this uses a slightly different method of selecting panes.
  * IPaneManager allows for different kind of pane selections (ie actions of
  * LOAD, IMAGE, ....) but one one may be selected for each action.)
  * NCPaneManager ignores the action but will allow for more than one pane to be
  * selected at one time. selectPane() and deselectPane() should be called
  * instead of setSelectedPane().
- * 
+ *
  * <pre>
- * 
+ *
  * SOFTWARE HISTORY
- * 
- * Date          Ticket#    Engineer     Description 
- * ------------ ----------  -----------  -------------------------- 
- * 03/07/11      R1G2-9 	Greg Hull 	 Created
+ *
+ * Date          Ticket#    Engineer     Description
+ * ------------ ----------  -----------  --------------------------
+ * 03/07/11      R1G2-9     Greg Hull    Created
  * 07/18/12      #649       Shova Gurung Fixed echo/virtual cursor display issue.
- * 09/13/12			?		B. Yin		 Refresh only for multiple panes
+ * 09/13/12      ?          B. Yin       Refresh only for multiple panes
  * 01/28/12      #972       Greg Hull    created from NCPaneManager minus remove PaneLayout code.
  * 12/16/13      #958       sgurung      Do not set virtual cursor for NcNonMapRenderableDisplay
  * 05/16/2014    #1136      qzhou        Add NCTimeseries for Graph.
- * 09/09/2014    R4078      sgurung      Added "contextualMenusEnabled" to specify whether to 
+ * 09/09/2014    R4078      sgurung      Added "contextualMenusEnabled" to specify whether to
  *                                       enable/disable contextual menus in panes.
- * 
+ * 03/25/2022    8790       mapeters     Handle pane manager refactor
+ *
  * </pre>
- * 
+ *
  * @author ghull
- * 
  */
-public abstract class AbstractNcPaneManager extends PaneManager implements
-        IInputHandler, INatlCntrsPaneManager {
-    private static final transient IUFStatusHandler statusHandler = UFStatus
+public abstract class AbstractNcPaneManager extends PaneManager
+        implements IInputHandler, INatlCntrsPaneManager {
+
+    private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(AbstractNcPaneManager.class);
 
-    static public String NC_PANE_SELECT_ACTION = "NC_SELECT_PANE";
+    public static final String NC_PANE_SELECT_ACTION = "NC_SELECT_PANE";
 
     protected INcPaneLayout paneLayout;
 
     protected NcDisplayType displayType;
 
-    // protected int displayId;
     protected NcDisplayName displayName;
 
     // a flag to indicate that resources other than those in the default RBD
@@ -109,8 +109,8 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
 
     protected boolean contextualMenusEnabled = true;
 
-    protected boolean isHide = false; // means loop rsc on, and Hide btn
-                                      // displayed
+    // means loop rsc on, and Hide btn displayed
+    protected boolean isHide = false;
 
     protected String defaultTool = "gov.noaa.nws.ncep.viz.tools.pan";
 
@@ -128,15 +128,12 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
     // Implement the VirtualCursor and Pane Selection
     protected class NcPaneMouseHandler extends InputAdapter {
 
-        IDisplayPane[] lastHandledPanes = null;
+        private IDisplayPane[] lastHandledPanes = null;
 
-        AbstractNcEditor ncMapEditor = null;
-
-        NcPaneMouseHandler(AbstractNcEditor ncEd) { // , NCDisplayPane pane ) {
-            ncMapEditor = ncEd;
-            // thisPane = pane;
+        protected NcPaneMouseHandler(AbstractNcEditor ncEd) {
         }
 
+        @Override
         public boolean handleMouseMove(int x, int y) {
             Coordinate c = translateClick(x, y);
 
@@ -157,9 +154,9 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
 
             for (IDisplayPane pane : lastHandledPanes) {
 
-                if (geoSync
-                        && currentMouseHoverPane != pane
-                        && !(currentMouseHoverPane.getRenderableDisplay() instanceof NCNonMapRenderableDisplay)) {
+                if (geoSync && currentMouseHoverPane != pane
+                        && !(currentMouseHoverPane
+                                .getRenderableDisplay() instanceof NCNonMapRenderableDisplay)) {
                     ((VizDisplayPane) pane).setVirtualCursor(c);
                 } else {
                     ((VizDisplayPane) pane).setVirtualCursor(null);
@@ -191,20 +188,18 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
         }
     }
 
-    public AbstractNcPaneManager(INcPaneLayout playout, NcDisplayType dispType) {
+    public AbstractNcPaneManager(INcPaneLayout playout,
+            NcDisplayType dispType) {
         paneLayout = playout;
         setDisplayType(dispType);
 
-        inputManager = new InputManager(this);
-
-        displayPanes = new ArrayList<VizDisplayPane>();
-
         // this is defined in PaneManager. We are using this but we
         // ignore the keys and just fill them in with bogus unique numbers.
-        selectedPanes = new HashMap<String, IDisplayPane>();
-        listeners = new HashSet<ISelectedPanesChangedListener>();
+        selectedPanes = new HashMap<>();
+        listeners = new HashSet<>();
     }
 
+    @Override
     public INcPaneLayout getPaneLayout() {
         return paneLayout;
     }
@@ -213,27 +208,24 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
     @Override
     public IPaneLayoutable getPane(INcPaneID pid) {
         if (paneLayout.containsPaneId(pid)
-                && paneLayout.getPaneIndex(pid) < displayPanes.size()) {
-            VizDisplayPane vdp = displayPanes.get(paneLayout.getPaneIndex(pid));
+                && paneLayout.getPaneIndex(pid) < mainCanvasToPaneMap.size()) {
+            IDisplayPane vdp = mainCanvasToPaneMap.asList()
+                    .get(paneLayout.getPaneIndex(pid));
             if (vdp != null
                     && vdp.getRenderableDisplay() instanceof IPaneLayoutable) {
                 return (IPaneLayoutable) vdp.getRenderableDisplay();
             }
-            // return displayPanes.get( paneLayout.getPaneIndex( pid ) );
         }
         return null;
     }
 
     // called from AbstractEditor.createPartControl
-    //
     @Override
     public abstract void initializeComponents(IDisplayPaneContainer container,
             Composite parent);
 
     // The following methods are based on the NcDisplayType but these can be
     // overridden
-    //
-    //
     public String getEditorId() {
         if (displayType == NcDisplayType.NMAP_DISPLAY) {
             return "gov.noaa.nws.ncep.viz.ui.display.NcMapEditor";
@@ -280,21 +272,24 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
         return defaultTool;
     }
 
-    public INatlCntrsRenderableDisplay createNcRenderableDisplay(INcPaneID pid) {
+    public INatlCntrsRenderableDisplay createNcRenderableDisplay(
+            INcPaneID pid) {
         try {
             String rendDispClassName = getRenderableDisplayClass(pid);
             Class<?> rendDispClass = Class.forName(rendDispClassName);
 
-            Object rendDispObj = rendDispClass.newInstance();
+            Object rendDispObj = rendDispClass.getDeclaredConstructor()
+                    .newInstance();
 
             if (rendDispObj instanceof INatlCntrsRenderableDisplay) {
 
                 INatlCntrsRenderableDisplay iRendDisp = (INatlCntrsRenderableDisplay) rendDispObj;
                 iRendDisp.setPaneId(pid);
 
-                Class<?> descrClass = Class.forName(getDescriptorClass(
-                        rendDispClassName, pid));
-                Object descrObj = descrClass.newInstance();
+                Class<?> descrClass = Class
+                        .forName(getDescriptorClass(rendDispClassName, pid));
+                Object descrObj = descrClass.getDeclaredConstructor()
+                        .newInstance();
 
                 if (descrObj instanceof INatlCntrsDescriptor) {
                     INatlCntrsDescriptor iDescr = (INatlCntrsDescriptor) descrObj;
@@ -306,17 +301,15 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
                     return null;
                 }
             }
-        } catch (InstantiationException e) {
-            System.out.println(e.getMessage());
-        } catch (IllegalAccessException e) {
-            System.out.println(e.getMessage());
-        } catch (ClassNotFoundException e) {
-            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            statusHandler.error(
+                    "Error creating renderable display for pane: " + pid, e);
         }
 
         return null;
     }
 
+    @Override
     protected void registerHandlers(IDisplayPane pane) {
         // I think that this listener needs to be added before the
         // input Manager otherwise an inputHandler method may reference
@@ -324,19 +317,14 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
         //
         final IDisplayPane thisPane = pane;
 
-        pane.addListener(SWT.MouseDown, new Listener() {
+        pane.addListener(SWT.MouseDown, e -> {
+            if (e.button == 1 || e.button == 3) {
 
-            @Override
-            public void handleEvent(Event e) {
-                if (e.button == 1 || e.button == 3) {
+                boolean radioBehaviour = ((e.stateMask & SWT.CONTROL) == 0);
 
-                    boolean radioBehaviour = ((e.stateMask & SWT.CONTROL) == 0);
-
-                    if (paneContainer instanceof AbstractNcEditor) {
-                        NcEditorUtil.selectPane(
-                                (AbstractNcEditor) paneContainer, thisPane,
-                                radioBehaviour);
-                    }
+                if (paneContainer instanceof AbstractNcEditor) {
+                    NcEditorUtil.selectPane((AbstractNcEditor) paneContainer,
+                            thisPane, radioBehaviour);
                 }
             }
         });
@@ -355,18 +343,15 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
 
     @Override
     public int getNumberofPanes() {
-        return displayPanes.size();
+        return mainCanvasToPaneMap.size();
     }
 
     //
     public int getNumberofSelectedPanes() {
-        return selectedPanes.keySet().size();
+        return selectedPanes.size();
     }
 
-    // public boolean isPaneManaged( IDisplayPane pane ) {
-    // return displayPanes.contains( pane );
-    // }
-
+    @Override
     public NcDisplayType getDisplayType() {
         return displayType;
     }
@@ -376,10 +361,9 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
     }
 
     // This interface method shouldn't be called from NC perspective.
-    //
     @Override
     public void setSelectedPane(String action, IDisplayPane pane) {
-        if (action == null || !action.equals(NC_PANE_SELECT_ACTION)) {
+        if (action == null || !NC_PANE_SELECT_ACTION.equals(action)) {
             return;
         }
 
@@ -388,26 +372,19 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
         // to store different types (actions) of selections. We ignore this
         // since we only have 1 kind of selection (NC_PANE_SELECT_ACTION) but
         // multiple panes can be selected at once.
-        if (!selectedPanes.values().contains(pane)) {
-            String keyStr = Integer.toString(displayPanes.indexOf(pane));
+        if (!selectedPanes.containsValue(pane)) {
+            String keyStr = Integer.toString(mainCanvasToPaneMap.indexOf(pane));
             if (selectedPanes.containsKey(keyStr)) {
-                System.out
-                        .println("Sanity check in NcPaneManager.setSelectedPane. A non-unique key was created???");
+                statusHandler.warn(
+                        "Sanity check in NcPaneManager.setSelectedPane. A non-unique key was created? "
+                                + keyStr);
                 return;
             }
             selectedPanes.put(keyStr, pane);
         }
-
-        // for( ISelectedPanesChangedListener lstnr : listeners ) {
-        // lstnr.selectedPanesChanged(NC_PANE_SELECT_ACTION,
-        // getSelectedPanes(NC_PANE_SELECT_ACTION));
-        // }
-        // refresh();
     }
 
     public void selectPane(IDisplayPane pane) {
-        // System.out.println("NCPaneManager selecting pane " +
-        // pane.hashCode());
         setSelectedPane(NC_PANE_SELECT_ACTION, pane);
     }
 
@@ -437,7 +414,7 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
     //
     @Override
     public IDisplayPane getSelectedPane(String action) {
-        if (action == null || !action.equals(NC_PANE_SELECT_ACTION)) {
+        if (action == null || !NC_PANE_SELECT_ACTION.equals(action)) {
             return null;
         }
 
@@ -451,21 +428,21 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
 
     @Override
     public IDisplayPane[] getSelectedPanes(String action) {
-        if (action == null || !action.equals(NC_PANE_SELECT_ACTION)) {
+        if (action == null || !NC_PANE_SELECT_ACTION.equals(action)) {
             return null;
         }
-        IDisplayPane seldPanes[] = selectedPanes.values().toArray(
-                new IDisplayPane[0]);
+        IDisplayPane seldPanes[] = selectedPanes.values()
+                .toArray(new IDisplayPane[0]);
 
         return seldPanes;
     }
 
     @Override
     public boolean isSelectedPane(String action, IDisplayPane pane) {
-        if (action == null || !action.equals(NC_PANE_SELECT_ACTION)) {
+        if (!NC_PANE_SELECT_ACTION.equals(action)) {
             return false;
         }
-        return (selectedPanes.values().contains(pane) ? true : false);
+        return selectedPanes.containsValue(pane);
     }
 
     @Override
@@ -489,16 +466,17 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
 
         // sanity check
         // the pane id index should match the index into the displayPanes array.
-        if (pid != null && paneLayout.getPaneIndex(pid) != displayPanes.size()) {
-            System.out
-                    .println("??? in addRenderableDisplayToPane. "
-                            + "pane index doesn't matche the index in displayPanes array");
+        if (pid != null
+                && paneLayout.getPaneIndex(pid) != mainCanvasToPaneMap.size()) {
+            statusHandler.warn("Pane index (" + paneLayout.getPaneIndex(pid)
+                    + ") doesn't match the index in displayPanes array ("
+                    + mainCanvasToPaneMap.size() + ")");
         }
 
         VizDisplayPane pane = null;
         try {
             pane = new VizDisplayPane(paneContainer, canvasComp,
-                    renderableDisplay, contextualMenusEnabled);
+                    CanvasType.MAIN, renderableDisplay, contextualMenusEnabled);
             // register the inputManager and the mouse listener for pane
             // selection
             registerHandlers(pane);
@@ -506,23 +484,28 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
             final VizDisplayPane thisPane = pane;
 
             pane.addFocusListener(new FocusListener() {
+                @Override
                 public void focusGained(FocusEvent e) {
                     activatedPane = thisPane;
                 }
 
+                @Override
                 public void focusLost(FocusEvent e) {
                 }
             });
 
             pane.addMouseTrackListener(new MouseTrackListener() {
+                @Override
                 public void mouseEnter(MouseEvent e) {
                     activatedPane = thisPane;
                     currentMouseHoverPane = thisPane;
                 }
 
+                @Override
                 public void mouseExit(MouseEvent e) {
                 }
 
+                @Override
                 public void mouseHover(MouseEvent e) {
                 }
             });
@@ -538,10 +521,10 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
                 if (activatedPane == null) {
                     activatedPane = pane;
                 }
-                // ++displayedPaneCount; // not hiding panes...
-                if (displayPanes.size() > 0) {
-                    pane.getRenderableDisplay().setBackgroundColor(
-                            displayPanes.get(0).getRenderableDisplay()
+                if (!mainCanvasToPaneMap.isEmpty()) {
+                    pane.getRenderableDisplay()
+                            .setBackgroundColor(mainCanvasToPaneMap.firstKey()
+                                    .getRenderableDisplay()
                                     .getBackgroundColor());
                 } else {
                     BackgroundColor.getActivePerspectiveInstance().setColor(
@@ -549,12 +532,12 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
                             pane.getRenderableDisplay().getBackgroundColor());
                 }
 
-                if (displayPanes.size() > 0) {
+                if (!mainCanvasToPaneMap.isEmpty()) {
                     pane.getDescriptor().synchronizeTimeMatching(
-                            displayPanes.get(0).getDescriptor());
+                            mainCanvasToPaneMap.firstKey().getDescriptor());
                 }
 
-                displayPanes.add(pane);
+                mainCanvasToPaneMap.put(pane, new LegacyPane(pane));
 
             } catch (Throwable t) {
                 statusHandler.handle(Priority.PROBLEM, "Error adding pane", t);
@@ -578,8 +561,9 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
             paneId = ((INatlCntrsRenderableDisplay) renderableDisplay)
                     .getPaneId();
         } else {
-            System.out
-                    .println("??? addPane() to non-INatlCntrsRenderableDisplay display pane");
+            statusHandler.error(
+                    "Unable to add unexpected renderable display type to pane: "
+                            + renderableDisplay);
         }
 
         Composite canvasComp = new Composite(composite, SWT.NONE);
@@ -589,43 +573,40 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
         canvasComp.setLayout(gl);
         canvasComp.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        return addRenderableDisplayToPane(renderableDisplay, canvasComp, paneId);
+        return addRenderableDisplayToPane(renderableDisplay, canvasComp,
+                paneId);
     }
-
-    // @Override
-    // public void addPanes( IRenderableDisplay[] displaysToLoad ) {
-    // }
 
     @Override
     public void removePane(IDisplayPane pane) {
-        System.out.println("removePane not implemented for NCPaneManager");
+        // Not implemented for NCP
     }
 
     @Override
     public void hidePane(IDisplayPane pane) {
-        System.out.println("hidePane not implemented for NCPaneManager");
+        // Not implemented for NCP
     }
 
     @Override
     public void showPane(IDisplayPane pane) {
-        System.out.println("showPane not implemented for NCPaneManager");
+        // Not implemented for NCP
     }
 
     // TODO : if we implement hide/show then this will need to change, but for
     // now all panes are shown.
     @Override
     public int displayedPaneCount() {
-        return displayPanes.size();
+        return mainCanvasToPaneMap.size();
     }
 
     @Override
     public void clear() {
-        System.out.println("clearPanes not implemented for NCDisplayPane");
+        // Not implemented for NCP
     }
 
     @Override
     public IDisplayPane[] getDisplayPanes() {
-        return displayPanes.toArray(new VizDisplayPane[displayPanes.size()]);
+        return mainCanvasToPaneMap.keySet().toArray(IDisplayPane[]::new);
     }
 
     @Override
@@ -641,7 +622,8 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
     @Override
     public IDisplayPane getActiveDisplayPane() {
         if (activatedPane == null) {
-            activatedPane = displayPanes.size() > 0 ? displayPanes.get(0)
+            activatedPane = !mainCanvasToPaneMap.isEmpty()
+                    ? mainCanvasToPaneMap.firstKey()
                     : null;
         }
         return activatedPane;
@@ -649,7 +631,7 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
 
     @Override
     public void refresh() {
-        for (IDisplayPane pane : displayPanes) {
+        for (IDisplayPane pane : mainCanvasToPaneMap.keySet()) {
             pane.refresh();
         }
     }
@@ -689,9 +671,7 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
     public void dispose() {
         activatedPane = null;
         currentMouseHoverPane = null;
-        // displayedPaneCount = 0;
         selectedPanes = null;
-        // parentComposite = null;
         composite = null;
     }
 
@@ -719,10 +699,12 @@ public abstract class AbstractNcPaneManager extends PaneManager implements
     }
 
     // from PaneManager if we want to use it.....
+    @Override
     public BufferedImage screenshot() {
         return getActiveDisplayPane().getTarget().screenshot();
     }
 
+    @Override
     public NcDisplayName getDisplayName() {
         return displayName;
     }
