@@ -22,4 +22,4 @@ Require-Bundle: com.raytheon.edex.common,
  javax.persistence,
  com.raytheon.uf.edex.decodertools,
  javax.xml.bind,
- com.raytheon.uf.common.status
+ org.slf4j
