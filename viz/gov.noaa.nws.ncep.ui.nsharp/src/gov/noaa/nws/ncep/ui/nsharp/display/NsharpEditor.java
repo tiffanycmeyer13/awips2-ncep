@@ -1,6 +1,11 @@
 package gov.noaa.nws.ncep.ui.nsharp.display;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.RGB;
@@ -28,6 +33,7 @@ import com.raytheon.uf.common.status.IUFStatusHandler;
 import com.raytheon.uf.common.status.UFStatus;
 import com.raytheon.uf.common.status.UFStatus.Priority;
 import com.raytheon.uf.viz.core.IDisplayPane;
+import com.raytheon.uf.viz.core.IPane;
 import com.raytheon.uf.viz.core.IPane.CanvasType;
 import com.raytheon.uf.viz.core.IRenderableDisplayChangedListener;
 import com.raytheon.uf.viz.core.InputManager;
@@ -40,6 +46,7 @@ import com.raytheon.uf.viz.core.rsc.ResourceList;
 import com.raytheon.viz.ui.EditorUtil;
 import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.raytheon.viz.ui.editor.EditorInput;
+import com.raytheon.viz.ui.panes.LegacyPane;
 import com.raytheon.viz.ui.panes.PaneManager;
 import com.raytheon.viz.ui.panes.VizDisplayPane;
 
@@ -86,6 +93,7 @@ import gov.noaa.nws.ncep.viz.ui.display.NCLoopProperties;
  * Apr 22, 2019  6660        bsteffen   Apply background color to all panes.
  * Apr 01, 2022  89212       smanoj     Fix some Nsharp display issues.
  * Oct 07, 2022  8792        mapeters   Updated for tracking of LegacyPanes
+ * Oct 27, 2022  8956        mapeters   Override new methods added for ComboEditors
  *
  * </pre>
  *
@@ -200,7 +208,9 @@ public class NsharpEditor extends AbstractEditor
 
     private NsharpWitoPaneMouseHandler witoPaneMouseHandler = null;
 
-    protected VizDisplayPane displayPanes[];
+    protected VizDisplayPane[] displayPanes;
+
+    protected Map<VizDisplayPane, IPane> canvasToPaneMap = new LinkedHashMap<>();
 
     protected VizDisplayPane selectedPane;
 
@@ -372,6 +382,8 @@ public class NsharpEditor extends AbstractEditor
                             CanvasType.MAIN, displaysToLoad[i]);
 
                     displayPanes[i].setRenderableDisplay(displaysToLoad[i]);
+                    canvasToPaneMap.put(displayPanes[i],
+                            new LegacyPane(displayPanes[i]));
                 }
             }
             registerHandlers();
@@ -920,6 +932,7 @@ public class NsharpEditor extends AbstractEditor
                 edInput.getRenderableDisplays());
         nsharpComp = new Composite[DISPLAY_TOTAL];
         displayPanes = new VizDisplayPane[DISPLAY_TOTAL];
+        canvasToPaneMap.clear();
 
         for (IRenderableDisplay display : displayArray) {
             // attempt to find and reuse rscHandler if possible
@@ -1477,6 +1490,7 @@ public class NsharpEditor extends AbstractEditor
         displayArray = newDisplayArray;
         nsharpComp = new Composite[DISPLAY_TOTAL];
         displayPanes = new VizDisplayPane[DISPLAY_TOTAL];
+        canvasToPaneMap.clear();
         // CHIN task#5930 use same loop properties
         EditorInput edInput = new EditorInput(
                 this.editorInput.getLoopProperties(), displayArray);
@@ -1983,4 +1997,27 @@ public class NsharpEditor extends AbstractEditor
         this.refresh();
     }
 
+    @Override
+    public IDisplayPane[] getCanvases(CanvasType type) {
+        return getDisplayPanes();
+    }
+
+    @Override
+    public List<IPane> getPanes() {
+        return Collections
+                .unmodifiableList(new ArrayList<>(canvasToPaneMap.values()));
+    }
+
+    @Override
+    public IPane getActivePane() {
+        if (selectedPane == null) {
+            return null;
+        }
+        return canvasToPaneMap.get(selectedPane);
+    }
+
+    @Override
+    public List<IDisplayPane> getCanvasesCompatibleWithActive() {
+        return Arrays.asList(getDisplayPanes());
+    }
 }
