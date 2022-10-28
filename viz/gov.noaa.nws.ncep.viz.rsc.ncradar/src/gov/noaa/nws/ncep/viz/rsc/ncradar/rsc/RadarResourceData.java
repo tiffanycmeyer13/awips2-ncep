@@ -1,18 +1,14 @@
 /*
  * gov.noaa.nws.ncep.viz.rsc.ncradar.rsc.RadarResourceData
- * 
+ *
  * 12-08-2011
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.viz.rsc.ncradar.rsc;
 
-import gov.noaa.nws.ncep.viz.resources.AbstractNatlCntrsRequestableResourceData;
-import gov.noaa.nws.ncep.viz.rsc.ncradar.rsc.image.RadarRadialResource;
-import gov.noaa.nws.ncep.viz.rsc.ncradar.rsc.image.RadarRasterResource;
-import gov.noaa.nws.ncep.viz.ui.display.ColorBarFromColormap;
-
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -33,28 +29,34 @@ import com.raytheon.uf.viz.core.exception.VizException;
 import com.raytheon.uf.viz.core.rsc.AbstractVizResource;
 import com.raytheon.uf.viz.core.rsc.LoadProperties;
 
+import gov.noaa.nws.ncep.viz.resources.AbstractNatlCntrsRequestableResourceData;
+import gov.noaa.nws.ncep.viz.rsc.ncradar.rsc.image.RadarRadialResource;
+import gov.noaa.nws.ncep.viz.rsc.ncradar.rsc.image.RadarRasterResource;
+import gov.noaa.nws.ncep.viz.ui.display.ColorBarFromColormap;
+
 /**
  * Provides the metadata and constructor for Radar
- * 
+ *
  * This class is based on Raytheon's code.
- * 
+ *
  * <pre>
- * 
+ *
  * SOFTWARE HISTORY
  * Date         Ticket#     Engineer    Description
  * ------------ ---------- ----------- --------------------------
  * 12/08/2011    #541       S. Gurung   Initial creation
  * 06/10/2013    #999       G. hull     rm RadarProductFactory til interrogate is supported
  * 02/24/2016    R15557     A. Su       Converted RadarDataTime objects to DataTime objects.
- * 
+ * 10/28/2022    8959       mapeters    Update how data time levels are set
+ *
  * </pre>
- * 
+ *
  * @author sgurung
- * @version 1.0
  */
 @XmlAccessorType(XmlAccessType.NONE)
 @XmlType(name = "NC-RadarResourceData")
-public class RadarResourceData extends AbstractNatlCntrsRequestableResourceData {
+public class RadarResourceData
+        extends AbstractNatlCntrsRequestableResourceData {
     private static final transient IUFStatusHandler statusHandler = UFStatus
             .getHandler(RadarResourceData.class);
 
@@ -93,8 +95,8 @@ public class RadarResourceData extends AbstractNatlCntrsRequestableResourceData 
         RequestConstraint productCodeConstraint = metadataMap
                 .get("productCode");
 
-        if (productCodeConstraint == null
-                || productCodeConstraint.getConstraintType() != ConstraintType.EQUALS) {
+        if (productCodeConstraint == null || productCodeConstraint
+                .getConstraintType() != ConstraintType.EQUALS) {
             return -1;
         }
 
@@ -102,8 +104,8 @@ public class RadarResourceData extends AbstractNatlCntrsRequestableResourceData 
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            statusHandler.handle(Priority.ERROR, "Cannot parse <" + value
-                    + "> to an integer.");
+            statusHandler.handle(Priority.ERROR,
+                    "Cannot parse <" + value + "> to an integer.");
         }
         return -1;
     }
@@ -147,16 +149,18 @@ public class RadarResourceData extends AbstractNatlCntrsRequestableResourceData 
 
             if (info == null) {
                 throw new VizException(
-                        "Unable to create resource for productCode:" + prodCode);
+                        "Unable to create resource for productCode:"
+                                + prodCode);
             }
             format = info.getFormat().trim();
 
-            if (format == null || format.equals("")) {
+            if (format == null || format.isEmpty()) {
                 statusHandler.handle(Priority.ERROR,
                         "There is not format defined in radarInfo.txt for "
                                 + prodCode);
                 throw new VizException(
-                        "Unable to create resource for productCode:" + prodCode);
+                        "Unable to create resource for productCode:"
+                                + prodCode);
             }
         }
 
@@ -211,11 +215,6 @@ public class RadarResourceData extends AbstractNatlCntrsRequestableResourceData 
         this.latest = latest;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#hashCode()
-     */
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -226,42 +225,30 @@ public class RadarResourceData extends AbstractNatlCntrsRequestableResourceData 
         return result;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (!super.equals(obj))
+        }
+        if (!super.equals(obj)) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         RadarResourceData other = (RadarResourceData) obj;
-        if (latest != other.latest)
+        if (latest != other.latest) {
             return false;
-        if (mode == null) {
-            if (other.mode != null)
-                return false;
-        } else if (!mode.equals(other.mode))
+        }
+        if (!Objects.equals(mode, other.mode)) {
             return false;
-        if (pointID == null) {
-            if (other.pointID != null)
-                return false;
-        } else if (!pointID.equals(other.pointID))
+        }
+        if (!Objects.equals(pointID, other.pointID)) {
             return false;
+        }
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * gov.noaa.nws.ncep.viz.resources.AbstractNatlCntrsRequestableResourceData#
-     * getAvailableTimes()
-     */
     @Override
     public DataTime[] getAvailableTimes() throws VizException {
 
@@ -282,14 +269,15 @@ public class RadarResourceData extends AbstractNatlCntrsRequestableResourceData 
             dataTimes[i].setFcstTime(aRadarDataTime.getFcstTime());
             dataTimes[i].setValidPeriod(aRadarDataTime.getValidPeriod());
             dataTimes[i].setVisible(aRadarDataTime.isVisible());
-            dataTimes[i].setLevelValue(aRadarDataTime.getLevelValue());
+            dataTimes[i].setLevel(aRadarDataTime.getLevelValue(),
+                    aRadarDataTime.getLevelType());
             dataTimes[i].setUtilityFlags(aRadarDataTime.getUtilityFlags());
         }
 
         if (latest) {
-            Set<DataTime> times = new HashSet<DataTime>();
+            Set<DataTime> times = new HashSet<>();
             for (DataTime time : dataTimes) {
-                time.setLevelValue(null);
+                time.clearLevel();
                 times.add(time);
             }
             dataTimes = times.toArray(new DataTime[0]);
