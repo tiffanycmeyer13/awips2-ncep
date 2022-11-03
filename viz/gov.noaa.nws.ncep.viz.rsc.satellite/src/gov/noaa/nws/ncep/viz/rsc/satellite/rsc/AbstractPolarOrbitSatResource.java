@@ -66,11 +66,11 @@ import tech.units.indriya.quantity.Quantities;
  *                                       specified in attribute set files.
  *  12/14/2016   R20988    kbugenhagen  Update getColorMapName to allow for 
  *                                       override of colormap name in SPF.
- *  05/21/2019   64168      ksunil       Use ImageryLabelingPreference                                     
+ *  05/21/2019   64168      ksunil       Use ImageryLabelingPreference 
+ *  11/03/2022   8905       lsingh       Check for NaN when converting units.
  * </pre>
  * 
  * @author kbugenhagen
- * @version 1
  */
 
 /**
@@ -81,7 +81,7 @@ import tech.units.indriya.quantity.Quantities;
 public abstract class AbstractPolarOrbitSatResource<R extends IPersistable>
         extends NcSatelliteResource implements ISamplingResource {
 
-    static final String SAMPLING_METHOD_NAME = "findBestValueForCoordinate";
+    protected static final String SAMPLING_METHOD_NAME = "findBestValueForCoordinate";
 
     // sampled coordinate
     protected ReferencedCoordinate sampleCoord;
@@ -147,7 +147,7 @@ public abstract class AbstractPolarOrbitSatResource<R extends IPersistable>
      */
     public class RecordData extends AbstractSatelliteRecordData<R> {
 
-        protected final static double INTERSECTION_FACTOR = 10.0;
+        protected static final double INTERSECTION_FACTOR = 10.0;
 
         protected boolean createdGeoTiff = false;
 
@@ -168,7 +168,7 @@ public abstract class AbstractPolarOrbitSatResource<R extends IPersistable>
 
     protected abstract class FrameData extends NcSatelliteResource.FrameData {
 
-        RecordData recordData;
+        protected RecordData recordData;
 
         protected String legendStr = "No Data";
 
@@ -413,7 +413,7 @@ public abstract class AbstractPolarOrbitSatResource<R extends IPersistable>
                 currFrame, target, paintProps);
 
         for (Collection<DrawableImage> images : allImagesForframe) {
-            if (images != null && images.size() > 0) {
+            if (images != null && !images.isEmpty()) {
                 if (!target.drawRasters(paintProps,
                         images.toArray(new DrawableImage[images.size()]))) {
                     issueRefresh();
@@ -537,7 +537,7 @@ public abstract class AbstractPolarOrbitSatResource<R extends IPersistable>
                 if (data != null && data.contains(p)) {
                     double value;
                     value = data.interrogate(latLon);
-                    if (Double.isNaN(value) == false && value != noDataValue) {
+                    if (!Double.isNaN(value) && value != noDataValue) {
                         bestValue = value;
                         bestRecord = (R) data.getRecord();
                     }
@@ -545,9 +545,13 @@ public abstract class AbstractPolarOrbitSatResource<R extends IPersistable>
             }
         }
         double dataValue = Double.NaN;
-        if (Double.isNaN(bestValue) == false) {
-            dataValue = colorMapParameters.getDataToDisplayConverter()
-                    .convert(bestValue);
+        if (!Double.isNaN(bestValue)) {
+            try {
+                dataValue = colorMapParameters.getDataToDisplayConverter()
+                        .convert(bestValue);
+            } catch (NumberFormatException e) {
+                dataValue = Double.NaN;
+            }
             dataValue = convertDataValue(dataValue);
         }
         if (bestRecord != null) {

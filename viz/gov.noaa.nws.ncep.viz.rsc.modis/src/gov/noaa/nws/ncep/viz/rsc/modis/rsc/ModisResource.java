@@ -135,6 +135,7 @@ import tech.units.indriya.quantity.Quantities;
  * 06/11/2018   7310    mapeters     Remove unused import
  * 04/15/2019   7596    lsingh       Updated units framework to JSR-363.
  * 05/21/2019   64168   ksunil       Use ImageryLabelingPreference
+ * 11/02/2022   8905    lsingh       Check for NaN when converting units.
  * </pre>
  *
  * @author kbugenhagen
@@ -145,13 +146,13 @@ public class ModisResource
         implements INatlCntrsResource, IResourceDataChanged, ImageProvider,
         ISamplingResource {
 
-    static final String AREANAME = "areaName";
+    protected static final String AREANAME = "areaName";
 
-    static final char SLASH = File.separatorChar;
+    protected static final char SLASH = File.separatorChar;
 
-    static final String DEFAULT_COLORMAP_NAME = "colorMapName";
+    protected static final String DEFAULT_COLORMAP_NAME = "colorMapName";
 
-    static final String SAMPLING_METHOD_NAME = "findBestValueForCoordinate";
+    protected static final String SAMPLING_METHOD_NAME = "findBestValueForCoordinate";
 
     private ModisResourceData modisResourceData;
 
@@ -165,13 +166,14 @@ public class ModisResource
 
     protected ReferencedCoordinate sampleCoord;
 
-    protected Coordinate virtualCursor;// virtual cursor location
+    // virtual cursor location
+    protected Coordinate virtualCursor;
 
     protected boolean sampling = false;
 
-    String customizedLegendString = "";
+    protected String customizedLegendString = "";
 
-    String originalLegendString = "";
+    protected String originalLegendString = "";
 
     /**
      * Map for data records to renderable data, synchronized on for painting,
@@ -185,8 +187,6 @@ public class ModisResource
 
         private ModisRecord record;
 
-        private ModisDataRetriever dataRetriever;
-
         private ModisTileImageCreator(ModisRecord record) {
             this.record = record;
         }
@@ -194,8 +194,7 @@ public class ModisResource
         @Override
         public DrawableImage createTileImage(IGraphicsTarget target, Tile tile,
                 GeneralGridGeometry targetGeometry) throws VizException {
-
-            this.dataRetriever = new ModisDataRetriever(record, tile.tileLevel,
+            ModisDataRetriever dataRetriever = new ModisDataRetriever(record, tile.tileLevel,
                     tile.getRectangle());
             IImage image = target.getExtension(IColormappedImageExtension.class)
                     .initializeRaster(dataRetriever,
@@ -214,9 +213,9 @@ public class ModisResource
      */
     private class RecordData extends AbstractSatelliteRecordData<ModisRecord> {
 
-        private final static double INTERSECTION_FACTOR = 10.0;
+        private static final double INTERSECTION_FACTOR = 10.0;
 
-        private final static int TILE_SIZE = 2048;
+        private static final int TILE_SIZE = 2048;
 
         private ModisTileImageCreator imageCreator;
 
@@ -256,7 +255,7 @@ public class ModisResource
 
     protected class FrameData extends AbstractFrameData {
 
-        RecordData recordData;
+        protected RecordData recordData;
 
         private String legendStr = "No Data";
 
@@ -347,7 +346,7 @@ public class ModisResource
             builder.append(":");
             builder.append(timeParts[1]);
             legendStr = builder.toString();
-            StringBuffer sb = new StringBuffer("");
+            StringBuilder sb = new StringBuilder("");
             char x;
 
             originalLegendString = legendStr;
@@ -413,7 +412,7 @@ public class ModisResource
                  * it doesn't then remove it from legendString.
                  */
                 Pattern p = Pattern.compile("\\{(.*?)\\}");
-                Matcher m = p.matcher(legendStringAttribute.toString());
+                Matcher m = p.matcher(legendStringAttribute);
                 String value = "";
                 while (m.find()) {
                     value = variables.get(m.group(1));
@@ -457,9 +456,7 @@ public class ModisResource
                 }
 
             } catch (Exception ex) {
-                statusHandler.handle(Priority.ERROR,
-                        "Error building legend string ",
-                        ex.getStackTrace().toString());
+                statusHandler.error("Error building legend string ", ex);
             }
 
         }
@@ -529,7 +526,7 @@ public class ModisResource
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            statusHandler.error("There was a problem getting the the lat/lons.", e);
         }
     }
 
@@ -587,9 +584,7 @@ public class ModisResource
             }
         } catch (StyleException e) {
             throw new VizException(e.getLocalizedMessage(), e);
-        } catch (SerializationException e) {
-            statusHandler.handle(Priority.PROBLEM, e.getLocalizedMessage(), e);
-        } catch (JAXBException e) {
+        } catch (SerializationException | JAXBException e) {
             statusHandler.handle(Priority.PROBLEM, e.getLocalizedMessage(), e);
         }
 
@@ -840,7 +835,7 @@ public class ModisResource
                 currFrame, target, paintProps);
 
         for (Collection<DrawableImage> images : allImagesForframe) {
-            if (images != null && images.size() > 0) {
+            if (images != null && !images.isEmpty()) {
                 if (!target.drawRasters(paintProps,
                         images.toArray(new DrawableImage[images.size()]))) {
                     issueRefresh();
@@ -881,8 +876,7 @@ public class ModisResource
                     Request.ALL, ModisRecord.getDataSet(0));
             data = (float[]) dataRecords[0].getDataObject();
         } catch (DataCubeException e) {
-            statusHandler.warn("Unable to create geotiff");
-            e.printStackTrace();
+            statusHandler.warn("Unable to create geotiff", e);
             return;
         }
         int nx = record.getCoverage().getNx();
@@ -973,7 +967,7 @@ public class ModisResource
                                     * dimensions[0] + ic;
                             if (dataIndex < 0 || dataIndex >= (dimensions[0]
                                     * dimensions[1])) {
-                                System.out.println("dataIndex: " + dataIndex
+                                statusHandler.debug("dataIndex: " + dataIndex
                                         + " is out of bounds for granule "
                                         + getName());
                             } else {
@@ -1003,8 +997,7 @@ public class ModisResource
             writer.write(coverage, null);
             writer.dispose();
         } catch (IllegalArgumentException | IOException e) {
-            statusHandler.warn("Unable to create geotiff");
-            e.printStackTrace();
+            statusHandler.warn("Unable to create geotiff", e);
             return;
         }
     }
@@ -1229,7 +1222,7 @@ public class ModisResource
                 if (data != null && data.contains(p)) {
                     double value;
                     value = data.interrogate(latLon);
-                    if (Double.isNaN(value) == false && value != noDataValue) {
+                    if (!Double.isNaN(value) && value != noDataValue) {
                         bestValue = value;
                         bestRecord = data.getRecord();
                     }
@@ -1238,9 +1231,13 @@ public class ModisResource
         }
         double dataValue = Double.NaN;
         double ciValue = Double.NaN;
-        if (Double.isNaN(bestValue) == false) {
-            dataValue = colorMapParameters.getDataToDisplayConverter()
-                    .convert(bestValue);
+        if (!Double.isNaN(bestValue)) {
+            try {
+                dataValue = colorMapParameters.getDataToDisplayConverter()
+                        .convert(bestValue);
+            } catch (NumberFormatException e) {
+                dataValue = Double.NaN;
+            }
             // convert CI scaled value (dataValue), which is 0..254 to actual CI
             // value, which is 0.0001..0.034
             ciValue = dataValue;

@@ -446,8 +446,14 @@ public abstract class RadarImageResource<D extends IDescriptor>
 
                 // Set the data value
                 if (thresholds[i] instanceof Float) {
-                    entry.setDisplayValue(
-                            params.getDataToDisplayConverter().convert(i));
+                    double convertedValue;
+                    try {
+                        convertedValue = params.getDataToDisplayConverter()
+                                .convert(i);
+                    } catch (NumberFormatException e) {
+                        convertedValue = Double.NaN;
+                    }
+                    entry.setDisplayValue(convertedValue);
                 } else if (thresholds[i] instanceof String) {
                     entry.setLabel((String) thresholds[i]);
                 } else if (thresholds[i] == null) {
