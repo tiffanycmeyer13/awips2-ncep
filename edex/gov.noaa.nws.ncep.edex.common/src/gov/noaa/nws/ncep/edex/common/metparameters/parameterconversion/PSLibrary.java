@@ -14,7 +14,7 @@ import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.PRLibrary
 import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingLayer2;
 import si.uom.SI;
 import systems.uom.common.USCustomary;
-import tec.uom.se.AbstractUnit;
+import tech.units.indriya.AbstractUnit;
 
 /**
  * @author archana

@@ -9,7 +9,7 @@ import com.raytheon.uf.common.geospatial.MapUtil;
 import com.raytheon.uf.common.units.UnitConv;
 
 import si.uom.SI;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 
 public class CustomLambertConformalCoverage extends CustomCoverage {

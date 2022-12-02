@@ -8,7 +8,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import com.raytheon.uf.common.serialization.ISerializableObject;
 import com.raytheon.uf.common.serialization.annotations.DynamicSerialize;
 
-import tec.uom.se.AbstractUnit;
+import tech.units.indriya.AbstractUnit;
 
 /**
  * Maps to the GEMPAK parameter STID

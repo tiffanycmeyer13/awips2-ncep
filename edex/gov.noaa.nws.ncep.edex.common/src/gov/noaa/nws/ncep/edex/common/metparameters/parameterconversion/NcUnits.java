@@ -23,10 +23,10 @@ import si.uom.NonSI;
 import si.uom.SI;
 import si.uom.quantity.Density;
 import systems.uom.common.USCustomary;
-import tec.uom.se.format.SimpleUnitFormat;
-import tec.uom.se.unit.MetricPrefix;
-import tec.uom.se.unit.ProductUnit;
-import tec.uom.se.unit.Units;
+import tech.units.indriya.format.SimpleUnitFormat;
+import javax.measure.MetricPrefix;
+import tech.units.indriya.unit.ProductUnit;
+import tech.units.indriya.unit.Units;
 
 /**
  *

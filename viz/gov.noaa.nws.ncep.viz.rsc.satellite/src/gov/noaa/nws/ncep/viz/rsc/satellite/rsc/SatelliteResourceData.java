@@ -4,7 +4,7 @@ import java.io.File;
 import java.text.ParsePosition;
 
 import javax.measure.Unit;
-import javax.measure.format.ParserException;
+import javax.measure.format.MeasurementParseException;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -20,7 +20,7 @@ import gov.noaa.nws.ncep.viz.common.area.IAreaProviderCapable;
 import gov.noaa.nws.ncep.viz.resources.AbstractNatlCntrsRequestableResourceData;
 import gov.noaa.nws.ncep.viz.resources.IDataLoader;
 import gov.noaa.nws.ncep.viz.ui.display.ColorBarFromColormap;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * Resource data for satellite data
@@ -139,7 +139,7 @@ public class SatelliteResourceData extends
                 try {
                     displayUnit = SimpleUnitFormat.getInstance(SimpleUnitFormat.Flavor.ASCII).parseSingleUnit(
                             displayUnitStr, new ParsePosition(0));
-                } catch (ParserException e) {
+                } catch (MeasurementParseException e) {
                     statusHandler.error("Unable parse display units : "
                             + displayUnitStr, e);
                 }

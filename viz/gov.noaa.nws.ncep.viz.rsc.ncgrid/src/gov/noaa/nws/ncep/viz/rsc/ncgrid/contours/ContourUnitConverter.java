@@ -1,12 +1,10 @@
 package gov.noaa.nws.ncep.viz.rsc.ncgrid.contours;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.Arrays;
 
 import javax.measure.UnitConverter;
 
-import tec.uom.se.AbstractConverter;
+import tech.units.indriya.function.AbstractConverter;
 
 /**
  * ContourUnitConverter
@@ -20,6 +18,8 @@ import tec.uom.se.AbstractConverter;
  * ------------ ---------- ----------- --------------------------
  * 11/16/2015   R13016     mkean       Initial creation.
  * Apr 29, 2019 7596       lsingh      Updated units framework to JSR-363.
+ * Aug 05, 2022 8905       lsingh      Updated units framework to 2.0.2.
+ *                                     Renamed methods, and overrided additional methods.
  * 
  * </pre>
  * 
@@ -40,35 +40,28 @@ public class ContourUnitConverter extends AbstractConverter {
     }
 
     @Override
-    public double convert(double x) {
-        if (Double.isNaN(x)) {
+    public Number convertWhenNotIdentity(Number x) {
+        if (Double.isNaN(x.doubleValue())) {
             return Double.NaN;
         }
-        if (Double.isInfinite(x)) {
+        if (Double.isInfinite(x.doubleValue())) {
             return x;
         }
         double increment = (yVals[yVals.length - 1] - yVals[0])
                 / ((double) yVals.length - 1);
-        int index = (int) Math.round((x - yVals[0]) / increment);
+        int index = (int) Math.round((x.doubleValue() - yVals[0]) / increment);
 
         return yVals[index];
     }
 
     @Override
-    public AbstractConverter inverse() {
+    public AbstractConverter inverseWhenNotIdentity() {
         return new ContourUnitConverter(yVals, xVals);
     }
 
     @Override
     public boolean isLinear() {
         return false;
-    }
-
-    @Override
-    public UnitConverter concatenate(UnitConverter converter) {
-        // TODO Auto-generated method stub
-        UnitConverter result = super.concatenate(converter);
-        return result;
     }
 
     @Override
@@ -95,8 +88,26 @@ public class ContourUnitConverter extends AbstractConverter {
     }
 
     @Override
-    public BigDecimal convert(BigDecimal value, MathContext ctx)
-            throws ArithmeticException {
-        throw new UnsupportedOperationException();
+    public boolean isIdentity() {
+        return false;
     }
+
+    @Override
+    public int compareTo(UnitConverter o) {
+     // This method hasn't been implemented yet since it's unused
+        return 0;
+    }
+
+    @Override
+    protected String transformationLiteral() {
+     // This method hasn't been implemented yet since it's unused
+        return null;
+    }
+
+    @Override
+    protected boolean canReduceWith(AbstractConverter that) {
+     // This method hasn't been implemented yet since it's unused
+        return false;
+    }
+
 }

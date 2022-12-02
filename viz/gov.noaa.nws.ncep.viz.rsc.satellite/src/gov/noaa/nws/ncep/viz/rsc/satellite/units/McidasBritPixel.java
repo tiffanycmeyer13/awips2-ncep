@@ -12,8 +12,8 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import com.raytheon.uf.common.dataplugin.satellite.units.generic.GenericFromPixelConverter;
 
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.quantity.QuantityDimension;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.unit.UnitDimension;
 
 /**
  * Used to represent the McIdas BRIT Calibration type.  Its the same unit as 
@@ -67,6 +67,6 @@ public class McidasBritPixel extends AbstractUnit<Dimensionless> {
 
     @Override
     public Dimension getDimension() {
-        return QuantityDimension.NONE;
+        return UnitDimension.NONE;
     }
 }

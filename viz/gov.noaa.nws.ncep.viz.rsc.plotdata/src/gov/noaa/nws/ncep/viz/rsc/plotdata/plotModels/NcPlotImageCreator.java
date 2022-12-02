@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.measure.Unit;
-import javax.measure.format.ParserException;
+import javax.measure.format.MeasurementParseException;
 import javax.measure.quantity.Angle;
 
 import org.eclipse.swt.graphics.RGB;
@@ -58,7 +58,7 @@ import gov.noaa.nws.ncep.viz.rsc.plotdata.rsc.Tracer;
 import gov.noaa.nws.ncep.viz.ui.display.NcDisplayMngr;
 import si.uom.NonSI;
 import systems.uom.common.USCustomary;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * <pre>
@@ -739,7 +739,7 @@ public class NcPlotImageCreator {
 
                 }
 
-            } catch (ParserException e) {
+            } catch (MeasurementParseException e) {
                 statusHandler
                         .warn("Failed to parse plot unit from string (value: "
                                 + Objects.toString(plotUnit) + ")", e);

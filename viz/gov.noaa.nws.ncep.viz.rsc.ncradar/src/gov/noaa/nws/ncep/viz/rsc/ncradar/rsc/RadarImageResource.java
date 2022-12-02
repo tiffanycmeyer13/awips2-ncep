@@ -23,7 +23,7 @@ import javax.measure.IncommensurableException;
 import javax.measure.UnconvertibleException;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
-import javax.measure.format.ParserException;
+import javax.measure.format.MeasurementParseException;
 
 import org.eclipse.swt.graphics.RGB;
 import org.geotools.referencing.CRS;
@@ -84,10 +84,10 @@ import gov.noaa.nws.ncep.viz.common.ColorMapUtil;
 import gov.noaa.nws.ncep.viz.resources.colorBar.ColorBarResource;
 import gov.noaa.nws.ncep.viz.resources.colorBar.ColorBarResourceData;
 import gov.noaa.nws.ncep.viz.ui.display.ColorBarFromColormap;
-import tec.uom.se.AbstractConverter;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.format.SimpleUnitFormat;
-import tec.uom.se.function.MultiplyConverter;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.format.SimpleUnitFormat;
+import tech.units.indriya.function.AbstractConverter;
+import tech.units.indriya.function.MultiplyConverter;
 
 /**
  * TODO Add Description
@@ -117,6 +117,7 @@ import tec.uom.se.function.MultiplyConverter;
  * Mar 20, 2019  7569     tgurney    Fix colorbar alignment
  * Apr 15, 2019 7596      lsingh     Updated units framework to JSR-363.
  * Apr 20, 2020  8145     randerso   Replace SamplePreferences with SampleFormat
+ * Oct 25, 2022  8905     lsingh     Check for NaN before converting units.
  * 
  *
  * </pre>
@@ -208,7 +209,7 @@ public abstract class RadarImageResource<D extends IDescriptor>
             try {
                 dataUnit = SimpleUnitFormat.getInstance(SimpleUnitFormat.Flavor.ASCII).parseProductUnit(
                         radarRecord.getUnit(), new ParsePosition(0));
-            } catch (ParserException e) {
+            } catch (MeasurementParseException e) {
                 throw new VizException("Unable to parse units ", e);
             }
         } else {
@@ -445,8 +446,14 @@ public abstract class RadarImageResource<D extends IDescriptor>
 
                 // Set the data value
                 if (thresholds[i] instanceof Float) {
-                    entry.setDisplayValue(
-                            params.getDataToDisplayConverter().convert(i));
+                    double convertedValue;
+                    try {
+                        convertedValue = params.getDataToDisplayConverter()
+                                .convert(i);
+                    } catch (NumberFormatException e) {
+                        convertedValue = Double.NaN;
+                    }
+                    entry.setDisplayValue(convertedValue);
                 } else if (thresholds[i] instanceof String) {
                     entry.setLabel((String) thresholds[i]);
                 } else if (thresholds[i] == null) {
@@ -663,10 +670,25 @@ public abstract class RadarImageResource<D extends IDescriptor>
             dataToImage = params.getDataToImageConverter();
         }
         if (dataToImage == null && record.getNumLevels() <= 16) {
-            dataToImage = new MultiplyConverter(16);
+            dataToImage = MultiplyConverter.of(16);
         } else if (dataToImage == null) {
             dataToImage = AbstractConverter.IDENTITY;
         }
+
+        UnitConverter converter = null;
+        try {
+            if(dataUnit != null) {
+                converter = dataUnit.getConverterToAny(params.getDisplayUnit());
+            }
+        } catch (IncommensurableException | UnconvertibleException e) {
+            SimpleUnitFormat fm = SimpleUnitFormat
+                    .getInstance(SimpleUnitFormat.Flavor.ASCII);
+            statusHandler.handle(Priority.INFO,
+                    "Unable to convert unit " + fm.format(dataUnit)
+                            + " to unit " + fm.format(params.getDisplayUnit()),
+                    e);
+        }
+
         // precompute the converted value for every possible value in the
         // record.
         byte[] table = new byte[record.getNumLevels()];
@@ -675,19 +697,15 @@ public abstract class RadarImageResource<D extends IDescriptor>
             if (Double.isNaN(image)) {
                 double d = Double.NaN;
                 try {
-                    if (dataUnit != null) {
-                        d = dataUnit.getConverterToAny(params.getDisplayUnit())
-                                .convert(i);
+                    if (converter != null) {
+                        d = converter.convert(i);
+                    } else {
+                        d = Double.NaN;
                     }
-                } catch (IncommensurableException | UnconvertibleException e) {
-                    SimpleUnitFormat fm = SimpleUnitFormat
-                            .getInstance(SimpleUnitFormat.Flavor.ASCII);
-                    statusHandler.handle(Priority.INFO,
-                            "Unable to convert unit " + fm.format(dataUnit)
-                                    + " to unit "
-                                    + fm.format(params.getDisplayUnit()),
-                            e);
+                } catch (NumberFormatException e) {
+                    d = Double.NaN;
                 }
+
                 if (Double.isNaN(d)) {
                     // This means that the data is a non-numeric value, most
                     // likely a flag of some sort
@@ -719,11 +737,17 @@ public abstract class RadarImageResource<D extends IDescriptor>
                     if (image2disp == null) {
                         continue;
                     }
+
                     for (int j = 0; j < 256; j++) {
-                        double disp = image2disp.convert(j);
-                        if (Double.isNaN(disp)) {
+                        double disp;
+                        try {
+                            disp = image2disp.convert(j);
+                        } catch (NumberFormatException e) {
+                            // the value is a special case and represents
+                            // "no color" on the color map.
                             continue;
                         }
+
                         if (d < disp) {
                             // Map data values smaller than the colormap min to
                             // 0, which should be no data.

@@ -13,7 +13,7 @@ import com.raytheon.uf.common.serialization.annotations.DynamicSerialize;
 
 import gov.noaa.nws.ncep.edex.common.metparameters.MetParameterFactory.DeriveMethod;
 import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.PRLibrary.InvalidValueException;
-import tec.uom.se.AbstractUnit;
+import tech.units.indriya.AbstractUnit;
 
 /**
  * Maps to the GEMPAK parameter PP2C
