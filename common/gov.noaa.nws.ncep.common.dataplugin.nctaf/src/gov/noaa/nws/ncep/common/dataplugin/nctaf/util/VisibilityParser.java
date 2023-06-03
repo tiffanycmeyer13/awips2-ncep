@@ -6,7 +6,7 @@ import javax.measure.UnitConverter;
 import si.uom.NonSI;
 import si.uom.SI;
 import systems.uom.common.USCustomary;
-import tec.uom.se.unit.MetricPrefix;
+import javax.measure.MetricPrefix;
 
 /**
  * TODO Parse visibility provided in different formats.

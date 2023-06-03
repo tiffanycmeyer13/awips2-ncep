@@ -14,7 +14,7 @@ import com.raytheon.uf.common.datastorage.records.IDataRecord;
 import com.raytheon.uf.common.datastorage.records.ShortDataRecord;
 
 import gov.noaa.nws.ncep.edex.plugin.mosaic.common.MosaicRecord;
-import tec.uom.se.AbstractConverter;
+import tech.units.indriya.function.AbstractConverter;
 
 /**
  * Derived from original uEngine DecodeMosaicImage task.

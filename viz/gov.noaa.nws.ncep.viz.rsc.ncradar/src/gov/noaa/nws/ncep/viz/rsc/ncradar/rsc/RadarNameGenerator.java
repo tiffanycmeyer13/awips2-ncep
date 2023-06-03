@@ -31,8 +31,8 @@ import com.raytheon.uf.viz.core.rsc.capabilities.BlendedCapability;
 import com.raytheon.uf.viz.core.rsc.capabilities.ColorMapCapability;
 
 import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * Name generator for radar products.

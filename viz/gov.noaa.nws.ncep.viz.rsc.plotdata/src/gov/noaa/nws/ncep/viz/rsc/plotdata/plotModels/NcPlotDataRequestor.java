@@ -64,7 +64,7 @@ import gov.noaa.nws.ncep.viz.rsc.plotdata.rsc.Station;
 import gov.noaa.nws.ncep.viz.rsc.plotdata.rsc.Tracer;
 import si.uom.NonSI;
 import si.uom.SI;
-import tec.uom.se.unit.MetricPrefix;
+import javax.measure.MetricPrefix;
 
 /**
  *

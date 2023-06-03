@@ -48,8 +48,8 @@ import com.raytheon.uf.viz.npp.viirs.style.VIIRSDataRecordCriteria;
 import gov.noaa.nws.ncep.viz.resources.AbstractFrameData;
 import gov.noaa.nws.ncep.viz.rsc.satellite.rsc.AbstractPolarOrbitSatDataRetriever;
 import gov.noaa.nws.ncep.viz.rsc.satellite.rsc.AbstractPolarOrbitSatResource;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * Class for display of the Viirs satellite data.

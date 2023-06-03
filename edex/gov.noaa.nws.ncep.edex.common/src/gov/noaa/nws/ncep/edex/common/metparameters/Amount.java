@@ -3,7 +3,7 @@ package gov.noaa.nws.ncep.edex.common.metparameters;
 import java.text.ParsePosition;
 
 import javax.measure.Unit;
-import javax.measure.format.ParserException;
+import javax.measure.format.MeasurementParseException;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -14,8 +14,8 @@ import com.raytheon.uf.common.serialization.annotations.DynamicSerializeElement;
 import com.raytheon.uf.common.units.UnitAdapter;
 import com.raytheon.uf.common.units.UnitConv;
 
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * Class used to hold a value and its units.
@@ -122,7 +122,7 @@ public class Amount implements ISerializableObject {
                         .getInstance(SimpleUnitFormat.Flavor.ASCII)
                         .getInstance()
                         .parseObject(this.unitStr, new ParsePosition(0));
-            } catch (ParserException e) {
+            } catch (MeasurementParseException e) {
                 // logger.warn("ParseException while parsing unit string: "
                 // + this.unit + " defaulting to unit: " + Unit.ONE);
                 this.unit = AbstractUnit.ONE;

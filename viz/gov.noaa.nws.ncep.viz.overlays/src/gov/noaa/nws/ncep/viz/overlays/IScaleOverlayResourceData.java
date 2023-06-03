@@ -13,7 +13,7 @@ import com.raytheon.uf.viz.core.drawables.IFont.Style;
 
 import si.uom.SI;
 import systems.uom.common.USCustomary;
-import tec.uom.se.unit.MetricPrefix;
+import javax.measure.MetricPrefix;
 
 /**
  * <pre>

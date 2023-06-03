@@ -12,7 +12,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.measure.Unit;
-import javax.measure.format.ParserException;
+import javax.measure.format.MeasurementParseException;
 
 import org.eclipse.swt.graphics.RGB;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -67,8 +67,8 @@ import gov.noaa.nws.ncep.viz.resources.colorBar.ColorBarResource;
 import gov.noaa.nws.ncep.viz.resources.colorBar.ColorBarResourceData;
 import gov.noaa.nws.ncep.viz.ui.display.ColorBarFromColormap;
 import gov.noaa.nws.ncep.viz.ui.display.NCMapDescriptor;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * Provide Radar Mosaic raster rendering support
@@ -440,7 +440,7 @@ public class MosaicResource
             try {
                 dataUnit = SimpleUnitFormat.getInstance(SimpleUnitFormat.Flavor.ASCII).parseProductUnit(
                         radarRecord.getUnit(), new ParsePosition(0));
-            } catch (ParserException e) {
+            } catch (MeasurementParseException e) {
                 throw new VizException("Unable to parse units ", e);
             }
         } else {

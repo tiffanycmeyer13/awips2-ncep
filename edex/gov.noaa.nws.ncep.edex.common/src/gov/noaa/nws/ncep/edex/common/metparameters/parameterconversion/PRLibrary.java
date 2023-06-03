@@ -16,9 +16,9 @@ import gov.noaa.nws.ncep.edex.common.metparameters.Amount;
 import si.uom.NonSI;
 import si.uom.SI;
 import systems.uom.common.USCustomary;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.unit.MetricPrefix;
-import tec.uom.se.unit.Units;
+import tech.units.indriya.AbstractUnit;
+import javax.measure.MetricPrefix;
+import tech.units.indriya.unit.Units;
 
 /**
  * <pre>

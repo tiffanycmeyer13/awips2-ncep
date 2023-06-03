@@ -45,6 +45,15 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.geotools.geometry.jts.JTS;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateList;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.linearref.LinearLocation;
+import org.locationtech.jts.linearref.LocationIndexedLine;
 import org.opengis.referencing.operation.MathTransform;
 
 import com.raytheon.uf.common.geospatial.MapUtil;
@@ -67,16 +76,7 @@ import com.raytheon.viz.ui.EditorUtil;
 import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.raytheon.viz.ui.editor.EditorInput;
 import com.raytheon.viz.ui.editor.ISelectedPanesChangedListener;
-import com.raytheon.viz.ui.panes.PaneManager;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.CoordinateList;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.linearref.LinearLocation;
-import org.locationtech.jts.linearref.LocationIndexedLine;
+import com.raytheon.viz.ui.panes.AbstractPaneManager;
 
 import gov.noaa.nws.ncep.ui.pgen.contours.Contours;
 import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
@@ -185,6 +185,7 @@ import gov.noaa.nws.ncep.viz.common.display.NcDisplayType;
  * Dec 01, 2021  95362       tjensen      Refactor PGEN Resource management to
  *                                        support multi-panel displays
  * Feb 07, 2022  100402      smanoj       Check against null pointer.
+ * Mar 25, 2022  8790        mapeters     Handle pane manager refactor, cleanup
  *
  * </pre>
  *
@@ -192,7 +193,7 @@ import gov.noaa.nws.ncep.viz.common.display.NcDisplayType;
  */
 public class PgenUtil {
 
-    private static final IUFStatusHandler handler = UFStatus
+    private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(PgenUtil.class);
 
     /**
@@ -203,9 +204,11 @@ public class PgenUtil {
      * @author sgilbert
      *
      */
-    public static enum PgenMode {
+    public enum PgenMode {
         SINGLE, MULTIPLE
-    };
+    }
+
+    private static final Object LOCK = new Object();
 
     private static PgenResourceData rscData = null;
 
@@ -363,8 +366,8 @@ public class PgenUtil {
                 cmd.executeWithChecks(exec);
 
             } catch (Exception e) {
-
-                e.printStackTrace();
+                statusHandler.error("Error setting command mode to: " + command,
+                        e);
             }
         }
     }
@@ -382,7 +385,7 @@ public class PgenUtil {
         Map<String, String> params = new HashMap<>();
         params.put("name", symbolType);
         params.put("className", symbolCat);
-        params.put("usePrevColor", new Boolean(usePrevColor).toString());
+        params.put("usePrevColor", Boolean.toString(usePrevColor));
         executeCommand("gov.noaa.nws.ncep.ui.pgen.rsc.PgenSingleDraw", adc,
                 params);
     }
@@ -403,8 +406,8 @@ public class PgenUtil {
         Map<String, String> params = new HashMap<>();
         params.put("name", "General Text");
         params.put("className", "Text");
-        params.put("addLabel", new Boolean(addLabel).toString());
-        params.put("usePrevColor", new Boolean(usePrevColor).toString());
+        params.put("addLabel", Boolean.toString(addLabel));
+        params.put("usePrevColor", Boolean.toString(usePrevColor));
         params.put("defaultTxt", defaultTxt);
         executeCommand("gov.noaa.nws.ncep.ui.pgen.rsc.PgenTextDraw", adc,
                 params);
@@ -429,15 +432,6 @@ public class PgenUtil {
                 params.put("editor", part);
                 params.put("name", "GFA");
                 params.put("className", "MET");
-                StringBuilder sb = new StringBuilder("");
-
-                for (String s : lastUsedGfa.getString()) {
-                    sb.append(s).append(",,"); // ,, delimited
-                }
-                if (lastUsedGfa.getString() != null
-                        && lastUsedGfa.getString().length > 0) {
-                    sb.setLength(sb.length() - 2);
-                }
                 params.put("startGfaText", "true");
                 params.put("lastUsedGfa", lastUsedGfa);
 
@@ -447,8 +441,8 @@ public class PgenUtil {
                 cmd.executeWithChecks(exec);
 
             } catch (Exception e) {
-
-                e.printStackTrace();
+                statusHandler.error(
+                        "Error setting drawing mode to GFA: " + lastUsedGfa, e);
             }
         }
     }
@@ -488,8 +482,8 @@ public class PgenUtil {
                 cmd.executeWithChecks(exec);
 
             } catch (Exception e) {
-
-                e.printStackTrace();
+                statusHandler.error(
+                        "Error setting drawing mode to front: " + front, e);
             }
         }
     }
@@ -591,8 +585,8 @@ public class PgenUtil {
             handlerService.executeCommandInContext(parameterizedCommand, null,
                     context);
         } catch (Exception e) {
-
-            e.printStackTrace();
+            statusHandler.error(
+                    "Error executing command: " + parameterizedCommand, e);
         }
     }
 
@@ -634,8 +628,7 @@ public class PgenUtil {
                 cmd.executeWithChecks(exec);
 
             } catch (Exception e) {
-
-                e.printStackTrace();
+                statusHandler.error("Error loading outlook drawing tool", e);
             }
         }
     }
@@ -648,7 +641,6 @@ public class PgenUtil {
     public static final PgenResource createNewResource() {
 
         PgenResource drawingLayer = null;
-        // NCMapEditor editor = NmapUiUtils.getActiveNatlCntrsEditor();
         AbstractEditor editor = getActiveEditor();
         if (editor != null) {
             try {
@@ -667,8 +659,10 @@ public class PgenUtil {
                      * Use existing (or new) PgenResourceData to construct new
                      * Resources to add to each Pane's ResourceList
                      */
-                    if (rscData == null) {
-                        rscData = new PgenResourceData();
+                    synchronized (LOCK) {
+                        if (rscData == null) {
+                            rscData = new PgenResourceData();
+                        }
                     }
 
                     for (IDisplayPane pane : editor.getDisplayPanes()) {
@@ -701,7 +695,7 @@ public class PgenUtil {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                statusHandler.error("Error creating new resource", e);
             }
         }
         return drawingLayer;
@@ -724,8 +718,10 @@ public class PgenUtil {
                      * Use existing (or new) PgenResourceData to construct new
                      * Resources to add to each Pane's ResourceList
                      */
-                    if (rscData == null) {
-                        rscData = new PgenResourceData();
+                    synchronized (LOCK) {
+                        if (rscData == null) {
+                            rscData = new PgenResourceData();
+                        }
                     }
                     for (IDisplayPane pane : editor.getDisplayPanes()) {
                         IDescriptor idesc = pane.getDescriptor();
@@ -765,7 +761,8 @@ public class PgenUtil {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                statusHandler.error(
+                        "Error adding PGEN resource to active editor", e);
             }
         }
         return drawingLayer;
@@ -838,7 +835,7 @@ public class PgenUtil {
         if (event.widget instanceof Text) {
 
             Text latLonText = (Text) event.widget;
-            StringBuffer str = new StringBuffer(latLonText.getText());
+            StringBuilder str = new StringBuilder(latLonText.getText());
 
             // if the event is from key press, insert the text,
             // otherwise, replace the text
@@ -883,7 +880,7 @@ public class PgenUtil {
 
         if (ve.widget instanceof Text) {
             Text advnum = (Text) ve.widget;
-            StringBuffer str = new StringBuffer(advnum.getText());
+            StringBuilder str = new StringBuilder(advnum.getText());
             str.replace(ve.start, ve.end, ve.text);
 
             if (str.toString().isEmpty()) {
@@ -960,8 +957,8 @@ public class PgenUtil {
     public static String getCurrentOffice() {
 
         String wfo = LocalizationManager.getInstance().getCurrentSite();
-        if (wfo.equalsIgnoreCase("none") || wfo.isEmpty()) {
-            wfo = new String("KNHC");
+        if ("none".equalsIgnoreCase(wfo) || wfo.isEmpty()) {
+            wfo = "KNHC";
         }
 
         return wfo;
@@ -1063,8 +1060,7 @@ public class PgenUtil {
                 cmd.executeWithChecks(exec);
 
             } catch (Exception e) {
-
-                e.printStackTrace();
+                statusHandler.error("Error loading contours tool: " + de, e);
             }
         }
     }
@@ -1145,38 +1141,38 @@ public class PgenUtil {
 
         if (jdattim != null) {
 
-            String gstr = "";
+            StringBuilder gstr = new StringBuilder();
 
             int year = jdattim.get(Calendar.YEAR);
-            gstr += year - year / 100 * 100;
+            gstr.append(year - year / 100 * 100);
 
             int month = jdattim.get(Calendar.MONTH) + 1;
             if (month < 10) {
-                gstr += "0";
+                gstr.append("0");
             }
-            gstr += month;
+            gstr.append(month);
 
             int day = jdattim.get(Calendar.DAY_OF_MONTH);
             if (day < 10) {
-                gstr += "0";
+                gstr.append("0");
             }
-            gstr += day;
+            gstr.append(day);
 
-            gstr += "/";
+            gstr.append("/");
 
             int hour = jdattim.get(Calendar.HOUR_OF_DAY);
             if (hour < 10) {
-                gstr += "0";
+                gstr.append("0");
             }
-            gstr += hour;
+            gstr.append(hour);
 
             int minute = jdattim.get(Calendar.MINUTE);
             if (minute < 10) {
-                gstr += "0";
+                gstr.append("0");
             }
-            gstr += minute;
+            gstr.append(minute);
 
-            gDattim = new String(gstr);
+            gDattim = gstr.toString();
         }
 
         return gDattim;
@@ -1190,7 +1186,7 @@ public class PgenUtil {
      *
      * Set to a user-defined directory in PGEN preference.
      */
-    public static String CURRENT_WORKING_DIRECTORY = System
+    public static final String CURRENT_WORKING_DIRECTORY = System
             .getProperty("user.home");
 
     public static String getWorkingDirectory() {
@@ -1210,7 +1206,7 @@ public class PgenUtil {
      * @param me
      *            - map editor
      */
-    static public LabeledLine mergeLabels(LabeledLine ll, Label testLbl,
+    public static LabeledLine mergeLabels(LabeledLine ll, Label testLbl,
             Coordinate loc, AbstractEditor mapEditor, PgenResourceList rsc) {
 
         // label close to testLbl
@@ -1244,9 +1240,12 @@ public class PgenUtil {
                                         + (scnLoc[1] - scnPt[1])
                                                 * (scnLoc[1] - scnPt[1]));
 
-                        if (dist < 20) { // 20 is the screen distance.
-                            // a label in this range(<20) is considered as being
-                            // at the same location
+                        if (dist < 20) {
+                            /*
+                             * 20 is the screen distance. a label in this
+                             * range(<20) is considered as being at the same
+                             * location
+                             */
                             mergeLbl = lbl;
                             nearestLine = (LabeledLine) adc;
                             break;
@@ -1285,7 +1284,9 @@ public class PgenUtil {
      * Removes the current PgenResourceData object
      */
     public static void resetResourceData() {
-        rscData = null;
+        synchronized (LOCK) {
+            rscData = null;
+        }
     }
 
     /**
@@ -1301,10 +1302,13 @@ public class PgenUtil {
      */
     public static double getSphPolyArea(Coordinate ptsin[]) {
 
-        final double HalfPi = 1.5707963267948966192313;// Degrees per radian
+        // Degrees per radian
+        final double HalfPi = 1.5707963267948966192313;
         final double Degree = 57.295779513082320876798;
-        final double M2NM = 5.4e-4F; // meter to nautical mile
-        final double RADIUS = 6371200.0F; // earth radius
+        // meter to nautical mile
+        final double M2NM = 5.4e-4F;
+        // earth radius
+        final double RADIUS = 6371200.0F;
         final double GDIFFD = 0.000001;
 
         int jj, kk;
@@ -1354,7 +1358,7 @@ public class PgenUtil {
                     CosB2 = Math.cos(Beta2);
                 }
 
-                if (!(Math.abs(Lam1 - Lam2) < GDIFFD)) {
+                if ((Math.abs(Lam1 - Lam2) >= GDIFFD)) {
 
                     double a = (1.0 - Math.cos(Beta2 - Beta1)) / 2.0;
                     double b = (1.0 - Math.cos(Lam2 - Lam1)) / 2.0;
@@ -1382,10 +1386,9 @@ public class PgenUtil {
             area = Math.abs(sum);
 
             /*
-             * Convert into "square nautical miles".
+             * Convert Earth's radius into nautical miles
              */
-            double radius = RADIUS
-                    * M2NM; /* The Earth's radius in nautical miles */
+            double radius = RADIUS * M2NM;
 
             area *= ((radius) * (radius) / Degree);
 
@@ -1507,7 +1510,7 @@ public class PgenUtil {
             area = areaInMeters / PgenUtil.NM2M / PgenUtil.NM2M;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            statusHandler.error("Error getting area of polygon: " + poly, e);
         }
 
         return area;
@@ -1543,13 +1546,15 @@ public class PgenUtil {
      * @return
      */
     public static CoordinateTransform getCompCoord() {
+        synchronized (LOCK) {
+            if (coordTrans == null
+                    || !coordTrans.getProjection()
+                            .equals(getPgenCompCoordProj())
+                    || !coordTrans.getGarea().equals(getPgenCompCoordGarea())) {
 
-        if (coordTrans == null
-                || !coordTrans.getProjection().equals(getPgenCompCoordProj())
-                || !coordTrans.getGarea().equals(getPgenCompCoordGarea())) {
-
-            coordTrans = new CoordinateTransform(getPgenCompCoordProj(),
-                    getPgenCompCoordGarea(), 800, 600);
+                coordTrans = new CoordinateTransform(getPgenCompCoordProj(),
+                        getPgenCompCoordGarea(), 800, 600);
+            }
         }
 
         return coordTrans;
@@ -1587,8 +1592,7 @@ public class PgenUtil {
      *            points to be converted
      * @return
      */
-    public static ArrayList<Coordinate> latlonToGrid(
-            ArrayList<Coordinate> lonlat) {
+    public static ArrayList<Coordinate> latlonToGrid(List<Coordinate> lonlat) {
 
         Coordinate[] aa = new Coordinate[lonlat.size()];
 
@@ -1604,8 +1608,7 @@ public class PgenUtil {
      *            points to be converted
      * @return
      */
-    public static ArrayList<Coordinate> gridToLatlon(
-            ArrayList<Coordinate> gridpts) {
+    public static ArrayList<Coordinate> gridToLatlon(List<Coordinate> gridpts) {
 
         Coordinate[] aa = new Coordinate[gridpts.size()];
 
@@ -1757,7 +1760,7 @@ public class PgenUtil {
                 }
 
                 for (String str : items) {
-                    if (str.equals(".")) {
+                    if (".".equals(str)) {
                         stb.append(System.getProperty("user.home"));
                     } else if (str.startsWith("$")
                             && System.getenv(str.substring(1)) != null) {
@@ -1797,12 +1800,12 @@ public class PgenUtil {
     public static Coordinate computePoint(Coordinate coor, float dist,
             float dir) {
         final double PI = 3.14159265, HALFPI = PI / 2.0, TWOPI = 2.0 * PI,
-                DTR = PI / 180.0, // Degrees
-                                  // to
-                                  // Radians
-                RTD = 180.0 / PI, // Radians to Degrees
-                RADIUS = 6371200.0F, // Earth radius
-                NM2M = 1852.0F;
+                // Degrees to Radians
+                DTR = PI / 180.0,
+                // Radians to Degrees
+                RTD = 180.0 / PI,
+                // Earth radius
+                RADIUS = 6371200.0F, NM2M = 1852.0F;
 
         /*
          * Convert the input values to radians.
@@ -1883,7 +1886,7 @@ public class PgenUtil {
      * @param xsltName
      * @return
      */
-    static public String applyStyleSheet(DOMSource dSource, String xsltName) {
+    public static String applyStyleSheet(DOMSource dSource, String xsltName) {
 
         String ret = "";
         if (xsltName != null && !xsltName.isEmpty()) {
@@ -1902,7 +1905,7 @@ public class PgenUtil {
 
                     ret = new String(baos.toByteArray());
                 } catch (Exception e) {
-                    handler.error("Error applying style sheet: ", e);
+                    statusHandler.error("Error applying style sheet: ", e);
                 }
             }
         }
@@ -1930,7 +1933,7 @@ public class PgenUtil {
             return "";
         }
         if (newLineStr == null) {
-            newLineStr = System.getProperty("line.separator");
+            newLineStr = System.lineSeparator();
 
         }
         if (wrapLength < 1) {
@@ -1938,62 +1941,60 @@ public class PgenUtil {
         }
         int inputLineLength1 = str1.length();
         int offset = 0;
-        StringBuffer wrappedLine = new StringBuffer(inputLineLength1 + 32);
+        StringBuilder wrappedLine = new StringBuilder(inputLineLength1 + 32);
 
         String[] lines = str1.split(newLineStr);
 
-        for (String str : lines) {
+        for (String line : lines) {
             offset = 0;
-            int inputLineLength = str.length();
+            int inputLineLength = line.length();
 
-            if (str.length() < wrapLength) {
+            if (line.length() < wrapLength) {
 
-                wrappedLine.append(str).append(newLineStr);
+                wrappedLine.append(line).append(newLineStr);
 
             } else {
                 while ((inputLineLength - offset) > wrapLength) {
-                    if (str.charAt(offset) == ' ') {
+                    if (line.charAt(offset) == ' ') {
                         offset++;
                         continue;
                     }
-                    int spaceToWrapAt = str.lastIndexOf(' ',
+                    int spaceToWrapAt = line.lastIndexOf(' ',
                             wrapLength + offset);
 
                     if (spaceToWrapAt >= offset) {
                         // normal case
                         wrappedLine
-                                .append(str.substring(offset, spaceToWrapAt));
+                                .append(line.substring(offset, spaceToWrapAt));
                         wrappedLine.append(newLineStr);
                         offset = spaceToWrapAt + 1;
 
+                    } else if (wrapLongWords) {
+                        // wrap really long word one line at a time
+                        wrappedLine.append(
+                                line.substring(offset, wrapLength + offset));
+                        wrappedLine.append(newLineStr);
+                        offset += wrapLength;
                     } else {
-                        // really long word or URL
-                        if (wrapLongWords) {
-                            // wrap really long word one line at a time
+                        /*
+                         * do not wrap really long word, just extend beyond
+                         * limit
+                         */
+                        spaceToWrapAt = line.indexOf(' ', wrapLength + offset);
+                        if (spaceToWrapAt >= 0) {
                             wrappedLine.append(
-                                    str.substring(offset, wrapLength + offset));
+                                    line.substring(offset, spaceToWrapAt));
                             wrappedLine.append(newLineStr);
-                            offset += wrapLength;
+                            offset = spaceToWrapAt + 1;
                         } else {
-                            // do not wrap really long word, just extend beyond
-                            // limit
-                            spaceToWrapAt = str.indexOf(' ',
-                                    wrapLength + offset);
-                            if (spaceToWrapAt >= 0) {
-                                wrappedLine.append(
-                                        str.substring(offset, spaceToWrapAt));
-                                wrappedLine.append(newLineStr);
-                                offset = spaceToWrapAt + 1;
-                            } else {
-                                wrappedLine.append(str.substring(offset));
-                                offset = inputLineLength;
-                            }
+                            wrappedLine.append(line.substring(offset));
+                            offset = inputLineLength;
                         }
                     }
                 }
 
                 // Whatever is left in line is short enough to just pass through
-                wrappedLine.append(str.substring(offset)).append(newLineStr);
+                wrappedLine.append(line.substring(offset)).append(newLineStr);
             }
         }
 
@@ -2025,7 +2026,8 @@ public class PgenUtil {
 
             if (edInput instanceof EditorInput) {
 
-                PaneManager pmngr = ((EditorInput) edInput).getPaneManager();
+                AbstractPaneManager pmngr = ((EditorInput) edInput)
+                        .getPaneManager();
 
                 if (pmngr instanceof INatlCntrsPaneManager) {
 
@@ -2033,8 +2035,7 @@ public class PgenUtil {
                             .getDisplayType();
 
                     // if other display types are supported then add them here.
-                    //
-                    if (dispType.equals(NcDisplayType.NMAP_DISPLAY)) {
+                    if (NcDisplayType.NMAP_DISPLAY.equals(dispType)) {
                         return true;
                     }
                 }
@@ -2090,14 +2091,16 @@ public class PgenUtil {
         if (PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null
                 && PlatformUI.getWorkbench().getActiveWorkbenchWindow()
                         .getShell() != null) {
-            // Save the existing title to reset.
-            if (caveTitle.equalsIgnoreCase("CAVE")) {
-                caveTitle = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-                        .getShell().getText();
-            }
+            synchronized (LOCK) {
+                // Save the existing title to reset.
+                if ("CAVE".equalsIgnoreCase(caveTitle)) {
+                    caveTitle = PlatformUI.getWorkbench()
+                            .getActiveWorkbenchWindow().getShell().getText();
+                }
 
-            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell()
-                    .setText(caveTitle + "  (" + title + ")");
+                PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell()
+                        .setText(caveTitle + "  (" + title + ")");
+            }
         }
 
     }
@@ -2106,9 +2109,11 @@ public class PgenUtil {
      * Reset the title of the CAVE to "CAVE".
      */
     public static final void resetCaveTitle() {
-        if (caveTitle != null) {
-            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell()
-                    .setText(caveTitle);
+        synchronized (LOCK) {
+            if (caveTitle != null) {
+                PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell()
+                        .setText(caveTitle);
+            }
         }
     }
 
@@ -2126,36 +2131,17 @@ public class PgenUtil {
                 .getPaneManager()).getDisplayName();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.raytheon.viz.ui.editor.IMultiPaneEditor#getNumberofPanes()
-     */
     public static int getNumberofPanes(AbstractEditor editor) {
         return ((EditorInput) editor.getEditorInput()).getPaneManager()
                 .getNumberofPanes();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.raytheon.viz.ui.editor.IMultiPaneEditor#
-     * addSelectedPaneChangedListener
-     * (com.raytheon.viz.ui.editor.ISelectedPanesChangedListener)
-     */
     public static void addSelectedPaneChangedListener(AbstractEditor editor,
             ISelectedPanesChangedListener listener) {
         ((EditorInput) editor.getEditorInput()).getPaneManager()
                 .addSelectedPaneChangedListener(listener);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.raytheon.viz.ui.editor.IMultiPaneEditor#
-     * removeSelectedPaneChangedListener
-     * (com.raytheon.viz.ui.editor.ISelectedPanesChangedListener)
-     */
     public static void removeSelectedPaneChangedListener(AbstractEditor editor,
             ISelectedPanesChangedListener listener) {
         ((EditorInput) editor.getEditorInput()).getPaneManager()
@@ -2348,7 +2334,7 @@ public class PgenUtil {
             List<Coordinate> linePoints, boolean closed, Coordinate point1,
             Coordinate point2) {
 
-        ArrayList<ArrayList<Coordinate>> listOfNewLines = new ArrayList<>();
+        List<ArrayList<Coordinate>> listOfNewLines = new ArrayList<>();
 
         Coordinate firstPt;
         Coordinate secondPt;
@@ -2432,8 +2418,8 @@ public class PgenUtil {
                     listOfNewLines.add(newLine2);
                 }
             }
-        } else { // closed line
-
+        } else {
+            // closed line
             ArrayList<Coordinate> newLine = new ArrayList<>();
 
             int pointsBetween = secondLoc.getSegmentIndex()
@@ -2535,13 +2521,13 @@ public class PgenUtil {
                 String dtyp = new String(actTyp.getType());
                 String dstyp = actTyp.getSubtype();
                 if (dstyp != null && dstyp.trim().length() > 0
-                        && !dstyp.equalsIgnoreCase(PgenConstant.NONE)) {
-                    dtyp = new String(actTyp.getType() + "(" + dstyp + ")");
+                        && !PgenConstant.NONE.equalsIgnoreCase(dstyp)) {
+                    dtyp = (actTyp.getType() + "(" + dstyp + ")");
                 }
 
                 if (!dtyp.equals(prd.getName()) && (actTyp.getName() != null
                         && !actTyp.getName().equals(prd.getName()))) {
-                    sfile = new String(prd.getName() + "." + sfile);
+                    sfile = (prd.getName() + "." + sfile);
                 }
             }
         }
