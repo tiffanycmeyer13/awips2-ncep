@@ -51,6 +51,7 @@ import org.locationtech.jts.geom.Coordinate;
  * Oct 15, 2020  82255    smanoj     Additional fix for Nsharp PFC Sounding retrieval
  *                                   to load Forecast Hour(V000) as default.
  * Nov 09, 2020  84810    smanoj     Fix a Null Pointer Exception.
+ * Jul 07, 2023  2035833  smanoj     Fix an issue with toggle between 2 PFC soundings.
  * 
  * </pre>
  * 
@@ -138,8 +139,6 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
     private String timelineStr = "NA";
 
     private String stationStr = "NA";
-
-    private String previousStnSelected = "NA";
 
     private boolean compareStnIsOn;
 
@@ -755,19 +754,9 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
 
         // Nsharp Point Forecast Sounding(NAM or GFS) retrieval should
         // load first Forecast Hour(V000) as default.
-        if (stnElemList.size() > 0) {
-            if (initialLoad) {
-                previousStnSelected = stnElemList.get(curStnIndex)
-                        .getDescription();
-                initialPFCLoadToHour0();
-                initialLoad = false;
-            } else {
-                if (!(previousStnSelected.equalsIgnoreCase(
-                        stnElemList.get(curStnIndex).getDescription()))) {
-                    // New station selected; load Forecast Hour(V000) as default
-                    initialPFCLoadToHour0();
-                }
-            }
+        if (initialLoad) {
+            initialPFCLoadToHour0();
+            initialLoad = false;
         }
     }
 
@@ -779,7 +768,6 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
             curTimeLineIndex = rscHandler.getFrameCount() - 1;
             rscHandler.setSoundingType(sndTypeStr);
             rscHandler.setCurrentIndex(curTimeLineIndex);
-            previousStnSelected = stnElemList.get(curStnIndex).getDescription();
         }
     }
 
@@ -788,12 +776,12 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
         if (timeElemList.size() % numLineToShowPerPage != 0)
             totalTimeLinePage = totalTimeLinePage + 1;
         curTimeLinePage = curTimeLineIndex / numLineToShowPerPage + 1;
-        
+
         totalStnIdPage = stnElemList.size() / numLineToShowPerPage;
         if (stnElemList.size() % numLineToShowPerPage != 0)
             totalStnIdPage++;
         curStnIdPage = curStnIndex / numLineToShowPerPage + 1;
-        
+
         totalSndPage = sndElemList.size() / numLineToShowPerPage;
         if (sndElemList.size() % numLineToShowPerPage != 0)
             totalSndPage++;
