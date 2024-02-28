@@ -19,60 +19,62 @@
  **/
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
-import java.util.List;
 import java.awt.Color;
+import java.util.List;
 
 import com.raytheon.viz.ui.editor.AbstractEditor;
 import org.locationtech.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.ContoursAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.contours.ContourLine;
-import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
-import gov.noaa.nws.ncep.ui.pgen.elements.Text;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
-
 import gov.noaa.nws.ncep.ui.pgen.display.IText.DisplayType;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.FontStyle;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.TextJustification;
 import gov.noaa.nws.ncep.ui.pgen.display.IText.TextRotation;
+import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElement;
+import gov.noaa.nws.ncep.ui.pgen.elements.Text;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 
 /**
-*
-* Mouse handler to add a new label to ContourLine.
-*
-* <pre>
-*
-* SOFTWARE HISTORY
-*
-* Date          Ticket#  Engineer  Description
-* ------------- -------- --------- -----------------
-* Sep 01, 2020   81798    smanoj    Initial creation
-* Sep 17, 2020   81798    smanoj    Fixed label count issue when drawing
-*                                   more than one contour
-* Oct 30, 2020   84101    smanoj    Create a default contour label for the
-*                                   case of empty labels in the contour line.
-* </pre>
-*
-* @author smanoj
-*/
+ *
+ * Mouse handler to add a new label to ContourLine.
+ *
+ * <pre>
+ * SOFTWARE HISTORY
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * Sep 01, 2020  81798    smanoj    Initial creation
+ * Sep 17, 2020  81798    smanoj    Fixed label count issue when drawing more
+ *                                  than one contour
+ * Oct 30, 2020  84101    smanoj    Create a default contour label for the case
+ *                                  of empty labels in the contour line.
+ * Aug 25, 2021  86161    srussell  Updated addNewLabel()
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
+ * </pre>
+ *
+ * @author smanoj
+ */
 public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
 
     protected AbstractEditor mapEditor;
 
-    protected PgenResource drawingLayer;
+    protected PgenResourceList drawingLayers;
 
     protected AbstractPgenTool tool;
 
     public PgenAddNewLabelHandler(AbstractPgenTool tool) {
         this.mapEditor = tool.mapEditor;
-        this.drawingLayer = tool.getDrawingLayer();
+        this.drawingLayers = tool.getDrawingLayers();
         this.tool = tool;
     }
 
     private void addNewLabel(Coordinate loc, Text lbl, ContourLine cline) {
+
         int nlabels = cline.getNumOfLabels() + 1;
         lbl.setText(lbl.getText());
         lbl.setLocation(loc);
@@ -80,36 +82,30 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
         cline.setNumOfLabels(nlabels);
         cline.add(lbl);
 
-        PgenSession.getInstance().getPgenResource().issueRefresh();
-        PgenSession.getInstance().getPgenResource().resetAllElements();
-        AbstractPgenTool thisTool = PgenSession.getInstance().getPgenTool();
-        if (thisTool instanceof AbstractPgenDrawingTool) {
-            AttrDlg thisDlg = ((AbstractPgenDrawingTool) thisTool).getAttrDlg();
-            if (thisDlg instanceof ContoursAttrDlg
-                    && thisTool instanceof PgenContoursTool) {
-                ContoursAttrDlg pgenDlg = (ContoursAttrDlg) thisDlg;
-                pgenDlg.close();
-                thisDlg.close();
-            }
-        }
+        PgenResource currentResource = PgenSession.getInstance()
+                .getCurrentResource();
+        currentResource.issueRefresh();
+        currentResource.resetAllElements();
 
     }
 
     @Override
     public boolean handleMouseDown(int anX, int aY, int button) {
 
-        if (!drawingLayer.isEditable())
+        if (!drawingLayers.isEditable()) {
             return false;
+        }
 
         // Check if mouse is in geographic extent
         Coordinate loc = mapEditor.translateClick(anX, aY);
-        if (loc == null || shiftDown)
+        if (loc == null || shiftDown) {
             return false;
+        }
 
         if (button == 1) {
 
             // Find selected element
-            DrawableElement de = drawingLayer.getSelectedDE();
+            DrawableElement de = drawingLayers.getSelectedDE();
             if (de != null) {
 
                 // if selected element is ContourLine add new label
@@ -137,7 +133,7 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
             return true;
 
         } else if (button == 3) {
-            drawingLayer.removeSelected();
+            drawingLayers.removeSelected();
             return true;
 
         } else {
@@ -165,7 +161,7 @@ public class PgenAddNewLabelHandler extends InputHandlerDefaultImpl {
         return mapEditor;
     }
 
-    public PgenResource getPgenrsc() {
-        return drawingLayer;
+    public PgenResourceList getPgenrsc() {
+        return drawingLayers;
     }
 }

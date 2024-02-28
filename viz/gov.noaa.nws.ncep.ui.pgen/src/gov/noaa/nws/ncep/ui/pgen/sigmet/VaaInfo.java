@@ -1,22 +1,12 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.tools.PgenVolcanoCreateTool
- * 
+ *
  * Janurary 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 
 package gov.noaa.nws.ncep.ui.pgen.sigmet;
-
-import gov.noaa.nws.ncep.common.dataplugin.pgen.PgenRecord;
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
-import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
-import gov.noaa.nws.ncep.ui.pgen.elements.Product;
-import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
-import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -60,21 +50,36 @@ import com.raytheon.uf.common.dataquery.requests.RequestConstraint.ConstraintTyp
 import com.raytheon.uf.common.dataquery.responses.DbQueryResponse;
 import com.raytheon.uf.viz.core.requests.ThriftClient;
 
+import gov.noaa.nws.ncep.common.dataplugin.pgen.PgenRecord;
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.PgenStaticDataProvider;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
+import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
+import gov.noaa.nws.ncep.ui.pgen.elements.Product;
+import gov.noaa.nws.ncep.ui.pgen.store.PgenStorageException;
+import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
+
 /**
  * The class for Volcano info storage and utilities
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 01/10		#165		G. Zhang   	Initial Creation.
- * 07/11        #450        G. Hull     NcPathManager
- * 10/11        #?          J. Wu       Match "OBS" with "F00"
- * 02/12		#481,2,3	B. Yin		Fixed VAA text output issues.
- * 11/12		#889		B. Yin		Look in PGEN working directory for the advisory number.
- * 04/13        #977        S. Gilbert  PGEN Database support
+ *
+ * Date          Ticket#   Engineer    Description
+ * ------------- --------- ----------- -----------------------------------------
+ * 01/10         165       G. Zhang    Initial Creation.
+ * 07/11         450       G. Hull     NcPathManager
+ * 10/11         #?        J. Wu       Match "OBS" with "F00"
+ * 02/12         #481,2,3  B. Yin      Fixed VAA text output issues.
+ * 11/12         889       B. Yin      Look in PGEN working directory for the
+ *                                     advisory number.
+ * 04/13         977       S. Gilbert  PGEN Database support
+ * Dec 01, 2021  95362     tjensen     Refactor PGEN Resource management to
+ *                                     support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author G. Zhang
  */
 
@@ -104,12 +109,13 @@ public class VaaInfo {
      * the map holding info of the vaa.xml. key: top element: PATH, FORMAT,etc;
      * value: orig-stn=KNES, vaac=/DARWIN,etc
      */
-    public static final Map<String, ArrayList<String>> VAA_INFO_MAP = new HashMap<String, ArrayList<String>>();
+    public static final Map<String, ArrayList<String>> VAA_INFO_MAP = new HashMap<>();
 
     /**
      * LOC_EDIT from VolcanoVaaAttrDlg; LOC_CREATE from VolcanoCreateDlg.
      */
-    public static final String[] LOCS = new String[] { "LOC_EDIT", "LOC_CREATE" };
+    public static final String[] LOCS = new String[] { "LOC_EDIT",
+            "LOC_CREATE" };
 
     /**
      * standard layers with Product Center's VOLCANO Product.
@@ -128,7 +134,7 @@ public class VaaInfo {
     /**
      * the map holding the corresponding Product to the related Volcano
      */
-    public static final Map<Volcano, Product> VOL_PROD_MAP = new HashMap<Volcano, Product>();
+    public static final Map<Volcano, Product> VOL_PROD_MAP = new HashMap<>();
 
     /**
      * the common words separator, used to divide words in a line of text
@@ -165,11 +171,11 @@ public class VaaInfo {
      * leading attribute of an xml element value: corresponding attributes in an
      * array
      */
-    public static Map<String, String[]> VAA_INFO_SINGLE_MAP = new HashMap<String, String[]>(),
-            VAA_INFO_PATH_MAP = new HashMap<String, String[]>(),
-            VAA_INFO_STN_MAP = new HashMap<String, String[]>(),
-            VAA_INFO_OTHERSFCST_MAP = new HashMap<String, String[]>(),
-            VAA_INFO_WORDING_MAP = new HashMap<String, String[]>();
+    public static Map<String, String[]> VAA_INFO_SINGLE_MAP = new HashMap<>(),
+            VAA_INFO_PATH_MAP = new HashMap<>(),
+            VAA_INFO_STN_MAP = new HashMap<>(),
+            VAA_INFO_OTHERSFCST_MAP = new HashMap<>(),
+            VAA_INFO_WORDING_MAP = new HashMap<>();
 
     /**
      * map holding info and methods to avoid hard coded entries/setters for
@@ -177,7 +183,7 @@ public class VaaInfo {
      * <VOLCANO>,<REMARKS>,etc value: Volcano class setters, getName(),
      * getRemarks(),etc
      */
-    public static final Map<String, Method> ENTRY_VOLSETTER_MAP = new HashMap<String, Method>();
+    public static final Map<String, Method> ENTRY_VOLSETTER_MAP = new HashMap<>();
 
     /**
      * constants for different Volcano file format
@@ -207,7 +213,7 @@ public class VaaInfo {
         /*
          * Note: 1. <OBS ASH DATA/TIME> NIL MAYBE of QUICK not included since
          * there are two methods in Volcano
-         * 
+         *
          * 2. Volcano's other setters without entries NOT included
          */
 
@@ -232,8 +238,8 @@ public class VaaInfo {
              * ENTRY_VOLSETTER_MAP.put("<ERUPTION DETAILS>",
              * Volcano.class.getMethod("setErupDetails", String.class) );
              */
-            ENTRY_VOLSETTER_MAP.put("<OBS ASH CLOUD>", Volcano.class.getMethod(
-                    "setObsFcstAshCloudInfo", String.class));
+            ENTRY_VOLSETTER_MAP.put("<OBS ASH CLOUD>", Volcano.class
+                    .getMethod("setObsFcstAshCloudInfo", String.class));
             ENTRY_VOLSETTER_MAP.put("<FCST ASH CLOUD +6H>", Volcano.class
                     .getMethod("setObsFcstAshCloudInfo6", String.class));
             ENTRY_VOLSETTER_MAP.put("<FCST ASH CLOUD +12H>", Volcano.class
@@ -248,9 +254,8 @@ public class VaaInfo {
             // respective fields using Volcano.WORD_SPLITTER
             ENTRY_VOLSETTER_MAP.put("<REMARKS>",
                     Volcano.class.getMethod("setExtraRemarks", String.class));
-            ENTRY_VOLSETTER_MAP
-                    .put("<INFORMATION SOURCE>", Volcano.class.getMethod(
-                            "setExtraInfoSource", String.class));
+            ENTRY_VOLSETTER_MAP.put("<INFORMATION SOURCE>", Volcano.class
+                    .getMethod("setExtraInfoSource", String.class));
             ENTRY_VOLSETTER_MAP.put("<ERUPTION DETAILS>", Volcano.class
                     .getMethod("setExtraErupDetails", String.class));
             ENTRY_VOLSETTER_MAP.put("<NEXT ADVISORY>",
@@ -268,37 +273,38 @@ public class VaaInfo {
      * elements unlikely to change
      */
 
-    public static void initVaaMaps() { // main(String[] args){
+    public static void initVaaMaps() {
 
-        List<String> singleList = new ArrayList<String>();
+        List<String> singleList = new ArrayList<>();
 
         for (String s : VAA_INFO_MAP.keySet()) {
             ArrayList<String> ss = VAA_INFO_MAP.get(s);
 
-            if ("others-fcst".equals(s.trim()))
+            if ("others-fcst".equals(s.trim())) {
                 initOthersFcstMap(ss);
+            }
 
             for (String sss : ss) {
                 String[] sa = sss.split(SEPERATER);
 
-                if ("header-information".equals(s.trim()))
+                if ("header-information".equals(s.trim())) {
                     initStnMap(sa);
-                else if ("path".equals(s.trim()))
+                } else if ("path".equals(s.trim())) {
                     initPathMap(sa);
-                else if ("format".equals(s.trim()))
+                } else if ("format".equals(s.trim())) {
                     initProductMap(sa);
-                // else if("others-fcst".equals(s.trim()))
-                // initOthersFcstMap(sa);
-                else if ("wording".equals(s.trim()))
+                } else if ("wording".equals(s.trim())) {
                     initWordingMap(sa);
-                else {
+                } else {
                     for (String ssss : sa) {
                         String[] values = ssss.split("=");
 
-                        if (sa.length > 1 || "path".equalsIgnoreCase(s.trim())) {
+                        if (sa.length > 1
+                                || "path".equalsIgnoreCase(s.trim())) {
                         } else {
-                            if (values.length > 1)
+                            if (values.length > 1) {
                                 singleList.add(values[1]);
+                            }
                         }
                     }
                 }
@@ -313,7 +319,7 @@ public class VaaInfo {
 
     /**
      * initialize the stn map
-     * 
+     *
      * @param String
      *            []: the station id and header array
      */
@@ -340,14 +346,15 @@ public class VaaInfo {
     /**
      * others-fcst is different in that we need an array composed of the first
      * part (current) of each element of the ArrayList<String>
-     * 
+     *
      * @param ArrayList
      *            <String> of others-fcst
      */
     public static void initOthersFcstMap(ArrayList<String> sss) {
 
         // LinkedHashSet keeps the order when converting to array
-        LinkedHashSet<String> current = new LinkedHashSet<String>(), older = new LinkedHashSet<String>(), oldest = new LinkedHashSet<String>();
+        LinkedHashSet<String> current = new LinkedHashSet<>(),
+                older = new LinkedHashSet<>(), oldest = new LinkedHashSet<>();
 
         for (int i = 0; i < sss.size(); i++) {
             String[] ss = sss.get(i).split(VaaInfo.SEPERATER);
@@ -373,7 +380,7 @@ public class VaaInfo {
 
     /**
      * initialize the Path map
-     * 
+     *
      * @param String
      *            []: path info
      */
@@ -390,7 +397,7 @@ public class VaaInfo {
 
     /**
      * initialize the product map
-     * 
+     *
      * @param String
      *            []: array with location and product of a format
      */
@@ -414,7 +421,7 @@ public class VaaInfo {
 
     /**
      * initialize wording map
-     * 
+     *
      * @param String
      *            []: array with wording tag, new/old wording
      */
@@ -448,8 +455,8 @@ public class VaaInfo {
 
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
-            File vaaFile = PgenStaticDataProvider.getProvider().getStaticFile(
-                    PgenStaticDataProvider.getProvider()
+            File vaaFile = PgenStaticDataProvider.getProvider()
+                    .getStaticFile(PgenStaticDataProvider.getProvider()
                             .getPgenLocalizationRoot() + "vaa.xml");
 
             doc = builder.parse(vaaFile.getAbsoluteFile());
@@ -457,7 +464,7 @@ public class VaaInfo {
             System.out.println("-----------" + e.getMessage());
         }
 
-        NodeList nlist = doc.getElementsByTagNameNS("*", "*"); // doc.getElementsByTagName("PATH");
+        NodeList nlist = doc.getElementsByTagNameNS("*", "*");
 
         for (int i = 0; i < nlist.getLength(); i++) {
 
@@ -485,7 +492,7 @@ public class VaaInfo {
                 listOld.add(getListString(sb));
 
             } else {
-                ArrayList<String> list = new ArrayList<String>();
+                ArrayList<String> list = new ArrayList<>();
                 list.add(getListString(sb));
                 VAA_INFO_MAP.put(elemName, list);
             }
@@ -496,7 +503,7 @@ public class VaaInfo {
 
     /**
      * helper method for parseVaaFile()
-     * 
+     *
      * @param StringBuilder
      *            : for constructing the attributes line
      * @param String
@@ -514,7 +521,7 @@ public class VaaInfo {
 
     /**
      * helper method for parseVaaFile()
-     * 
+     *
      * @param StringBuilder
      *            : for constructing the attribute line
      * @return String: the String without the last word separator
@@ -529,9 +536,11 @@ public class VaaInfo {
 
     /**
      * convert meter to foot with required fraction digits
-     * 
-     * @param double: meter to be converted
-     * @param int: maximum fraction digits
+     *
+     * @param double:
+     *            meter to be converted
+     * @param int:
+     *            maximum fraction digits
      * @return String: foot of the corresponding meter in string
      */
     public static String getFootTxtFromMeter(double meter, int maxFracDigits) {
@@ -544,7 +553,7 @@ public class VaaInfo {
 
     /**
      * convert foot text to meter
-     * 
+     *
      * @param String
      *            : foot in string
      * @return int: meter in integer
@@ -564,7 +573,7 @@ public class VaaInfo {
 
     /**
      * calculate the current GMT date/time string with given format
-     * 
+     *
      * @param String
      *            : format like: yyMMdd
      * @return String: current GMT date/time String
@@ -579,23 +588,26 @@ public class VaaInfo {
 
     /**
      * validate Lat/Lon input of format NxxxxWxxxxx
-     * 
+     *
      * @param String
      *            : lat/lon input
      * @return boolean: true: valid lat/lon; false: otherwise
      */
     public static boolean isValidLatLon(String latlon) {
 
-        if (latlon == null || latlon.length() != 11)
+        if (latlon == null || latlon.length() != 11) {
             return false;
+        }
 
         if ((latlon.charAt(0) != 'n' && latlon.charAt(0) != 'N')
-                && (latlon.charAt(0) != 's' && latlon.charAt(0) != 'S'))
+                && (latlon.charAt(0) != 's' && latlon.charAt(0) != 'S')) {
             return false;
+        }
 
         if ((latlon.charAt(5) != 'w' && latlon.charAt(5) != 'W')
-                && (latlon.charAt(5) != 'e' && latlon.charAt(5) != 'E'))
+                && (latlon.charAt(5) != 'e' && latlon.charAt(5) != 'E')) {
             return false;
+        }
 
         String lat = latlon.substring(1, 5), lon = latlon.substring(6);
         int latInt = -999999, lonInt = -999999;
@@ -606,8 +618,9 @@ public class VaaInfo {
             return false;
         }
 
-        if (latInt < 0 || latInt > 9000 || lonInt < 0 || lonInt > 18000)
+        if (latInt < 0 || latInt > 9000 || lonInt < 0 || lonInt > 18000) {
             return false;
+        }
 
         return true;
     }
@@ -615,7 +628,7 @@ public class VaaInfo {
     /**
      * validate the elevation: an elevation is valid if it lower than Mount
      * Everest and higher than Mariana Trench.
-     * 
+     *
      * @param String
      *            : elev in string
      * @return boolean: true: valid; false otherwise.
@@ -634,18 +647,20 @@ public class VaaInfo {
          * Trench
          */
 
-        if (elevInt < -35840 || elevInt > 27889)
+        if (elevInt < -35840 || elevInt > 27889) {
             return false;
+        }
 
         return true;
     }
 
     /**
      * convert lat/lon from string text to float
-     * 
+     *
      * @param String
      *            : lat or lon to be converted
-     * @param boolean: true: lat; false: lon
+     * @param boolean:
+     *            true: lat; false: lon
      * @return float: lat or lon in float
      */
     public static Float getLatLonFromTxt(String latlon, boolean isLat) {
@@ -671,7 +686,7 @@ public class VaaInfo {
     /**
      * loop through files with the same Volcano name to get the latest Adv No of
      * the same Volcano
-     * 
+     *
      * @param String
      *            : file format, xml generally
      * @param String
@@ -695,30 +710,37 @@ public class VaaInfo {
              * latest AdvNo, NO need for consideration
              */
 
+            @Override
             public boolean accept(File dir, String name) {
 
                 String connector = "_";
 
-                if (name == null || name.length() == 0)
+                if (name == null || name.length() == 0) {
                     return false;
-                if (!name.startsWith(volFilePrefix))
+                }
+                if (!name.startsWith(volFilePrefix)) {
                     return false;
-                if (!name.endsWith("." + fileExt))
+                }
+                if (!name.endsWith("." + fileExt)) {
                     return false;
-                if (!name.contains(connector))
+                }
+                if (!name.contains(connector)) {
                     return false;
+                }
 
                 String[] f = name.split("\\." + fileExt)[0].split(connector);
-                if (f.length < 3)// La_Palma_20100329_2039.xml
+                if (f.length < 3) {
                     return false;
+                }
 
                 StringBuilder sb = new StringBuilder(volFilePrefix);
                 sb.append(connector).append(f[f.length - 2]);
                 sb.append(connector).append(f[f.length - 1]);
                 sb.append("." + fileExt);
 
-                if (!name.equals(sb.toString()))
+                if (!name.equals(sb.toString())) {
                     return false;
+                }
 
                 String pDate = "[0-9]{8}", pTime = "[0-9]{4}";
 
@@ -728,11 +750,12 @@ public class VaaInfo {
         });
 
         // ---no such file
-        if (files == null || files.length == 0)
+        if (files == null || files.length == 0) {
             return "000";
+        }
 
         // --- sort the files
-        TreeMap<Date, File> dmap = new TreeMap<Date, File>();
+        TreeMap<Date, File> dmap = new TreeMap<>();
 
         for (File file : files) {
             // get time from: La_Palma_20100329_2039.xml TODO: put in try block
@@ -741,26 +764,30 @@ public class VaaInfo {
                     .split("_");
             Date date = null;
             try {
-                date = getTime(ftime[ftime.length - 2], ftime[ftime.length - 1]);
+                date = getTime(ftime[ftime.length - 2],
+                        ftime[ftime.length - 1]);
             } catch (NumberFormatException e) {
-                System.out.println("---get time of the file failed: "
-                        + e.getMessage());
+                System.out.println(
+                        "---get time of the file failed: " + e.getMessage());
             }
-            if (date != null)
+            if (date != null) {
                 dmap.put(date, file);
+            }
         }
 
         // --- the file wanted
         File latestFile = dmap.get(dmap.lastKey());
 
-        return FILE_EXTENSION_TXT.equals(fileExt) ? getAdvNoFrmTxtFile(latestFile)
+        return FILE_EXTENSION_TXT.equals(fileExt)
+                ? getAdvNoFrmTxtFile(latestFile)
                 : VaaInfo.getLatestAdvNoFrmXMLFile(latestFile);
     }
 
     public static String getLatestAdvNo(String volname) {
         Volcano vol = getLatestProductFor(volname);
-        if (vol == null)
+        if (vol == null) {
             return "000";
+        }
         System.out.println("Got Volnum = " + vol.getAdvNum());
         return vol.getAdvNum();
     }
@@ -770,11 +797,10 @@ public class VaaInfo {
         DbQueryRequest request = new DbQueryRequest();
         request.setEntityClass(PgenRecord.class.getName());
         request.addRequestField(PgenRecord.DATAURI);
-        request.addConstraint(PgenRecord.ACTIVITY_NAME, new RequestConstraint(
-                volname, ConstraintType.EQUALS));
+        request.addConstraint(PgenRecord.ACTIVITY_NAME,
+                new RequestConstraint(volname, ConstraintType.EQUALS));
 
         request.setOrderByField(PgenRecord.REF_TIME, OrderMode.ASC);
-        // request.setLimit(1);
         DbQueryResponse response;
         try {
             response = (DbQueryResponse) ThriftClient.sendRequest(request);
@@ -787,8 +813,9 @@ public class VaaInfo {
             return null;
         }
 
-        if (dataURI == null)
+        if (dataURI == null) {
             return null;
+        }
 
         List<Product> prods;
         try {
@@ -801,8 +828,9 @@ public class VaaInfo {
         for (Product p : prods) {
             for (Layer l : p.getLayers()) {
                 for (AbstractDrawableComponent adc : l.getDrawables()) {
-                    if (adc instanceof Volcano)
+                    if (adc instanceof Volcano) {
                         return (Volcano) adc;
+                    }
                 }
             }
         }
@@ -811,24 +839,27 @@ public class VaaInfo {
 
     /**
      * get java.util.Date from two strings
-     * 
-     * @param: date: yyyyMMdd
-     * @param: hourmin: HHmm
+     *
+     * @param: date:
+     *             yyyyMMdd
+     * @param: hourmin:
+     *             HHmm
      */
     public static Date getTime(String date, String hourmin)
             throws NumberFormatException {
 
         return new Date(Integer.parseInt(date.substring(0, 4)),
-                Integer.parseInt(date.substring(4, 6)), Integer.parseInt(date
-                        .substring(6)), Integer.parseInt(hourmin
-                        .substring(0, 2)), Integer.parseInt(hourmin.substring(
-                        2, 4)));
+                Integer.parseInt(date.substring(4, 6)),
+                Integer.parseInt(date.substring(6)),
+                Integer.parseInt(hourmin.substring(0, 2)),
+                Integer.parseInt(hourmin.substring(2, 4)));
     }
 
     /**
      * parse the txt file to get the Advisory No
-     * 
-     * @param: the text file to be parsed
+     *
+     * @param: the
+     *             text file to be parsed
      * @return: the advisory no
      */
 
@@ -840,15 +871,17 @@ public class VaaInfo {
             return "000";
         }
 
-        if (in == null)
+        if (in == null) {
             return "000";
+        }
 
         String line = null, advNo = null;
 
         try {
             while ((line = in.readLine()) != null) {
-                if (line.contains("ADVISORY NR"))
+                if (line.contains("ADVISORY NR")) {
                     advNo = line.split("/")[1];
+                }
             }
         } catch (Exception e) {
             return "000";
@@ -859,7 +892,7 @@ public class VaaInfo {
 
     /**
      * returns a string[] with its elements in date/hour format
-     * 
+     *
      * @param date
      *            user input date in dd format
      * @param time
@@ -881,8 +914,9 @@ public class VaaInfo {
                 wrongDate = true;
             }
 
-            if (d == 0 || d > 31)
+            if (d == 0 || d > 31) {
                 wrongDate = true;
+            }
         }
 
         // handle time
@@ -895,8 +929,9 @@ public class VaaInfo {
                 wrongTime = true;
             }
 
-            if (t > 2359) // 0 hour is OK
+            if (t > 2359) {
                 wrongTime = true;
+            }
 
             hour = t / 100;
             min = t % 100;
@@ -907,15 +942,17 @@ public class VaaInfo {
                 min = 0;
             }
 
-            if (hour > 23)// wrong hour
+            if (hour > 23) {
                 wrongTime = true;
+            }
         }
 
         SimpleDateFormat sdf = new SimpleDateFormat();
 
         // valid inputs are already treated as GMT
-        if (wrongDate || wrongTime)
+        if (wrongDate || wrongTime) {
             sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        }
 
         Calendar c = Calendar.getInstance();
 
@@ -927,8 +964,9 @@ public class VaaInfo {
         }
 
         // 45-99 min add one hour, but itself NOT used
-        if (min > 44)
+        if (min > 44) {
             hour++;
+        }
 
         // 15-44 minutes rounding to half hour
         sdf.applyPattern(min > 14 && min < 45 ? "dd/HH30" : "dd/HH00");
@@ -937,8 +975,8 @@ public class VaaInfo {
         c.set(Calendar.HOUR_OF_DAY, hour);
 
         // prepare for 06,12, and 18 hours
-        Calendar c6 = (Calendar) c.clone(), c12 = (Calendar) c.clone(), c18 = (Calendar) c
-                .clone();
+        Calendar c6 = (Calendar) c.clone(), c12 = (Calendar) c.clone(),
+                c18 = (Calendar) c.clone();
         c6.add(Calendar.HOUR, 6);
         c12.add(Calendar.HOUR, 12);
         c18.add(Calendar.HOUR, 18);
@@ -956,9 +994,9 @@ public class VaaInfo {
 
         // LinkedHashSet for keeping the insertion order in the returned
         // String[]
-        private static final Map<String, LinkedHashSet<String>> LOC_PROD_MAP = new HashMap<String, LinkedHashSet<String>>();
+        private static final Map<String, LinkedHashSet<String>> LOC_PROD_MAP = new HashMap<>();
 
-        private static final Map<String, ArrayList<String>> PROD_ENTRY_MAP = new HashMap<String, ArrayList<String>>();
+        private static final Map<String, ArrayList<String>> PROD_ENTRY_MAP = new HashMap<>();
 
         /**
          * method for adding elements in the maps
@@ -971,7 +1009,7 @@ public class VaaInfo {
             LinkedHashSet<String> prods = LOC_PROD_MAP.get(loc);
 
             if (prods == null) {
-                LinkedHashSet<String> prodSet = new LinkedHashSet<String>();
+                LinkedHashSet<String> prodSet = new LinkedHashSet<>();
                 prodSet.add(prod);
                 LOC_PROD_MAP.put(loc, prodSet);
             } else {
@@ -983,7 +1021,7 @@ public class VaaInfo {
             ArrayList<String> entries = PROD_ENTRY_MAP.get(prod);
 
             if (entries == null) {
-                ArrayList<String> entryList = new ArrayList<String>();
+                ArrayList<String> entryList = new ArrayList<>();
                 entryList.add(entry);
                 PROD_ENTRY_MAP.put(prod, entryList);
             } else {
@@ -993,10 +1031,10 @@ public class VaaInfo {
 
         /**
          * get all products of a dialog
-         * 
+         *
          * createDlg: TEST/RESUME, maybe BACKUP editDlg: NORMAL/END/QUICK/NEAR,
          * maybe watch
-         * 
+         *
          * @param: LOC_EDIT/LOC_CREATE
          * @return:products of one dialog
          */
@@ -1008,8 +1046,9 @@ public class VaaInfo {
 
         /**
          * get all words of a product (i.e. TEST, QUICK)
-         * 
-         * @param: proudct type
+         *
+         * @param: proudct
+         *             type
          * @return: all words in a list (has a contains() method for checking)
          */
         public static ArrayList<String> getEntry(String prod) {
@@ -1021,7 +1060,7 @@ public class VaaInfo {
 
     /**
      * parse the an attribute line into two parts:
-     * 
+     *
      * entryValue[0]: like <VOLCANO> entryValue[1]: like TEST
      */
     public static String[] getVaaEntryParts(String entry) {
@@ -1047,12 +1086,14 @@ public class VaaInfo {
     public static void setVolcanoFields(Volcano vol, String prodType,
             boolean fromSelection) {
 
-        if (vol == null || prodType == null || prodType.length() == 0)
+        if (vol == null || prodType == null || prodType.length() == 0) {
             return;
+        }
 
         ArrayList<String> entries = ProductInfo.getEntry(prodType);
-        if (entries == null)
+        if (entries == null) {
             return;
+        }
 
         // Not necessary any more ?// if( fromSelection ){
         // setVolFieldsFrmSelect(vol, prodType, entries); return; }
@@ -1060,14 +1101,16 @@ public class VaaInfo {
         String part = "";
 
         for (String line : entries) {
-            if (line == null || line.length() == 0)
+            if (line == null || line.length() == 0) {
                 continue;// empty line
+            }
 
             index = line.indexOf(">");
             part = line.substring(index + 1);
 
-            if (part == null || part.length() == 0)
+            if (part == null || part.length() == 0) {
                 continue;// empty value after tag like: QUICK <AREA>
+            }
 
             /*
              * using java reflection
@@ -1078,24 +1121,14 @@ public class VaaInfo {
 
             try {
 
-                if (m != null && ev[1] != null)
+                if (m != null && ev[1] != null) {
                     m.invoke(vol, ev[1]);
+                }
 
             } catch (Exception e) {
                 System.out.println("--- java reflection method call failed: "
                         + e.getMessage());
             }
-
-            /*
-             * index = line.indexOf(">"); part = line.substring(index+1).trim();
-             * if(line.contains("<VOLCANO>")) vol.setName(part);
-             * if(line.contains("<NUMBER>")) vol.setNumber(part);
-             * if(line.contains("<LOCATION>")) vol.setTxtLoc(part);
-             * if(line.contains("<AREA>")) vol.setArea(part);
-             * if(line.contains("<SUMMIT ELEVATION>")) vol.setElev(part);
-             * if(line.contains("<ADVISORY NUMBER>")) vol.setAdvNum(part);
-             * if(line.contains("<REMARKS>")) vol.setRemarks(part);
-             */
         }
 
     }
@@ -1108,40 +1141,46 @@ public class VaaInfo {
         int index = -1;
         String part = "";
         for (String line : entries) {
-            if (line == null || line.length() == 0)
+            if (line == null || line.length() == 0) {
                 continue;
+            }
 
             index = line.indexOf(">");
             part = line.substring(index + 1).trim();
 
             // --- END & QUICK
 
-            if (line.contains("<INFORMATION SOURCE>"))
+            if (line.contains("<INFORMATION SOURCE>")) {
                 vol.setInfoSource(part);
+            }
 
-            if (line.contains("<ERUPTION DETAILS>"))
+            if (line.contains("<ERUPTION DETAILS>")) {
                 vol.setErupDetails(part);
+            }
 
-            // if(line.contains("<OBS ASH DATA/TIME>"))vol.setObsAshDate(part);//
-            // legacy is /Z
-
-            if (line.contains("<OBS ASH CLOUD>"))
+            if (line.contains("<OBS ASH CLOUD>")) {
                 vol.setObsFcstAshCloudInfo(part);
+            }
 
-            if (line.contains("<FCST ASH CLOUD +6H>"))
+            if (line.contains("<FCST ASH CLOUD +6H>")) {
                 vol.setObsFcstAshCloudInfo6(part);
+            }
 
-            if (line.contains("<FCST ASH CLOUD +12H>"))
+            if (line.contains("<FCST ASH CLOUD +12H>")) {
                 vol.setObsFcstAshCloudInfo6(part);
+            }
 
-            if (line.contains("<FCST ASH CLOUD +18H>"))
+            if (line.contains("<FCST ASH CLOUD +18H>")) {
                 vol.setObsFcstAshCloudInfo6(part);
+            }
 
-            if (line.contains("<REMARKS>"))
+            if (line.contains("<REMARKS>")) {
                 vol.setRemarks(part);
+            }
 
-            if (line.contains("<NEXT ADVISORY>"))
+            if (line.contains("<NEXT ADVISORY>")) {
                 vol.setNextAdv(part);
+            }
 
         }
 
@@ -1149,10 +1188,10 @@ public class VaaInfo {
 
     /**
      * convert a Volcano to a pgen.file.Volcano
-     * 
+     *
      * @param: Volcano
      * @return pgen.file.Volcano
-     * 
+     *
      */
     public static gov.noaa.nws.ncep.ui.pgen.file.Volcano getXMLVolFrmDrawableVol(
             Volcano dVol) {
@@ -1164,7 +1203,7 @@ public class VaaInfo {
 
     /**
      * the function doing XML to text transforming using xslt;
-     * 
+     *
      * @param DOMSource
      *            : pgen.file.Volcano's XML represented by DOMSource
      * @param File
@@ -1193,7 +1232,7 @@ public class VaaInfo {
 
     /**
      * transform a pgen.file.Volcano into DOMSource
-     * 
+     *
      * @param pgen
      *            .file.Volcano:
      * @param String
@@ -1229,7 +1268,7 @@ public class VaaInfo {
     /**
      * check if users try to open VAA special products like TEST/RESUME; if
      * true, a MessageDialog opens informing users
-     * 
+     *
      * @param prods
      *            ( of pgen.file package )
      * @return boolean: true if the Product nondrawable
@@ -1249,8 +1288,8 @@ public class VaaInfo {
                     List<gov.noaa.nws.ncep.ui.pgen.file.Volcano> list = de
                             .getVolcano();
                     for (gov.noaa.nws.ncep.ui.pgen.file.Volcano v : list) {
-                        String vp = v.getProduct() == null ? null : v
-                                .getProduct().trim();
+                        String vp = v.getProduct() == null ? null
+                                : v.getProduct().trim();
                         flag = Arrays.asList(ProductInfo.getProduct(LOCS[1]))
                                 .contains(vp);
                     }
@@ -1263,7 +1302,7 @@ public class VaaInfo {
 
     /**
      * informing users trying to open nondrawable VAA products
-     * 
+     *
      * @param msg
      *            : message for users
      */
@@ -1271,8 +1310,9 @@ public class VaaInfo {
     public static void openMsgDlg(String msg) {
         org.eclipse.jface.dialogs.MessageDialog confirmDlg = new org.eclipse.jface.dialogs.MessageDialog(
                 org.eclipse.ui.PlatformUI.getWorkbench()
-                        .getActiveWorkbenchWindow().getShell(), "Warning",
-                null, msg, org.eclipse.jface.dialogs.MessageDialog.WARNING,
+                        .getActiveWorkbenchWindow().getShell(),
+                "Warning", null, msg,
+                org.eclipse.jface.dialogs.MessageDialog.WARNING,
                 new String[] { "OK" }, 0);
         confirmDlg.open();
     }
@@ -1280,39 +1320,30 @@ public class VaaInfo {
     /**
      * method for getting obs & fcst Ash Cloud info called by VolcanoVaaAttrDlg
      * & AshCloudInfoDlg
-     * 
-     * @param: FHR: 00/06/12/18
+     *
+     * @param: FHR:
+     *             00/06/12/18
      * @return:String of the Ash Cloud Info
      */
     public static String getAshCloudInfo(String hour) {
         StringBuilder sb = new StringBuilder();
         List<AbstractDrawableComponent> list = null;
 
-        // ---2010-03-16
-        // List<Product> prods =
-        // PgenSession.getInstance().getPgenResource().getProducts();
-        Product volProd = null;// 2010-03-25getVaaProduct();//2010-03-17 null;
-        /*
-         * for(Product p : prods){ if("VOLCANO".equals(p.getName()) ){//TmODO:
-         * getActiveProduct() or this "Volcano" ? volProd = p; } }
-         */
-        volProd = PgenSession.getInstance().getPgenResource()
+        Product volProd = null;
+        volProd = PgenSession.getInstance().getCurrentResource()
                 .getActiveProduct();
         List<Layer> lyrList = volProd == null ? null : volProd.getLayers();
-        if (!VaaInfo.VOLCANO_PRODUCT_NAME.equalsIgnoreCase((volProd.getName())))
+        if (!VaaInfo.VOLCANO_PRODUCT_NAME
+                .equalsIgnoreCase((volProd.getName()))) {
             return sb.toString();
-        /*
-         * try{ list =
-         * PgenSession.getInstance().getPgenResource().getActiveLayer
-         * ().getDrawables(); }catch(Exception e){
-         * System.out.println(e.getMessage());return sb.toString(); }
-         */
+        }
 
-        if (lyrList == null)
+        if (lyrList == null) {
             return sb.toString();
+        }
 
         boolean isObsWithNotSeen = false;
-        ArrayList<String> obsWithNotSeen = new ArrayList<String>();
+        ArrayList<String> obsWithNotSeen = new ArrayList<>();
 
         for (Layer lyr : lyrList) {
             list = lyr.getDrawables();
@@ -1323,14 +1354,15 @@ public class VaaInfo {
 
                     // TODO: handle lineType with Text
                     String fhr = vac.getEditableAttrFreeText();
-                    String fromLine = PgenUtil
-                            .getLatLonStringPrepend(vac.getLinePoints(), vac
-                                    .getType().contains("Area"));
+                    String fromLine = PgenUtil.getLatLonStringPrepend(
+                            vac.getLinePoints(),
+                            vac.getType().contains("Area"));
 
                     // ---TODO: a temporary solution for moved after selection
                     // cloud
-                    if (fhr == null)
+                    if (fhr == null) {
                         return sb.toString();
+                    }
 
                     if (fhr.substring(0, 3).contains(hour)) {
                         String txt = getParsedTxt(fhr, fromLine, vac.getType(),
@@ -1344,13 +1376,13 @@ public class VaaInfo {
 
                             obsWithNotSeen.add(txt);
 
-                            if (vac.getType() != null
-                                    && vac.getType().contains(
-                                            VA_NOT_IDENTIFIABLE))
+                            if (vac.getType() != null && vac.getType()
+                                    .contains(VA_NOT_IDENTIFIABLE)) {
                                 isObsWithNotSeen = true;
+                            }
                         }
 
-                        sb.append(txt);// sb.append(fhr).append("\n").append(fromLine);
+                        sb.append(txt);
                     }
                 }
             }
@@ -1371,28 +1403,31 @@ public class VaaInfo {
     private static String getParsedTxt(String fhr, String fline, String type,
             String lineWidth) {
 
-        if (type != null && type.contains(VaaInfo.TYPE_TEXT))
+        if (type != null && type.contains(VaaInfo.TYPE_TEXT)) {
             return getFcstTxtFromTextType(type);
+        }
 
         String divider = " - ";
 
-        String[] txtFhr = fhr.split(SEPERATER), txtFline = fline
-                .split(SEPERATER);
+        String[] txtFhr = fhr.split(SEPERATER),
+                txtFline = fline.split(SEPERATER);
 
         StringBuilder sb = new StringBuilder();
 
         // ---SFC/FL, FLXX/XX line
 
-        if ((txtFhr.length > 1) && txtFhr[1].contains("SFC"))
+        if ((txtFhr.length > 1) && txtFhr[1].contains("SFC")) {
             sb.append(txtFhr[1]).append("/FL");
-        else
+        } else {
             sb.append("FL").append(txtFhr[1]).append("/");
+        }
 
         if (txtFhr.length < 3 || txtFhr[2] == null || txtFhr[2].length() == 0
-                || txtFhr[2].equals(" "))
+                || txtFhr[2].equals(" ")) {
             ;
-        else
+        } else {
             sb.append(txtFhr[2]);
+        }
 
         sb.append(" ");
 
@@ -1411,30 +1446,34 @@ public class VaaInfo {
         }
 
         int last = sb.lastIndexOf("-");
-        if ((last > 0) && (last < sb.length()))
+        if ((last > 0) && (last < sb.length())) {
             sb.delete(last, last + 1);
+        }
 
         // ---FCST text is without MOV
 
-        if (fhr.contains("F06") || fhr.contains("F12") || fhr.contains("F18"))
+        if (fhr.contains("F06") || fhr.contains("F12") || fhr.contains("F18")) {
             return sb.append(" ").toString();
+        }
 
         // --- last part for Obs info
 
         sb.append("MOV").append(" ");
 
         if (txtFhr.length < 4 || txtFhr[3] == null || txtFhr[3].length() == 0
-                || txtFhr[3].equals(" "))
+                || txtFhr[3].equals(" ")) {
             ;
-        else
+        } else {
             sb.append(txtFhr[3]).append(" ");
+        }
 
         if (txtFhr.length < 1 || txtFhr[txtFhr.length - 1] == null
                 || txtFhr[txtFhr.length - 1].length() == 0
-                || txtFhr[txtFhr.length - 1].equals(" "))
+                || txtFhr[txtFhr.length - 1].equals(" ")) {
             sb.append("0KT");
-        else
+        } else {
             sb.append(txtFhr[txtFhr.length - 1]).append("KT");
+        }
 
         sb.append(" ");
         return sb.toString();
@@ -1442,11 +1481,11 @@ public class VaaInfo {
 
     /**
      * calculate the current layer index to the LAYER array
-     * 
+     *
      * @return int: index for LAYER array
      */
     public static int getLayerIdx() {
-        Layer lyr = PgenSession.getInstance().getPgenResource()
+        Layer lyr = PgenSession.getInstance().getCurrentResource()
                 .getActiveLayer();
         for (int i = 0; i < LAYERS.length; i++) {
             if (LAYERS[i].equalsIgnoreCase("OBS")) {
@@ -1469,7 +1508,7 @@ public class VaaInfo {
 
     /**
      * check if the Volcano is of VAA special products like TEST/RESUME
-     * 
+     *
      * @param Volcano
      * @return boolean: true if NonDrawable
      */
@@ -1481,8 +1520,9 @@ public class VaaInfo {
 
     /**
      * parse the txt file to get the Advisory No
-     * 
-     * @param: the text file to be parsed
+     *
+     * @param: the
+     *             text file to be parsed
      * @return: the advisory no
      */
     public static String getLatestAdvNoFrmXMLFile(File f) {
@@ -1496,8 +1536,8 @@ public class VaaInfo {
         try {
             db = dbf.newDocumentBuilder();
         } catch (Exception e) {
-            System.out.println("---DocumentBuilder create failed: "
-                    + e.getMessage());
+            System.out.println(
+                    "---DocumentBuilder create failed: " + e.getMessage());
         }
 
         Document doc = null;
@@ -1505,8 +1545,8 @@ public class VaaInfo {
         try {
             doc = db.parse(f);
         } catch (Exception e) {
-            System.out.println("---DocumentBuilder create failed: "
-                    + e.getMessage());
+            System.out.println(
+                    "---DocumentBuilder create failed: " + e.getMessage());
         }
 
         NodeList nList = doc.getElementsByTagName("Volcano");
@@ -1515,8 +1555,9 @@ public class VaaInfo {
             Node n = nList.item(i);
             NamedNodeMap nnMap = n.getAttributes();
             Node advNo = nnMap.getNamedItem("advNum");
-            if (advNo != null)
+            if (advNo != null) {
                 ano = advNo.getNodeValue();
+            }
         }
 
         return (ano == null || ano.length() == 0) ? "000" : ano;
@@ -1524,15 +1565,16 @@ public class VaaInfo {
 
     /**
      * get index for others-fcst dialog/display/text array
-     * 
+     *
      * @param String
      *            : display words
      * @return int: array index of the display words
      */
     public static int getFcstItemIndexFromTxt(String txt) {
         int index = 0;
-        if (txt == null || txt.length() == 0)
+        if (txt == null || txt.length() == 0) {
             return index;// default;
+        }
 
         String[] values = VaaInfo.VAA_INFO_OTHERSFCST_MAP
                 .get(VaaInfo.OTHERSFCST_DISPLAY);
@@ -1547,11 +1589,12 @@ public class VaaInfo {
             }
             if (!values[i].equals(txt) && values[i].contains(keyWord)
                     && txt.contains(keyWord)) {
-                if (txt.substring(txt.indexOf(keyWord)).equals(
-                        values[i].substring(values[i].indexOf(keyWord)))
+                if (txt.substring(txt.indexOf(keyWord))
+                        .equals(values[i].substring(values[i].indexOf(keyWord)))
                         && txt.indexOf(keyWord) > 0
-                        && values[i].indexOf(keyWord) > 0)// {FL}
+                        && values[i].indexOf(keyWord) > 0) {
                     index = i;
+                }
             }
         }
 
@@ -1561,7 +1604,7 @@ public class VaaInfo {
 
     /**
      * get the Text Product of others-fcst from display words
-     * 
+     *
      * @param String
      *            : text with display words of others-fcst
      * @return Text Product words of others-fcst
@@ -1569,13 +1612,15 @@ public class VaaInfo {
     public static String getFcstTxtFromTextType(String type) {
         String empty = "", oneSpace = " ";
 
-        if (type == null || type.length() == 0)
+        if (type == null || type.length() == 0) {
             return empty;
+        }
 
         // type looks like: Text:::FL222/FL555 ASH DISSIPATING
         String[] words = type.split(SEPERATER);
-        if (words.length < 2)
+        if (words.length < 2) {
             return empty;
+        }
 
         // displayed text, like: FL222/FL555 ASH DISSIPATING
         String disTxt = words[1];
@@ -1583,9 +1628,9 @@ public class VaaInfo {
         // NotSeen text: Text:::VA NOT IDENTIFIABLE FROM SATELLITE DATA:::WINDS
         // SFC/FL /KT
         if (disTxt != null && disTxt.contains(VaaInfo.VA_NOT_IDENTIFIABLE)) {
-            if (words.length < 3)
+            if (words.length < 3) {
                 return empty;
-            else {
+            } else {
                 return words[1] + oneSpace + words[2];
             }
         }
@@ -1594,16 +1639,18 @@ public class VaaInfo {
         int index = getFcstItemIndexFromTxt(disTxt);
         String[] texts = VaaInfo.VAA_INFO_OTHERSFCST_MAP
                 .get(VaaInfo.OTHERSFCST_TEXT);
-        if (index < 0 || index > texts.length - 1)
+        if (index < 0 || index > texts.length - 1) {
             return empty;
+        }
 
         // the text product word
         String txt = texts[index];
 
         if (txt != null) {
 
-            if (txt.contains("SFC/FL"))
+            if (txt.contains("SFC/FL")) {
                 return disTxt;
+            }
 
             /*
              * for text products with FL numbers, curly braces { } should always
@@ -1642,8 +1689,9 @@ public class VaaInfo {
         for (Product p : prods) {
             for (Layer l : p.getLayers()) {
                 for (AbstractDrawableComponent adc : l.getDrawables()) {
-                    if (adc instanceof Volcano)
+                    if (adc instanceof Volcano) {
                         return isNonDrawableVol((Volcano) adc);
+                    }
                 }
             }
         }

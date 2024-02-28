@@ -1,3 +1,22 @@
+/**
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
+ *
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
+ *
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
+ *
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
 package gov.noaa.nws.ncep.ui.nsharp.view;
 
 import org.eclipse.jface.dialogs.Dialog;
@@ -14,8 +33,6 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-
-import com.raytheon.uf.viz.core.exception.VizException;
 
 import gov.noaa.nws.ncep.edex.common.nsharpLib.NsharpLibSndglib;
 import gov.noaa.nws.ncep.ui.nsharp.display.NsharpEditor;
@@ -36,8 +53,11 @@ import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpResourceHandler;
  * Mar 23, 2010  229      Chin Chen      Initial coding
  * Jul 05, 2016  15923    Chin Chen      NSHARP - Native Code replacement
  * 10/26/2018   DR20904   mgamazaychikov Changed parcel indices from 
- *                                          NsharpNativeConstants to NsharpLibSndglib
+ *                                       NsharpNativeConstants to NsharpLibSndglib
  * Dec 20, 2018  7575     bsteffen       Use Parcel numbers from NsharpLibSndglib
+ * Apr 22, 2020  76580    smanoj         Allow user to interact with NsharpEditor
+ *                                       while the dialog is open.
+ * Mar 21 2022   89212    smanoj         Configuration Dialog display issues.
  * 
  * </pre>
  * 
@@ -67,13 +87,14 @@ public class NsharpParcelDialog extends Dialog {
     private static final int BTN_GAP_Y = 5;
 
     private int userDefdParcelMb = 850;
-    
+
     private int curParcelType;
 
     private Text userDefdMbtext;
 
     public NsharpParcelDialog(Shell parentShell) {
         super(parentShell);
+        this.setShellStyle(SWT.MODELESS);
     }
 
     private void createDialogContents(Composite parent) {
@@ -89,8 +110,8 @@ public class NsharpParcelDialog extends Dialog {
                     if (child instanceof Button) {
                         Button button = (Button) child;
                         if (button.getSelection()) {
-                            curParcelType = Short.parseShort(button.getData()
-                                    .toString());
+                            curParcelType = Short
+                                    .parseShort(button.getData().toString());
 
                             NsharpEditor editor = NsharpEditor
                                     .getActiveNsharpEditor();
@@ -114,47 +135,53 @@ public class NsharpParcelDialog extends Dialog {
         Button curSfcBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         curSfcBtn.setText(CUR_SFC);
         curSfcBtn.setEnabled(true);
-        curSfcBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X, btnGp.getBounds().y
-                + LABEL_GAP, BTN_WIDTH, BTN_HEIGHT);
+        curSfcBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X,
+                btnGp.getBounds().y + LABEL_GAP, BTN_WIDTH, BTN_HEIGHT);
         curSfcBtn.setData(NsharpLibSndglib.PARCELTYPE_OBS_SFC);
         curSfcBtn.addListener(SWT.MouseUp, radioGpLsner);
 
         Button frcstBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         frcstBtn.setText(FRCST_SFC);
         frcstBtn.setEnabled(true);
-        frcstBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X,
-                curSfcBtn.getBounds().y + curSfcBtn.getBounds().height
-                        + BTN_GAP_Y, BTN_WIDTH, BTN_HEIGHT);
+        frcstBtn.setBounds(
+                btnGp.getBounds().x + BTN_GAP_X, curSfcBtn.getBounds().y
+                        + curSfcBtn.getBounds().height + BTN_GAP_Y,
+                BTN_WIDTH, BTN_HEIGHT);
         frcstBtn.setData(NsharpLibSndglib.PARCELTYPE_FCST_SFC);
         frcstBtn.addListener(SWT.MouseUp, radioGpLsner);
 
         Button mmlBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         mmlBtn.setText(MML);
         mmlBtn.setEnabled(true);
-        mmlBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X, frcstBtn.getBounds().y
-                + frcstBtn.getBounds().height + BTN_GAP_Y, BTN_WIDTH, BTN_HEIGHT);
+        mmlBtn.setBounds(
+                btnGp.getBounds().x + BTN_GAP_X, frcstBtn.getBounds().y
+                        + frcstBtn.getBounds().height + BTN_GAP_Y,
+                BTN_WIDTH, BTN_HEIGHT);
         mmlBtn.setData(NsharpLibSndglib.PARCELTYPE_MEAN_MIXING);
         mmlBtn.addListener(SWT.MouseUp, radioGpLsner);
         Button mupBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         mupBtn.setText(MUP);
         mupBtn.setEnabled(true);
-        mupBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X, mmlBtn.getBounds().y
-                + mmlBtn.getBounds().height + BTN_GAP_Y, BTN_WIDTH, BTN_HEIGHT);
+        mupBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X,
+                mmlBtn.getBounds().y + mmlBtn.getBounds().height + BTN_GAP_Y,
+                BTN_WIDTH, BTN_HEIGHT);
         mupBtn.setData(NsharpLibSndglib.PARCELTYPE_MOST_UNSTABLE);
         mupBtn.addListener(SWT.MouseUp, radioGpLsner);
         Button effBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         effBtn.setText(EFF);
         effBtn.setEnabled(true);
-        effBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X, mupBtn.getBounds().y
-                + mupBtn.getBounds().height + BTN_GAP_Y, BTN_WIDTH, BTN_HEIGHT);
+        effBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X,
+                mupBtn.getBounds().y + mupBtn.getBounds().height + BTN_GAP_Y,
+                BTN_WIDTH, BTN_HEIGHT);
         effBtn.setData(NsharpLibSndglib.PARCELTYPE_EFF);
         effBtn.addListener(SWT.MouseUp, radioGpLsner);
 
         Button udlBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         udlBtn.setText(UDL);
         udlBtn.setEnabled(true);
-        udlBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X, effBtn.getBounds().y
-                + effBtn.getBounds().height + BTN_GAP_Y, BTN_WIDTH, BTN_HEIGHT);
+        udlBtn.setBounds(btnGp.getBounds().x + BTN_GAP_X,
+                effBtn.getBounds().y + effBtn.getBounds().height + BTN_GAP_Y,
+                BTN_WIDTH, BTN_HEIGHT);
         udlBtn.setData(NsharpLibSndglib.PARCELTYPE_USER_DEFINED);
         udlBtn.addListener(SWT.MouseUp, radioGpLsner);
 
@@ -191,10 +218,27 @@ public class NsharpParcelDialog extends Dialog {
 
             }
         });
+
+        userDefdMbtext.addListener(SWT.Modify, new Listener() {
+            @Override
+            public void handleEvent(Event e) {
+                String textStr = userDefdMbtext.getText();
+                if ((textStr != null) && !(textStr.isEmpty())) {
+                    userDefdParcelMb = Integer.decode(textStr);
+                }
+                NsharpResourceHandler skewtRsc = NsharpEditor
+                        .getActiveNsharpEditor().getRscHandler();
+                skewtRsc.getWeatherDataStore()
+                        .setUserDefdParcelMb(userDefdParcelMb);
+                skewtRsc.setCurrentParcel(curParcelType);
+            }
+        });
+
         NsharpResourceHandler skewtRsc = NsharpEditor.getActiveNsharpEditor()
                 .getRscHandler();
         if (skewtRsc != null) {
-            userDefdParcelMb = skewtRsc.getWeatherDataStore().getUserDefdParcelMb();
+            userDefdParcelMb = skewtRsc.getWeatherDataStore()
+                    .getUserDefdParcelMb();
             curParcelType = skewtRsc.getCurrentParcel();
             switch (curParcelType) {
             case NsharpLibSndglib.PARCELTYPE_OBS_SFC:
@@ -236,7 +280,8 @@ public class NsharpParcelDialog extends Dialog {
                 }
                 NsharpResourceHandler skewtRsc = NsharpEditor
                         .getActiveNsharpEditor().getRscHandler();
-                skewtRsc.getWeatherDataStore().setUserDefdParcelMb(userDefdParcelMb);
+                skewtRsc.getWeatherDataStore()
+                        .setUserDefdParcelMb(userDefdParcelMb);
                 skewtRsc.setCurrentParcel(curParcelType);
                 close();
             }
@@ -286,12 +331,19 @@ public class NsharpParcelDialog extends Dialog {
 
     @Override
     public int open() {
+
         if (this.getShell() == null) {
             this.create();
+        } else {
+            try {
+                this.getShell().setLocation(
+                        this.getShell().getParent().getLocation().x + 1100,
+                        this.getShell().getParent().getLocation().y + 200);
+            } catch (Exception e) {
+                // if widget disposed
+                this.create();
+            }
         }
-        this.getShell().setLocation(
-                this.getShell().getParent().getLocation().x + 1100,
-                this.getShell().getParent().getLocation().y + 200);
         return super.open();
     }
 

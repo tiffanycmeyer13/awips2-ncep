@@ -1,4 +1,35 @@
 /**
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
+ *
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
+ *
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
+ *
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
+package gov.noaa.nws.ncep.ui.nsharp.display;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Event;
+import org.locationtech.jts.geom.Coordinate;
+
+import com.raytheon.uf.viz.core.IDisplayPane;
+
+import gov.noaa.nws.ncep.ui.nsharp.display.map.AbstractNsharpMapResource;
+import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpTimeStnPaneResource;
+import gov.noaa.nws.ncep.ui.nsharp.view.NsharpShowTextDialog;
+
+/**
  * 
  * gov.noaa.nws.ncep.ui.nsharp.skewt.rsc.NsharpTimeStnPaneMouseHandler
  * 
@@ -8,132 +39,143 @@
  * <pre>
  * SOFTWARE HISTORY
  * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 05/22/2012	229			Chin Chen	Initial coding for multiple Panes implementations
- *
+ * Date         Ticket#     Engineer    Description
+ * -------      -------     --------    -----------
+ * 05/22/2012   229         Chin Chen   Initial coding for multiple Panes implementations
+ * 04/16/2020   73571       smanoj      NSHARP D2D port refactor
+ * 04/01/2022   89212       smanoj      Fix some Nsharp display issues.
+ * 
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
  */
-package gov.noaa.nws.ncep.ui.nsharp.display;
+public class NsharpTimeStnPaneMouseHandler extends NsharpAbstractMouseHandler {
+    public NsharpTimeStnPaneMouseHandler(NsharpEditor editor,
+            IDisplayPane pane) {
+        super(editor, pane);
+    }
+    @Override
+    public boolean handleMouseWheel(Event event, int x, int y) {
 
+        if (editor == null || cursorInPane == false) {
+            return false;
+        }
 
-import org.eclipse.swt.SWT;
+        com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_FORWARD = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_FORWARD;
+        com.raytheon.viz.ui.input.preferences.MouseEvent SCROLL_BACK = com.raytheon.viz.ui.input.preferences.MouseEvent.SCROLL_BACK;
+        if ((event.count < 0
+                && prefManager.handleEvent(ZOOMIN_PREF, SCROLL_FORWARD))
+                || (event.count > 0 && prefManager.handleEvent(ZOOMOUT_PREF,
+                        SCROLL_BACK))) {
+            currentPane.zoom(event.count, event.x, event.y);
 
-import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResource;
-import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpSkewTPaneResource;
-import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpTimeStnPaneResource;
-import gov.noaa.nws.ncep.ui.nsharp.view.NsharpShowTextDialog;
-
-import com.raytheon.uf.viz.core.IDisplayPane;
-import org.locationtech.jts.geom.Coordinate;
-
-public class NsharpTimeStnPaneMouseHandler extends NsharpAbstractMouseHandler{
-
-    
-    public NsharpTimeStnPaneMouseHandler(NsharpEditor editor, IDisplayPane pane) {
-    	super(editor,pane);
-   }
- 
-
+            editor.refresh();
+        }
+        return true;
+    }
 
     @Override
     public boolean handleMouseDown(int x, int y, int mouseButton) {
-    	theLastMouseX = x;
-    	theLastMouseY = y;
+        theLastMouseX = x;
+        theLastMouseY = y;
         if (getPaneDisplay() == null) {
             return false;
-        }
-        else if (mouseButton == 1) {
-        	//System.out.println("handleMouseDown");
+        } else if (mouseButton == 1) {
             this.mode = Mode.CREATE;
-            Coordinate c = editor.translateClick(x, y);   		
-            NsharpTimeStnPaneResource timeStnRsc = (NsharpTimeStnPaneResource)getDescriptor().getPaneResource();
-            if(timeStnRsc.getTimeLineRectangle().contains((int) c.x, (int) c.y)== true) {
-            	this.mode = Mode.TIMELINE_DOWN;
-            }
-            else if(timeStnRsc.getStnIdRectangle().contains((int) c.x, (int) c.y) == true) {
-            	this.mode = Mode.STATIONID_DOWN;
-            }
-            else if(timeStnRsc.getSndRectangle().contains((int) c.x, (int) c.y) == true) {
-            	this.mode = Mode.SNDTYPE_DOWN;
+            Coordinate c = editor.translateClick(x, y);
+            NsharpTimeStnPaneResource timeStnRsc = (NsharpTimeStnPaneResource) getDescriptor()
+                    .getPaneResource();
+            if (timeStnRsc.getTimeLineRectangle().contains((int) c.x,
+                    (int) c.y) == true) {
+                this.mode = Mode.TIMELINE_DOWN;
+            } else if (timeStnRsc.getStnIdRectangle().contains((int) c.x,
+                    (int) c.y) == true) {
+                this.mode = Mode.STATIONID_DOWN;
+            } else if (timeStnRsc.getSndRectangle().contains((int) c.x,
+                    (int) c.y) == true) {
+                this.mode = Mode.SNDTYPE_DOWN;
             }
             editor.refresh();
+            
         }
 
         return false;
     }
-
 
     @Override
     public boolean handleMouseUp(int x, int y, int mouseButton) {
-    	if (getPaneDisplay() == null) {
+        if (getPaneDisplay() == null) {
             return false;
         }
-    	if(editor!=null){		
-        	// button 1 is left mouse button 
-    		if (mouseButton == 1 ){
-    			NsharpTimeStnPaneResource timeStnRsc = (NsharpTimeStnPaneResource)getDescriptor().getPaneResource();
-    			Coordinate c = editor.translateClick(x, y);
-    			 if(timeStnRsc.getTimeLineRectangle().contains((int) c.x, (int) c.y) == true && this.mode == Mode.TIMELINE_DOWN) {
-    				//data time line has been touched, and may be changed
-    				timeStnRsc.getRscHandler().handleUserClickOnTimeLine(c,shiftDown);// FixMark:clickOnTimeStnPane
-    				handleMouseMove(x,y);
+        if (editor != null) {
+            // button 1 is left mouse button
+            if (mouseButton == 1) {
+                NsharpTimeStnPaneResource timeStnRsc = (NsharpTimeStnPaneResource) getDescriptor()
+                        .getPaneResource();
+                Coordinate c = editor.translateClick(x, y);
+                if (timeStnRsc.getTimeLineRectangle().contains((int) c.x,
+                        (int) c.y) == true && this.mode == Mode.TIMELINE_DOWN) {
+                    // data time line has been touched, and may be changed
+                    timeStnRsc.getRscHandler().handleUserClickOnTimeLine(c,
+                            shiftDown);// FixMark:clickOnTimeStnPane
+                    handleMouseMove(x, y);
 
-    				NsharpShowTextDialog textarea =  NsharpShowTextDialog.getAccess();
-    				if(textarea != null){
-    					textarea.refreshTextData();
-    				}
-    				
-    			}
-    			else if(timeStnRsc.getStnIdRectangle().contains((int) c.x, (int) c.y) == true && this.mode == Mode.STATIONID_DOWN) {
-    				//stn id line has been touched, and may be changed
-    				timeStnRsc.getRscHandler().handleUserClickOnStationId(c,shiftDown);// FixMark:clickOnTimeStnPane
-    				handleMouseMove(x,y);
-    			}
-    			else if(timeStnRsc.getSndRectangle().contains((int) c.x, (int) c.y) == true && this.mode == Mode.SNDTYPE_DOWN) {
-    				//stn id line has been touched, and may be changed
-    				timeStnRsc.getRscHandler().handleUserClickOnSndLine(c,shiftDown);// FixMark:clickOnTimeStnPane
-    				handleMouseMove(x,y);
-    			}
-    			
-    			this.mode = Mode.CREATE;
-    		} else if(mouseButton == 3){
-    			//right mouse button
-    			//System.out.println("hodo handleMouseUp right button");
-    			NsharpMapResource.bringMapEditorToTop();
-    		}
-    		editor.refresh();
-    	}
+                    NsharpShowTextDialog textarea = NsharpShowTextDialog
+                            .getAccess();
+                    if (textarea != null) {
+                        textarea.refreshTextData();
+                    }
+
+                } else if (timeStnRsc.getStnIdRectangle().contains((int) c.x,
+                        (int) c.y) == true
+                        && this.mode == Mode.STATIONID_DOWN) {
+                    // stn id line has been touched, and may be changed
+                    timeStnRsc.getRscHandler().handleUserClickOnStationId(c,
+                            shiftDown);// FixMark:clickOnTimeStnPane
+                    handleMouseMove(x, y);
+                } else if (timeStnRsc.getSndRectangle().contains((int) c.x,
+                        (int) c.y) == true && this.mode == Mode.SNDTYPE_DOWN) {
+                    // stn id line has been touched, and may be changed
+                    timeStnRsc.getRscHandler().handleUserClickOnSndLine(c,
+                            shiftDown);// FixMark:clickOnTimeStnPane
+                    handleMouseMove(x, y);
+                }
+
+                this.mode = Mode.CREATE;
+            } else if (mouseButton == 3) {
+                // right mouse button
+                if (AbstractNsharpMapResource.getMapResource(editor) != null) {
+                    AbstractNsharpMapResource.getMapResource(editor)
+                            .bringMapEditorToTop();
+                }
+            }
+            editor.refresh();
+        }
         return false;
     }
+
     // FixMark:clickOnTimeStnPane
     @Override
     public boolean handleKeyDown(int keyCode) {
-    	//System.out.println("key down="+(char)keyCode+ " code ="+keyCode);
-    	
-    	if ((keyCode & SWT.SHIFT) != 0)  {
-    		shiftDown = true;
-            
+
+        if ((keyCode & SWT.SHIFT) != 0) {
+            shiftDown = true;
+
             return true;
-        } 
-    	return false;
+        }
+        return false;
     }
 
     @Override
     public boolean handleKeyUp(int keyCode) {
-    	//String s = "key up="+(char)keyCode;
-    	//System.out.println(s+ " code ="+keyCode);
-    	if (getPaneDisplay() == null) {
-    		return false;
-    	}
-    	if (keyCode == SWT.SHIFT) {
+        if (getPaneDisplay() == null) {
+            return false;
+        }
+        if (keyCode == SWT.SHIFT) {
             shiftDown = false;
             return true;
         }
         return false;
     }
- //End FixMark:clickOnTimeStnPane
+    // End FixMark:clickOnTimeStnPane
 }

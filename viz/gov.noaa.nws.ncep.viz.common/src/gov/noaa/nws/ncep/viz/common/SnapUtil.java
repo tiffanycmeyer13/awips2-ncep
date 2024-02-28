@@ -40,6 +40,7 @@ import org.locationtech.jts.geom.Envelope;
  * 										no space between distance and direction for CONV_SIGMET.
  * 10/2014      TTR726      J. Wu       Add "-" or " TO " at the end of vor text line.
  * 01/2017      17469       W. Kwock    Added CWA Formatter.
+ * 02/01/2021   87515       wkwock      Remove CWA
  * 
  * </pre>
  * 
@@ -52,9 +53,9 @@ public class SnapUtil {
 
     public static final String GFA_TEXT = new String("GFA_TYPE");
 
-    public static final String[] DIRECT_ARRAY = new String[] { "N", "NNE",
-            "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W",
-            "WNW", "NW", "NNW" };
+    public static final String[] DIRECT_ARRAY = new String[] { "N", "NNE", "NE",
+            "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW",
+            "NW", "NNW" };
 
     private static final Map<Integer, double[]> compassPtsAzimuths = new HashMap<Integer, double[]>();
 
@@ -66,8 +67,8 @@ public class SnapUtil {
     public static final float NM2M = 1852.0f;
 
     static {
-        File stnFile = NcPathManager.getInstance().getStaticFile(
-                NcPathConstants.VORS_STN_TBL);
+        File stnFile = NcPathManager.getInstance()
+                .getStaticFile(NcPathConstants.VORS_STN_TBL);
         VOR_STATION_LIST = new StationTable(stnFile.getAbsolutePath())
                 .getStationList();
 
@@ -179,8 +180,8 @@ public class SnapUtil {
 
                 double distance = treeMap.firstKey();
                 Station vorStn = treeMap.get(distance);
-                snapPtsList.add(new Coordinate(vorStn.getLongitude(), vorStn
-                        .getLatitude()));
+                snapPtsList.add(new Coordinate(vorStn.getLongitude(),
+                        vorStn.getLatitude()));
             }
 
             treeMap.clear();
@@ -198,9 +199,9 @@ public class SnapUtil {
      * @param coor
      * @param useJTS
      */
-    public static void populateStationsTreeMap(
-            TreeMap<Double, Station> treeMap, List<Station> stnList,
-            GeodeticCalculator gc, Coordinate coor, boolean useJTS) {
+    public static void populateStationsTreeMap(TreeMap<Double, Station> treeMap,
+            List<Station> stnList, GeodeticCalculator gc, Coordinate coor,
+            boolean useJTS) {
         double geoDistance = Double.NaN;
         for (Station stn : stnList) {
             if (useJTS) {
@@ -263,8 +264,8 @@ public class SnapUtil {
 
     public static double getSnapDir(double azimuth, int numOfCompassPts) {
 
-        double[] ap = getAzimuths(numOfCompassPts, true), am = getAzimuths(
-                numOfCompassPts, false);
+        double[] ap = getAzimuths(numOfCompassPts, true),
+                am = getAzimuths(numOfCompassPts, false);
         TreeMap<Double, Double> treeMap = new TreeMap<Double, Double>();
 
         if (azimuth == 0) {
@@ -315,34 +316,36 @@ public class SnapUtil {
         compassPtsAzimuthsMinus.put(6, new double[] { 0, -60, -120, -180 });
 
         compassPtsAzimuths.put(8, new double[] { 0, 45, 90, 135, 180 });
-        compassPtsAzimuthsMinus
-                .put(8, new double[] { 0, -45, -90, -135, -180 });
+        compassPtsAzimuthsMinus.put(8,
+                new double[] { 0, -45, -90, -135, -180 });
 
         compassPtsAzimuths.put(10, new double[] { 0, 36, 72, 108, 144, 180 });
-        compassPtsAzimuthsMinus.put(10, new double[] { 0, -36, -72, -108, -144,
-                -180 });
+        compassPtsAzimuthsMinus.put(10,
+                new double[] { 0, -36, -72, -108, -144, -180 });
 
         compassPtsAzimuths.put(12,
                 new double[] { 0, 30, 60, 90, 120, 150, 180 });
-        compassPtsAzimuthsMinus.put(12, new double[] { 0, -30, -60, -90, -120,
-                -150, -180 });
+        compassPtsAzimuthsMinus.put(12,
+                new double[] { 0, -30, -60, -90, -120, -150, -180 });
 
-        compassPtsAzimuths.put(16, new double[] { 0, 22.5, 45, 67.5, 90, 112.5,
-                135, 157.5, 180 });
+        compassPtsAzimuths.put(16,
+                new double[] { 0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180 });
         compassPtsAzimuthsMinus.put(16, new double[] { 0, -22.5, -45, -67.5,
                 -90, -112.5, -135, -157.5, -180 });
 
-        compassPtsAzimuths.put(18, new double[] { 0, 20, 40, 60, 80, 100, 120,
-                140, 160, 180 });
+        compassPtsAzimuths.put(18,
+                new double[] { 0, 20, 40, 60, 80, 100, 120, 140, 160, 180 });
         compassPtsAzimuthsMinus.put(18, new double[] { 0, -20, -40, -60, -80,
                 -100, -120, -140, -160, -180 });
 
-        compassPtsAzimuths.put(32, new double[] { 0, 11.25, 22.5, 33.75, 45,
-                56.25, 67.5, 78.75, 90, 101.25, 112.5, 123.75, 135, 146.25,
-                157.5, 168.75, 180 });
-        compassPtsAzimuthsMinus.put(32, new double[] { 0, -11.25, -22.5,
-                -33.75, -45, -56.25, -67.5, -78.75, -90, -101.25, -112.5,
-                -123.75, -135, -146.25, -157.5, -168.75, -180 });
+        compassPtsAzimuths.put(32,
+                new double[] { 0, 11.25, 22.5, 33.75, 45, 56.25, 67.5, 78.75,
+                        90, 101.25, 112.5, 123.75, 135, 146.25, 157.5, 168.75,
+                        180 });
+        compassPtsAzimuthsMinus.put(32,
+                new double[] { 0, -11.25, -22.5, -33.75, -45, -56.25, -67.5,
+                        -78.75, -90, -101.25, -112.5, -123.75, -135, -146.25,
+                        -157.5, -168.75, -180 });
 
     }
 
@@ -368,8 +371,8 @@ public class SnapUtil {
 
         int key = getCompassPoint(numOfCompassPts);
 
-        return positive ? compassPtsAzimuths.get(key) : compassPtsAzimuthsMinus
-                .get(key);
+        return positive ? compassPtsAzimuths.get(key)
+                : compassPtsAzimuthsMinus.get(key);
     }
 
     /**
@@ -387,8 +390,8 @@ public class SnapUtil {
      */
     public static String getVORText(Coordinate[] coors, String vorConnector,
             String lineType, int numPerLines, boolean isSnapped) {
-        return getVORText(coors, vorConnector, lineType, numPerLines,
-                isSnapped, true, false);
+        return getVORText(coors, vorConnector, lineType, numPerLines, isSnapped,
+                true, false);
     }
 
     /**
@@ -408,10 +411,10 @@ public class SnapUtil {
      * @return VOR text string
      */
     public static String getVORText(Coordinate[] coors, String vorConnector,
-            String lineType, int numPerLines, boolean isSnapped,
-            boolean useJTS, boolean isGfa) {
-        return getVORText(coors, vorConnector, lineType, numPerLines,
-                isSnapped, true, isGfa, null);
+            String lineType, int numPerLines, boolean isSnapped, boolean useJTS,
+            boolean isGfa) {
+        return getVORText(coors, vorConnector, lineType, numPerLines, isSnapped,
+                true, isGfa, null);
     }
 
     /**
@@ -433,8 +436,8 @@ public class SnapUtil {
      * @return VOR text string
      */
     public static String getVORText(Coordinate[] coors, String vorConnector,
-            String lineType, int numPerLines, boolean isSnapped,
-            boolean useJTS, boolean isGfa, String sigmetType) {
+            String lineType, int numPerLines, boolean isSnapped, boolean useJTS,
+            boolean isGfa, String sigmetType) {
 
         if (lineType != null && lineType.startsWith("Line")) {
             coors = reorderLineCoordinates(coors);
@@ -474,8 +477,8 @@ public class SnapUtil {
             if ("OUTL_SIGMET".equals(sigmetType) && (int) distance < 30)
                 distance = 0;
 
-            resultList.add(new VORStation(vorStn.getStid(), azimuth, ""
-                    + (int) distance));
+            resultList.add(new VORStation(vorStn.getStid(), azimuth,
+                    "" + (int) distance));
             treeMap.clear();
         }
 
@@ -490,8 +493,7 @@ public class SnapUtil {
                 vs.setPgenType(GFA_TEXT);
             } else if ("CONV_SIGMET".equals(sigmetType)
                     || "NCON_SIGMET".equals(sigmetType)
-                    || "OUTL_SIGMET".equals(sigmetType)
-                    || "CWA_FORMATTER".equals(sigmetType)) {
+                    || "OUTL_SIGMET".equals(sigmetType)) {
                 vs.setPgenType(sigmetType);
             }
 
@@ -502,9 +504,9 @@ public class SnapUtil {
                     + (((++count) % numPerLines) == 0 ? (vorConnector + "\n")
                             : vorConnector));
         }
-        String resultString = "Area".equals(lineType) ? result.append(first)
-                .toString() : result.substring(0,
-                result.lastIndexOf(vorConnector));
+        String resultString = "Area".equals(lineType)
+                ? result.append(first).toString()
+                : result.substring(0, result.lastIndexOf(vorConnector));
         ;
         return resultString;
     }
@@ -643,7 +645,8 @@ public class SnapUtil {
      */
     public static double getDirection(Coordinate coor1, Coordinate coor2) {
 
-        final double PI = 3.14159265, HALFPI = PI / 2.0, RTD = 180.0 / PI, DTR = PI / 180.0;
+        final double PI = 3.14159265, HALFPI = PI / 2.0, RTD = 180.0 / PI,
+                DTR = PI / 180.0;
 
         double lat1d, lat2d, lon1d = 0.0, lon2d = 0.0;
         double dir, dLon, theta, alpha, val, tang;
@@ -663,8 +666,8 @@ public class SnapUtil {
         } else if (Math.abs(-lat2d - HALFPI) < 0.000001) {
             dir = 0.0F;
         } else {
-            val = (double) (Math.sin(lat1d) * Math.sin(lat2d) + Math.cos(lat1d)
-                    * Math.cos(lat2d) * Math.cos(dLon));
+            val = (double) (Math.sin(lat1d) * Math.sin(lat2d)
+                    + Math.cos(lat1d) * Math.cos(lat2d) * Math.cos(dLon));
 
             if (-1.0 <= val && val <= 1.0) {
                 theta = Math.acos(val);
@@ -715,8 +718,7 @@ public class SnapUtil {
             }
             if ("CONV_SIGMET".equalsIgnoreCase(pgenType)
                     || "NCON_SIGMET".equalsIgnoreCase(pgenType)
-                    || "OUTL_SIGMET".equalsIgnoreCase(pgenType)
-                    || "CWA_FORMATTER".equalsIgnoreCase(pgenType)) {
+                    || "OUTL_SIGMET".equalsIgnoreCase(pgenType)) {
                 return distance + azimuth + " " + name;
             }
             // For GFA - should be (30NNW LGC"), not "30 NNW LGC"
@@ -941,8 +943,8 @@ public class SnapUtil {
          *            : Area or Line:ESOL
          * @return String: VOR text
          */
-        public static String getSnapVORTxt(Coordinate[] coors,
-                String connector, String lineType, boolean useJts, boolean isGfa) {
+        public static String getSnapVORTxt(Coordinate[] coors, String connector,
+                String lineType, boolean useJts, boolean isGfa) {
             String txt = "";
             String pgenType = "-".equals(connector) ? "CONV_SIGMET" : "";// 2010-05-14
                                                                          // work

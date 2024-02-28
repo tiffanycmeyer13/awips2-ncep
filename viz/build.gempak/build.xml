@@ -1,4 +1,5 @@
 <project default="usage" basedir=".">
+    <property name="target.dir" value="/awips2/eclipse" />
     <property name="eclipse.dir" value="/awips2/eclipse" />
     <property name="build.os" value="linux" />
     <property name="build.ws" value="gtk" />
@@ -42,7 +43,7 @@
             <arg value="org.eclipse.ant.core.antRunner" />
             <arg value="-buildfile" />
             <arg value="${pde.dir}/scripts/productBuild/productBuild.xml" />
-            <arg value="-DbaseLocation=${eclipse.dir}" />
+            <arg value="-DbaseLocation=${target.dir}" />
             <arg value="-Dbuilder=${basedir}/gempak" />
             <arg value="-DbuildDirectory=${basedir}/gempak/tmp" />
             <arg value="-Dbase=${basedir}/gempak" />

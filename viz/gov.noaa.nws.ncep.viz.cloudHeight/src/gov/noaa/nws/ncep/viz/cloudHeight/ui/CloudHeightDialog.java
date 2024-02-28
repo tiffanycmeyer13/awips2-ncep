@@ -38,7 +38,7 @@ import gov.noaa.nws.ncep.viz.tools.cursor.NCCursors;
 import gov.noaa.nws.ncep.viz.tools.cursor.NCCursors.CursorRef;
 import si.uom.SI;
 import systems.uom.common.USCustomary;
-import tec.uom.se.unit.MetricPrefix;
+import javax.measure.MetricPrefix;
 
 /**
  * Cloud Height Dialog.

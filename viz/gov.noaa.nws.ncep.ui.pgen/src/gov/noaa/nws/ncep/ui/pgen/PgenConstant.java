@@ -25,6 +25,11 @@ package gov.noaa.nws.ncep.ui.pgen;
  * Mar 13, 2020  76151    tjensen   Added TYPE_TROPICAL_CYCLONE and
  *                                  TYPE_VOLCANIC_ASH
  * Dec 09, 2020  85217    smanoj    Added ADD_NEW_LABEL
+ * Feb 01, 2021  87515    wkwock    Remove CWA
+ *
+ * Aug 17, 2021  93036      omoncayo     PGEN INTL SIGMET:QC Check Attributes
+ * Sep 21, 2021  93036      omoncayo     More QC check:
+ *                                         adding TO option
  *
  * Aug 17, 2021  93036      omoncayo     PGEN INTL SIGMET:QC Check Attributes
  * Sep 21, 2021  93036      omoncayo     More QC check:
@@ -199,10 +204,6 @@ public final class PgenConstant {
     public static final String G2G_BOUND_MARK = "9999";
 
     public static final String SIGMET = "SIGMET";
-
-    public static final String CWA_SIGMET = "CWA_SIGMET";
-
-    public static final String CWA_FORMATTER = "CWA_FORMATTER";
 
     public static final String TYPE_TROPICAL_TROF = "TROPICAL_TROF";
 

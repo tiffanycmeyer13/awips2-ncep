@@ -10,8 +10,8 @@ import javax.measure.quantity.Temperature;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import si.uom.SI;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.quantity.QuantityDimension;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.unit.UnitDimension;
 
 /**
  * Represents a pixel value on a satellite IR image.
@@ -58,7 +58,7 @@ public class NcIRPixel extends AbstractUnit<Temperature> {
 
     @Override
     public Dimension getDimension() {
-        return QuantityDimension.TEMPERATURE;
+        return UnitDimension.TEMPERATURE;
     }
 
 }

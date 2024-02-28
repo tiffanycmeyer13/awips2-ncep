@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.measure.Unit;
-import javax.measure.format.ParserException;
+import javax.measure.format.MeasurementParseException;
 import javax.measure.quantity.Angle;
 
 import org.eclipse.swt.graphics.RGB;
@@ -58,7 +58,7 @@ import gov.noaa.nws.ncep.viz.rsc.plotdata.rsc.Tracer;
 import gov.noaa.nws.ncep.viz.ui.display.NcDisplayMngr;
 import si.uom.NonSI;
 import systems.uom.common.USCustomary;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * <pre>
@@ -97,6 +97,8 @@ import tec.uom.se.format.SimpleUnitFormat;
  *
  * 11/25/2016    R21762      P. Moyer     Implemented dropping of drawable items if their colors have an alpha of 0 (for conditional parameter coloring)
  * Mar 8, 2019   7581        tgurney      Fix NPE in createOneVector + Cleanup
+ * Aug 24, 2021  93101       smanoj       Added nctaf related element Position and Symbol Type.
+ * 
  * </pre>
  */
 
@@ -150,6 +152,7 @@ public class NcPlotImageCreator {
         SC,
         // special wind barb position -- plots at MC
         WD,
+        LM,
         // ----
         INVALID
     }
@@ -389,7 +392,7 @@ public class NcPlotImageCreator {
     }
 
     public static enum PlotSymbolType {
-        WSYM, SKYC, ICSY, TBSY, PTSY, MARK, INVALID
+        WSYM, SKYC, ICSY, TBSY, PTSY, MARK, TSKC, INVALID
     }
 
     private PlotSymbolType getPlotSymbolType(String symbolGEMPAKName) {
@@ -736,7 +739,7 @@ public class NcPlotImageCreator {
 
                 }
 
-            } catch (ParserException e) {
+            } catch (MeasurementParseException e) {
                 statusHandler
                         .warn("Failed to parse plot unit from string (value: "
                                 + Objects.toString(plotUnit) + ")", e);

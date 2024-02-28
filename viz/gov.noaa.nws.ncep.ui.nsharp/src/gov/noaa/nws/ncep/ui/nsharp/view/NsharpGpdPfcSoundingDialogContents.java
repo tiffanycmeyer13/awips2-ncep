@@ -26,7 +26,7 @@ import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingStnInfoCollection;
 import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingTimeLines;
 import gov.noaa.nws.ncep.ui.nsharp.NsharpConstants;
 import gov.noaa.nws.ncep.ui.nsharp.NsharpStationInfo;
-import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResource;
+import gov.noaa.nws.ncep.ui.nsharp.display.map.AbstractNsharpMapResource;
 
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
@@ -45,6 +45,9 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 //import gov.noaa.nws.ncep.viz.rsc.gpd.query.GpdQuery;
+
+import com.raytheon.viz.ui.EditorUtil;
+import com.raytheon.viz.ui.editor.AbstractEditor;
 
 public class NsharpGpdPfcSoundingDialogContents {
     private Composite parent;
@@ -193,8 +196,9 @@ public class NsharpGpdPfcSoundingDialogContents {
     private void handleSndTimeSelection() {
         String selectedSndTime = null;
         if (sndTimeList.getSelectionCount() > 0) {
-            NsharpMapResource nsharpMapResource = NsharpMapResource
-                    .getOrCreateNsharpMapResource();
+            AbstractEditor mapEditor = ((AbstractEditor) EditorUtil.getActiveEditor());
+            AbstractNsharpMapResource nsharpMapResource= AbstractNsharpMapResource.getMapResource(mapEditor);
+            nsharpMapResource.getOrCreateNsharpMapResource();
             nsharpMapResource.setPoints(null);
             selectedTimeList.clear();
             ldDia.startWaitCursor();
@@ -227,7 +231,7 @@ public class NsharpGpdPfcSoundingDialogContents {
             ldDia.stopWaitCursor();
 
             nsharpMapResource.setPoints(stnPoints);
-            NsharpMapResource.bringMapEditorToTop();
+            nsharpMapResource.bringMapEditorToTop();
         }
     }
 

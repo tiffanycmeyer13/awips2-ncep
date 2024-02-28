@@ -1,7 +1,7 @@
 
 /*
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenMultiPointDrawingTool
- * 
+ *
  * 5 December 2008
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -16,66 +16,77 @@ import java.util.Calendar;
 import org.eclipse.ui.PlatformUI;
 import org.geotools.referencing.GeodeticCalculator;
 import org.geotools.referencing.datum.DefaultEllipsoid;
-
-import com.raytheon.uf.viz.core.rsc.IInputHandler;
 import org.locationtech.jts.geom.Coordinate;
 
-import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
+import com.raytheon.uf.viz.core.rsc.IInputHandler;
+
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.display.IText.DisplayType;
-import gov.noaa.nws.ncep.ui.pgen.display.IText.FontStyle;
-import gov.noaa.nws.ncep.ui.pgen.display.IText.TextJustification;
-import gov.noaa.nws.ncep.ui.pgen.display.IText.TextRotation;
-import gov.noaa.nws.ncep.ui.pgen.elements.*;
-import gov.noaa.nws.ncep.ui.pgen.display.IAttribute;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrDlgFactory;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.AttrSettings;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.FrontAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.PgenDistanceDlg;
+import gov.noaa.nws.ncep.ui.pgen.attrdialog.PgenDistanceDlg.DistanceDisplayProperties;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.SigmetAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.SigmetCommAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.TrackAttrDlg;
 import gov.noaa.nws.ncep.ui.pgen.attrdialog.TrackExtrapPointInfoDlg;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.PgenDistanceDlg.DistanceDisplayProperties;
-import gov.noaa.nws.ncep.ui.pgen.attrdialog.vaadialog.*;
-import gov.noaa.nws.ncep.ui.pgen.sigmet.*;
+import gov.noaa.nws.ncep.ui.pgen.attrdialog.vaadialog.VaaCloudDlg;
+import gov.noaa.nws.ncep.ui.pgen.display.IText.DisplayType;
+import gov.noaa.nws.ncep.ui.pgen.display.IText.FontStyle;
+import gov.noaa.nws.ncep.ui.pgen.display.IText.TextJustification;
+import gov.noaa.nws.ncep.ui.pgen.display.IText.TextRotation;
+import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
+import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
+import gov.noaa.nws.ncep.ui.pgen.elements.DrawableElementFactory;
+import gov.noaa.nws.ncep.ui.pgen.elements.DrawableType;
+import gov.noaa.nws.ncep.ui.pgen.elements.Line;
+import gov.noaa.nws.ncep.ui.pgen.elements.MultiPointElement;
+import gov.noaa.nws.ncep.ui.pgen.elements.Text;
+import gov.noaa.nws.ncep.ui.pgen.elements.Track;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.CcfpInfo;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.ConvSigmet;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.Sigmet;
+import gov.noaa.nws.ncep.ui.pgen.sigmet.VolcanoAshCloud;
 import gov.noaa.nws.ncep.viz.common.LocatorUtil;
 
 /**
  * Implements a modal map tool for PGEN multiple points drawing.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 02/09                    B. Yin      Initial Creation.
- * 04/09        72          S. Gilbert  Modified to use PgenSession and PgenCommands
- * 04/24        99          G. Hull     Use NmapUiUtils
- * 05/09        #42         S. Gilbert  Added pgenType and pgenCategory
- * 05/09        #79         B. Yin      Extends from AbstractPgenDrawingTool
- * 10/09        #160        G. Zhang    Added Sigmet support
- * 01/10        #182        G. Zhang    Added ConvSigmet support
- * 04/10        #165        G. Zhang    Added VAA support
- * 02/11        ?           B. Yin      Put Front with labels in DECollection 
- * 02/11        #318        S. Gilbert  Added option of displaying distance from first point
- *                                      while drawing.
- * 01/12        597         S. Gurung   Removed Snapping for ConvSigmet
- * 02/12        TTR456      Q.Zhou      Added parameters to setTrack()
- * 02/12        #597        S. Gurung   Removed snapping for NCON_SIGMET. 
- * 05/12        #708        J. Wu       Use data frame time for Track element
- * 08/13        #1025       J. Wu       Populate VOR data for "Isolated" CONV_SIGMET.
- * 12/12/2016   17469       W. Kwock    Added CWA Formatter
- * 
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 02/09                  B. Yin      Initial Creation.
+ * 04/09         72       S. Gilbert  Modified to use PgenSession and
+ *                                    PgenCommands
+ * 04/24         99       G. Hull     Use NmapUiUtils
+ * 05/09         42       S. Gilbert  Added pgenType and pgenCategory
+ * 05/09         79       B. Yin      Extends from AbstractPgenDrawingTool
+ * 10/09         160      G. Zhang    Added Sigmet support
+ * 01/10         182      G. Zhang    Added ConvSigmet support
+ * 04/10         165      G. Zhang    Added VAA support
+ * 02/11         ?        B. Yin      Put Front with labels in DECollection
+ * 02/11         318      S. Gilbert  Added option of displaying distance from
+ *                                    first point while drawing.
+ * 01/12         597      S. Gurung   Removed Snapping for ConvSigmet
+ * 02/12         TTR456   Q.Zhou      Added parameters to setTrack()
+ * 02/12         597      S. Gurung   Removed snapping for NCON_SIGMET.
+ * 05/12         708      J. Wu       Use data frame time for Track element
+ * 08/13         1025     J. Wu       Populate VOR data for "Isolated"
+ *                                    CONV_SIGMET.
+ * Dec 12, 2016  17469    W. Kwock    Added CWA Formatter
+ * 02/01/2021   87515       wkwock      Remove CWA
+ * Dec 02, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author B. Yin
  */
 
 public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
-
-    // private final static org.apache.log4j.Logger log =
-    // org.apache.log4j.Logger.getLogger(PgenMultiPointDrawingTool.class);
 
     private TrackExtrapPointInfoDlg trackExtrapPointInfoDlg;
 
@@ -85,37 +96,33 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.raytheon.viz.ui.tools.AbstractModalTool#deactivateTool()
-     */
     @Override
     public void deactivateTool() {
 
         super.deactivateTool();
 
-        if (trackExtrapPointInfoDlg != null)
+        if (trackExtrapPointInfoDlg != null) {
             trackExtrapPointInfoDlg.close();
+        }
 
         if (mouseHandler instanceof PgenMultiPointDrawingHandler) {
             PgenMultiPointDrawingHandler mph = (PgenMultiPointDrawingHandler) mouseHandler;
-            if (mph != null)
+            if (mph != null) {
                 mph.clearPoints();
+            }
         }
     }
 
     /**
      * Returns the current mouse handler.
-     * 
+     *
      * @return
      */
+    @Override
     public IInputHandler getMouseHandler() {
 
         if (this.mouseHandler == null) {
-
             this.mouseHandler = new PgenMultiPointDrawingHandler();
-
         }
 
         return this.mouseHandler;
@@ -123,7 +130,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
 
     /**
      * Implements input handler for mouse events.
-     * 
+     *
      * @author bingfan
      *
      */
@@ -133,7 +140,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
         /**
          * Points of the new element.
          */
-        protected ArrayList<Coordinate> points = new ArrayList<Coordinate>();
+        protected ArrayList<Coordinate> points = new ArrayList<>();
 
         /**
          * Current element.
@@ -151,33 +158,30 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
          */
         boolean ccfpTxtFlag = false;
 
-        private GeodeticCalculator gc = new GeodeticCalculator(
+        private final GeodeticCalculator gc = new GeodeticCalculator(
                 DefaultEllipsoid.WGS84);
 
-        private DistanceDisplayProperties distProps = PgenDistanceDlg
+        private final DistanceDisplayProperties distProps = PgenDistanceDlg
                 .getInstance(PlatformUI.getWorkbench()
                         .getActiveWorkbenchWindow().getShell())
                 .getDistanceProperties();
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseDown(int,
-         * int, int)
-         */
         @Override
         public boolean handleMouseDown(int anX, int aY, int button) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(anX, aY);
-            if (loc == null || shiftDown)
+            if (loc == null || shiftDown) {
                 return false;
+            }
 
             if (button == 1) {
-                if ("SIGMET".equalsIgnoreCase(pgenCategory))
+                if ("SIGMET".equalsIgnoreCase(pgenCategory)) {
                     return handleSigmetMouseDown(loc);
+                }
 
                 points.add(loc);
 
@@ -213,21 +217,13 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                 }
 
                 return true;
-
             } else if (button == 3) {
-
                 return true;
-
             } else if (button == 2) {
-
                 return true;
-
             } else {
-
                 return false;
-
             }
-
         }
 
         /*
@@ -235,19 +231,19 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
          */
         @Override
         public boolean handleMouseUp(int x, int y, int button) {
-            if (!drawingLayer.isEditable() || shiftDown)
+            if (!drawingLayers.isEditable() || shiftDown) {
                 return false;
+            }
 
             if (button == 3) {
-                if (points.size() == 0 && !PgenConstant.CWA_FORMATTER
-                        .equalsIgnoreCase(pgenType)) {
+                if (points.size() == 0) {
                     closeAttrDlg(attrDlg, pgenType);
                     attrDlg = null;
                     PgenUtil.setSelectingMode();
 
                 } else if (points.size() < 2) {
 
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
                     points.clear();
 
                     mapEditor.refresh();
@@ -256,26 +252,13 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                     // Use pgenType value to decide if the DrawableType should
                     // be TRACK or LINE
                     DrawableType drawableType = getDrawableType(pgenType);
-                    // log.debug("PgenMultiPointDrawingTool, before call
-                    // def.create, drawableType=" + drawableType + ",
-                    // pgenType="+pgenType);
-
-                    /*
-                     * if(drawableType == DrawableType.CONV_SIGMET &&
-                     * ("NCON_SIGMET".equals(pgenType)))
-                     * //"CONV_SIGMET".equals(pgenType)|| points =
-                     * SnapUtil.getSnapWithStation(points,
-                     * SnapUtil.VOR_STATION_LIST, 10, 8);
-                     */
 
                     // create a new DrawableElement.
-                    elem = def.create(drawableType, (IAttribute) attrDlg,
-                            pgenCategory, pgenType, points,
-                            drawingLayer.getActiveLayer());
+                    elem = def.create(drawableType, attrDlg, pgenCategory,
+                            pgenType, points, drawingLayers.getActiveLayer());
 
-                    attrDlg.setDrawableElement((DrawableElement) elem);
-                    AttrSettings.getInstance()
-                            .setSettings((DrawableElement) elem);
+                    attrDlg.setDrawableElement(elem);
+                    AttrSettings.getInstance().setSettings(elem);
 
                     if ("CCFP_SIGMET".equals(pgenType)) {// avoid 2 Sigmet
                                                          // elements issue
@@ -290,7 +273,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                         dec.setPgenCategory(pgenCategory);
                         dec.setPgenType(pgenType);
                         dec.addElement(elem);
-                        drawingLayer.addElement(dec);
+                        drawingLayers.addElement(dec);
 
                         PgenUtil.setDrawingTextMode(true,
                                 ((FrontAttrDlg) attrDlg).useFrontColor(), "",
@@ -298,7 +281,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                         elem = null;
                     } else {
                         // add the product to PGEN resource
-                        drawingLayer.addElement(elem);
+                        drawingLayers.addElement(elem);
                     }
 
                     if (isTrackElement(drawableType)) {
@@ -306,10 +289,11 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                                 (Track) elem);
                     }
 
-                    drawingLayer.removeGhostLine();
+                    drawingLayers.removeGhostLine();
 
-                    if (!ccfpTxtFlag)
+                    if (!ccfpTxtFlag) {
                         points.clear();
+                    }
 
                     mapEditor.refresh();
 
@@ -323,39 +307,33 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
 
         @Override
         public boolean handleMouseDownMove(int aX, int aY, int button) {
-            if (!isResourceEditable() || shiftDown)
+            if (!isResourceEditable() || shiftDown) {
                 return false;
-            else
+            } else {
                 return true;
+            }
         }
 
         private boolean handleSigmetMouseDown(Coordinate loc) {
 
-            if ("CCFP_SIGMET".equals(pgenType) && ccfpTxtFlag)
+            if ("CCFP_SIGMET".equals(pgenType) && ccfpTxtFlag) {
                 return handleCcfpMouseDown(loc);
+            }
 
             points.add(loc);
 
             if ((getSigmetLineType(attrDlg).contains("Text")) || "Isolated"
                     .equalsIgnoreCase(getSigmetLineType(attrDlg))) {
 
-                /*
-                 * if(getDrawableType(pgenType)==DrawableType.CONV_SIGMET &&
-                 * ("NCON_SIGMET".equals(pgenType)))
-                 * //"CONV_SIGMET".equals(pgenType)|| points =
-                 * SnapUtil.getSnapWithStation(points,
-                 * SnapUtil.VOR_STATION_LIST, 10, 8);
-                 */
+                elem = def.create(getDrawableType(pgenType), attrDlg,
+                        pgenCategory, pgenType, points,
+                        drawingLayers.getActiveLayer());
 
-                elem = def.create(getDrawableType(pgenType),
-                        (IAttribute) attrDlg, pgenCategory, pgenType, points,
-                        drawingLayer.getActiveLayer());
+                attrDlg.setDrawableElement(elem);
+                AttrSettings.getInstance().setSettings(elem);
 
-                attrDlg.setDrawableElement((DrawableElement) elem);
-                AttrSettings.getInstance().setSettings((DrawableElement) elem);
-
-                drawingLayer.addElement(elem);
-                drawingLayer.removeGhostLine();
+                drawingLayers.addElement(elem);
+                drawingLayers.removeGhostLine();
                 points.clear();
                 mapEditor.refresh();
             }
@@ -363,24 +341,24 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
         }
 
         private DrawableType getDrawableType(String pgenTypeString) {
-            if (Track.TRACK_PGEN_TYPE.equalsIgnoreCase(pgenTypeString))
+            if (Track.TRACK_PGEN_TYPE.equalsIgnoreCase(pgenTypeString)) {
                 return DrawableType.TRACK;
-            else if (pgenTypeString.equalsIgnoreCase("jet"))
+            } else if (pgenTypeString.equalsIgnoreCase("jet")) {
                 return DrawableType.JET;
-            else if (Sigmet.SIGMET_PGEN_TYPE.equalsIgnoreCase(pgenTypeString))
+            } else if (Sigmet.SIGMET_PGEN_TYPE
+                    .equalsIgnoreCase(pgenTypeString)) {
                 return DrawableType.SIGMET;
-            else if (ConvSigmet.SIGMET_PGEN_TYPE
+            } else if (ConvSigmet.SIGMET_PGEN_TYPE
                     .equalsIgnoreCase(pgenTypeString)
                     || "NCON_SIGMET".equalsIgnoreCase(pgenTypeString)
                     || "AIRM_SIGMET".equalsIgnoreCase(pgenTypeString)
                     || "OUTL_SIGMET".equalsIgnoreCase(pgenTypeString)
-                    || "CCFP_SIGMET".equalsIgnoreCase(pgenTypeString)
-                    || PgenConstant.CWA_FORMATTER
-                            .equalsIgnoreCase(pgenTypeString))
+                    || "CCFP_SIGMET".equalsIgnoreCase(pgenTypeString)) {
                 return DrawableType.CONV_SIGMET;
-            else if (VolcanoAshCloud.SIGMET_PGEN_TYPE
-                    .equalsIgnoreCase(pgenTypeString))
+            } else if (VolcanoAshCloud.SIGMET_PGEN_TYPE
+                    .equalsIgnoreCase(pgenTypeString)) {
                 return DrawableType.VAA_CLOUD;
+            }
             return DrawableType.LINE;
         }
 
@@ -390,26 +368,30 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                 return ((SigmetAttrDlg) attrDlg).getLineType();
             } else {
 
-                if (pgenType.equalsIgnoreCase("CCFP_SIGMET"))
+                if (pgenType.equalsIgnoreCase("CCFP_SIGMET")) {
                     return ((gov.noaa.nws.ncep.ui.pgen.attrdialog.vaadialog.CcfpAttrDlg) attrDlg)
                             .getLineType();
+                }
 
-                if (pgenType.equalsIgnoreCase("VACL_SIGMET"))
+                if (pgenType.equalsIgnoreCase("VACL_SIGMET")) {
                     return ((VaaCloudDlg) attrDlg).getLineType();
+                }
                 return ((SigmetCommAttrDlg) attrDlg).getLineType();
             }
         }
 
         private boolean isTrackElement(DrawableType drawableType) {
-            if (drawableType == DrawableType.TRACK)
+            if (drawableType == DrawableType.TRACK) {
                 return true;
+            }
             return false;
         }
 
         private void closeAttrDlg(AttrDlg attrDlgObject,
                 String pgenTypeString) {
-            if (attrDlgObject == null)
+            if (attrDlgObject == null) {
                 return;
+            }
             if (DrawableType.TRACK == getDrawableType(pgenTypeString)) {
                 TrackAttrDlg tempTrackAttrDlg = (TrackAttrDlg) attrDlgObject;
                 closeTrackExtrapPointInfoDlg(
@@ -421,43 +403,40 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
 
         private void closeTrackExtrapPointInfoDlg(
                 TrackExtrapPointInfoDlg dlgObject) {
-            if (dlgObject != null)
+            if (dlgObject != null) {
                 dlgObject.close();
+            }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.raytheon.viz.ui.input.IInputHandler#handleMouseMove(int,
-         * int)
-         */
         @Override
         public boolean handleMouseMove(int x, int y) {
-            if (!isResourceEditable())
+            if (!isResourceEditable()) {
                 return false;
+            }
 
             // Check if mouse is in geographic extent
             Coordinate loc = mapEditor.translateClick(x, y);
-            if (loc == null)
+            if (loc == null) {
                 return false;
+            }
 
             DECollection ghost = new DECollection();
 
-            if ("SIGMET".equalsIgnoreCase(pgenCategory))
+            if ("SIGMET".equalsIgnoreCase(pgenCategory)) {
                 return handleSigmetMouseMove(loc);
+            }
 
             // create the ghost element and put it in the drawing layer
             AbstractDrawableComponent ghostline = def.create(DrawableType.LINE,
-                    (IAttribute) attrDlg, pgenCategory, pgenType, points,
-                    drawingLayer.getActiveLayer());
+                    attrDlg, pgenCategory, pgenType, points,
+                    drawingLayers.getActiveLayer());
 
             if (points != null && points.size() >= 1) {
 
-                ArrayList<Coordinate> ghostPts = new ArrayList<Coordinate>(
-                        points);
+                ArrayList<Coordinate> ghostPts = new ArrayList<>(points);
                 ghostPts.add(loc);
                 Line ln = (Line) ghostline;
-                ln.setLinePoints(new ArrayList<Coordinate>(ghostPts));
+                ln.setLinePoints(new ArrayList<>(ghostPts));
                 ghost.add(ghostline);
 
                 /*
@@ -469,8 +448,9 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                             points.get(0).y);
 
                     double azimuth = gc.getAzimuth();
-                    if (azimuth < 0)
+                    if (azimuth < 0) {
                         azimuth += 360.0;
+                    }
                     double distanceInMeter = gc.getOrthodromicDistance();
                     String distdir = createDistanceString(distanceInMeter,
                             azimuth, distProps);
@@ -482,7 +462,7 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                             "TEXT", "General Text"));
                 }
 
-                drawingLayer.setGhostLine(ghost);
+                drawingLayers.setGhostLine(ghost);
                 mapEditor.refresh();
 
             }
@@ -502,7 +482,6 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
                     distProps.distanceUnits.toUpperCase());
 
             sb.append(distVal);
-            // sb.append( distProps.distanceUnits.toLowerCase() );
             sb.append(' ');
 
             if (distProps.directionUnits
@@ -518,25 +497,24 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
 
         private boolean handleSigmetMouseMove(Coordinate loc) {
 
-            if (ccfpTxtFlag)
+            if (ccfpTxtFlag) {
                 return handleCcfpMouseMove(loc);
+            }
 
             AbstractDrawableComponent ghost = def.create(
-                    getDrawableType(pgenType), (IAttribute) attrDlg,
-                    pgenCategory, pgenType, points,
-                    drawingLayer.getActiveLayer());
+                    getDrawableType(pgenType), attrDlg, pgenCategory, pgenType,
+                    points, drawingLayers.getActiveLayer());
 
             if ("Isolated".equalsIgnoreCase(getSigmetLineType(attrDlg))
                     || (getSigmetLineType(attrDlg).contains("Text"))
                     || points != null && points.size() >= 1) {
 
-                ArrayList<Coordinate> ghostPts = new ArrayList<Coordinate>(
-                        points);
+                ArrayList<Coordinate> ghostPts = new ArrayList<>(points);
                 ghostPts.add(loc);
                 MultiPointElement ln = (MultiPointElement) ghost;
-                ln.setLinePoints(new ArrayList<Coordinate>(ghostPts));
+                ln.setLinePoints(new ArrayList<>(ghostPts));
 
-                drawingLayer.setGhostLine(ghost);
+                drawingLayers.setGhostLine(ghost);
                 mapEditor.refresh();
             }
 
@@ -550,18 +528,19 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
         private boolean handleCcfpMouseMove(Coordinate loc) {
 
             ConvSigmet ccfp = (ConvSigmet) def.create(getDrawableType(pgenType),
-                    (IAttribute) attrDlg, pgenCategory, pgenType, points,
-                    drawingLayer.getActiveLayer());
+                    attrDlg, pgenCategory, pgenType, points,
+                    drawingLayers.getActiveLayer());
 
             ccfp.setEditableAttrFromLine("CCFP_SIGMET");
 
-            double[] ad = CcfpInfo.getCcfpTxtAziDir(loc, (Sigmet) ccfp);
-            if (ad == null)
+            double[] ad = CcfpInfo.getCcfpTxtAziDir(loc, ccfp);
+            if (ad == null) {
                 return false;
+            }
 
             ccfp.setEditableAttrFreeText("" + ad[0] + ":::" + ad[1]);
 
-            drawingLayer.setGhostLine(ccfp);
+            drawingLayers.setGhostLine(ccfp);
 
             mapEditor.refresh();
             return false;
@@ -572,26 +551,27 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
             ((ConvSigmet) elem).setEditableAttrFromLine("CCFP_SIGMET");
 
             double[] ad = CcfpInfo.getCcfpTxtAziDir(loc, (Sigmet) elem);
-            if (ad == null)
+            if (ad == null) {
                 return false;
+            }
 
             ((ConvSigmet) elem)
                     .setEditableAttrFreeText("" + ad[0] + ":::" + ad[1]);
 
-            elem = def.create(getDrawableType(pgenType), (IAttribute) attrDlg,
-                    pgenCategory, pgenType, points,
-                    drawingLayer.getActiveLayer());
+            elem = def.create(getDrawableType(pgenType), attrDlg, pgenCategory,
+                    pgenType, points, drawingLayers.getActiveLayer());
 
             double[] ad2 = CcfpInfo.getCcfpTxtAziDir(loc, (Sigmet) elem);
-            if (ad2 == null)
+            if (ad2 == null) {
                 return true;
+            }
 
             ((ConvSigmet) elem)
                     .setEditableAttrFreeText("" + ad2[0] + ":::" + ad2[1]);
             ((ConvSigmet) elem).setEditableAttrFromLine("CCFP_SIGMET");
 
-            drawingLayer.addElement(elem);
-            drawingLayer.removeGhostLine();
+            drawingLayers.addElement(elem);
+            drawingLayers.removeGhostLine();
             points.clear();
             mapEditor.refresh();
 
@@ -604,13 +584,14 @@ public class PgenMultiPointDrawingTool extends AbstractPgenDrawingTool {
     private void displayTrackExtrapPointInfoDlg(TrackAttrDlg trackAttrDlgObject,
             Track trackObject) {
 
-        if (trackAttrDlgObject == null)
+        if (trackAttrDlgObject == null) {
             return;
+        }
         TrackExtrapPointInfoDlg extrapPointInfoDlg = trackAttrDlgObject
                 .getTrackExtrapPointInfoDlg();
-        if (extrapPointInfoDlg != null)
+        if (extrapPointInfoDlg != null) {
             extrapPointInfoDlg.close();
-        else {
+        } else {
             extrapPointInfoDlg = (TrackExtrapPointInfoDlg) AttrDlgFactory
                     .createAttrDlg(Track.TRACK_INFO_DLG_CATEGORY_NAME, pgenType,
                             PlatformUI.getWorkbench().getActiveWorkbenchWindow()

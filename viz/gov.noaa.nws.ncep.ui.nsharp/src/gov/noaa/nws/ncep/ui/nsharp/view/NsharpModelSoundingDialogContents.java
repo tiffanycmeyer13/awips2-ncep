@@ -1,4 +1,61 @@
 /**
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
+ *
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
+ *
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
+ *
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
+package gov.noaa.nws.ncep.ui.nsharp.view;
+
+import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigManager;
+import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigStore;
+import gov.noaa.nws.ncep.ui.nsharp.NsharpConstants;
+import gov.noaa.nws.ncep.ui.nsharp.NsharpGraphProperty;
+import gov.noaa.nws.ncep.ui.nsharp.SurfaceStationPointData;
+import gov.noaa.nws.ncep.ui.nsharp.display.NsharpEditor;
+import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpModelSoundingQuery;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Text;
+
+import com.raytheon.uf.common.dataplugin.grid.GridInfoConstants;
+import com.raytheon.uf.common.dataplugin.grid.GridInfoRecord;
+import com.raytheon.uf.common.dataquery.requests.DbQueryRequest;
+import com.raytheon.uf.common.dataquery.responses.DbQueryResponse;
+import com.raytheon.uf.common.status.IUFStatusHandler;
+import com.raytheon.uf.common.status.UFStatus;
+import com.raytheon.uf.common.status.UFStatus.Priority;
+import com.raytheon.uf.viz.core.exception.VizException;
+import com.raytheon.uf.viz.core.requests.ThriftClient;
+import org.locationtech.jts.geom.Coordinate;
+
+/**
  * 
  * gov.noaa.nws.ncep.ui.nsharp.view.ModelSoundingDialogContents
  * 
@@ -10,286 +67,60 @@
  * 
  * Date         Ticket#     Engineer    Description
  * ----------   ---------   ----------  -----------
- * 01/2011      229         Chin Chen   Initial coding
- * 03/09/2015   RM#6674     Chin Chen   Support model sounding query data interpolation and nearest point option                       
- * Aug 05, 2015 4486        rjpeter     Changed Timestamp to Date.
- * 07202015     RM#9173     Chin Chen   use NcSoundingQuery.genericSoundingDataQuery() to query grid model sounding data
- * 08/24/2015   RM#10188    Chin Chen   Model selection upgrades - use grid resource definition name for model type display
- * 09/28/2015   RM#10295    Chin Chen   Let sounding data query run in its own thread to avoid gui locked out during load
- * 04/05/2016   RM#10435    rjpeter     Removed Inventory usage.
+ * 01/2011       229         Chin Chen   Initial coding
+ * 03/09/2015    RM#6674     Chin Chen   Support model sounding query data 
+ *                                       interpolation and nearest point option
+ * Aug 05,2015   4486        rjpeter     Changed Timestamp to Date.
+ * 07202015      RM#9173     Chin Chen   use NcSoundingQuery.genericSoundingDataQuery()
+ *                                       to query grid model sounding data
+ * 08/24/2015    RM#10188    Chin Chen   Model selection upgrades - use grid resource 
+ *                                       definition name for model type display
+ * 09/28/2015    RM#10295    Chin Chen   Let sounding data query run in its own thread
+ *                                       to avoid gui locked out during load
+ * 04/05/2016    RM#10435    rjpeter     Removed Inventory usage.
+ * 04/02/2020    73571       smanoj      NSHARP D2D port refactor
+ * 07/16/2020    80425       smanoj      Added queryLimit for NSHARP time queries.
+ * 
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
  */
-package gov.noaa.nws.ncep.ui.nsharp.view;
+public class NsharpModelSoundingDialogContents
+        extends AbstractMdlSoundingDlgContents {
 
-import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingLayer;
-import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingProfile.MdlSndType;
-import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingTimeLines;
-import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigManager;
-import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigStore;
-import gov.noaa.nws.ncep.ui.nsharp.NsharpConstants;
-import gov.noaa.nws.ncep.ui.nsharp.NsharpGraphProperty;
-import gov.noaa.nws.ncep.ui.nsharp.SurfaceStationPointData;
-import gov.noaa.nws.ncep.ui.nsharp.display.NsharpEditor;
-import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResource;
-import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpModelSoundingQuery;
-import gov.noaa.nws.ncep.viz.resources.manager.ResourceCategory;
-import gov.noaa.nws.ncep.viz.resources.manager.ResourceDefinition;
-import gov.noaa.nws.ncep.viz.resources.manager.ResourceDefnsMngr;
-import gov.noaa.nws.ncep.viz.soundingrequest.NcSoundingQuery;
-
-import java.text.DateFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
-
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Text;
-
-import com.raytheon.uf.common.dataplugin.grid.GridConstants;
-import com.raytheon.uf.common.dataplugin.grid.GridInfoConstants;
-import com.raytheon.uf.common.dataplugin.grid.GridInfoRecord;
-import com.raytheon.uf.common.dataplugin.grid.GridRecord;
-import com.raytheon.uf.common.dataquery.requests.DbQueryRequest;
-import com.raytheon.uf.common.dataquery.requests.RequestConstraint;
-import com.raytheon.uf.common.dataquery.responses.DbQueryResponse;
-import com.raytheon.uf.common.status.IUFStatusHandler;
-import com.raytheon.uf.common.status.UFStatus;
-import com.raytheon.uf.common.status.UFStatus.Priority;
-import com.raytheon.uf.viz.core.exception.VizException;
-import com.raytheon.uf.viz.core.requests.ThriftClient;
-import org.locationtech.jts.geom.Coordinate;
-
-public class NsharpModelSoundingDialogContents {
-    // Status handling
     private static final IUFStatusHandler statusHandler = UFStatus
             .getHandler(NsharpModelSoundingDialogContents.class);
 
-    private final Composite parent;
+    private Group availableFileGp, sndTimeListGp;
+
+    private Button timeBtn;
+
+    private boolean timeLimit = false;
 
     private org.eclipse.swt.widgets.List modelTypeRscDefNameList = null,
             availableFileList = null, sndTimeList = null;
 
-    // timeLineToFileMap maps time line (rangeStart time in sndTimeList) to
-    // available file (reftime in availableFileList)
-    private final Map<String, String> timeLineToFileMap = new HashMap<>();
-
-    // soundingLysLstMap maps "lat;lon timeline" string to its queried sounding
-    // layer list
-    private final Map<String, List<NcSoundingLayer>> soundingLysLstMap = new HashMap<>();
-
-    private Group modelTypeGp, bottomGp, availableFileGp, sndTimeListGp, topGp,
-            locationMainGp;
-
-    private Button timeBtn, latlonBtn, stationBtn, loadBtn;
-
-    private Text locationText;
-
-    private Label locationLbl;
-
-    private boolean timeLimit = false;
-
-    private final NsharpLoadDialog ldDia;
-
-    private final Font newFont;
+    private static final String SND_TIMELINE_NOT_AVAIL_STRING = "No Sounding Time for Nsharp";
 
     private List<String> selectedFileList = new ArrayList<>();
 
     private List<String> selectedTimeList = new ArrayList<>();
 
-    private float lat, lon;
-
-    private String stnStr = "";
-
-    private final String GOOD_LATLON_STR = " A good input looked like this:\n 38.95;-77.45 or 38.95,-77.45";
-
-    private final String GOOD_STN_STR = " A good input looked like this:\n GAI or gai";
-
-    private final int MAX_LOCATION_TEXT = 15;
-
-    private String selectedModelType = ""; // used for query to database
-
-    private String selectedRscDefName = ""; // use for display on GUI
-
-    private static Map<String, String> gridModelToRscDefNameMap = new HashMap<>();
-
-    private static Map<String, String> rscDefNameToGridModelMap = new HashMap<>();
-
-    private static final String SND_TIMELINE_NOT_AVAIL_STRING = "No Sounding Time for Nsharp";
-
-    public enum LocationType {
-        LATLON, STATION
-    }
-
-    private LocationType currentLocType = LocationType.LATLON;
-
-    public LocationType getCurrentLocType() {
-        return currentLocType;
-    }
-
-    public Text getLocationText() {
-        return locationText;
-    }
+    // For NSHARP in D2D queryLimit is set to the number of Frames in the
+    // D2D Display, but for NCP, pass in 0 and then ignore the checks in
+    // NsharpModelSoundingQuery.
+    private int queryLimit = 0;
 
     public NsharpModelSoundingDialogContents(Composite parent) {
-        this.parent = parent;
+        super(parent);
         ldDia = NsharpLoadDialog.getAccess();
         newFont = ldDia.getNewFont();
         try {
             createModelTypeToRscDefNameMapping();
         } catch (VizException e) {
-            statusHandler
-                    .handle(Priority.ERROR,
-                            "NsharpModelSoundingDialogContents: exception while createModelTypeToRscDefNameMapping.",
-                            e);
-        }
-    }
-
-    private void createMDLAvailableFileList() {
-        if (sndTimeList != null) {
-            sndTimeList.removeAll();
-        }
-        if (availableFileList != null) {
-            availableFileList.removeAll();
-        }
-        ldDia.startWaitCursor();
-
-        final String timeField = "dataTime.refTime";
-        DbQueryRequest dbQuery = new DbQueryRequest();
-        dbQuery.setEntityClass(GridRecord.class);
-        dbQuery.setDistinct(true);
-        dbQuery.addConstraint(GridConstants.DATASET_ID, new RequestConstraint(
-                selectedModelType));
-        dbQuery.addRequestField(timeField);
-
-        try {
-            DbQueryResponse response = (DbQueryResponse) ThriftClient
-                    .sendRequest(dbQuery);
-            Date[] reftimes = response.getFieldObjects(timeField, Date.class);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH");
-            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-            // format and dup elim
-            Set<String> formattedTimesSet = new HashSet<>(reftimes.length, 1);
-            for (Date reftime : reftimes) {
-                formattedTimesSet.add(sdf.format(reftime));
-            }
-
-            // sort times
-            List<String> formattedTimesList = new ArrayList<>(formattedTimesSet);
-            Collections.sort(formattedTimesList,
-                    Collections.reverseOrder(String.CASE_INSENSITIVE_ORDER));
-            String[] times = formattedTimesList.toArray(new String[0]);
-            availableFileList.setItems(times);
-        } catch (VizException e) {
-            statusHandler.error("Exception occurred looking up times for "
-                    + selectedModelType, e);
-        }
-
-        ldDia.stopWaitCursor();
-    }
-
-    private void createMDLSndTimeList(List<String> selectedFlLst) {
-        if (selectedFlLst.size() <= 0) {
-            return;
-        }
-        if (sndTimeList != null) {
-            sndTimeList.removeAll();
-        }
-        if (timeLineToFileMap != null) {
-            timeLineToFileMap.clear();
-        }
-        // set max resource name length to 10 chars for displaying
-        int nameLen = Math.min(10, selectedRscDefName.length());
-        String modelName = selectedRscDefName.substring(0, nameLen);
-        // query using NcSoundingQuery to query
-        DateFormatSymbols dfs = new DateFormatSymbols();
-        String[] defaultDays = dfs.getShortWeekdays();
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-        ldDia.startWaitCursor();
-        for (int i = 0; i < selectedFlLst.size(); i++) {
-            String fl = selectedFlLst.get(i);
-            long reftimeMs = NcSoundingQuery.convertRefTimeStr(fl);
-            NcSoundingTimeLines timeLines = NcSoundingQuery
-                    .soundingRangeTimeLineQuery(MdlSndType.ANY.toString(), fl,
-                            selectedModelType);
-            if ((timeLines != null) && (timeLines.getTimeLines().length > 0)) {
-                for (Object obj : timeLines.getTimeLines()) {
-                    Date rangestart = (Date) obj;
-                    // need to format rangestart to GMT time string.
-                    // Date.toString produce a local time Not GMT time
-                    cal.setTimeInMillis(rangestart.getTime());
-                    long vHour = (cal.getTimeInMillis() - reftimeMs) / 3600000;
-                    String dayOfWeek = defaultDays[cal
-                            .get(Calendar.DAY_OF_WEEK)];
-                    String gmtTimeStr = String.format(
-                            "%1$ty%1$tm%1$td/%1$tH(%4$s)V%2$03d %3$s", cal,
-                            vHour, modelName, dayOfWeek);
-                    if (sndTimeList.indexOf(gmtTimeStr) != -1) {
-                        // this indicate that gmtTimeStr is already in the
-                        // sndTimeList, then we dont need to add it to list
-                        // again.
-                        continue;
-                    }
-                    if (!timeLimit) {
-                        sndTimeList.add(gmtTimeStr);
-                        timeLineToFileMap.put(gmtTimeStr, fl);
-                    } else {
-                        int hour = cal.get(Calendar.HOUR_OF_DAY);
-                        if ((hour == 0) || (hour == 12)) {
-                            sndTimeList.add(gmtTimeStr);
-                            timeLineToFileMap.put(gmtTimeStr, fl);
-                        }
-                    }
-                }
-            }
-        }
-        if ((sndTimeList != null) && (sndTimeList.getItemCount() <= 0)) {
-            sndTimeList.add(SND_TIMELINE_NOT_AVAIL_STRING);
-        }
-        ldDia.stopWaitCursor();
-    }
-
-    private static void createModelTypeToRscDefNameMapping()
-            throws VizException {
-        ResourceDefnsMngr rscDefnsMngr = ResourceDefnsMngr.getInstance();
-        gridModelToRscDefNameMap.clear();
-        rscDefNameToGridModelMap.clear();
-        if (rscDefnsMngr != null) {
-            ResourceCategory cat = ResourceCategory.createCategory("GRID");
-            List<ResourceDefinition> rscTypes = rscDefnsMngr
-                    .getResourceDefnsForCategory(cat);
-            for (ResourceDefinition rd : rscTypes) {
-                HashMap<String, String> rpmap = rd.getResourceParameters(false);
-                if (rpmap != null) {
-                    String mdlType = rpmap.get("GDFILE");
-                    String rscDefName = rd.getResourceDefnName();
-                    gridModelToRscDefNameMap.put(mdlType, rscDefName);
-                    rscDefNameToGridModelMap.put(rscDefName, mdlType);
-                } else {
-                    continue;
-                }
-            }
+            statusHandler.handle(Priority.ERROR,
+                    "NsharpModelSoundingDialogContents: exception while createModelTypeToRscDefNameMapping.",
+                    e);
         }
     }
 
@@ -345,7 +176,6 @@ public class NsharpModelSoundingDialogContents {
         }
 
         ldDia.stopWaitCursor();
-
     }
 
     private void handleAvailFileListSelection() {
@@ -356,7 +186,8 @@ public class NsharpModelSoundingDialogContents {
                 selectedFile = availableFileList.getSelection()[i];
                 selectedFileList.add(selectedFile);
             }
-            createMDLSndTimeList(selectedFileList);
+            createMDLSndTimeList(selectedFileList, selectedRscDefName,
+                    selectedModelType);
         }
     }
 
@@ -365,13 +196,12 @@ public class NsharpModelSoundingDialogContents {
         if ((sndTimeList.getSelectionCount() > 0)
                 && (sndTimeList.getSelection()[0]
                         .equals(SND_TIMELINE_NOT_AVAIL_STRING) == false)) {
-
             selectedTimeList.clear();
             for (int i = 0; i < sndTimeList.getSelectionCount(); i++) {
                 selectedSndTime = sndTimeList.getSelection()[i];
                 selectedTimeList.add(selectedSndTime);
             }
-            NsharpMapResource.bringMapEditorToTop();
+            ldDia.getMapRsc().bringMapEditorToTop();
         }
     }
 
@@ -399,13 +229,14 @@ public class NsharpModelSoundingDialogContents {
             @Override
             public void handleEvent(Event e) {
                 if (modelTypeRscDefNameList.getSelectionCount() > 0) {
-                    selectedRscDefName = modelTypeRscDefNameList.getSelection()[0];
+                    selectedRscDefName = modelTypeRscDefNameList
+                            .getSelection()[0];
                     // convert selectedModel, in resource definition name, to
                     // grid model type name
                     selectedModelType = rscDefNameToGridModelMap
                             .get(selectedRscDefName);
                     ldDia.setActiveMdlSndMdlType(selectedModelType);
-                    createMDLAvailableFileList();
+                    createMDLAvailableFileList(selectedModelType);
                 }
             }
         });
@@ -460,9 +291,9 @@ public class NsharpModelSoundingDialogContents {
                 // refresh sounding list if file type is selected already
                 if ((selectedModelType != null)
                         && (selectedFileList.size() > 0)) {
-                    createMDLSndTimeList(selectedFileList);
+                    createMDLSndTimeList(selectedFileList, selectedRscDefName,
+                            selectedModelType);
                 }
-
             }
         });
         locationMainGp = new Group(parent, SWT.SHADOW_ETCHED_IN);
@@ -477,7 +308,7 @@ public class NsharpModelSoundingDialogContents {
         latlonBtn.addListener(SWT.MouseUp, new Listener() {
             @Override
             public void handleEvent(Event event) {
-                currentLocType = LocationType.LATLON;
+                setCurrentLocType(LocationType.LATLON);
                 locationText.setText("");
             }
         });
@@ -488,7 +319,7 @@ public class NsharpModelSoundingDialogContents {
         stationBtn.addListener(SWT.MouseUp, new Listener() {
             @Override
             public void handleEvent(Event event) {
-                currentLocType = LocationType.STATION;
+                setCurrentLocType(LocationType.STATION);
                 locationText.setText("");
             }
         });
@@ -513,7 +344,8 @@ public class NsharpModelSoundingDialogContents {
                             char inputChar = userInputStr.charAt(0);
                             if (!(('0' <= inputChar) && (inputChar <= '9'))
                                     && (inputChar != ';') && (inputChar != ',')
-                                    && (inputChar != '-') && (inputChar != '.')) {
+                                    && (inputChar != '-')
+                                    && (inputChar != '.')) {
                                 e.doit = false;
                                 return;
                             }
@@ -530,9 +362,10 @@ public class NsharpModelSoundingDialogContents {
         loadBtn.setText("Load ");
         loadBtn.setFont(newFont);
         loadBtn.setEnabled(true);
-        loadBtn.setBounds(locationMainGp.getBounds().x
-                + NsharpConstants.btnGapX, locationLbl.getBounds().y
-                + locationLbl.getBounds().height + NsharpConstants.btnGapY,
+        loadBtn.setBounds(
+                locationMainGp.getBounds().x + NsharpConstants.btnGapX,
+                locationLbl.getBounds().y + locationLbl.getBounds().height
+                        + NsharpConstants.btnGapY,
                 NsharpConstants.btnWidth, NsharpConstants.btnHeight);
         loadBtn.addListener(SWT.MouseUp, new Listener() {
             @Override
@@ -540,7 +373,8 @@ public class NsharpModelSoundingDialogContents {
                 NsharpLoadDialog ldDia = NsharpLoadDialog.getAccess();
                 if ((selectedTimeList != null)
                         && (selectedTimeList.size() == 0)) {
-                    ldDia.setAndOpenMb("Time line(s) is not selected!\n Can not load data!");
+                    ldDia.setAndOpenMb(
+                            "Time line(s) is not selected!\n Can not load data!");
                     return;
                 }
                 String textStr = locationText.getText();
@@ -561,10 +395,10 @@ public class NsharpModelSoundingDialogContents {
                         }
                         if (indexFound == true) {
                             try {
-                                lat = Float.parseFloat(textStr.substring(0,
-                                        dividerIndex));
-                                lon = Float.parseFloat(textStr
-                                        .substring(dividerIndex + 1));
+                                lat = Float.parseFloat(
+                                        textStr.substring(0, dividerIndex));
+                                lon = Float.parseFloat(
+                                        textStr.substring(dividerIndex + 1));
                                 if ((lat > 90) || (lat < -90) || (lon > 180)
                                         || (lon < -180)) {
                                     ldDia.setAndOpenMb("lat/lon out of range ("
@@ -574,7 +408,7 @@ public class NsharpModelSoundingDialogContents {
                                     return;
                                 }
                                 NsharpModelSoundingQuery qryAndLd = new NsharpModelSoundingQuery(
-                                        "Querying Sounding Data...");
+                                        "Querying Sounding Data...", queryLimit);
                                 NsharpEditor skewtEdt = NsharpEditor
                                         .createOrOpenEditor();
                                 qryAndLd.queryAndLoadData(false, skewtEdt,
@@ -583,10 +417,9 @@ public class NsharpModelSoundingDialogContents {
                                         selectedModelType, selectedRscDefName);
 
                             } catch (Exception e) {
-                                statusHandler
-                                        .handle(Priority.ERROR,
-                                                "NsharpModelSoundingDialogContents: exception while parsing string to float.",
-                                                e);
+                                statusHandler.handle(Priority.ERROR,
+                                        "NsharpModelSoundingDialogContents: exception while parsing string to float.",
+                                        e);
                                 return;
                             }
 
@@ -614,7 +447,7 @@ public class NsharpModelSoundingDialogContents {
                                 return;
                             }
                             NsharpModelSoundingQuery qryAndLd = new NsharpModelSoundingQuery(
-                                    "Querying Sounding Data...");
+                                    "Querying Sounding Data...", queryLimit);
                             NsharpEditor skewtEdt = NsharpEditor
                                     .createOrOpenEditor();
                             qryAndLd.queryAndLoadData(true, skewtEdt,
@@ -622,10 +455,9 @@ public class NsharpModelSoundingDialogContents {
                                     timeLineToFileMap, lat, lon, stnStr,
                                     selectedModelType, selectedRscDefName);
                         } catch (Exception e) {
-                            statusHandler
-                                    .handle(Priority.ERROR,
-                                            "NsharpModelSoundingDialogContents: exception while parsing string to float.",
-                                            e);
+                            statusHandler.handle(Priority.ERROR,
+                                    "NsharpModelSoundingDialogContents: exception while parsing string to float.",
+                                    e);
 
                             return;
                         }
@@ -640,27 +472,26 @@ public class NsharpModelSoundingDialogContents {
             selectedRscDefName = gridModelToRscDefNameMap
                     .get(selectedModelType);
             modelTypeRscDefNameList.setSelection(selectedModelArray);
-            createMDLAvailableFileList();
-            selectedFileList = ldDia.getMdlSelectedFileList();
+            createMDLAvailableFileList(selectedModelType);
+
             Object[] selFileObjectArray = selectedFileList.toArray();
             String[] selFileStringArray = Arrays.copyOf(selFileObjectArray,
                     selFileObjectArray.length, String[].class);
             availableFileList.setSelection(selFileStringArray);
             handleAvailFileListSelection();
 
-            selectedTimeList = ldDia.getMdlSelectedTimeList();
             Object[] selTimeObjectArray = selectedTimeList.toArray();
             String[] selTimeStringArray = Arrays.copyOf(selTimeObjectArray,
                     selTimeObjectArray.length, String[].class);
             sndTimeList.setSelection(selTimeStringArray);
             handleSndTimeSelection();
-
         }
     }
 
     public void cleanup() {
         if (modelTypeRscDefNameList != null) {
-            if (modelTypeRscDefNameList.getListeners(SWT.Selection).length > 0) {
+            if (modelTypeRscDefNameList
+                    .getListeners(SWT.Selection).length > 0) {
                 modelTypeRscDefNameList.removeListener(SWT.Selection,
                         modelTypeRscDefNameList.getListeners(SWT.Selection)[0]);
             }
@@ -746,32 +577,24 @@ public class NsharpModelSoundingDialogContents {
         }
     }
 
-    public static Map<String, String> getGridModelToRscDefNameMap() {
-        if (gridModelToRscDefNameMap.isEmpty()) {
-            try {
-                createModelTypeToRscDefNameMapping();
-            } catch (VizException e) {
-                statusHandler
-                        .handle(Priority.ERROR,
-                                "NsharpModelSoundingDialogContents: exception while createModelTypeToRscDefNameMapping.",
-                                e);
-            }
+    @Override
+    protected void setAvailableFileList(List<String> fileList) {
+        for (int i = 0; i < fileList.size(); i++) {
+            this.availableFileList.add(fileList.get(i));
         }
-        return gridModelToRscDefNameMap;
     }
 
-    public static Map<String, String> getRscDefNameToGridModelMap() {
-        if (rscDefNameToGridModelMap.isEmpty()) {
-            try {
-                createModelTypeToRscDefNameMapping();
-            } catch (VizException e) {
-                statusHandler
-                        .handle(Priority.ERROR,
-                                "NsharpModelSoundingDialogContents: exception while createModelTypeToRscDefNameMapping.",
-                                e);
-            }
+    @Override
+    protected void setSndTimeList(List<String> timeList) {
+        this.sndTimeList.removeAll();
+        for (int i = 0; i < timeList.size(); i++) {
+            this.sndTimeList.add(timeList.get(i));
         }
-        return rscDefNameToGridModelMap;
+    }
+
+    @Override
+    protected void setTimeLineToFileMap(Map<String, String> timeLineToFileMap) {
+        this.timeLineToFileMap = timeLineToFileMap;
     }
 
 }

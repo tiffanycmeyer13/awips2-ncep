@@ -1,11 +1,17 @@
 /*
  * PgenClipboard
- * 
+ *
  * Date created: 01/02/2013
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.tools;
+
+import java.util.List;
+
+import org.eclipse.core.commands.AbstractHandler;
+import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.core.commands.ExecutionException;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenClipboard;
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
@@ -14,16 +20,10 @@ import gov.noaa.nws.ncep.ui.pgen.elements.AbstractDrawableComponent;
 import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
 import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 
-import java.util.List;
-
-import org.eclipse.core.commands.AbstractHandler;
-import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.commands.ExecutionException;
-
 /**
  * This handler handles copy/paste/cut across PGEN layers/activities using
  * hotkeys.
- * 
+ *
  * "CUT" - Ctrl+X only works under "Select" and "MultiSelect" Modes. It copies
  * all selected elements to PgenClipboard, then delete originals from
  * PgenResource. "COPY" - Ctrl+C copies all selected elements to PgenClipboard.
@@ -32,28 +32,24 @@ import org.eclipse.core.commands.ExecutionException;
  * Modes. It selects all elements in current active layer and sends to
  * PgenResource. No attribute dialog will be popped up. This could be followed
  * up by Ctrl+C.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date       	Ticket#		Engineer	Description
- * ------------	----------	-----------	--------------------------
- * 01/2013		#967		Jun Wu  	Initial Creation.
- * 06/2015      R8354       Jun Wu      Refresh and draw handbars after Ctrl+A.
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 01/2013       967      Jun Wu    Initial Creation.
+ * 06/2015       8354     Jun Wu    Refresh and draw handbars after Ctrl+A.
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
- * 
+ *
  */
 public class PgenCopypasteHotkeyHandler extends AbstractHandler {
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.core.commands.IHandler#execute(org.eclipse.core.commands.
-     * ExecutionEvent)
-     */
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
         String action = event.getParameter("action");
@@ -61,7 +57,7 @@ public class PgenCopypasteHotkeyHandler extends AbstractHandler {
             return null;
         }
 
-        PgenResource pgenRsc = PgenSession.getInstance().getPgenResource();
+        PgenResource pgenRsc = PgenSession.getInstance().getCurrentResource();
         if (pgenRsc == null) {
             return null;
         }
@@ -86,9 +82,8 @@ public class PgenCopypasteHotkeyHandler extends AbstractHandler {
          * popped up. This could be followed up by Ctrl+C.
          */
         if (action.equalsIgnoreCase("CUT")) {
-            if (curAction != null
-                    && (curAction.equalsIgnoreCase("Select") || curAction
-                            .equalsIgnoreCase("MultiSelect"))) {
+            if (curAction != null && (curAction.equalsIgnoreCase("Select")
+                    || curAction.equalsIgnoreCase("MultiSelect"))) {
                 if (pgenRsc.getAllSelected() != null
                         && !pgenRsc.getAllSelected().isEmpty()) {
                     PgenClipboard.getInstance().copy(pgenRsc.getAllSelected());
@@ -114,9 +109,8 @@ public class PgenCopypasteHotkeyHandler extends AbstractHandler {
                 pgenRsc.addElements(elms);
             }
         } else if (action.equalsIgnoreCase("SELECTALL")) {
-            if (curAction != null
-                    && (curAction.equalsIgnoreCase("Select") || curAction
-                            .equalsIgnoreCase("MultiSelect"))) {
+            if (curAction != null && (curAction.equalsIgnoreCase("Select")
+                    || curAction.equalsIgnoreCase("MultiSelect"))) {
                 if (pgenRsc.getActiveLayer().getDrawables().size() > 0) {
 
                     if (curAction.equalsIgnoreCase("MultiSelect")) {
@@ -125,16 +119,16 @@ public class PgenCopypasteHotkeyHandler extends AbstractHandler {
                         PgenUtil.setSelectingMode();
                     }
 
-                    pgenRsc.setSelected(pgenRsc.getActiveLayer().getDrawables());
+                    pgenRsc.setSelected(
+                            pgenRsc.getActiveLayer().getDrawables());
                     changed = true;
-                    // PgenClipboard.getInstance().copy(
-                    // pgenRsc.getActiveLayer().getDrawables() );
                 }
             }
         }
 
-        if (changed)
+        if (changed) {
             PgenUtil.refresh();
+        }
 
         return null;
     }

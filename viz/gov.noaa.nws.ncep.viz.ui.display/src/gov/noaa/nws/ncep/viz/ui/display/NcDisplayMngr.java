@@ -1,14 +1,5 @@
 package gov.noaa.nws.ncep.viz.ui.display;
 
-import gov.noaa.nws.ncep.viz.common.display.INatlCntrsPaneManager;
-import gov.noaa.nws.ncep.viz.common.display.INatlCntrsRenderableDisplay;
-import gov.noaa.nws.ncep.viz.common.display.INcPaneID;
-import gov.noaa.nws.ncep.viz.common.display.INcPaneLayout;
-import gov.noaa.nws.ncep.viz.common.display.IPaneLayoutable;
-import gov.noaa.nws.ncep.viz.common.display.IPowerLegend;
-import gov.noaa.nws.ncep.viz.common.display.NcDisplayName;
-import gov.noaa.nws.ncep.viz.common.display.NcDisplayType;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -18,7 +9,6 @@ import java.util.List;
 
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
@@ -29,6 +19,8 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 
+import com.raytheon.uf.common.status.IUFStatusHandler;
+import com.raytheon.uf.common.status.UFStatus;
 import com.raytheon.uf.viz.core.IDisplayPane;
 import com.raytheon.uf.viz.core.drawables.AbstractRenderableDisplay;
 import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
@@ -37,55 +29,64 @@ import com.raytheon.uf.viz.core.exception.VizException;
 import com.raytheon.uf.viz.core.rsc.AbstractVizResource;
 import com.raytheon.uf.viz.core.rsc.ResourceList;
 import com.raytheon.viz.ui.EditorUtil;
-import com.raytheon.viz.ui.UiPlugin;
 import com.raytheon.viz.ui.VizWorkbenchManager;
 import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.raytheon.viz.ui.editor.EditorInput;
-import com.raytheon.viz.ui.panes.PaneManager;
+import com.raytheon.viz.ui.panes.AbstractPaneManager;
 import com.raytheon.viz.ui.panes.VizDisplayPane;
 
-//import gov.noaa.nws.ncep.viz.ui.display.NcDisplayName;
+import gov.noaa.nws.ncep.viz.common.display.INatlCntrsPaneManager;
+import gov.noaa.nws.ncep.viz.common.display.INatlCntrsRenderableDisplay;
+import gov.noaa.nws.ncep.viz.common.display.INcPaneID;
+import gov.noaa.nws.ncep.viz.common.display.INcPaneLayout;
+import gov.noaa.nws.ncep.viz.common.display.IPaneLayoutable;
+import gov.noaa.nws.ncep.viz.common.display.IPowerLegend;
+import gov.noaa.nws.ncep.viz.common.display.NcDisplayName;
+import gov.noaa.nws.ncep.viz.common.display.NcDisplayType;
 
 /**
  * NcDisplayMngr - contains UI utility methods for the NC perspective (See
  * com.raytheon.viz.ui.UiUtils for more utilities...)
- * 
+ *
  * <pre>
- * 
+ *
  *    SOFTWARE HISTORY
- *   
+ *
  * Date         Ticket#    Engineer    Description
  * ------------ ---------- ----------- --------------------------
  * 04/22/09       #99       Greg Hull   Initial Creation.
  * 09/09          #151      Jun Wu      Added method to set title for CAVE.
- * 09/27/09       #169      Greg Hull   Use NCMapEditor and NCDisplayPane 
+ * 09/27/09       #169      Greg Hull   Use NCMapEditor and NCDisplayPane
  * 10/26/09       #180      Greg Hull   added getAllNCDisplays()
  * 02/26/10       #226      Greg Hull   create Editors with PaneLayout.
  * 04/01/10      #238,#239  Archana     Updated the method createNatlCntrsEditor(String,NcPaneID)
- *                                      to use NCMapDescriptor.  
- *  02/10/2011              Chin Chen   handle multiple editor copies dispose issue    
+ *                                      to use NCMapDescriptor.
+ *  02/10/2011              Chin Chen   handle multiple editor copies dispose issue
  *  03/08/2011   migration  Greg Hull   move Display Name methods to DisplayIdManager
  * 05/17/2012     #791       Quan Zhou   Added findEmptyEditor() to check if default editor is empty
- * 08/09/2012     837       Archana      Updated getNcDisplayID() to fix a NumberFormatException     
+ * 08/09/2012     837       Archana      Updated getNcDisplayID() to fix a NumberFormatException
  * 02/10/2012     #971      Greg Hull    Renamed from NmapUiUtils and add support for NcDisplayType and NcDisplayName
  * 05/15/2013     #862      Greg Hull    call setPaneManager() ; add method findRenderableDisplayByPaneName()
  * 08/18/2014       ?       B. Yin       Added a method for function key to toggle GroupResource.
- * 
+ * 03/24/2022    8790       mapeters    Handle pane manager refactor
+ *
  * </pre>
- * 
+ *
  * @author ghull
- * @version 1
  */
 public class NcDisplayMngr {
 
+    private static final IUFStatusHandler statusHandler = UFStatus
+            .getHandler(NcDisplayMngr.class);
+
     public static final String CaveTitle = "CAVE";
 
-    // We could maintain an active list or map of all the open Editors and
-    // reference but instead just have some methods to get all the open editors
-    // from
-    // the workbench whenever we need them.
-    //
-    private static Object lock = new Object();
+    /*
+     * We could maintain an active list or map of all the open Editors and
+     * reference but instead just have some methods to get all the open editors
+     * from the workbench whenever we need them.
+     */
+    private static final Object lock = new Object();
 
     /**
      * Get a reference to the current editor, if it is a NCMapEditor.
@@ -106,7 +107,7 @@ public class NcDisplayMngr {
             return true;
         } else {
             EditorInput edIn = (EditorInput) ed.getEditorInput();
-            PaneManager pm = edIn.getPaneManager();
+            AbstractPaneManager pm = edIn.getPaneManager();
 
             return (pm instanceof AbstractNcPaneManager);
         }
@@ -124,19 +125,21 @@ public class NcDisplayMngr {
 
     // TODO: Do we need to look in all the panes or just the active (or the
     // selected panes)
-    //
     public static final AbstractVizResource findResource(
-            Class<? extends AbstractVizResource> rscClass, AbstractEditor aEdit) {
-        AbstractEditor editor = (aEdit != null ? aEdit : NcDisplayMngr
-                .getActiveNatlCntrsEditor());
-        if (editor == null)
+            Class<? extends AbstractVizResource> rscClass,
+            AbstractEditor aEdit) {
+        AbstractEditor editor = (aEdit != null ? aEdit
+                : NcDisplayMngr.getActiveNatlCntrsEditor());
+        if (editor == null) {
             return null;
+        }
 
         IRenderableDisplay disp = editor.getActiveDisplayPane()
                 .getRenderableDisplay();
 
-        if (disp == null)
+        if (disp == null) {
             return null;
+        }
 
         ResourceList rscList = disp.getDescriptor().getResourceList();
 
@@ -183,7 +186,8 @@ public class NcDisplayMngr {
     // This can be called
     public static AbstractEditor createNatlCntrsEditor(NcDisplayType dispType,
             String dispName) throws VizException {
-        return createNatlCntrsEditor(dispType, dispName, new NcPaneLayout(1, 1));
+        return createNatlCntrsEditor(dispType, dispName,
+                new NcPaneLayout(1, 1));
     }
 
     // This should only be called for DisplayTypes that support RBDs and
@@ -204,44 +208,33 @@ public class NcDisplayMngr {
             throws VizException {
 
         String ncPaneMngrClassName = dispType.getPaneManager();
-        Exception e = null;
         try {
             Class<?> ncPaneMngrClass = Class.forName(ncPaneMngrClassName);
-            Constructor<?> pmConstructor = ncPaneMngrClass.getConstructor(
-                    INcPaneLayout.class, NcDisplayType.class);
+            Constructor<?> pmConstructor = ncPaneMngrClass
+                    .getConstructor(INcPaneLayout.class, NcDisplayType.class);
 
             Object pmObj = pmConstructor.newInstance(paneLayout, dispType);
 
             if (pmObj instanceof AbstractNcPaneManager) {
-
                 return (AbstractNcPaneManager) pmObj;
+            } else {
+                throw new VizException(
+                        "Unexpected pane manager created: " + pmObj);
             }
-
-        } catch (SecurityException se) {
-            e = se;
-        } catch (NoSuchMethodException nsme) {
-            e = nsme;
-        } catch (IllegalArgumentException iae) {
-            e = iae;
-        } catch (InstantiationException ie) {
-            e = ie;
-        } catch (IllegalAccessException iae) {
-            e = iae;
-        } catch (InvocationTargetException ite) {
-            e = ite;
-        } catch (ClassNotFoundException cnfe) {
-            e = cnfe;
+        } catch (SecurityException | NoSuchMethodException
+                | IllegalArgumentException | InstantiationException
+                | IllegalAccessException | InvocationTargetException
+                | ClassNotFoundException e) {
+            statusHandler.error("Error instantiating PaneManager, "
+                    + ncPaneMngrClassName + ", for NcDisplayType, " + dispType,
+                    e);
+            throw new VizException(e);
         }
 
-        System.out.println("Error instantiating PaneManager, "
-                + ncPaneMngrClassName + ", for NcDisplayType, "
-                + dispType.toString() + ": " + e.getMessage());
-        throw new VizException(e);
     }
 
     public static AbstractEditor createNatlCntrsEditor(
-            AbstractNcPaneManager ncPaneMngr, String dispName)
-            throws VizException {
+            AbstractNcPaneManager ncPaneMngr, String dispName) {
 
         INcPaneLayout paneLayout = ncPaneMngr.getPaneLayout();
 
@@ -251,10 +244,12 @@ public class NcDisplayMngr {
             int numPanes = paneLayout.getNumberOfPanes();
             INatlCntrsRenderableDisplay[] mapDispArray = new INatlCntrsRenderableDisplay[numPanes];
 
-            // the name of the RenderableDisplay for multi-pane displays
-            // includes the pane number.
-            //
-            for (int paneIndx = 0; paneIndx < paneLayout.getNumberOfPanes(); paneIndx++) {
+            /*
+             * the name of the RenderableDisplay for multi-pane displays
+             * includes the pane number.
+             */
+            for (int paneIndx = 0; paneIndx < paneLayout
+                    .getNumberOfPanes(); paneIndx++) {
                 INcPaneID paneId = paneLayout.createPaneId(paneIndx);
 
                 mapDispArray[paneIndx] = ncPaneMngr
@@ -284,32 +279,22 @@ public class NcDisplayMngr {
                 IEditorPart ep = actPage.openEditor(edInput, editorId);
 
                 if (ep instanceof AbstractNcEditor) {
-                    AbstractNcEditor new_editor = (AbstractNcEditor) ep;
-
-                    return new_editor;
+                    return (AbstractNcEditor) ep;
                 } else {
-                    System.out.println("openEditor returned :"
-                            + ep.getClass().getName());
-                    System.out.println(ep.toString());
+                    statusHandler
+                            .error("Unexpected editor type created: " + ep);
                 }
             }
         } catch (PartInitException e) {
-            UiPlugin.getDefault()
-                    .getLog()
-                    .log(new Status(Status.ERROR, UiPlugin.PLUGIN_ID,
-                            "Error constituting editor", e));
-            // } catch (VizException ve) {
-            // UiPlugin.getDefault().getLog().log(
-            // new Status( Status.ERROR, UiPlugin.PLUGIN_ID,
-            // "Error constituting editor: ", ve));
+            statusHandler.error("Error constructing editor " + dispName, e);
         }
         return null;
     }
 
     // Note the rbd is a PaneManager but not the NcPaneManager used by editors.
     public static AbstractRenderableDisplay[] createDisplaysForNcDisplayType(
-            INatlCntrsPaneManager rbd, /* NcDisplayType dType, */
-            INcPaneLayout pLayout) throws VizException {
+            INatlCntrsPaneManager rbd, INcPaneLayout pLayout)
+            throws VizException {
 
         AbstractRenderableDisplay[] rendDisps = new AbstractRenderableDisplay[pLayout
                 .getNumberOfPanes()];
@@ -333,45 +318,9 @@ public class NcDisplayMngr {
         return rendDisps;
     }
 
-    // public static INatlCntrsRenderableDisplay createNcRenderableDisplay(
-    // NcDisplayType dispType, INcPaneID pid ) {
-    //
-    // try {
-    // Class<?> rendDispClass = Class.forName( dispType.getRederableDisplay() );
-    //
-    // Object rendDispObj = rendDispClass.newInstance();
-    //
-    // if( rendDispObj instanceof INatlCntrsRenderableDisplay ) {
-    //
-    // INatlCntrsRenderableDisplay iRendDisp =
-    // (INatlCntrsRenderableDisplay)rendDispObj;
-    // iRendDisp.setPaneId( pid );
-    //
-    // Class<?> descrClass = Class.forName( dispType.getDescriptorType() );
-    // Object descrObj = descrClass.newInstance();
-    //
-    // if( descrObj instanceof INatlCntrsDescriptor ) {
-    // INatlCntrsDescriptor iDescr = (INatlCntrsDescriptor)descrObj;
-    //
-    // iRendDisp.setDescriptor( iDescr );
-    //
-    // return iRendDisp;
-    // }
-    // else {
-    // return null;
-    // }
-    // }
-    // } catch (InstantiationException e) {
-    // } catch (IllegalAccessException e) {
-    // } catch (ClassNotFoundException e) {
-    // }
-    //
-    // return null;
-    // }
-
     public static List<AbstractEditor> getAllDisplaysOfType(
             NcDisplayType dispType) {
-        ArrayList<NcDisplayType> dispTypes = new ArrayList<NcDisplayType>();
+        List<NcDisplayType> dispTypes = new ArrayList<>();
         if (dispType != null) {
             dispTypes.add(dispType);
         }
@@ -382,7 +331,7 @@ public class NcDisplayMngr {
     public static List<AbstractEditor> getAllDisplaysByTypes(
             List<NcDisplayType> dispTypes) {
         List<AbstractEditor> allDisplays = getAllNcDisplays();
-        List<AbstractEditor> displays = new ArrayList<AbstractEditor>();
+        List<AbstractEditor> displays = new ArrayList<>();
 
         for (AbstractEditor disp : allDisplays) {
             if (dispTypes.contains(NcEditorUtil.getNcDisplayType(disp))) {
@@ -395,7 +344,7 @@ public class NcDisplayMngr {
 
     // all the Nc Displays ordered by ID
     public static List<AbstractEditor> getAllNcDisplays() {
-        ArrayList<AbstractEditor> displays = new ArrayList<AbstractEditor>();
+        List<AbstractEditor> displays = new ArrayList<>();
 
         IWorkbenchWindow[] windows = PlatformUI.getWorkbench()
                 .getWorkbenchWindows();
@@ -406,7 +355,7 @@ public class NcDisplayMngr {
                 IEditorReference[] refs = page.getEditorReferences();
                 for (IEditorReference r : refs) {
                     IWorkbenchPart wp = r.getPart(true);
-                    if (wp != null && wp instanceof AbstractEditor
+                    if (wp instanceof AbstractEditor
                             && isNatlCntrsEditor((AbstractEditor) wp)) {
 
                         displays.add((AbstractEditor) wp);
@@ -426,8 +375,8 @@ public class NcDisplayMngr {
             NcDisplayName dispName) {
 
         for (AbstractEditor d : getAllNcDisplays()) {
-            if ((dispType == null || dispType.equals(NcEditorUtil
-                    .getNcDisplayType(d)))
+            if ((dispType == null
+                    || dispType.equals(NcEditorUtil.getNcDisplayType(d)))
                     && dispName.getId() == NcEditorUtil.getDisplayName(d)
                             .getId()) {
 
@@ -438,7 +387,6 @@ public class NcDisplayMngr {
     }
 
     // lookup the editor by name (without the prefixed ID)
-    //
     public static AbstractEditor findDisplayByName(NcDisplayType dispType,
             String dispName) {
         for (AbstractEditor d : getAllDisplaysOfType(null)) {
@@ -464,7 +412,8 @@ public class NcDisplayMngr {
         for (AbstractEditor d : getAllDisplaysOfType(dispType)) {
             for (IDisplayPane ipane : d.getDisplayPanes()) {
                 if (ipane instanceof VizDisplayPane) {
-                    if (ipane.getRenderableDisplay() instanceof IPaneLayoutable) {
+                    if (ipane
+                            .getRenderableDisplay() instanceof IPaneLayoutable) {
                         IPaneLayoutable ncrdisp = (IPaneLayoutable) ipane
                                 .getRenderableDisplay();
                         if (ncrdisp.getPaneName().toString().equals(paneName)) {
@@ -511,22 +460,21 @@ public class NcDisplayMngr {
         AbstractEditor currEditor = NcDisplayMngr.getActiveNatlCntrsEditor();
 
         if (currEditor != null) {
-            ICommandService service = (ICommandService) currEditor.getSite()
+            ICommandService service = currEditor.getSite()
                     .getService(ICommandService.class);
-            String dfltTool = currEditor.getDefaultTool(); // this is the
-                                                           // PanTool
+            // this is the PanTool
+            String dfltTool = currEditor.getDefaultTool();
             Command cmd = service.getCommand(dfltTool);
             if (cmd != null) {
                 try {
-                    HashMap<String, Object> params = new HashMap<String, Object>();
+                    HashMap<String, Object> params = new HashMap<>();
                     // is this param no longer used?
                     params.put("editor", currEditor);
-                    // params.put("mode", )
                     ExecutionEvent exec = new ExecutionEvent(cmd, params, null,
                             null);
                     cmd.executeWithChecks(exec);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    statusHandler.error("Error setting panning mode", e);
                 }
             }
         }
@@ -537,8 +485,8 @@ public class NcDisplayMngr {
      */
     public static final void toggleOnResourceGroup(int funcKeyNum) {
         AbstractEditor currEditor = NcDisplayMngr.getActiveNatlCntrsEditor();
-        for (ResourcePair pair : currEditor.getDisplayPanes()[0]
-                .getDescriptor().getResourceList()) {
+        for (ResourcePair pair : currEditor.getDisplayPanes()[0].getDescriptor()
+                .getResourceList()) {
             if (pair.getResource() != null
                     && pair.getResource() instanceof IPowerLegend) {
                 IPowerLegend grpRes = (IPowerLegend) pair.getResource();

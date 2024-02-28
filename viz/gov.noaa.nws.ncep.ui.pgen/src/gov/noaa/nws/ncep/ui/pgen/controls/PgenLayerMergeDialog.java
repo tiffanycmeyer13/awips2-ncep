@@ -1,6 +1,6 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.controls.PgenLayerMergeDialog
- * 
+ *
  * July 2012
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
@@ -46,13 +46,18 @@ import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 07/12        #593        J. Wu       Initial Creation
- * 08/13        ?           B. Yin      Merge outlook when layers are merged
- * 12/13        TTR776      J. Wu       Check default common action set in preference.
- * 8/19         67220       ksunil      when contours are merged, copy second contour's contents
- *                                      into the first one. (And not create 2 Contours in the layer)
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 07/12         593      J. Wu     Initial Creation
+ * 08/13         ?        B. Yin    Merge outlook when layers are merged
+ * 12/13         TTR776   J. Wu     Check default common action set in
+ *                                  preference.
+ * 8/19          67220    ksunil    when contours are merged, copy second
+ *                                  contour's contents into the first one. (And
+ *                                  not create 2 Contours in the layer)
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
  *
@@ -75,7 +80,7 @@ public class PgenLayerMergeDialog extends Dialog {
         MERGE_INTO_LIKE_NAME_LAYER,
         MERGE_INTO_ACTIVE_LAYER,
         MERGE_RENAME_ACTIVE_LAYER
-    };
+    }
 
     /*
      * Bulk actions names and definitions.
@@ -114,7 +119,7 @@ public class PgenLayerMergeDialog extends Dialog {
 
     /**
      * AttrDlg constructor
-     * 
+     *
      * @param parShell
      * @throws VizException
      */
@@ -124,11 +129,11 @@ public class PgenLayerMergeDialog extends Dialog {
         super(parShell);
         this.setShellStyle(SWT.TITLE | SWT.PRIMARY_MODAL);
 
-        drawingLayer = PgenSession.getInstance().getPgenResource();
+        drawingLayer = PgenSession.getInstance().getCurrentResource();
         incomingActivity = prodIn;
         incomingFile = fileIn;
 
-        layerComboMap = new LinkedHashMap<Layer, Combo>();
+        layerComboMap = new LinkedHashMap<>();
 
     }
 
@@ -149,7 +154,7 @@ public class PgenLayerMergeDialog extends Dialog {
 
     /*
      * Called when "X" button on window is clicked.
-     * 
+     *
      * @see org.eclipse.jface.window.Window#handleShellCloseEvent()
      */
     @Override
@@ -161,6 +166,7 @@ public class PgenLayerMergeDialog extends Dialog {
     /**
      * Set the location of the dialog
      */
+    @Override
     public int open() {
 
         if (this.getShell() == null) {
@@ -181,6 +187,7 @@ public class PgenLayerMergeDialog extends Dialog {
     /**
      * Save location of the dialog.
      */
+    @Override
     public boolean close() {
         if (getShell() != null) {
             Rectangle bounds = getShell().getBounds();
@@ -422,6 +429,7 @@ public class PgenLayerMergeDialog extends Dialog {
     /**
      * Perform selected actions for each layer & redraws.
      */
+    @Override
     public void okPressed() {
 
         if (conflictActions()) {
@@ -485,6 +493,7 @@ public class PgenLayerMergeDialog extends Dialog {
     /**
      * closes the dialog
      */
+    @Override
     public void cancelPressed() {
         super.cancelPressed();
     }
@@ -524,7 +533,7 @@ public class PgenLayerMergeDialog extends Dialog {
     /*
      * Replace or merge the content of one layer with the content from another
      * layer
-     * 
+     *
      * Note: when "prd" is not null, it means a "rename" is required.
      */
     private void replaceMergeLayer(Layer existingLayer, Layer newLayer,
@@ -558,8 +567,7 @@ public class PgenLayerMergeDialog extends Dialog {
                             AbstractDrawableComponent adcE = iterE.next();
                             if (adcE instanceof Contours) {
                                 if (((Contours) adcE)
-                                        .compareLevelParmForecastHour(
-                                                (Contours) adcN)) {
+                                        .compareLevelParmForecastHour(adcN)) {
                                     hasSameContour = true;
                                     ((Contours) adcE).add(((Contours) adcN)
                                             .getContourCircles());
@@ -609,19 +617,19 @@ public class PgenLayerMergeDialog extends Dialog {
 
     /*
      * Check if if there are any conflicts for the user-selected actions:
-     * 
+     *
      * 1. One existing layer can receive only one "Replace" action from incoming
      * layers. 2. One existing layer can receive only one "Rename" action from
      * incoming layers.
-     * 
+     *
      * Note that only "active layer" might receive such conflicting actions. .
      */
     private boolean conflictActions() {
 
         boolean conflict = false;
 
-        ArrayList<String> replacingLayers = new ArrayList<String>();
-        ArrayList<String> renamingLayers = new ArrayList<String>();
+        ArrayList<String> replacingLayers = new ArrayList<>();
+        ArrayList<String> renamingLayers = new ArrayList<>();
 
         for (Layer lyr : layerComboMap.keySet()) {
 
@@ -719,12 +727,12 @@ public class PgenLayerMergeDialog extends Dialog {
     /**
      * Merges outlook in the specified layer. Outlook of the same type needs to
      * put into one outlook in order to make the 'set continue' and format work.
-     * 
+     *
      * @param layer
      */
     private void mergeOutlooks(Layer layer) {
 
-        ArrayList<ArrayList<Outlook>> otlkList = new ArrayList<ArrayList<Outlook>>();
+        ArrayList<ArrayList<Outlook>> otlkList = new ArrayList<>();
 
         // loop through DEs in the layer and put outlooks in the list
         // The outer list is a list of different types outlook list.
@@ -743,7 +751,7 @@ public class PgenLayerMergeDialog extends Dialog {
                 }
 
                 if (!found) {
-                    ArrayList<Outlook> oList = new ArrayList<Outlook>();
+                    ArrayList<Outlook> oList = new ArrayList<>();
                     oList.add(look);
                     otlkList.add(oList);
                 }

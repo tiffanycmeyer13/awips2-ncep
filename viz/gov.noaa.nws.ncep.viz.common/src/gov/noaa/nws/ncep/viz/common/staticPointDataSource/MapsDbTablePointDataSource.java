@@ -23,6 +23,8 @@ import org.locationtech.jts.io.WKBReader;
  * ------------  ----------    -----------      --------------------------
  * 10/11/2016    R20573        jbeck            Initial creation
  *                                              Support county names overlay: get point data from maps database
+ *
+ * 12/21/2020    21179    J. Rohwein      update method signatures  AsBinary -> ST_AsBinary
  * </pre>
  * 
  * @author jbeck
@@ -73,7 +75,7 @@ public class MapsDbTablePointDataSource extends AbstractPointDataSource {
     @Override
     public void loadData() throws VizException {
 
-        String sql = "SELECT AsBinary(" + DB_GEOM_FIELD + ")," + dbFieldName
+        String sql = "SELECT ST_AsBinary(" + DB_GEOM_FIELD + ")," + dbFieldName
                 + " FROM " + dbTableName;
 
         try {

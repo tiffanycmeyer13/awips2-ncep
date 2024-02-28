@@ -52,7 +52,8 @@ import org.eclipse.swt.widgets.Shell;
  * ------------- -------- --------- -----------------------------------------
  * Nov 13, 2018  7576     bsteffen  Merge three activation dialogs into one.
  * Dec 14, 2018  6872     bsteffen  Rewrite NsharpOperationElement
- *
+ * Apr 22, 2020  76580    smanoj    Allow user to interact with NsharpEditor while
+ *                                  the dialog is open.
  * </pre>
  *
  * @author bsteffen
@@ -84,6 +85,7 @@ public class ActivationDialog extends Dialog {
             List<? extends NsharpOperationElement> elementList,
             int currentIndex) {
         super(parentShell);
+        this.setShellStyle(SWT.MODELESS);
         this.elementDesc = elementDesc;
         this.elementList = elementList;
         this.currentIndex = currentIndex;

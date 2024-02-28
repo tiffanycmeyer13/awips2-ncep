@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
-import javax.measure.format.ParserException;
+import javax.measure.format.MeasurementParseException;
 import javax.measure.quantity.Temperature;
 import javax.xml.bind.JAXBException;
 
@@ -95,7 +95,7 @@ import gov.noaa.nws.ncep.viz.rsc.satellite.units.NcIRTempToPixelConverter;
 import gov.noaa.nws.ncep.viz.ui.display.ColorBarFromColormap;
 import gov.noaa.nws.ncep.viz.ui.display.NCMapDescriptor;
 import si.uom.SI;
-import tec.uom.se.format.SimpleUnitFormat;
+import tech.units.indriya.format.SimpleUnitFormat;
 
 /**
  * Provides satellite raster rendering support through the use of
@@ -895,7 +895,7 @@ public class NcSatelliteResource extends
             try {
                 recordUnit = SimpleUnitFormat.getInstance(SimpleUnitFormat.Flavor.ASCII).parseProductUnit(
                         record.getUnits(), new ParsePosition(0));
-            } catch (ParserException e) {
+            } catch (MeasurementParseException e) {
                 statusHandler.handle(Priority.PROBLEM,
                         "Unable to parse satellite units: " + record.getUnits(),
                         e);

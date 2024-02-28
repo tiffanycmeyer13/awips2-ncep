@@ -54,7 +54,8 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorMatrixSelector;
  * ------------ ---------- ----------- --------------------------
  * 03/21/2012    229       Chin Chen    Initial coding
  * Aug 17, 2018  7081      dgilling     Refactor based on CaveJFACEDialog.
- *
+ * Apr 22, 2020  76580     smanoj       Allow user to interact with NsharpEditor while
+ *                                      the dialog is open.
  * </pre>
  *
  * @author dgilling
@@ -88,7 +89,7 @@ public class NsharpWindBarbConfigDialog extends AbstractNsharpConfigDlg {
 
     public NsharpWindBarbConfigDialog(Shell parentShell) {
         super(parentShell, "Nsharp Wind Barb");
-
+        this.setShellStyle(SWT.MODELESS);
         this.curLineWidth = NsharpConstants.WINDBARB_WIDTH;
         this.curColor = NsharpConstants.color_yellow;
         this.curSize = NsharpConstants.WINDBARB_SIZE;
@@ -223,7 +224,7 @@ public class NsharpWindBarbConfigDialog extends AbstractNsharpConfigDlg {
         }
     }
 
-    private boolean applyChanges(){
+    private boolean applyChanges() {
         String textStr = windBarbDistText.getText();
         if (StringUtils.isNotEmpty(textStr)) {
             try {

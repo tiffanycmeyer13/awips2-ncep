@@ -74,31 +74,48 @@ import gov.noaa.nws.ncep.viz.common.ui.color.ColorButtonSelector;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ---------    --------   ----------   --------------------------
- * 12/09        182         G. Zhang    Initial Creation.
- * 03/10        231         Archana     Altered the common dialog for
- *                                      ConvSigmet, NonConvSigmet,Airmet and Outlook
- *                                      to display only a button showing the
- *                                      selected color instead of displaying
- *                                      the complete color matrix.
- * 03/10        #223        M.Laryukhin Refactored getVOR method to be used with gfa too.
- * 04/11        #?          B. Yin      Re-factor IAttribute
- * 12/11        #526        B. Yin      Close dialog after saving text.
- * 01/12        #597        S. Gurung   Removed Snapping for ConvSigmet
- * 02/12        #597        S. Gurung   Removed snapping for NonConvSigmet. Moved snap functionalities to SnapUtil from SigmetInfo.
- * 03/12        #611        S. Gurung   Fixed ability to change SIGMET type (from Area to Line/Isolated and back and forth)
- * 11/12        #873        B. Yin      Pass sigmet type "CONV_SIGMET" for snapping.
- * 03/13        #928        B. Yin      Made the button bar smaller.
- * 04/29        #977        S. Gilbert  PGEN Database support
- * 04/29        #726        J. Wu       Remove the line breaker when saving vor list into file.
- * 01/15        #5801       A. Su       Made tag ID part of the activity label.
- * 12/12/2016   17469       W. Kwock    Added CWA Formatter
- * 03/20/2019   #7572       dgilling    Code cleanup.
- * 11/04/2019   70576       smanoj      Update to allow forecaster change/update alphanumeric labels.
- * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
- * 06/26/2020   79977       pbutler     Added code to add data editableAttrFromLine: states, lakes, coastal waters
- * 08/18/2020   81809       mroos       Remove States list duplication
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 12/09         182      G. Zhang    Initial Creation.
+ * 03/10         231      Archana     Altered the common dialog for ConvSigmet,
+ *                                    NonConvSigmet,Airmet and Outlook to
+ *                                    display only a button showing the selected
+ *                                    color instead of displaying the complete
+ *                                    color matrix.
+ * 03/10         223      M.Laryukh   Refactored getVOR method to be used with
+ *                                    gfa too.
+ * 04/11         #?       B. Yin      Re-factor IAttribute
+ * 12/11         526      B. Yin      Close dialog after saving text.
+ * 01/12         597      S. Gurung   Removed Snapping for ConvSigmet
+ * 02/12         597      S. Gurung   Removed snapping for NonConvSigmet. Moved
+ *                                    snap functionalities to SnapUtil from
+ *                                    SigmetInfo.
+ * 03/12         611      S. Gurung   Fixed ability to change SIGMET type (from
+ *                                    Area to Line/Isolated and back and forth)
+ * 11/12         873      B. Yin      Pass sigmet type "CONV_SIGMET" for
+ *                                    snapping.
+ * 03/13         928      B. Yin      Made the button bar smaller.
+ * 04/29         977      S. Gilbert  PGEN Database support
+ * 04/29         726      J. Wu       Remove the line breaker when saving vor
+ *                                    list into file.
+ * 01/15         5801     A. Su       Made tag ID part of the activity label.
+ * Dec 12, 2016  17469    W. Kwock    Added CWA Formatter
+ * Mar 20, 2019  7572     dgilling    Code cleanup.
+ * Nov 04, 2019  70576    smanoj      Update to allow forecaster change/update
+ *                                    alphanumeric labels.
+ * Jan 07, 2020  71971    smanoj      Modified code to use PgenConstants
+ * Jun 26, 2020  79977    pbutler     Added code to add data
+ *                                    editableAttrFromLine: states, lakes,
+ *                                    coastal waters
+ * Aug 18, 2020  81809    mroos       Remove States list duplication
+ * 02/01/2021    87515    wkwock      Remove CWA
+ * Jul 21, 2021  93981    tjensen     Make SaveDlg block. Fix polygon updates
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ * Mar 04, 2022  100402   smanoj      Bug fix to support multi-panel
+ *                                    display refactor.
+ * 
  * </pre>
  *
  * @author gzhang
@@ -140,9 +157,9 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
     private boolean withExpandedArea = false;
 
-    private Map<String, Control> attrControlMap = new HashMap<>();
+    private final Map<String, Control> attrControlMap = new HashMap<>();
 
-    private Map<String, Button[]> attrButtonMap = new HashMap<>();
+    private final Map<String, Button[]> attrButtonMap = new HashMap<>();
 
     private String editableAttrArea = "";
 
@@ -226,7 +243,9 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
     @Override
     public void enableButtons() {
 
-        this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
+        if (this.getButton(IDialogConstants.CANCEL_ID) != null) {
+            this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
+        }
 
     }
 
@@ -244,7 +263,9 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
         String s = this.getVOR(coors);
         this.setEditableAttrFromLine(s);
         this.relatedState = this.getRelatedStates(coors, de);
-        ((AbstractSigmet) de).setEditableAttrFromLine(s);
+        if (s != null) {
+            ((AbstractSigmet) de).setEditableAttrFromLine(s);
+        }
         if (txtInfo != null && !txtInfo.isDisposed() && s != null) {
             txtInfo.setText(s);
         }
@@ -442,8 +463,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
                                                                                // RGB(0,255,0));
 
         if (!PgenConstant.TYPE_INTL_SIGMET.equalsIgnoreCase(pgenType)
-                && !PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pgenType)
-                && !PgenConstant.CWA_FORMATTER.equalsIgnoreCase(pgenType)) {
+                && !PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pgenType)) {
             btnLine.setEnabled(false);
             btnIsolated.setEnabled(false);
             comboLine.setEnabled(false);
@@ -572,7 +592,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
             final StringBuilder coorsLatLon = new StringBuilder();
             final AbstractDrawableComponent elSelected = PgenSession
-                    .getInstance().getPgenResource().getSelectedComp();
+                    .getInstance().getCurrentResource().getSelectedComp();
             final Coordinate[] coors = (elSelected == null) ? null
                     : elSelected.getPoints().toArray(new Coordinate[] {});
 
@@ -613,12 +633,12 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
         String vorConnector = (PgenConstant.TYPE_NCON_SIGMET
                 .equalsIgnoreCase(pgenType)
                 || PgenConstant.TYPE_AIRM_SIGMET.equalsIgnoreCase(pgenType))
-                        ? " TO " : "-";
+                        ? " TO "
+                        : "-";
 
         if (PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(pgenType)
                 || PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pgenType)
-                || PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(pgenType)
-                || PgenConstant.CWA_FORMATTER.equalsIgnoreCase(pgenType)) {
+                || PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(pgenType)) {
             return SnapUtil.getVORText(coors, vorConnector, lineType, 6,
                     isSnapped, true, false, pgenType);
         }
@@ -628,89 +648,86 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
     private void init() {
         if (this.asig == null) {
             return;
-        } else {
-            Button[] btns = attrButtonMap.get("lineType");
-            if (btns != null) {
-                if (lineType.equals(AREA)
-                        || PgenConstant.TYPE_NCON_SIGMET
-                                .equalsIgnoreCase(pgenType)
-                        || PgenConstant.TYPE_AIRM_SIGMET
-                                .equalsIgnoreCase(pgenType)
-                        || PgenConstant.TYPE_OUTL_SIGMET
-                                .equalsIgnoreCase(pgenType)) {
-                    btns[0].setSelection(true);
-                    btns[1].setSelection(false);
-                    btns[2].setSelection(false);
-                } else if (lineType.contains(LINE)) {
-                    btns[0].setSelection(false);
-                    btns[1].setSelection(true);
-                    btns[2].setSelection(false);
-
-                    attrControlMap.get("lineType").setEnabled(true);
-                    attrControlMap.get("width").setEnabled(true);
-                } else if (lineType.equals(ISOLATED)) {
-                    btns[0].setSelection(false);
-                    btns[1].setSelection(false);
-                    btns[2].setSelection(true);
-
-                    attrControlMap.get("width").setEnabled(true);
-                }
-            }
-
-            Combo comboLine = (Combo) attrControlMap.get("lineType");
-            String lt = this.getLineType();
-            if (comboLine != null && !comboLine.isDisposed() && lt != null
-                    && lt.contains(this.LINE_SEPERATER)) {
-                if (lt.length() > 7) {
-                    comboLine.setText(lt.substring(7));
-                } else {
-                    comboLine.select(0);
-                }
-            }
-
-            Text txtWidth = (Text) attrControlMap.get("width");
-            String width = this.width == null ? "10.00" : this.width;
-            if (txtWidth != null && !txtWidth.isDisposed()) {
-                txtWidth.setText(width);
-            }
-
-            Combo comboMWO = (Combo) attrControlMap.get("editableAttrArea");
-            if (comboMWO != null && !comboMWO.isDisposed()
-                    && this.getEditableAttrArea() != null) {
-                String area = this.getEditableAttrArea();
-                if (area != null && area.length() > 0) {
-                    comboMWO.setText(area);
-                } else {
-                    comboMWO.select(0);
-                }
-            }
-
-            Combo comboId = (Combo) attrControlMap.get("editableAttrId");
-            if (comboId != null && !comboId.isDisposed()
-                    && this.getEditableAttrId() != null) {
-                String id = this.getEditableAttrId();
-                if (id != null && id.length() > 0) {
-                    comboId.setText(id);
-                } else {
-                    comboId.select(0);
-                }
-            }
-
-            Spinner seq = (Spinner) attrControlMap.get("editableAttrSeqNum");
-            if (seq != null && !seq.isDisposed()
-                    && this.getEditableAttrSequence() != null) {
-                String seqAttr = this.getEditableAttrSequence();
-                int i = 0;
-                try {
-                    i = Integer.parseInt(seqAttr);
-                } catch (Exception e) {
-                    statusHandler.debug(e.getLocalizedMessage(), e);
-                    i = 0;
-                }
-                seq.setSelection(i);
-            }
-
         }
+        Button[] btns = attrButtonMap.get("lineType");
+        if (btns != null) {
+            if (lineType.equals(AREA)
+                    || PgenConstant.TYPE_NCON_SIGMET.equalsIgnoreCase(pgenType)
+                    || PgenConstant.TYPE_AIRM_SIGMET.equalsIgnoreCase(pgenType)
+                    || PgenConstant.TYPE_OUTL_SIGMET
+                            .equalsIgnoreCase(pgenType)) {
+                btns[0].setSelection(true);
+                btns[1].setSelection(false);
+                btns[2].setSelection(false);
+            } else if (lineType.contains(LINE)) {
+                btns[0].setSelection(false);
+                btns[1].setSelection(true);
+                btns[2].setSelection(false);
+
+                attrControlMap.get("lineType").setEnabled(true);
+                attrControlMap.get("width").setEnabled(true);
+            } else if (lineType.equals(ISOLATED)) {
+                btns[0].setSelection(false);
+                btns[1].setSelection(false);
+                btns[2].setSelection(true);
+
+                attrControlMap.get("width").setEnabled(true);
+            }
+        }
+
+        Combo comboLine = (Combo) attrControlMap.get("lineType");
+        String lt = this.getLineType();
+        if (comboLine != null && !comboLine.isDisposed() && lt != null
+                && lt.contains(this.LINE_SEPERATER)) {
+            if (lt.length() > 7) {
+                comboLine.setText(lt.substring(7));
+            } else {
+                comboLine.select(0);
+            }
+        }
+
+        Text txtWidth = (Text) attrControlMap.get("width");
+        String width = this.width == null ? "10.00" : this.width;
+        if (txtWidth != null && !txtWidth.isDisposed()) {
+            txtWidth.setText(width);
+        }
+
+        Combo comboMWO = (Combo) attrControlMap.get("editableAttrArea");
+        if (comboMWO != null && !comboMWO.isDisposed()
+                && this.getEditableAttrArea() != null) {
+            String area = this.getEditableAttrArea();
+            if (area != null && area.length() > 0) {
+                comboMWO.setText(area);
+            } else {
+                comboMWO.select(0);
+            }
+        }
+
+        Combo comboId = (Combo) attrControlMap.get("editableAttrId");
+        if (comboId != null && !comboId.isDisposed()
+                && this.getEditableAttrId() != null) {
+            String id = this.getEditableAttrId();
+            if (id != null && id.length() > 0) {
+                comboId.setText(id);
+            } else {
+                comboId.select(0);
+            }
+        }
+
+        Spinner seq = (Spinner) attrControlMap.get("editableAttrSeqNum");
+        if (seq != null && !seq.isDisposed()
+                && this.getEditableAttrSequence() != null) {
+            String seqAttr = this.getEditableAttrSequence();
+            int i = 0;
+            try {
+                i = Integer.parseInt(seqAttr);
+            } catch (Exception e) {
+                statusHandler.debug(e.getLocalizedMessage(), e);
+                i = 0;
+            }
+            seq.setSelection(i);
+        }
+
     }
 
     public String getEditableAttrArea() {
@@ -753,6 +770,9 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
         SigmetCommAttrDlgSaveMsgDlg(Shell parShell) throws VizException {
             super(parShell);
+
+            this.setShellStyle(SWT.TITLE | SWT.CLOSE | SWT.PRIMARY_MODAL);
+
         }
 
         public Map<String, Object> getAttrFromDlg() {
@@ -768,8 +788,13 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
         @Override
         public void enableButtons() {
-            this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
-            this.getButton(IDialogConstants.OK_ID).setEnabled(true);
+            if (this.getButton(IDialogConstants.CANCEL_ID) != null) {
+                this.getButton(IDialogConstants.CANCEL_ID).setEnabled(true);
+            }
+
+            if (this.getButton(IDialogConstants.OK_ID) != null) {
+                this.getButton(IDialogConstants.OK_ID).setEnabled(true);
+            }
         }
 
         @Override
@@ -794,7 +819,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
             setReturnCode(OK);
             close();
-            SigmetCommAttrDlg.this.drawingLayer.removeSelected();
+            SigmetCommAttrDlg.this.drawingLayers.removeSelected();
             SigmetCommAttrDlg.this.close();
             PgenUtil.setSelectingMode();
 
@@ -805,7 +830,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
             Layer defaultLayer = new Layer();
             defaultLayer.addElement(
-                    SigmetCommAttrDlg.this.drawingLayer.getSelectedDE());
+                    SigmetCommAttrDlg.this.drawingLayers.getSelectedDE());
             ArrayList<Layer> layerList = new ArrayList<>();
             layerList.add(defaultLayer);
 
@@ -818,10 +843,10 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
                     SigmetCommAttrDlg.this.pgenType, forecaster, null, refTime,
                     layerList);
 
-            String plabel = SigmetCommAttrDlg.this.drawingLayer
+            String plabel = SigmetCommAttrDlg.this.drawingLayers
                     .getActiveProduct().getOutputFile();
             if (plabel == null) {
-                plabel = SigmetCommAttrDlg.this.drawingLayer
+                plabel = SigmetCommAttrDlg.this.drawingLayers
                         .buildActivityLabel(defaultProduct);
             }
 
@@ -906,7 +931,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
             }
 
             if (PgenConstant.TYPE_AIRM_SIGMET
-                            .equalsIgnoreCase(SigmetCommAttrDlg.this.pgenType)
+                    .equalsIgnoreCase(SigmetCommAttrDlg.this.pgenType)
                     || PgenConstant.TYPE_OUTL_SIGMET.equalsIgnoreCase(
                             SigmetCommAttrDlg.this.pgenType)) {
                 return s.toUpperCase();
@@ -947,7 +972,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
 
         Polygon cSigPoly = null;
         com.raytheon.uf.viz.core.map.IMapDescriptor mapDescriptor = PgenSession
-                .getInstance().getPgenResource().getDescriptor();
+                .getInstance().getCurrentResource().getDescriptor();
         if (c1 != null) {
 
             double width = Double.parseDouble(SigmetCommAttrDlg.this.width);
@@ -995,45 +1020,38 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
             this.asig.setEditableAttrFromLine(newEditableLine);
         }
 
-        if (drawingLayer != null) {
-            adcList = drawingLayer.getAllSelected();
-        }
+        if (drawingLayers != null) {
+            adcList = drawingLayers.getAllSelected();
+            if (adcList != null && !adcList.isEmpty()) {
 
-        if (adcList != null && !adcList.isEmpty()) {
+                for (AbstractDrawableComponent adc : adcList) {
 
-            for (AbstractDrawableComponent adc : adcList) {
+                    Sigmet el = (Sigmet) adc.getPrimaryDE();
+                    if (el != null) {
+                        Sigmet newEl = (Sigmet) el.copy();
 
-                Sigmet el = (Sigmet) adc.getPrimaryDE();
-                if (el != null) {
-                    Sigmet newEl = (Sigmet) el.copy();
+                        attrUpdate();
 
-                    attrUpdate();
+                        copyEditableAttrToAbstractSigmet(newEl);
 
-                    copyEditableAttrToAbstractSigmet(newEl);
+                        // Change type and update From line
+                        newEl = convertType(newEl);
 
-                    // Change type and update From line
-                    newEl = convertType(newEl);
-
-                    this.setAbstractSigmet(newEl);
-                    newList.add(newEl);
+                        this.setAbstractSigmet(newEl);
+                        newList.add(newEl);
+                    }
                 }
+
+                List<AbstractDrawableComponent> oldList = new ArrayList<>(
+                        adcList);
+                drawingLayers.replaceElements(oldList, newList);
             }
 
-            List<AbstractDrawableComponent> oldList = new ArrayList<>(adcList);
-            drawingLayer.replaceElements(oldList, newList);
-        }
-
-        AbstractDrawableComponent newCmp = null;
-
-        for (AbstractDrawableComponent adc : newList) {
-            newCmp = adc;
-            drawingLayer.removeElement(adc);
-        }
-
-        if (newCmp != null) {
-            drawingLayer.addElement(newCmp);
-            drawingLayer.addSelected(newCmp);
-            drawingLayer.issueRefresh();
+            // set the new elements as selected.
+            drawingLayers.removeSelected();
+            for (AbstractDrawableComponent adc : newList) {
+                drawingLayers.addSelected(adc);
+            }
         }
 
         if (mapEditor != null) {
@@ -1058,8 +1076,7 @@ public class SigmetCommAttrDlg extends AttrDlg implements ISigmet {
             return Color.cyan;
         }
 
-        if (PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pType)
-                || PgenConstant.CWA_FORMATTER.equalsIgnoreCase(pType)) {
+        if (PgenConstant.TYPE_CONV_SIGMET.equalsIgnoreCase(pType)) {
             return Color.yellow;
         }
 

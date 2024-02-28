@@ -1,34 +1,22 @@
 /**
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
  *
- * gov.noaa.nws.ncep.ui.nsharp.palette.NsharpPaletteWindow
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
  *
- * This java class performs the NSHARP GUI construction.
- * This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
  *
- * <pre>
- * SOFTWARE HISTORY
- *
- * Date         Ticket#     Engineer    Description
- * -----------  ----------  ----------  -----------
- * 03/16/2010   229         Chin Chen   Initial coding
- * 03/11/2013   972         Greg Hull   NatlCntrsEditor
- * 09/03/2013   1031        Greg Hull   try 5 times to initialize the inventory.
- * 01/08/2014               Chin Chen   Only initializing inventory when in NCP
- * 01/13/2014   TTR829      Chin Chen   when interpolation, edit graph is allowed
- * 01/22/2014   DR17003     Chin Chen   NSHARP sounding display throws errors when swapping into main pane when show text is turned on.
- * 10/20/2014   DR16864     Chin Chen   D2D does not use unload button. Check to make sure not D2D instance before access unload button.
- * 02/04/2015   DR16888     Chin Chen   do not allow swap between Skewt and hodo when comparison is on, check in with DR17079
- * 08/10/2015   RM#9396     Chin Chen   implement new OPC pane configuration
- * 04/05/2016   RM#10435    rjpeter     Removed Inventory usage.
- * 07/05/2016   RM#15923    Chin Chen   NSHARP - Native Code replacement
- * 08/21/2018   #7081       dgilling    Support refactored NsharpEditDataDialog.
- * 10/16/2018   6835        bsteffen    Refactor printing.
- * 12/20/2018   7575        bsteffen    Do not reuse parcel dialog
- *
- * </pre>
- *
- * @author Chin Chen
- */
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
 package gov.noaa.nws.ncep.ui.nsharp.view;
 
 import org.eclipse.swt.SWT;
@@ -64,6 +52,7 @@ import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
 import com.raytheon.uf.viz.core.drawables.ResourcePair;
 import com.raytheon.uf.viz.d2d.ui.perspectives.D2D5Pane;
 import com.raytheon.viz.ui.UiUtil;
+import com.raytheon.viz.ui.editor.AbstractEditor;
 import com.raytheon.viz.ui.perspectives.VizPerspectiveListener;
 
 import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigManager;
@@ -75,10 +64,50 @@ import gov.noaa.nws.ncep.ui.nsharp.display.map.NsharpMapResource;
 import gov.noaa.nws.ncep.ui.nsharp.display.rsc.NsharpResourceHandler;
 import gov.noaa.nws.ncep.ui.nsharp.print.NsharpPrintHandle;
 import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
-import gov.noaa.nws.ncep.viz.ui.display.NatlCntrsEditor;
 
-public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
-        DisposeListener, IPartListener {
+/**
+ *
+ * gov.noaa.nws.ncep.ui.nsharp.palette.NsharpPaletteWindow
+ *
+ * This java class performs the NSHARP GUI construction. This code has been
+ * developed by the NCEP-SIB for use in the AWIPS2 system.
+ *
+ * <pre>
+ * SOFTWARE HISTORY
+ *
+ * Date         Ticket#     Engineer    Description
+ * -----------  ----------  ----------  -----------
+ * 03/16/2010   229         Chin Chen   Initial coding
+ * 03/11/2013   972         Greg Hull   NatlCntrsEditor
+ * 09/03/2013   1031        Greg Hull   try 5 times to initialize the inventory.
+ * 01/08/2014               Chin Chen   Only initializing inventory when in NCP
+ * 01/13/2014   TTR829      Chin Chen   when interpolation, edit graph is allowed
+ * 01/22/2014   DR17003     Chin Chen   NSHARP sounding display throws errors
+ *                                      when swapping into main pane when 
+ *                                      show text is turned on.
+ * 10/20/2014   DR16864     Chin Chen   D2D does not use unload button. 
+ *                                      Check to make sure not D2D instance
+ *                                      before access unload button.
+ * 02/04/2015   DR16888     Chin Chen   do not allow swap between Skewt and
+ *                                      hodo when comparison is on, check in
+ *                                      with DR17079
+ * 08/10/2015   RM#9396     Chin Chen   implement new OPC pane configuration
+ * 04/05/2016   RM#10435    rjpeter     Removed Inventory usage.
+ * 07/05/2016   RM#15923    Chin Chen   NSHARP - Native Code replacement
+ * 08/21/2018   #7081       dgilling    Support refactored NsharpEditDataDialog.
+ * 10/16/2018   6835        bsteffen    Refactor printing.
+ * 12/20/2018   7575        bsteffen    Do not reuse parcel dialog
+ * 04/06/2020   73571       smanoj      NSHARP D2D port refactor
+ * 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
+ * 03/21/2022   89212       smanoj      Configuration Dialog display issues.
+ * 04/01/2022   89212       smanoj      Fix some Nsharp display issues.
+ *
+ * </pre>
+ *
+ * @author Chin Chen
+ */
+public class NsharpPaletteWindow extends ViewPart
+        implements SelectionListener, DisposeListener, IPartListener {
     private final MessageBox mb;
 
     protected Button loadBtn, unloadBtn, overlayBtn, interpBtn, dataEditBtn,
@@ -141,6 +170,8 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
 
     private static NsharpPaletteWindow d2dInstance = null;
 
+    private NsharpMapResource mapRsc = null;
+
     private int currentGraphMode = NsharpConstants.GRAPH_SKEWT;
 
     private String paneConfigurationName;
@@ -154,6 +185,12 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
     private boolean spcGpCreated = false;
 
     private boolean imD2d = false;
+
+    private NsharpConfigDialog cfgDia = null;
+
+    private NsharpParcelDialog parcelDia = null;
+
+    private NsharpEditDataDialog editDia = null;
 
     public static NsharpPaletteWindow getInstance() {
         if (VizPerspectiveListener.getCurrentPerspectiveManager() != null) {
@@ -401,11 +438,12 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
                 || (rightGraph == NsharpConstants.SPCGraph.CONDTOR)) {
             condTorBtn.setBackground(colorBlue);
         } else {
-        	condTorBtn.setBackground(colorGrey);
+            condTorBtn.setBackground(colorGrey);
         }
         NsharpResourceHandler rsc = getRscHandler();
         if ((rsc != null) && (rsc.getSpcGraphsPaneRsc() != null)) {
-            rsc.getSpcGraphsPaneRsc().setGraphs(leftGraph, rightGraph, userVrot);
+            rsc.getSpcGraphsPaneRsc().setGraphs(leftGraph, rightGraph,
+                    userVrot);
         }
 
     }
@@ -464,7 +502,6 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
         page = site.getPage();
         page.addPartListener(this);
 
-        NsharpMapResource.registerMouseHandler();
         /*
          * get several control information back from SkewT resource, in the case
          * that NsharpPaletteWindow view was disposed and re-constructed while
@@ -489,7 +526,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
     @Override
     public void dispose() {
         if (!isEditorVisible) {
-            NsharpMapResource.unregisterMouseHandler();
+            if (mapRsc != null) {
+                mapRsc.unregisterMouseHandler();
+            }
             instance = null;
             d2dInstance = null;
             ncpInstance = null;
@@ -498,7 +537,10 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
             super.dispose();
             currentGraphMode = NsharpConstants.GRAPH_SKEWT;
             isEditorVisible = false;
-            NatlCntrsEditor editor = NsharpMapResource.getMapEditor();
+            AbstractEditor editor = null;
+            if (mapRsc != null) {
+                editor = mapRsc.getMapEditor();
+            }
             if (editor != null) {
                 for (IRenderableDisplay display : UiUtil
                         .getDisplaysFromContainer(editor)) {
@@ -531,6 +573,17 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
             instance = null;
             d2dInstance = null;
             ncpInstance = null;
+
+            if (cfgDia != null) {
+                cfgDia.close();
+            }
+            if (parcelDia != null) {
+                parcelDia.close();
+            }
+            if (editDia != null) {
+                editDia.close();
+            }
+
         }
     }
 
@@ -588,6 +641,8 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
 
                 if (loadDia != null) {
                     loadDia.open();
+                    mapRsc = (NsharpMapResource) loadDia.getMapRsc();
+                    mapRsc.registerMouseHandler();
                 }
             }
         });
@@ -640,9 +695,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
             public void handleEvent(Event event) {
                 Shell shell = PlatformUI.getWorkbench()
                         .getActiveWorkbenchWindow().getShell();
-                NsharpConfigDialog dia = NsharpConfigDialog.getInstance(shell);
-                if (dia != null) {
-                    dia.open();
+                cfgDia = NsharpConfigDialog.getInstance(shell);
+                if (cfgDia != null) {
+                    cfgDia.open();
                 }
             }
         });
@@ -706,7 +761,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
             @Override
             public void handleEvent(Event event) {
                 NsharpEditor editor = NsharpEditor.getActiveNsharpEditor();
-                editor.resetGraph();
+                if (editor != null) {
+                    editor.resetGraph();
+                }
             }
         });
 
@@ -720,8 +777,8 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
                 Shell shell = PlatformUI.getWorkbench()
                         .getActiveWorkbenchWindow().getShell();
                 if (checkLoadedData()) {
-                    NsharpParcelDialog parcelDia = new NsharpParcelDialog(shell);
-                        parcelDia.open();
+                    parcelDia = new NsharpParcelDialog(shell);
+                    parcelDia.open();
                 }
             }
         });
@@ -732,7 +789,6 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
         // Push buttons for Prev PAGE info
         Button prevpageBtn = new Button(dataGp, SWT.PUSH);
         prevpageBtn.setFont(newFont);
-        // prevpageBtn.setText("  Prev Data    ");
         prevpageBtn.setText("PvDt");
         prevpageBtn.setEnabled(true);
         prevpageBtn.addListener(SWT.MouseUp, new Listener() {
@@ -787,7 +843,8 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
                     if (interpolateIsOn) {
                         interpolateIsOn = false;
                         interpBtn.setText(INTP_OFF);
-                        if (((currentGraphMode == NsharpConstants.GRAPH_SKEWT) || (currentGraphMode == NsharpConstants.GRAPH_HODO))
+                        if (((currentGraphMode == NsharpConstants.GRAPH_SKEWT)
+                                || (currentGraphMode == NsharpConstants.GRAPH_HODO))
                                 && !editGraphOn) {
                             dataEditBtn.setEnabled(true);
                             compareTmBtn.setEnabled(true);
@@ -807,8 +864,8 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
                     // flag to Resource
                     NsharpEditor editor = NsharpEditor.getActiveNsharpEditor();
                     if (editor != null) {
-                        editor.getRscHandler().resetInfoOnInterpolate(
-                                interpolateIsOn);
+                        editor.getRscHandler()
+                                .resetInfoOnInterpolate(interpolateIsOn);
                         // know that current editor is NsharpSkewT editor,
                         // refresh it.
                         editor.refresh();
@@ -834,10 +891,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
         } else {
             overlayBtn.setText(OVLY_OFF);
             // comparison and overlay is mutual exclusive
-            if ((rscHandler != null)
-                    && (rscHandler.isCompareStnIsOn()
-                            || rscHandler.isCompareTmIsOn() || rscHandler
-                                .isCompareSndIsOn())) {
+            if ((rscHandler != null) && (rscHandler.isCompareStnIsOn()
+                    || rscHandler.isCompareTmIsOn()
+                    || rscHandler.isCompareSndIsOn())) {
                 overlayBtn.setEnabled(false);
             } else {
                 overlayBtn.setEnabled(true);
@@ -901,10 +957,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
         } else {
             // comparison and overlay is mutual exclusive
             compareStnBtn.setText(COMP_STN_OFF);
-            if ((rscHandler != null)
-                    && (rscHandler.isOverlayIsOn()
-                            || rscHandler.isCompareTmIsOn() || rscHandler
-                                .isCompareSndIsOn())) {
+            if ((rscHandler != null) && (rscHandler.isOverlayIsOn()
+                    || rscHandler.isCompareTmIsOn()
+                    || rscHandler.isCompareSndIsOn())) {
                 compareStnBtn.setEnabled(false);
             } else {
                 compareStnBtn.setEnabled(true);
@@ -970,10 +1025,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
         } else {
             // comparison and overlay is mutual exclusive
             compareTmBtn.setText(COMP_TM_OFF);
-            if ((rscHandler != null)
-                    && (rscHandler.isOverlayIsOn()
-                            || rscHandler.isCompareStnIsOn() || rscHandler
-                                .isCompareSndIsOn())) {
+            if ((rscHandler != null) && (rscHandler.isOverlayIsOn()
+                    || rscHandler.isCompareStnIsOn()
+                    || rscHandler.isCompareSndIsOn())) {
                 compareTmBtn.setEnabled(false);
             } else {
                 compareTmBtn.setEnabled(true);
@@ -1038,10 +1092,9 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
         } else {
             // comparison and overlay is mutual exclusive
             compareSndBtn.setText(COMP_SND_OFF);
-            if ((rscHandler != null)
-                    && (rscHandler.isOverlayIsOn()
-                            || rscHandler.isCompareStnIsOn() || rscHandler
-                                .isCompareTmIsOn())) {
+            if ((rscHandler != null) && (rscHandler.isOverlayIsOn()
+                    || rscHandler.isCompareStnIsOn()
+                    || rscHandler.isCompareTmIsOn())) {
                 compareSndBtn.setEnabled(false);
             } else {
                 compareSndBtn.setEnabled(true);
@@ -1112,8 +1165,7 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
                 if (checkLoadedData()) {
                     Shell shell = PlatformUI.getWorkbench()
                             .getActiveWorkbenchWindow().getShell();
-                    NsharpEditDataDialog editDia = new NsharpEditDataDialog(
-                            shell);
+                    editDia = new NsharpEditDataDialog(shell);
                     editDia.open();
                 }
             }
@@ -1222,9 +1274,8 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
             restorePaletteWindow(paneConfigurationName,
                     rscHandler.getCurrentGraphMode(),
                     rscHandler.isInterpolateIsOn(), rscHandler.isOverlayIsOn(),
-                    rscHandler.isCompareStnIsOn(),
-                    rscHandler.isCompareTmIsOn(), rscHandler.isEditGraphOn(),
-                    rscHandler.isCompareSndIsOn());
+                    rscHandler.isCompareStnIsOn(), rscHandler.isCompareTmIsOn(),
+                    rscHandler.isEditGraphOn(), rscHandler.isCompareSndIsOn());
         }
         parent.redraw();
     }
@@ -1422,13 +1473,13 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
         vrotBtn.addListener(SWT.MouseUp, new Listener() {
             @Override
             public void handleEvent(Event event) {
-            	Shell shell = PlatformUI.getWorkbench()
+                Shell shell = PlatformUI.getWorkbench()
                         .getActiveWorkbenchWindow().getShell();
-            	NsharpVrotDialog vrotDialog = NsharpVrotDialog
+                NsharpVrotDialog vrotDialog = NsharpVrotDialog
                         .getInstance(shell);
                 if (vrotDialog != null) {
-                	vrotDialog.open();
-                	userVrot = vrotDialog.getVrotValue();
+                    vrotDialog.open();
+                    userVrot = vrotDialog.getVrotValue();
                 }
                 if ((leftGraph != NsharpConstants.SPCGraph.VROT)
                         && (rightGraph != NsharpConstants.SPCGraph.VROT)) {
@@ -1846,16 +1897,46 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
 
     @Override
     public void partActivated(IWorkbenchPart part) {
+
+        // Prevent NSharp Configuration Dialog going to Localization Perspective.
+        if (VizPerspectiveListener.getCurrentPerspectiveManager() != null) {
+            if ((!(VizPerspectiveListener.getCurrentPerspectiveManager()
+                    .getPerspectiveId().equals(D2D5Pane.ID_PERSPECTIVE)))
+                    || (part.getTitle().contains("File Browser"))) {
+                if (cfgDia != null) {
+                    cfgDia.close();
+                }
+                if (parcelDia != null) {
+                    parcelDia.close();
+                }
+                if (editDia != null) {
+                    editDia.close();
+                }
+            }
+        } else {
+            if ((!(part instanceof NsharpPaletteWindow))
+                    || (part.getTitle().contains("File Browser"))) {
+                if (cfgDia != null) {
+                    cfgDia.close();
+                }
+                if (parcelDia != null) {
+                    parcelDia.close();
+                }
+                if (editDia != null) {
+                    editDia.close();
+                }
+            }
+        }
+
         if (context == null) {
-            IContextService ctxSvc = PlatformUI
-                    .getWorkbench().getService(IContextService.class);
-            context = ctxSvc
-                    .activateContext("gov.noaa.nws.ncep.ui.nsharp.nsharpContext");
+            IContextService ctxSvc = PlatformUI.getWorkbench()
+                    .getService(IContextService.class);
+            context = ctxSvc.activateContext(
+                    "gov.noaa.nws.ncep.ui.nsharp.nsharpContext");
         }
         if (part instanceof NsharpPaletteWindow) {
-            NsharpMapResource rsc = NsharpMapResource.getMapRsc();
-            if (rsc != null) {
-                rsc.setEditable(true);
+            if (mapRsc != null) {
+                mapRsc.setEditable(true);
             }
         }
     }
@@ -1876,8 +1957,8 @@ public class NsharpPaletteWindow extends ViewPart implements SelectionListener,
     public void partDeactivated(IWorkbenchPart part) {
         if (context != null) {
 
-            IContextService ctxSvc = PlatformUI
-                    .getWorkbench().getService(IContextService.class);
+            IContextService ctxSvc = PlatformUI.getWorkbench()
+                    .getService(IContextService.class);
             ctxSvc.deactivateContext(context);
             context = null;
         }

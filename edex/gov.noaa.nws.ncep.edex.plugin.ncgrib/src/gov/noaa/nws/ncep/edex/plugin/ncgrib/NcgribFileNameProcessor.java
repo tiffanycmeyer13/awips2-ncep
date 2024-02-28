@@ -33,6 +33,8 @@ import org.apache.camel.Processor;
  *                                    variable.
  * Oct 25, 2019  7959     tjensen     Only set secondary ids for appropriate
  *                                    patterns
+ * May 12, 2022 22594  mgamazaychikov Add dataIdentifier header to exchange header
+ *                                    map and set its value to datasetid
  *
  * </pre>
  *
@@ -96,6 +98,8 @@ public class NcgribFileNameProcessor implements Processor {
     private static final String HURRICANE_MODEL_RES_1P0 = "1p00";
 
     protected static final String EXCHANGE_HEADER = "CamelFileNameOnly";
+
+    private static final String DATA_IDENTIFIER = "dataIdentifier";
 
     private static NcgribModelNameMap modelMap = null;
 
@@ -239,12 +243,16 @@ public class NcgribFileNameProcessor implements Processor {
 
         }
 
+        StringBuilder dataIdentifierInfo = new StringBuilder();
+
         if (datasetid == null) {
             // Get model name from grib file template
             datasetid = getModelMap().getModelName(flName);
         }
 
         if (datasetid != null) {
+            dataIdentifierInfo.append("datasetid ");
+            dataIdentifierInfo.append(datasetid);
             exchange.getIn().setHeader("datasetid", datasetid);
         }
         if (secondaryid != null) {
@@ -252,6 +260,11 @@ public class NcgribFileNameProcessor implements Processor {
         }
         if (ensembleid != null) {
             exchange.getIn().setHeader("ensembleid", ensembleid);
+        }
+
+        // set dataIdentifier header value to datasetid
+        if (dataIdentifierInfo.length() != 0) {
+            exchange.getIn().setHeader(DATA_IDENTIFIER, dataIdentifierInfo.toString());
         }
 
     }

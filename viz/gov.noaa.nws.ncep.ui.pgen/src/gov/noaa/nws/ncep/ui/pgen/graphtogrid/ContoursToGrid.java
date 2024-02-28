@@ -1,25 +1,11 @@
 /*
  * gov.noaa.nws.ncep.ui.pgen.graphToGrid.ContoursToGrid
- * 
+ *
  * January 2010
  *
  * This code has been developed by the NCEP/SIB for use in the AWIPS2 system.
  */
 package gov.noaa.nws.ncep.ui.pgen.graphtogrid;
-
-import gov.noaa.nws.ncep.gempak.parameters.core.categorymap.CatMap;
-import gov.noaa.nws.ncep.ui.pgen.PgenSession;
-import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
-import gov.noaa.nws.ncep.ui.pgen.contours.ContourCircle;
-import gov.noaa.nws.ncep.ui.pgen.contours.ContourLine;
-import gov.noaa.nws.ncep.ui.pgen.contours.ContourMinmax;
-import gov.noaa.nws.ncep.ui.pgen.contours.Contours;
-import gov.noaa.nws.ncep.ui.pgen.elements.Arc;
-import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
-import gov.noaa.nws.ncep.ui.pgen.elements.Line;
-import gov.noaa.nws.ncep.ui.pgen.elements.SinglePointElement;
-import gov.noaa.nws.ncep.ui.pgen.elements.Symbol;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
 
 import java.awt.Color;
 import java.io.File;
@@ -44,26 +30,47 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 
+import gov.noaa.nws.ncep.gempak.parameters.core.categorymap.CatMap;
+import gov.noaa.nws.ncep.ui.pgen.PgenSession;
+import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
+import gov.noaa.nws.ncep.ui.pgen.contours.ContourCircle;
+import gov.noaa.nws.ncep.ui.pgen.contours.ContourLine;
+import gov.noaa.nws.ncep.ui.pgen.contours.ContourMinmax;
+import gov.noaa.nws.ncep.ui.pgen.contours.Contours;
+import gov.noaa.nws.ncep.ui.pgen.elements.Arc;
+import gov.noaa.nws.ncep.ui.pgen.elements.DECollection;
+import gov.noaa.nws.ncep.ui.pgen.elements.Line;
+import gov.noaa.nws.ncep.ui.pgen.elements.SinglePointElement;
+import gov.noaa.nws.ncep.ui.pgen.elements.Symbol;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+
 /**
  * Class for Graph-to-Grid to generate grids from a Contours element.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * -------------------------------------------------------------------
- * 01/10        #215        J. Wu       Initial Creation.
- * 06/10        #215        J. Wu       Added support for Min/Max.
- * 07/10        #215        J. Wu       Added support for Outlook.
- * 07/10        #215        J. Wu       Added support for writing grid to
- *                                         a GEMPAK grid file
- * 09/10        #215        J. Wu       Checked working directory and PATH.
- * 11/10        #345        J. Wu       Added support for circle.
- * 05/14        TTR989      J. Wu       Allow environmental variable in PATH.
- * 01/27/2016   R13166      J. Wu       Allow symbol only & label only Minmax.
- * 07/21/2016   R16077      J. Wu       Allow number of labels to be 0 for contour lines.
- * 
+ *
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * 01/10         215      J. Wu     Initial Creation.
+ * 06/10         215      J. Wu     Added support for Min/Max.
+ * 07/10         215      J. Wu     Added support for Outlook.
+ * 07/10         215      J. Wu     Added support for writing grid to a GEMPAK
+ *                                  grid file
+ * 09/10         215      J. Wu     Checked working directory and PATH.
+ * 11/10         345      J. Wu     Added support for circle.
+ * 05/14         TTR989   J. Wu     Allow environmental variable in PATH.
+ * Jan 27, 2016  13166    J. Wu     Allow symbol only & label only Minmax.
+ * Jul 21, 2016  16077    J. Wu     Allow number of labels to be 0 for contour
+ *                                  lines.
+ * Apr 23, 2021  89949    smanoj    Fixed Graph to Grid Issues.
+ * Jun 14, 2021  91162    smanoj    Turn extend off, so grid lines match contour
+ *                                  lines.
+ * Dec 01, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
+ *
  * </pre>
- * 
+ *
  * @author J. Wu
  */
 
@@ -74,7 +81,7 @@ public class ContoursToGrid extends GraphToGrid {
     private static float largestContourValue = GridUtil.GRID_FILL_VALUE + 1;
 
     /** Factory */
-    private GeometryFactory geometryFactory = new GeometryFactory();
+    private final GeometryFactory geometryFactory = new GeometryFactory();
 
     /**
      * Constructor
@@ -135,9 +142,11 @@ public class ContoursToGrid extends GraphToGrid {
                 newPt[1] = jj + 1;
                 lonlat = gtrans.gridToWorld(newPt);
 
-                c = new Coordinate(lonlat[0], lonlat[1]);
+                if (lonlat != null) {
+                    c = new Coordinate(lonlat[0], lonlat[1]);
 
-                gridPts[ii + jj * kx] = c;
+                    gridPts[ii + jj * kx] = c;
+                }
             }
         }
 
@@ -156,11 +165,11 @@ public class ContoursToGrid extends GraphToGrid {
 
         /*
          * Smooth and extend the lines - in grid space.
-         * 
+         *
          * 1. Convert the text label to float using the CATMAP. 2. Add bound
          * lines as part of the Contours. 3. Extend the lines to the boundary of
          * the GAREA
-         * 
+         *
          * Note that bound lines is also processed here but it won't be smoothed
          * and extended since they are closed lines with smoothing level 0.
          */
@@ -201,20 +210,17 @@ public class ContoursToGrid extends GraphToGrid {
                 kx, ky, new Color[] { Color.blue }, cmap);
 
         /*
-         * Draw bounds and grids for diagnosis
-         */
-        // drawBoundsAndGrid( bndContours, hist, kx, ky, gridPts );
-
-        /*
          * Prepare data to be set into g2g_driver
-         * 
+         *
          * Note that if no extension is required (bounds is empty or the line is
          * a closed line), fi_ext and fj_ext should use the the original line
          * points.
-         * 
+         *
          * ?It is reasonable to always extend the lines regardless of bounds?
          */
-        boolean extend = true;
+        // Always 'extend' the lines logic is not working properly, so turning
+        // it off for now.
+        boolean extend = false;
 
         float[][] flat, flon;
         float[][] fi_orig, fj_orig;
@@ -304,7 +310,7 @@ public class ContoursToGrid extends GraphToGrid {
 
         /*
          * Line values, smooth level, closed flag.
-         * 
+         *
          * Note that the bounds with a value of "-RMISSD" should be reset to
          * "RMISSD" for g2g calculation.
          */
@@ -338,8 +344,7 @@ public class ContoursToGrid extends GraphToGrid {
 
             Coordinate cmmPt;
             if (cmm.getSymbol() != null) {
-                cmmPt = ((SinglePointElement) (cmm.getSymbol()))
-                    .getLocation();
+                cmmPt = ((SinglePointElement) (cmm.getSymbol())).getLocation();
             } else {
                 cmmPt = cmm.getLabel().getLocation();
             }
@@ -422,9 +427,6 @@ public class ContoursToGrid extends GraphToGrid {
             return;
         }
 
-        gdatim = new String(PgenUtil.calendarToGempakDattim(extContours
-                .getTime1()) + extContours.getForecastHours());
-
         /*
          * Find the correct current working directory in case.
          */
@@ -445,7 +447,7 @@ public class ContoursToGrid extends GraphToGrid {
          * environmental variables (which is UPPER CASE!). So we need to parse
          * the environmental variables in the PATH before checking upper case
          * characters.
-         * 
+         *
          * Check if the PATH is valid and exists
          */
         String msg = null;
@@ -497,8 +499,10 @@ public class ContoursToGrid extends GraphToGrid {
 
         if (msg != null) {
 
-            MessageDialog msgDlg = new MessageDialog(PlatformUI.getWorkbench()
-                    .getActiveWorkbenchWindow().getShell(), "Warning", null,
+            MessageDialog msgDlg = new MessageDialog(
+                    PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                            .getShell(),
+                    "Warning", null,
                     "Fail to write to " + fullFile + " because:\n\n" + msg,
                     MessageDialog.INFORMATION, new String[] { "OK" }, 0);
             msgDlg.open();
@@ -512,8 +516,8 @@ public class ContoursToGrid extends GraphToGrid {
         String cpyfil = new String(" ");
         String anlyss = new String(" ");
 
-        g2gNative.g2g_write(grid, hist, histgrd, fullFile, proj, cpyfil,
-                gdarea, anlyss, ckxky, maxgrd, gparm, gdatim, gvcord, glevel);
+        g2gNative.g2g_write(grid, hist, histgrd, fullFile, proj, cpyfil, gdarea,
+                anlyss, ckxky, maxgrd, gparm, gdatim, gvcord, glevel);
 
     }
 
@@ -542,17 +546,17 @@ public class ContoursToGrid extends GraphToGrid {
         float gmax = Float.MIN_VALUE;
         float gmin = Float.MAX_VALUE;
 
-        for (int ii = 0; ii < grid.length; ii++) {
-            if (grid[ii] > gmax) {
-                gmax = grid[ii];
+        for (float element : grid) {
+            if (element > gmax) {
+                gmax = element;
             }
 
-            if (grid[ii] < gmin) {
-                gmin = grid[ii];
+            if (element < gmin) {
+                gmin = element;
             }
         }
 
-        ArrayList<String> contourVals = new ArrayList<String>();
+        ArrayList<String> contourVals = new ArrayList<>();
         for (ContourLine cline : ((Contours) currentGraph).getContourLines()) {
             contourVals.add(cline.getLabelString()[0]);
         }
@@ -581,7 +585,7 @@ public class ContoursToGrid extends GraphToGrid {
                 }
             } else {
                 String[] cintArray = cint.split(";");
-                ArrayList<String> cintList = new ArrayList<String>();
+                ArrayList<String> cintList = new ArrayList<>();
                 for (String str : cintArray) {
                     try {
                         Float.parseFloat(str);
@@ -639,10 +643,11 @@ public class ContoursToGrid extends GraphToGrid {
         int npts = 0;
         for (int ii = 0; ii < nContours; ii++) {
             float[] line = container.xyContourPoints.get(ii);
-            contourValue[ncnt] = ((int) (container.contourVals.get(ii) * 10)) / 10.0f;
+            contourValue[ncnt] = ((int) (container.contourVals.get(ii) * 10))
+                    / 10.0f;
             nContourPts[ncnt] = line.length / 2;
-            for (int jj = 0; jj < line.length; jj += 1) {
-                vals[npts] = line[jj];
+            for (float element : line) {
+                vals[npts] = element;
                 npts += 1;
             }
             ncnt += 1;
@@ -670,7 +675,7 @@ public class ContoursToGrid extends GraphToGrid {
             }
 
             PgenResource drawingLayer = PgenSession.getInstance()
-                    .getPgenResource();
+                    .getCurrentResource();
             if (dispAsGhost) {
                 drawingLayer.setGhostLine(gridContours);
             } else {
@@ -688,13 +693,12 @@ public class ContoursToGrid extends GraphToGrid {
      * reversed if the "inout" flag is explicitly set to "false" by the user. In
      * that case, the grid points outside a bound are set as BOUNDED and their
      * values as RMISSD (-9999).
-     * 
+     *
      * Note: need to access the "hist" array as it is an FORTRAN array (column
      * first).
      */
-    private Contours contoursFromBounds(String bnds,
-            CoordinateTransform gtrans, float hist[], Coordinate[] grdPts,
-            int kx, int ky) {
+    private Contours contoursFromBounds(String bnds, CoordinateTransform gtrans,
+            float hist[], Coordinate[] grdPts, int kx, int ky) {
 
         ArrayList<BoundPolygon> boundPolys = BoundPolygon.getAllBounds(bnds);
 
@@ -745,25 +749,25 @@ public class ContoursToGrid extends GraphToGrid {
 
     /**
      * Special bound processing -
-     * 
+     *
      * 1. A closed line labeled "-9999.0" is treated as a bound - the grid
      * points inside such a bound are set as "BOUNDED" and values as "RMISSD".
      * 2. A closed line labeled "9999.0" is also treated as a bound - the grid
      * points outside such a bound are set as "BOUNDED" and values as "RMISSD".
      * 3. An unlabeled closed line is treated as a line labeled as "-9999.0"
-     * 
+     *
      * Note: need to access the "hist" array as it is an FORTRAN array (column
      * first).
      */
     private void checkSpecialBounds(Contours cnt, float[] hist, int kx, int ky,
             CoordinateTransform gtrans, Coordinate[] grdPts, CatMap cmap) {
 
-        ArrayList<ContourLine> cntline = new ArrayList<ContourLine>();
+        ArrayList<ContourLine> cntline = new ArrayList<>();
         if (cnt != null) {
             cntline = cnt.getContourLines();
         }
 
-        ArrayList<Polygon> polys = new ArrayList<Polygon>();
+        ArrayList<Polygon> polys = new ArrayList<>();
         boolean[] inout = new boolean[cntline.size()];
 
         int nb = 0;
@@ -773,8 +777,8 @@ public class ContoursToGrid extends GraphToGrid {
 
             float lblValue = getValueForLabel(cmap, label[0]);
 
-            if (ln.isClosedLine()
-                    && (lblValue == G2GCommon.RMISSD || lblValue == -G2GCommon.RMISSD)) {
+            if (ln.isClosedLine() && (lblValue == G2GCommon.RMISSD
+                    || lblValue == -G2GCommon.RMISSD)) {
                 ArrayList<Coordinate> coords = ln.getPoints();
                 coords.add(new Coordinate(coords.get(0).x, coords.get(0).y));
 
@@ -834,7 +838,8 @@ public class ContoursToGrid extends GraphToGrid {
     private void drawBoundsAndGrid(Contours cnt, float[] hist, int kx, int ky,
             Coordinate[] grdPts) {
 
-        PgenResource drawingLayer = PgenSession.getInstance().getPgenResource();
+        PgenResource drawingLayer = PgenSession.getInstance()
+                .getCurrentResource();
 
         /*
          * Build grid points as a a collection of markers - for debug. if a grid
@@ -872,15 +877,16 @@ public class ContoursToGrid extends GraphToGrid {
 
     /*
      * Generate a list of points from a circle (Arc) to from a line.
-     * 
+     *
      * This is adapted from Steve's DisplayElementFactory->
      * createDisplayElements(IArc arc, PaintProperties paintProps)
      */
     private ArrayList<Coordinate> generateArcPoints(Arc arc, double interval) {
 
-        ArrayList<Coordinate> points = new ArrayList<Coordinate>();
+        ArrayList<Coordinate> points = new ArrayList<>();
 
-        PgenResource drawingLayer = PgenSession.getInstance().getPgenResource();
+        PgenResource drawingLayer = PgenSession.getInstance()
+                .getCurrentResource();
 
         /*
          * Convert center and circumference point from lat/lon to pixel
@@ -895,8 +901,8 @@ public class ContoursToGrid extends GraphToGrid {
         /*
          * calculate angle of major axis
          */
-        double axisAngle = Math.toDegrees(Math.atan2((circum[1] - center[1]),
-                (circum[0] - center[0])));
+        double axisAngle = Math.toDegrees(
+                Math.atan2((circum[1] - center[1]), (circum[0] - center[0])));
         double cosineAxis = Math.cos(Math.toRadians(axisAngle));
         double sineAxis = Math.sin(Math.toRadians(axisAngle));
 
@@ -912,8 +918,8 @@ public class ContoursToGrid extends GraphToGrid {
          */
         double increment = interval; // degrees
         double angle = arc.getStartAngle();
-        int numpts = (int) (Math.round(arc.getEndAngle() - arc.getStartAngle()
-                + 1.0) / increment);
+        int numpts = (int) (Math.round(
+                arc.getEndAngle() - arc.getStartAngle() + 1.0) / increment);
 
         double[][] path = new double[numpts][3];
         for (int j = 0; j < numpts; j++) {
@@ -924,8 +930,8 @@ public class ContoursToGrid extends GraphToGrid {
             path[j][1] = center[1] + (major * sineAxis * thisCosine)
                     + (minor * cosineAxis * thisSine);
 
-            double[] pt = drawingLayer.getDescriptor().pixelToWorld(
-                    new double[] { path[j][0], path[j][1], 0.0 });
+            double[] pt = drawingLayer.getDescriptor()
+                    .pixelToWorld(new double[] { path[j][0], path[j][1], 0.0 });
 
             points.add(new Coordinate(pt[0], pt[1]));
 

@@ -46,6 +46,12 @@ import org.locationtech.jts.geom.Coordinate;
  *                                   resource handler.
  * Dec 14, 2018  6872     bsteffen   Display more precision when needed
  * Jan 23  2019  21039    smoorthy   make fonts the same as on 18.1.2
+ * Sep 24, 2020  82255    smanoj     Nsharp Point Forecast Sounding retrieval should
+ *                                   load first Forecast Hour(V000) as default.
+ * Oct 15, 2020  82255    smanoj     Additional fix for Nsharp PFC Sounding retrieval
+ *                                   to load Forecast Hour(V000) as default.
+ * Nov 09, 2020  84810    smanoj     Fix a Null Pointer Exception.
+ * Jul 07, 2023  2035833  smanoj     Fix an issue with toggle between 2 PFC soundings.
  * 
  * </pre>
  * 
@@ -139,6 +145,12 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
     private boolean compareTmIsOn;
 
     private boolean compareSndIsOn;
+
+    private boolean initialLoad = true;
+
+    private final static String NAM_SOUNDING_TYPE = "NAMS";
+
+    private final static String GFS_SOUNDING_TYPE = "GFSS";
 
     public NsharpTimeStnPaneResource(AbstractResourceData resourceData,
             LoadProperties loadProperties, NsharpAbstractPaneDescriptor desc) {
@@ -614,6 +626,11 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
             x = sndXOrig + 5;
             NsharpOperationElement elm = sndElemList.get(j);
             NsharpConstants.ActState sta = elm.getActionState();
+
+            sndTypeStr = elm.getDescription().substring(
+                    elm.getDescription().length() - 4,
+                    elm.getDescription().length());
+
             if (sta == NsharpConstants.ActState.ACTIVE && j == curSndIndex)
                 sta = NsharpConstants.ActState.CURRENT;
 
@@ -735,19 +752,36 @@ public class NsharpTimeStnPaneResource extends NsharpAbstractPaneResource {
         // plot color notations
         drawNsharpColorNotation(target, colorNoteRectangle);
 
+        // Nsharp Point Forecast Sounding(NAM or GFS) retrieval should
+        // load first Forecast Hour(V000) as default.
+        if (initialLoad) {
+            initialPFCLoadToHour0();
+            initialLoad = false;
+        }
     }
-    
+
+    private void initialPFCLoadToHour0() {
+        // Nsharp Point Forecast Sounding(NAM or GFS) retrieval should
+        // load first Forecast Hour(V000) as default.
+        if ((NAM_SOUNDING_TYPE.equalsIgnoreCase(sndTypeStr))
+                || (GFS_SOUNDING_TYPE.equalsIgnoreCase(sndTypeStr))) {
+            curTimeLineIndex = rscHandler.getFrameCount() - 1;
+            rscHandler.setSoundingType(sndTypeStr);
+            rscHandler.setCurrentIndex(curTimeLineIndex);
+        }
+    }
+
     private void calculateTimeStnBoxData() {
         totalTimeLinePage = timeElemList.size() / numLineToShowPerPage;
         if (timeElemList.size() % numLineToShowPerPage != 0)
             totalTimeLinePage = totalTimeLinePage + 1;
         curTimeLinePage = curTimeLineIndex / numLineToShowPerPage + 1;
-        
+
         totalStnIdPage = stnElemList.size() / numLineToShowPerPage;
         if (stnElemList.size() % numLineToShowPerPage != 0)
             totalStnIdPage++;
         curStnIdPage = curStnIndex / numLineToShowPerPage + 1;
-        
+
         totalSndPage = sndElemList.size() / numLineToShowPerPage;
         if (sndElemList.size() % numLineToShowPerPage != 0)
             totalSndPage++;

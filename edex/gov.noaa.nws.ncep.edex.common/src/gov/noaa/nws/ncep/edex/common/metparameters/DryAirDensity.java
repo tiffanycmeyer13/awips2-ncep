@@ -12,7 +12,7 @@ import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.PRLibrary
 import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.PRLibrary.InvalidValueException;
 import si.uom.SI;
 import si.uom.quantity.Density;
-import tec.uom.se.unit.ProductUnit;
+import tech.units.indriya.unit.ProductUnit;
 
 /**
  * Maps to the GEMPAK parameter DDEN

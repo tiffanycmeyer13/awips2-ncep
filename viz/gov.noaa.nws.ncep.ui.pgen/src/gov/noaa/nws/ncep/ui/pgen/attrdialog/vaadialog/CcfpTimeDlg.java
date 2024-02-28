@@ -53,10 +53,12 @@ import gov.noaa.nws.ncep.ui.pgen.store.StorageUtils;
  * SOFTWARE HISTORY
  * Date         Ticket#    Engineer    Description
  * ------------ ---------- ----------- --------------------------
- * 09/10         322        G. Zhang    Initial Creation.
- * 07/11        #450        G. Hull     NcPathManager
- * 04/13        #977        S. Gilbert  PGEN Database support
- * 03/20/2019   #7572       dgilling    Code cleanup.
+ * 09/10         322       G. Zhang    Initial Creation.
+ * 07/11         #450      G. Hull     NcPathManager
+ * 04/13         #977      S. Gilbert  PGEN Database support
+ * 03/20/2019    #7572     dgilling    Code cleanup.
+ * Feb 02, 2022  100705    thuggins    Fixed code that adjusts issue time
+ *                                     when it's later than valid time
  * </pre>
  *
  * @author gzhang
@@ -247,11 +249,10 @@ public class CcfpTimeDlg extends AttrDlg {
             StorageUtils.showError(e1);
             return;
         }
-        String txtPrd = CcfpInfo.convertXml2Txt(
-                activityXML,
-                PgenStaticDataProvider.getProvider().getFileAbsolutePath(
-                        PgenStaticDataProvider.getProvider()
-                                .getPgenLocalizationRoot()
+        String txtPrd = CcfpInfo.convertXml2Txt(activityXML,
+                PgenStaticDataProvider.getProvider()
+                        .getFileAbsolutePath(PgenStaticDataProvider
+                                .getProvider().getPgenLocalizationRoot()
                                 + CcfpMsgDlg.PGEN_CCFP_XSLT));
 
         // close this dialog
@@ -287,8 +288,8 @@ public class CcfpTimeDlg extends AttrDlg {
 
         try {
 
-            File file = PgenStaticDataProvider.getProvider().getFile(
-                    PgenStaticDataProvider.getProvider()
+            File file = PgenStaticDataProvider.getProvider()
+                    .getFile(PgenStaticDataProvider.getProvider()
                             .getPgenLocalizationRoot() + "ccfpTimes.xml");
 
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -360,8 +361,8 @@ public class CcfpTimeDlg extends AttrDlg {
             list.add(day + "_" + hour);
             issueTimeDayMap.put(itime, day);
         } else {
-            list.add((fh < ih ? getDayOrHour(tomorrow) : issueTimeDayMap
-                    .get(itime)) + "_" + hour);
+            list.add((fh < ih ? getDayOrHour(tomorrow)
+                    : issueTimeDayMap.get(itime)) + "_" + hour);
         }
 
     }
@@ -384,8 +385,8 @@ public class CcfpTimeDlg extends AttrDlg {
 
         // today's hour
         return isToday == null ? sdft.format(today.getTime())
-                : isToday ? sdf.format(today.getTime()) : sdf.format(tomorrow
-                        .getTime());
+                : isToday ? sdf.format(today.getTime())
+                        : sdf.format(tomorrow.getTime());
     }
 
     /*
@@ -403,6 +404,10 @@ public class CcfpTimeDlg extends AttrDlg {
                 cmbVaTime.select(0);
 
                 ccfpIssueTime = it;
+
+                // When issue time pushed past valid time valid time is adjusted
+                // to at least 4 hours ahead
+                ccfpValidTime = cmbVaTime.getText().trim();
 
             }
         });

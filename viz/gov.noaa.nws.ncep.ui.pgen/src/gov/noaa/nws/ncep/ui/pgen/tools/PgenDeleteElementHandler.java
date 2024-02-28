@@ -9,6 +9,7 @@
 package gov.noaa.nws.ncep.ui.pgen.tools;
 
 import com.raytheon.viz.ui.editor.AbstractEditor;
+import org.locationtech.jts.geom.Coordinate;
 
 import gov.noaa.nws.ncep.ui.pgen.PgenSession;
 import gov.noaa.nws.ncep.ui.pgen.PgenUtil;
@@ -22,9 +23,8 @@ import gov.noaa.nws.ncep.ui.pgen.elements.Layer;
 import gov.noaa.nws.ncep.ui.pgen.elements.Outlook;
 import gov.noaa.nws.ncep.ui.pgen.elements.Text;
 import gov.noaa.nws.ncep.ui.pgen.filter.AcceptFilter;
-import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource;
+import gov.noaa.nws.ncep.ui.pgen.rsc.PgenResourceList;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Implements input handler for mouse events for the deleting action.
  *
@@ -41,6 +41,8 @@ import org.locationtech.jts.geom.Coordinate;
  * Feb 20, 2020  74901    smanoj    Removed confirmation for deleting contours.
  *                                  Undo functionality issues are also fixed.
  * Apr 06, 2020  77420    tjensen   Allow delete of specific contour labels
+ * Dec 02, 2021  95362    tjensen   Refactor PGEN Resource management to support
+ *                                  multi-panel displays
  *
  * </pre>
  *
@@ -51,7 +53,7 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
 
     protected AbstractEditor mapEditor;
 
-    protected PgenResource pgenrsc;
+    protected PgenResourceList pgenrscs;
 
     protected AbstractPgenTool tool;
 
@@ -64,7 +66,7 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
      */
     public PgenDeleteElementHandler(AbstractPgenTool tool) {
         this.tool = tool;
-        pgenrsc = tool.getDrawingLayer();
+        pgenrscs = tool.getDrawingLayers();
         mapEditor = tool.mapEditor;
 
         if (tool instanceof AbstractPgenDrawingTool) {
@@ -87,26 +89,26 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
         }
 
         if (button == 1) {
-            if (pgenrsc.getSelectedComp() != null) {
+            if (pgenrscs.getSelectedComp() != null) {
                 doDelete();
             } else {
                 // Get the nearest element and set it as the selected element.
-                AbstractDrawableComponent elSelected = pgenrsc
+                AbstractDrawableComponent elSelected = pgenrscs
                         .getNearestComponent(loc, new AcceptFilter(), true);
 
                 // Delete watch status line
                 if (elSelected instanceof DECollection
                         && elSelected.getName().equalsIgnoreCase("Watch")
-                        && pgenrsc.getNearestElement(loc).getPgenType()
+                        && pgenrscs.getNearestElement(loc).getPgenType()
                                 .equalsIgnoreCase("POINTED_ARROW")) {
-                    elSelected = pgenrsc.getNearestElement(loc);
+                    elSelected = pgenrscs.getNearestElement(loc);
                 } else if ((elSelected instanceof Outlook
                         && ((Outlook) elSelected).getDEs() > 1)) {
-                    AbstractDrawableComponent adc = pgenrsc
+                    AbstractDrawableComponent adc = pgenrscs
                             .getNearestElement(loc);
                     elSelected = adc.getParent();
                 } else if (elSelected instanceof Contours) {
-                    AbstractDrawableComponent adc = pgenrsc
+                    AbstractDrawableComponent adc = pgenrscs
                             .getNearestElement(loc);
                     if (adc instanceof Text) {
                         elSelected = adc;
@@ -116,7 +118,7 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
                 }
 
                 if (elSelected != null) {
-                    pgenrsc.setSelected(elSelected);
+                    pgenrscs.setSelected(elSelected);
                     preempt = true;
                 }
                 mapEditor.refresh();
@@ -124,9 +126,9 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
         } else if (button == 2) {
             preempt = true;
         } else if (button == 3) {
-            if (pgenrsc.getSelectedComp() != null) {
+            if (pgenrscs.getSelectedComp() != null) {
                 // de-select element
-                pgenrsc.removeSelected();
+                pgenrscs.removeSelected();
                 mapEditor.refresh();
             } else {
                 // set selecting mode
@@ -154,11 +156,11 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
     @Override
     public void preprocess() {
 
-        if (pgenrsc.getSelectedComp() != null) {
+        if (pgenrscs.getSelectedComp() != null) {
 
             if (attrDlg != null
-                    && (pgenrsc.getSelectedComp().getParent() instanceof Layer
-                            || pgenrsc.getSelectedComp().getParent().getName()
+                    && (pgenrscs.getSelectedComp().getParent() instanceof Layer
+                            || pgenrscs.getSelectedComp().getParent().getName()
                                     .equalsIgnoreCase("labeledSymbol"))) {
                 attrDlg.close();
             }
@@ -172,12 +174,12 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
      * Deletes the selected element or component from the PGEN resource.
      */
     private void doDelete() {
-        AbstractDrawableComponent adc = pgenrsc.getSelectedComp();
+        AbstractDrawableComponent adc = pgenrscs.getSelectedComp();
 
         if (adc.getParent() instanceof ContourLine && adc instanceof Text) {
             removeContourLineLabel((Text) adc);
         } else {
-            pgenrsc.deleteSelectedElements();
+            pgenrscs.deleteSelectedElements();
         }
         mapEditor.refresh();
     }
@@ -186,8 +188,8 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
         return mapEditor;
     }
 
-    public PgenResource getPgenrsc() {
-        return pgenrsc;
+    public PgenResourceList getPgenrsc() {
+        return pgenrscs;
     }
 
     private void removeContourLineLabel(Text label) {
@@ -198,8 +200,8 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
         int nlabels = cline.getNumOfLabels() - 1;
         cline.setNumOfLabels(nlabels);
 
-        pgenrsc.removeSelected(label);
-        pgenrsc.removeElement(label);
+        pgenrscs.removeSelected(label);
+        pgenrscs.removeElement(label);
 
         AbstractPgenTool thisTool = PgenSession.getInstance().getPgenTool();
         if (thisTool instanceof AbstractPgenDrawingTool) {
@@ -216,6 +218,6 @@ public class PgenDeleteElementHandler extends InputHandlerDefaultImpl {
                 pgenDlg.closeAttrEditDialogs();
             }
         }
-        pgenrsc.resetAllElements();
+        pgenrscs.resetAllElements();
     }
 }

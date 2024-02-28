@@ -21,10 +21,12 @@ package gov.noaa.nws.ncep.viz.soundingrequest;
  *                                      for sending query request message to EDEX
  * 07/14/2015   RM#9173     Chin Chen   Clean up NcSoundingQuery and Obsolete NcSoundingQuery2 and MergeSounding2
  * 09/22/2016   RM15953     R.Reynolds  Added capability for wind interpolation
+ * 01/27/2021   86815       smanoj      Added ARW and RAP to PFC Model Sounding for Nsharp.
+ * 
  * </pre>
  * 
  * @author Chin Chen
- * @version 1.0
+ * 
  */
 
 import gov.noaa.nws.ncep.common.dataplugin.soundingrequest.SoundingServiceRequest;
@@ -42,10 +44,17 @@ import gov.noaa.nws.ncep.edex.common.sounding.NcSoundingTools;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import com.raytheon.uf.common.status.IUFStatusHandler;
+import com.raytheon.uf.common.status.UFStatus;
+import com.raytheon.uf.common.status.UFStatus.Priority;
 import com.raytheon.uf.viz.core.requests.ThriftClient;
 import org.locationtech.jts.geom.Coordinate;
 
+
 public class NcSoundingQuery {
+    protected static final transient IUFStatusHandler statusHandler = UFStatus
+            .getHandler(NcSoundingQuery.class);
+
     public static int counter = 1;
 
     public static String GRIB_PLUGIN_NAME = "grid";
@@ -65,7 +74,7 @@ public class NcSoundingQuery {
                     date = Integer.parseInt(refTimeStr.substring(index - 2,
                             index));
                     refTimeStr = refTimeStr.substring(index + 1);
-                    // index = refTimeStr.indexOf(':');
+
                     if (refTimeStr.length() >= 2) {
                         hr = Integer.parseInt(refTimeStr.substring(0, 2));
                         Calendar refTimeCal = Calendar.getInstance(TimeZone
@@ -74,10 +83,7 @@ public class NcSoundingQuery {
                         refTimeCal.setTimeInMillis(0);
                         // set new time
                         refTimeCal.set(year, mon - 1, date, hr, 0, 0);
-                        // System.out.println("set time Str " + refTimeStr +
-                        // " cal time in GMT " +
-                        // refTimeCal.getTime().toGMTString() + " in msec = " +
-                        // refTimeCal.getTimeInMillis());
+
                         return refTimeCal.getTimeInMillis();
                     }
                 }
@@ -124,7 +130,7 @@ public class NcSoundingQuery {
         Vhour = displayStr.substring(displayStr.indexOf('V') + 1,
                 displayStr.indexOf('V') + 4);
         cal.set(Integer.parseInt(year), Integer.parseInt(mon) - 1,
-                Integer.parseInt(day), Integer.parseInt(hour), 0);// Integer.parseInt(min));
+                Integer.parseInt(day), Integer.parseInt(hour), 0);
         // from VXXX and rangeStart time get forecast Time
         long forecasttimeMs = cal.getTimeInMillis()
                 - (Integer.parseInt(Vhour) * 3600000);
@@ -134,26 +140,7 @@ public class NcSoundingQuery {
         return ref;
     }
 
-    // NCP nsharp use this for query PFC for one ref time and multiple sounding
-    // range times of a same station using lat/lon
-    // 9173 obsoleting this method
-    // public static NcSoundingCube pfcSoundingQueryByRangeTimeArray(long
-    // refTime, long[] soundingRangeTime,
-    // double lat, double lon, String sndType, NcSoundingLayer.DataType
-    // dataType, boolean merge, String level) {
-    // //RM#8306
-    // long[] refLTimeAry = {refTime};
-    // Coordinate[] coordArray = new Coordinate[1];
-    // Coordinate latlon = new Coordinate(lon,lat);
-    // coordArray[0]= latlon;
-    // long[] soundingRangeTimeArray = new long[soundingRangeTime.length];
-    // for(int i =0; i< soundingRangeTime.length; i++)
-    // soundingRangeTimeArray[i] = soundingRangeTime[i];
-    //
-    // return(genericSoundingDataQuery( refLTimeAry, soundingRangeTimeArray,
-    // null, null, coordArray, null, sndType, dataType,
-    // merge, level,null,true, false, false));
-    // }
+
 
     /*
      * genericSoundingDataQuery() used to query observed uair sounding, point
@@ -218,6 +205,10 @@ public class NcSoundingQuery {
             request.setSndType(SoundingType.PFC_NAM_SND);
         } else if (sndType.equals(PfcSndType.GFSSND.toString())) {
             request.setSndType(SoundingType.PFC_GFS_SND);
+        } else if (sndType.equals(PfcSndType.ARWSND.toString())) {
+            request.setSndType(SoundingType.PFC_ARW_SND);
+        } else if (sndType.equals(PfcSndType.RAPSND.toString())) {
+            request.setSndType(SoundingType.PFC_RAP_SND);
         } else if (sndType.equals(MdlSndType.ANY.toString())) {
             request.setSndType(SoundingType.GRID_MODEL_SND);
         } else
@@ -241,8 +232,7 @@ public class NcSoundingQuery {
         request.setModelType(modelType);
         request.setWindInterpolation(windInterpolation);
 
-        // request.setUseNcSoundingLayer2(false);//(useNcSoundingLayer2);
-        // request.setUseNcSoundingLayer2(useNcSoundingLayer2);
+
         // do not support DATA_TYPE now, as edex sounding query service does not
         // support it now and no any applications use it.
         try {
@@ -261,34 +251,13 @@ public class NcSoundingQuery {
 
             }
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            statusHandler.handle(Priority.WARN,
+                    "Sounding Query Request Failed ", e.getMessage() );
         }
         return cube;
     }
 
     // end RM#8306
-
-    // ncep Nsharp use this interface to query both bufrua and ncuair data
-    // RM#9173: obsoleted this method
-    // public static NcSoundingCube uaGenericSoundingQuery(Long[] refTime,
-    // double[][] latLon, String sndType, NcSoundingLayer.DataType dataType,
-    // boolean merge, String level) {
-    // //RM#8306
-    // if(refTime!=null && refTime.length>0){
-    // long[] reflTimeAry = new long[refTime.length];
-    // for(int i=0; i< refTime.length; i++)
-    // reflTimeAry[i]= refTime[i];
-    // Coordinate[] coordArray = convertDoubleLatLonArray(latLon);
-    // return(genericSoundingDataQuery( reflTimeAry, null, null,
-    // null,coordArray, null, sndType, dataType, merge, level,null,true,
-    // false));
-    // }
-    // else
-    // return null;
-    //
-    //
-    // }
 
     /*
      * The following 3 methods are used by D2D Nsharp only!!!!!
@@ -352,20 +321,22 @@ public class NcSoundingQuery {
             request.setSndType(SoundingType.PFC_NAM_SND);
         } else if (sndType.equals(PfcSndType.GFSSND.toString())) {
             request.setSndType(SoundingType.PFC_GFS_SND);
+        } else if (sndType.equals(PfcSndType.ARWSND.toString())) {
+            request.setSndType(SoundingType.PFC_ARW_SND);
+        } else if (sndType.equals(PfcSndType.RAPSND.toString())) {
+            request.setSndType(SoundingType.PFC_RAP_SND);  
         } else
             return null;
         try {
             Object rslts = ThriftClient.sendRequest(request);
             if ((rslts instanceof NcSoundingTimeLines)) {
-                //
                 timeLines = (NcSoundingTimeLines) rslts;
             } else {
                 System.out.println("soundingTimeLineQuery Request Failed: ");
-
             }
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            statusHandler.handle(Priority.WARN,
+                    "Sounding Query Request Failed ", e.getMessage() );
         }
         return timeLines;
     }
@@ -385,6 +356,10 @@ public class NcSoundingQuery {
             request.setSndType(SoundingType.PFC_NAM_SND);
         } else if (sndType.equals(PfcSndType.GFSSND.toString())) {
             request.setSndType(SoundingType.PFC_GFS_SND);
+        } else if (sndType.equals(PfcSndType.ARWSND.toString())) {
+            request.setSndType(SoundingType.PFC_ARW_SND);
+        } else if (sndType.equals(PfcSndType.RAPSND.toString())) {
+            request.setSndType(SoundingType.PFC_RAP_SND);
         } else if (sndType.equals(MdlSndType.ANY.toString())) {
             request.setSndType(SoundingType.GRID_MODEL_SND);
             request.setModelType(mdlType);
@@ -401,8 +376,8 @@ public class NcSoundingQuery {
 
             }
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            statusHandler.handle(Priority.WARN,
+                    "Sounding Query Request Failed ", e.getMessage() );
         }
         return timeLines;
     }
@@ -427,6 +402,10 @@ public class NcSoundingQuery {
             request.setSndType(SoundingType.PFC_NAM_SND);
         } else if (sndType.equals(PfcSndType.GFSSND.toString())) {
             request.setSndType(SoundingType.PFC_GFS_SND);
+        } else if (sndType.equals(PfcSndType.ARWSND.toString())) {
+            request.setSndType(SoundingType.PFC_ARW_SND);
+        } else if (sndType.equals(PfcSndType.RAPSND.toString())) {
+            request.setSndType(SoundingType.PFC_RAP_SND);
         }
         String[] refTimeStrAry = new String[1];
         refTimeStrAry[0] = referTimeStr;
@@ -447,8 +426,8 @@ public class NcSoundingQuery {
 
             }
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            statusHandler.handle(Priority.WARN,
+                    "Sounding Request Query Failed ", e.getMessage() );
         }
 
         return stnInfos;

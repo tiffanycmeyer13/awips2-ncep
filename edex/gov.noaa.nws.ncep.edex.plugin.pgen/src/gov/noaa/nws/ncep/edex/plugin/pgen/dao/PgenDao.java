@@ -19,11 +19,13 @@ import gov.noaa.nws.ncep.common.dataplugin.pgen.PgenRecord;
  *
  * SOFTWARE HISTORY
  *
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * Apr 22, 2013            sgilbert    Initial creation
- * Sep 23, 2021 8608       mapeters    Pass metadata ids to datastore
- * Jun 22, 2022 8865       mapeters    Update populateDataStore to return boolean
+ * Date          Ticket#  Engineer  Description
+ * ------------- -------- --------- --------------------------------------------
+ * Apr 22, 2013           sgilbert  Initial creation
+ * Mar 29, 2021  8374     randerso  Renamed IDataRecord.get/setProperties to
+ *                                  get/setProps
+ * Sep 23, 2021  8608     mapeters  Pass metadata ids to datastore
+ * Jun 22, 2022  8865     mapeters  Update populateDataStore to return boolean
  *
  * </pre>
  *
@@ -47,7 +49,7 @@ public class PgenDao extends PluginDao {
 
         StorageProperties props = new StorageProperties();
 
-        storageRecord.setProperties(props);
+        storageRecord.setProps(props);
         storageRecord.setCorrelationObject(record);
         dataStore.addDataRecord(storageRecord,
                 new DataUriMetadataIdentifier(record));

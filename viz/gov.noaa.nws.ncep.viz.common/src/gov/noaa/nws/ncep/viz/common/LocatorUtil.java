@@ -2,7 +2,7 @@ package gov.noaa.nws.ncep.viz.common;
 
 import si.uom.NonSI;
 import si.uom.SI;
-import tec.uom.se.unit.MetricPrefix;
+import javax.measure.MetricPrefix;
 
 public class LocatorUtil {
 		

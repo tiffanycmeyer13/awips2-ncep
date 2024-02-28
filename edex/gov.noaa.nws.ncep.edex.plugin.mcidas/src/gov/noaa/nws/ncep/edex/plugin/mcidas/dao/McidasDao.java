@@ -35,17 +35,21 @@ import gov.noaa.nws.ncep.common.dataplugin.mcidas.McidasRecord;
  * <pre>
  * SOFTWARE HISTORY
  *
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 10/2009      144         T. Lee      Created
- * 11/2009      144         T. Lee      Implemented area name DAO
- * Nov 14, 2013 2393        bclement    added in-java interpolation
- * Mar 07, 2014 2791        bsteffen    Move Data Source/Destination to numeric
- *                                      plugin.
- * 08/15/2015   R7190       R. Reynolds Modifications to handle mcidas area header info.
- * 12/03/2015   R13119      R. Reynolds Enable purging of mcidas area files metadata.
- * Sep 23, 2021 8608        mapeters    Pass metadata ids to datastore
- * Jun 22, 2022 8865        mapeters    Update populateDataStore to return boolean
+ * Date          Ticket#  Engineer     Description
+ * ------------- -------- ------------ -----------------------------------------
+ * Oct ??, 2009  144      T. Lee       Created
+ * Nov ??, 2009  144      T. Lee       Implemented area name DAO
+ * Nov 14, 2013  2393     bclement     added in-java interpolation
+ * Mar 07, 2014  2791     bsteffen     Move Data Source/Destination to numeric
+ *                                     plugin.
+ * Aug 15, 2015  7190     R. Reynolds  Modifications to handle mcidas area
+ *                                     header info.
+ * Dec 03, 2015  13119    R. Reynolds  Enable purging of mcidas area files
+ *                                     metadata.
+ * Mar 29, 2021  8374     randerso     Renamed IDataRecord.get/setProperties to
+ *                                     get/setProps
+ * Sep 23, 2021  8608     mapeters     Pass metadata ids to datastore
+ * Jun 22, 2022  8865     mapeters     Update populateDataStore to return boolean
  *
  * </pre>
  *
@@ -101,7 +105,7 @@ public class McidasDao extends PluginDao {
             }
             GridDownscaler downScaler = new GridDownscaler(gridGeom);
 
-            storageRecord.setProperties(props);
+            storageRecord.setProps(props);
             storageRecord.setCorrelationObject(satRecord);
             // Store the base record.
             dataStore.addDataRecord(storageRecord, metaId);
@@ -128,7 +132,7 @@ public class McidasDao extends PluginDao {
                             IDataRecord rval = DataStoreFactory
                                     .createStorageRecord(name, group, data, 2,
                                             sizes);
-                            rval.setProperties(props);
+                            rval.setProps(props);
                             rval.setCorrelationObject(satRecord);
                             return rval;
                         }

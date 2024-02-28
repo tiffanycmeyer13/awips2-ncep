@@ -29,6 +29,9 @@ public class IssueOffice {
     @XmlAttribute(name = "seriesIDs")
     private String seriesIDs;
 
+    @XmlAttribute(name = "includeABlankSeriesId")
+    private boolean includeABlankSeriesId;
+
     public IssueOffice() {
 
     }
@@ -46,6 +49,10 @@ public class IssueOffice {
         return seriesIDs;
     }
 
+    public boolean getIncludeABlankSeriesId() {
+        return includeABlankSeriesId;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -54,9 +61,14 @@ public class IssueOffice {
         this.seriesIDs = seriesIDs;
     }
 
+    public void setIncludeABlankSeriesId(boolean includeABlankSeriesId) {
+        this.includeABlankSeriesId = includeABlankSeriesId;
+    }
+
     @Override
     public String toString() {
-        return "IssueOffice [name=" + name + ", seriesIDs=" + seriesIDs + "]";
+        return "IssueOffice [name=" + name + "," + ", includeABlankSeriesId="
+                + includeABlankSeriesId + ", seriesIDs=" + seriesIDs + "]";
     }
 
 }

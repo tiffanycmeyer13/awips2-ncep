@@ -15,7 +15,7 @@ import gov.noaa.nws.ncep.edex.common.metparameters.MetParameterFactory.DeriveMet
 import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.PRLibrary;
 //import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.PRLibrary.InvalidRangeException; 
 import gov.noaa.nws.ncep.edex.common.metparameters.parameterconversion.PRLibrary.InvalidValueException;
-import tec.uom.se.AbstractUnit;
+import tech.units.indriya.AbstractUnit;
 
 /**
  * Maps to the GEMPAK parameter MIXS

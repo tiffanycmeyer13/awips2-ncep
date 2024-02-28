@@ -72,28 +72,33 @@ import gov.noaa.nws.ncep.viz.common.ISaveableResourceData;
  * Contains all the PGEN Products, layers, and Elements behind the PgenResource.
  * Also holds the command manager to undo/redo changes to the data in the
  * product list.
- * 
+ *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#      Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 01/15        #5413       B. Yin      Close PGEN palette in cleanup
- * 05/02/2016   R16076      J. Wu       update startProductManage()   
- * 05/10/2016   R13560      S. Russell  Updated promptToSave to no longer save
- *                                      data, that is done in PGenPaletteWindow
- *                                      ISaveablePart2 code.  Also modified it
- *                                      to return the return code of the dialog
- * 06/15/2016   R13559      bkowal      File cleanup. Removed commented code.
- * 07/28/2016   R17954      B. Yin      Close PGEN palette only in D2D.
- *                                      Implemented ISaveableResourceData
- * 08/15/2016   R21066      J. Wu       Add switchLayer() for hot key handler.
- * 11/30/2016   R17954      Bugenhagen  Keep track of total number of pgen resources
- *                                      in session.  Modified cleanup method.
- *                                      Always return resource data as dirty.
- * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
- * 
+ *
+ * Date          Ticket#  Engineer    Description
+ * ------------- -------- ----------- ------------------------------------------
+ * 01/15         5413     B. Yin      Close PGEN palette in cleanup
+ * May 02, 2016  16076    J. Wu       update startProductManage()
+ * May 10, 2016  13560    S. Russell  Updated promptToSave to no longer save
+ *                                    data, that is done in PGenPaletteWindow
+ *                                    ISaveablePart2 code.  Also modified it to
+ *                                    return the return code of the dialog
+ * Jun 15, 2016  13559    bkowal      File cleanup. Removed commented code.
+ * Jul 28, 2016  17954    B. Yin      Close PGEN palette only in D2D.
+ *                                    Implemented ISaveableResourceData
+ * Aug 15, 2016  21066    J. Wu       Add switchLayer() for hot key handler.
+ * Nov 30, 2016  17954    Bugenhagen  Keep track of total number of pgen
+ *                                    resources in session.  Modified cleanup
+ *                                    method. Always return resource data as
+ *                                    dirty.
+ * Jan 07, 2020  71971    smanoj      Modified code to use PgenConstants
+ * Dec 01, 2021  95362    tjensen     Refactor PGEN Resource management to
+ *                                    support multi-panel displays
+ * Jan 25, 2022  100402   smanoj      Check against null pointer.
+ *
  * </pre>
- * 
+ *
  * @author sgilbert
  */
 
@@ -104,9 +109,9 @@ public class PgenResourceData extends AbstractResourceData
     private static final transient IUFStatusHandler statusHandler = UFStatus
             .getHandler(PgenResourceData.class);
 
-    private List<Product> productList;
+    private final List<Product> productList;
 
-    private PgenCommandManager commandMgr;
+    private final PgenCommandManager commandMgr;
 
     /**
      * Current active product in the PGEN drawing layer.
@@ -125,7 +130,7 @@ public class PgenResourceData extends AbstractResourceData
     /*
      * This group of fields used for the Autosave and recovery feature
      */
-    private String recoveryFilename;
+    private final String recoveryFilename;
 
     private String autoSaveFilename = null;
 
@@ -141,14 +146,7 @@ public class PgenResourceData extends AbstractResourceData
 
     private boolean needsDisplay = false;
 
-    /**
-     * Number of pgen resources for this resource data object. Not to be
-     * confused with the total number of pgen resources in a pgen session
-     * {@link PgenSession#getNumberOfSessionResources}.
-     */
-    private int numberOfResources = 0;
-
-    private ArrayList<PgenResource> rscList = new ArrayList<>();
+    private final ArrayList<PgenResource> rscList = new ArrayList<>();
 
     public PgenResourceData() {
         super();
@@ -160,42 +158,19 @@ public class PgenResourceData extends AbstractResourceData
         initializeProducts();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.raytheon.uf.viz.core.rsc.AbstractResourceData#construct(com.raytheon
-     * .uf.viz.core.comm.LoadProperties,
-     * com.raytheon.uf.viz.core.drawables.IDescriptor)
-     */
     @Override
     public PgenResource construct(LoadProperties loadProperties,
             IDescriptor descriptor) throws VizException {
-        numberOfResources++;
         PgenSession.getInstance().bumpNumberOfSessionResources();
         PgenResource rsc = new PgenResource(this, loadProperties);
         rscList.add(rsc);
         return rsc;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.raytheon.uf.viz.core.rsc.AbstractResourceData#update(java.lang.Object
-     * )
-     */
     @Override
     public void update(Object updateData) {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.raytheon.uf.viz.core.rsc.AbstractResourceData#equals(java.lang.Object
-     * )
-     */
     @Override
     public boolean equals(Object obj) {
         return obj == this;
@@ -360,8 +335,7 @@ public class PgenResourceData extends AbstractResourceData
         if (productList.size() == 0) {
 
             activeProduct = new Product(PgenConstant.GENERAL_DEFAULT,
-                    PgenConstant.GENERAL_DEFAULT,
-                    PgenConstant.GENERAL_DEFAULT,
+                    PgenConstant.GENERAL_DEFAULT, PgenConstant.GENERAL_DEFAULT,
                     new ProductInfo(), new ProductTime(),
                     new ArrayList<Layer>());
 
@@ -377,7 +351,7 @@ public class PgenResourceData extends AbstractResourceData
     /**
      * Uses a PgenCommand to replace one drawable element in the product list
      * with another drawable element.
-     * 
+     *
      * @param old
      *            Element to replace
      * @param Element
@@ -402,7 +376,7 @@ public class PgenResourceData extends AbstractResourceData
      * same number of elements as the new list has. Loop through each of the
      * elements in the old list, find the parent, remove the old element and add
      * the new element.
-     * 
+     *
      * @param parent
      *            parent collection of the old elements
      * @param old
@@ -489,23 +463,24 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Append the incoming activity to the active activity.
-     * 
+     *
      * Rule: (1) If there is only ONE layer in the incoming activity, its
      * contents is combined into the active layer. (2) If there are more than
      * one layer in the incoming activity, we will first try to match the active
      * layer with the incoming layers by this order: a. a layer with the same
      * name as the active layers' b. a "Default" layer
-     * 
+     *
      * All other layers in the incoming activity will be matched against the
      * layers in the active activity by the layer's name. If no match found, the
      * incoming layer is attached as a separate layer.
-     * 
+     *
      */
     public void appendProduct(List<Product> prds) {
 
         // remove the empty "Default" product
         if (productList.size() == 1
-                && productList.get(0).getName().equals(PgenConstant.GENERAL_DEFAULT)
+                && productList.get(0).getName()
+                        .equals(PgenConstant.GENERAL_DEFAULT)
                 && productList.get(0).getLayers().size() == 1
                 && productList.get(0).getLayers().get(0).getName()
                         .equalsIgnoreCase(PgenConstant.GENERAL_DEFAULT)
@@ -541,7 +516,8 @@ public class PgenResourceData extends AbstractResourceData
                 // Find match for active layer
                 Layer matchLayer = prds.get(0).getLayer(activeLayer.getName());
                 if (matchLayer == null) {
-                    matchLayer = prds.get(0).getLayer(PgenConstant.GENERAL_DEFAULT);
+                    matchLayer = prds.get(0)
+                            .getLayer(PgenConstant.GENERAL_DEFAULT);
                 }
 
                 if (matchLayer != null) {
@@ -582,7 +558,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Uses a PgenCommand to remove an element from the product list
-     * 
+     *
      * @param de
      *            Element to be removed
      */
@@ -608,7 +584,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Uses a PgenCommand to remove all elements from the active layer
-     * 
+     *
      * @param de
      *            Element to be removed
      */
@@ -618,7 +594,7 @@ public class PgenResourceData extends AbstractResourceData
          * elements on the active layer and send it to the Command Manager
          */
         PgenCommand cmd = new DeleteSelectedElementsCommand(productList,
-                (List<AbstractDrawableComponent>) activeLayer.getDrawables());
+                activeLayer.getDrawables());
 
         commandMgr.addCommand(cmd);
 
@@ -626,7 +602,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Uses a PgenCommand to remove all elements from the product list
-     * 
+     *
      * @param de
      *            Element to be removed
      */
@@ -642,7 +618,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Uses a PgenCommand to add a DrawableElement to the productList.
-     * 
+     *
      * @param de
      *            The DrawableElement being added.
      */
@@ -656,7 +632,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Uses a PgenCommand to add a List of DrawableElements to the productList.
-     * 
+     *
      * @param elems
      *            List of DrawableElement being added.
      */
@@ -670,7 +646,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Delete the part between point 1 and point 2 from an muliti-point element
-     * 
+     *
      * @param mpe
      *            - multi-point element
      * @param pt1
@@ -694,7 +670,8 @@ public class PgenResourceData extends AbstractResourceData
             layeringControlDlg.close();
         }
 
-        if (!activeLayer.getName().equalsIgnoreCase(PgenConstant.GENERAL_DEFAULT)
+        if (!activeLayer.getName()
+                .equalsIgnoreCase(PgenConstant.GENERAL_DEFAULT)
                 || activeProduct.getLayers().size() > 1) {
 
             activateLayering();
@@ -753,18 +730,12 @@ public class PgenResourceData extends AbstractResourceData
      * If there are no more dataChangedListeners registered with this Data
      * object, clean up command manager stacks and listeners, and determines if
      * data needs to be saved.
-     * 
+     *
      * @param paneImage
      */
     public synchronized void cleanup() {
 
         closeDialogs();
-
-        numberOfResources--;
-        if (numberOfResources != 0) {
-            return; // not ready yet
-        }
-
         int numResourcesinSession = PgenSession.getInstance()
                 .getNumberOfSessionResources();
 
@@ -822,8 +793,9 @@ public class PgenResourceData extends AbstractResourceData
                 + recoveryFilename;
 
         File tmpFile = new File(filepath);
-        if (tmpFile.exists())
+        if (tmpFile.exists()) {
             tmpFile.delete();
+        }
 
     }
 
@@ -834,17 +806,19 @@ public class PgenResourceData extends AbstractResourceData
 
         String filepath = PgenUtil.getTempWorkDir() + File.separator
                 + recoveryFilename;
-        PgenResource rsc = PgenSession.getInstance().getPgenResource();
-        ArrayList<Product> prds = (ArrayList<Product>) rsc.getProducts();
+        PgenResource rsc = PgenSession.getInstance().getCurrentResource();
+        if (rsc != null) {
+            ArrayList<Product> prds = (ArrayList<Product>) rsc.getProducts();
 
-        Products filePrds = ProductConverter.convert(prds);
-        FileTools.write(filepath, filePrds);
+            Products filePrds = ProductConverter.convert(prds);
+            FileTools.write(filepath, filePrds);
+        }
 
     }
 
     /**
      * Saves all elements in the productList to a given file.
-     * 
+     *
      * If "multiSave" is true or a product's "saveLayers" flag is configured to
      * be true - each product is saved into a separate file in directory
      * ".../[filename]_post/[product_name].xml" and each layer is save at the
@@ -852,7 +826,7 @@ public class PgenResourceData extends AbstractResourceData
      * file, it is saved to that given file as well and layers are saved under
      * the directory specified in the output file, if the "saveLayers" is true
      * for the product.
-     * 
+     *
      * @param filename
      * @param postSave
      *            flag to save individual product and layer for
@@ -1011,7 +985,7 @@ public class PgenResourceData extends AbstractResourceData
      * Saves all elements in the productList to a given file Also, save each
      * product as a separate file and each layer in each product as a separate
      * file as well.
-     * 
+     *
      * @param filename
      */
     public void saveProducts_prev(String filename, boolean multiSave) {
@@ -1115,7 +1089,7 @@ public class PgenResourceData extends AbstractResourceData
     /*
      * (non-Javadoc) Invoked by CommandManager when change has been made to the
      * ProductList
-     * 
+     *
      * @see
      * gov.noaa.nws.ncep.ui.pgen.controls.CommandStackListener#stacksUpdated
      * (int, int)
@@ -1123,8 +1097,9 @@ public class PgenResourceData extends AbstractResourceData
     @Override
     public void stacksUpdated(int undoSize, int redoSize) {
 
-        if (undoSize + redoSize == 0)
+        if (undoSize + redoSize == 0) {
             return;
+        }
 
         needsSaving = true;
         needsDisplay = true;
@@ -1158,7 +1133,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * PGen Exit Dialog, ask the user if they would like to save their PGen work
-     * 
+     *
      * @param paneImage
      *            ( a screen shot of CAVE at the time of the prompt
      * @return int - code of the button pushed on the dialog
@@ -1189,10 +1164,10 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Saves all elements in a product to a configured file.
-     * 
+     *
      * Layers might be saved into individual files as well if "saveLayers" is
      * true for this product type.
-     * 
+     *
      */
     public boolean saveOneProduct(Product prd, String outfile) {
 
@@ -1243,7 +1218,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Saves all elements in the active product to a configured file.
-     * 
+     *
      * Layers might be saved into individual files as well if "saveLayers" is
      * true for this product type.
      */
@@ -1254,7 +1229,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Saves all products to their configured files.
-     * 
+     *
      * Layers might be saved into individual files as well if "saveLayers" is
      * true for this product type.
      */
@@ -1320,7 +1295,7 @@ public class PgenResourceData extends AbstractResourceData
     /**
      * Build a full path file name for a product's configured path/output file
      * name
-     * 
+     *
      * @param prd
      * @return
      */
@@ -1345,7 +1320,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Build an activity name for a product's configured path/output name.
-     * 
+     *
      * @param prd
      * @return
      */
@@ -1357,7 +1332,8 @@ public class PgenResourceData extends AbstractResourceData
             int idx = temp.lastIndexOf(File.separator);
             sfile = temp.substring(idx + 1);
         } else {
-            sfile = PgenUtil.replaceWithDate(PgenConstant.DEFAULT_ACTIVITY_LABEL,
+            sfile = PgenUtil.replaceWithDate(
+                    PgenConstant.DEFAULT_ACTIVITY_LABEL,
                     Calendar.getInstance());
         }
 
@@ -1366,7 +1342,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Return the "needSaving" flag.
-     * 
+     *
      * @return
      */
     public boolean isNeedsSaving() {
@@ -1381,7 +1357,7 @@ public class PgenResourceData extends AbstractResourceData
     }
 
     /**
-     * 
+     *
      * @return boolean
      */
     public boolean isNeedsDisplay() {
@@ -1389,7 +1365,7 @@ public class PgenResourceData extends AbstractResourceData
     }
 
     /**
-     * 
+     *
      * @param needsDisplay
      */
     public void setNeedsDisplay(boolean needsDisplay) {
@@ -1398,15 +1374,17 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Check if need to remove the empty "Default" product
-     * 
+     *
      * @return
      */
     public boolean removeEmptyDefaultProduct() {
 
         boolean remove = false;
         if (productList.size() == 1
-                && productList.get(0).getName().equalsIgnoreCase(PgenConstant.GENERAL_DEFAULT)
-                && productList.get(0).getType().equalsIgnoreCase(PgenConstant.GENERAL_DEFAULT)
+                && productList.get(0).getName()
+                        .equalsIgnoreCase(PgenConstant.GENERAL_DEFAULT)
+                && productList.get(0).getType()
+                        .equalsIgnoreCase(PgenConstant.GENERAL_DEFAULT)
                 && productList.get(0).getLayers().size() == 1
                 && productList.get(0).getLayers().get(0).getName()
                         .equalsIgnoreCase(PgenConstant.GENERAL_DEFAULT)
@@ -1421,7 +1399,7 @@ public class PgenResourceData extends AbstractResourceData
 
     /**
      * Switch the active layer to a given layer & update GUI.
-     * 
+     *
      * @param layerName
      *            layer to switch on
      * @return

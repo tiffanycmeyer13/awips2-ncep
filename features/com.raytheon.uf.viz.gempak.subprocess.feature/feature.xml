@@ -142,12 +142,6 @@
          unpack="false"/>
 
    <plugin
-         id="net.sf.cglib"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
          id="org.slf4j"
          download-size="0"
          install-size="0"
@@ -157,7 +151,7 @@
          id="com.google.guava"
          download-size="0"
          install-size="0"
-         version="30.0.0"/>
+         version="32.0.0"/>
 
    <plugin
          id="org.quartz"
@@ -179,12 +173,6 @@
          unpack="false"/>
 
    <plugin
-         id="javax.vecmath"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
          id="gov.noaa.nws.ncep.common.log"
          download-size="0"
          install-size="0"
@@ -199,6 +187,12 @@
 
    <plugin
          id="org.apache.commons.collections"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.apache.commons.collections4"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
@@ -453,13 +447,6 @@
          unpack="false"/>
 
    <plugin
-         id="com.raytheon.uf.common.velocity"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.apache.activemq"
          download-size="0"
          install-size="0"
@@ -559,7 +546,7 @@
          id="com.sun.jna"
          download-size="0"
          install-size="0"
-         version="4.5.1"/>
+         version="5.8.0"/>
 
    <plugin
          id="gov.noaa.nws.ncep.viz.gempak.nativelib"
@@ -595,6 +582,13 @@
          download-size="0"
          install-size="0"
          version="0.0.0"/>
+
+   <plugin
+         id="com.raytheon.uf.common.security"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
 
    <plugin
          id="com.raytheon.uf.common.jms"
@@ -634,7 +628,7 @@
          id="com.sun.jna.platform"
          download-size="0"
          install-size="0"
-         version="4.5.1"
+         version="5.8.0"
          unpack="false"/>
 
 </feature>

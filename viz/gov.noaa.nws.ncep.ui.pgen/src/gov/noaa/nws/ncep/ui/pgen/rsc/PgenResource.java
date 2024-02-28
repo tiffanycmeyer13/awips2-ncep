@@ -41,6 +41,12 @@ import com.raytheon.viz.ui.input.EditableManager;
 import com.raytheon.viz.ui.perspectives.AbstractVizPerspectiveManager;
 import com.raytheon.viz.ui.perspectives.VizPerspectiveListener;
 import com.raytheon.viz.ui.tools.AbstractModalTool;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateArrays;
+import org.locationtech.jts.geom.CoordinateList;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineSegment;
+import org.locationtech.jts.geom.Point;
 
 import gov.noaa.nws.ncep.ui.pgen.Activator;
 import gov.noaa.nws.ncep.ui.pgen.PgenConstant;
@@ -98,12 +104,6 @@ import gov.noaa.nws.ncep.ui.pgen.tools.AbstractPgenTool;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenContoursTool;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
 
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.CoordinateArrays;
-import org.locationtech.jts.geom.CoordinateList;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineSegment;
-import org.locationtech.jts.geom.Point;
 /**
  * gov.noaa.nws.ncep.ui.pgen.rsc.PgenResource This code has been developed by
  * the NCEP/SIB for use in the AWIPS2 system.
@@ -112,81 +112,108 @@ import org.locationtech.jts.geom.Point;
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * ------------ ----------  ----------- --------------------------
- * 02/09                    B. Yin      Initial Creation.
- * 04/09                    S. Gilbert  Added PgenCommand for undo/redo.
- * 04/09        #88         J. Wu       Added Text.
- * 04/09        #89         J. Wu       Added Arc.
- * 05/09        #79         B. Yin      Added a List for points selected
- * 05/09        #89         J. Wu       Added Vector
- * 06/09        #116        B. Yin      Use AbstractDrawableComponent
- * 07/09        #131        J. Wu       Made all commands work only on active layer
- * 07/09        #131        J. Wu       Drew layers in mono color & filled mode.
- * 07/09        #131        J. Wu       Initialize product list when a PgenResource
- *                                      is created.
- * 07/09        #141        J. Wu       Added "replaceElements"
- * 08/09        #142        S. Gilbert
- * 09/09        #151        J. Wu       Added product management dialog
- * 09/30/09     #169        Greg Hull  NCMapEditor
- * 12/09        #167        J. Wu       Made getNearestElement work for a given DECollection
- * 12/09        #267        B. Yin      Fixed the delObj bug
- * 03/10        #223        M.Laryukhin Added Gfa
- * 04/10        #165        G.Zhang     Added the two setSelected( ) null arguments handling
- * 03/10        #223        M.Laryukhin Added Gfa
- * 04/10        #165        G.Zhang     Added the two setSelected( ) null arguments handling
- * 03/10        #265        B. Yin      Added filters for forecast hours
- * 09/10        #290        B. Yin      Calculate distance from line segment
- * 09/10        #151        J. Wu       Save product in LPF-style
- * 10/10        #310        S. Gilbert  Modified to support PGEN SINGLE mode
- * 02/11        ?           B. Yin      Select elements only in certain distance.
- * 04/11        ?           B. Yin      Re-factor IAttribute
- * 09/11        ?           B. Yin      Added Circle symbol for Inc/Dec selection.
- * 01/12        ?           J. Wu       TTR 444-Always display active product's active layer.
- * 03/12        ?           B. Yin      Make VAA text editable
- * 04/12        ?           B. Hebbard  Per B. Yin; in paintInternal(), add makeContextCurrent()
- *                                       on IGLTarget after screenshot to avoid GLException:
- *                                      "No OpenGL context current on this thread";
- *                                      workaround pending RTS regression fix.
- * 04/12        #705        J. Wu       TTR 542 - Draw elements in specific sequences.
- * 05/12        #610        J. Wu       TTR 397 - Select GFA by text box.
- * 07/12        #695        B. Yin      TTR 261 - Add Pgen resource editable capability.
- * 08/12        #655        B. Hebbard  TTR 382 - Add paintProps as parameter to IDisplayable draw
- * 09/12                    B. Hebbard  Merge out RTS changes from OB12.9.1
- * 03/13        #927        B. Yin      Implemented IContextMenuProvider interface
- * 04/13        #874        B. Yin      Added a method replaceElements with parameter parent.
- * 04/13        #977        S. Gilbert  PGEN Database support
- * 11/13        TTR 752     J. Wu       Add methods for CCFP text auto placement.
- * 09/14        TTR972      J. Wu       "Filled" object on the active layer should be
- *                                      drawn as "filled" even if the "filled" flag for
- *                                      the layer is "false".
- * 11/14        R5413       B. Yin      Display PGEN in side view in D2D
- * 12/14     R5198/TTR1057  J. Wu       Adding a method to select label over a line for Contours.
- * 06/15        R8199       S. Russell  Alter fillContextMenu() to NOT add a
- *                                      "Delete Label" option where not appropriate
  *
- * 07/13/2015   R8198       S. Russell  Altered fillContextMenu(),  added an
- *                                      argument to getActionList(). Moved
- *                                      several methods for 8199 into a the
- *                                      new class PgenActionXtra
- * 12/16/2105   R12597      B. Yin      Added context menu item to add line to contours
- * 01/27/2016   R13166      J. Wu       Add context menu item to add Text to contours as label-only min/max.
- *
- * 05/11/2016   R13560      S. Russell  Updated PaintInternal() to no longer
- *                                      take screenshots.  That functionality
- *                                      was moved to PgenPaletteWindow where
- *                                      it is used to make an exit dialog with
- *                                      a picture of CAVE.  Removed member
- *                                      variable paneImage ( the screen shot )
- * 06/15/2016   R13559      bkowal      File cleanup. Removed commented code.
- * 07/11/2016   R17943      J. Wu       Display all objects in a non-active activity if its display flag is on.
- * 07/21/2016   R16077      J. Wu       Add context menu for contour lines to remove labels.
- * 01/07/2020   71971       smanoj      Modified code to use PgenConstants
- * 01/09/2020   71072       smanoj      Fix some NullPointerException issues
- * Apr 06, 2020 77420       tjensen     Allow delete of specific contour labels
- * Oct 07, 2020 81798       smanoj      Add New Label option should stop showing up
- *                                      if 10 labels already exist on the Contour.
- * Dec 09, 2020 85217       smanoj      Moving ADD_NEW_LABEL to PgenConstant.
+ * Date          Ticket#     Engineer     Description
+ * ------------- ----------- ------------ --------------------------------------
+ * 02/09                     B. Yin       Initial Creation.
+ * 04/09                     S. Gilbert   Added PgenCommand for undo/redo.
+ * 04/09         88          J. Wu        Added Text.
+ * 04/09         89          J. Wu        Added Arc.
+ * 05/09         79          B. Yin       Added a List for points selected
+ * 05/09         89          J. Wu        Added Vector
+ * 06/09         116         B. Yin       Use AbstractDrawableComponent
+ * 07/09         131         J. Wu        Made all commands work only on active
+ *                                        layer
+ * 07/09         131         J. Wu        Drew layers in mono color & filled
+ *                                        mode.
+ * 07/09         131         J. Wu        Initialize product list when a
+ *                                        PgenResource is created.
+ * 07/09         141         J. Wu        Added "replaceElements"
+ * 08/09         142         S. Gilbert
+ * 09/09         151         J. Wu        Added product management dialog
+ * Sep 30, 2009  169         Greg Hull    NCMapEditor
+ * 12/09         167         J. Wu        Made getNearestElement work for a
+ *                                        given DECollection
+ * 12/09         267         B. Yin       Fixed the delObj bug
+ * 03/10         223         M.Laryukhin  Added Gfa
+ * 04/10         165         G.Zhang      Added the two setSelected( ) null
+ *                                        arguments handling
+ * 03/10         223         M.Laryukhin  Added Gfa
+ * 04/10         165         G.Zhang      Added the two setSelected( ) null
+ *                                        arguments handling
+ * 03/10         265         B. Yin       Added filters for forecast hours
+ * 09/10         290         B. Yin       Calculate distance from line segment
+ * 09/10         151         J. Wu        Save product in LPF-style
+ * 10/10         310         S. Gilbert   Modified to support PGEN SINGLE mode
+ * 02/11         ?           B. Yin       Select elements only in certain
+ *                                        distance.
+ * 04/11         ?           B. Yin       Re-factor IAttribute
+ * 09/11         ?           B. Yin       Added Circle symbol for Inc/Dec
+ *                                        selection.
+ * 01/12         ?           J. Wu        TTR 444-Always display active
+ *                                        product's active layer.
+ * 03/12         ?           B. Yin       Make VAA text editable
+ * 04/12         ?           B. Hebbard   Per B. Yin; in paintInternal(), add
+ *                                        makeContextCurrent() on IGLTarget
+ *                                        after screenshot to avoid GLException:
+ *                                        "No OpenGL context current on this
+ *                                        thread"; workaround pending RTS
+ *                                        regression fix.
+ * 04/12         705         J. Wu        TTR 542 - Draw elements in specific
+ *                                        sequences.
+ * 05/12         610         J. Wu        TTR 397 - Select GFA by text box.
+ * 07/12         695         B. Yin       TTR 261 - Add Pgen resource editable
+ *                                        capability.
+ * 08/12         655         B. Hebbard   TTR 382 - Add paintProps as parameter
+ *                                        to IDisplayable draw
+ * 09/12                     B. Hebbard   Merge out RTS changes from OB12.9.1
+ * 03/13         927         B. Yin       Implemented IContextMenuProvider
+ *                                        interface
+ * 04/13         874         B. Yin       Added a method replaceElements with
+ *                                        parameter parent.
+ * 04/13         977         S. Gilbert   PGEN Database support
+ * 11/13         TTR 752     J. Wu        Add methods for CCFP text auto
+ *                                        placement.
+ * 09/14         TTR972      J. Wu        "Filled" object on the active layer
+ *                                        should be drawn as "filled" even if
+ *                                        the "filled" flag for the layer is
+ *                                        "false".
+ * 11/14         5413        B. Yin       Display PGEN in side view in D2D
+ * 12/14     R5  98/TTR1057  J. Wu        Adding a method to select label over a
+ *                                        line for Contours.
+ * 06/15         8199        S. Russell   Alter fillContextMenu() to NOT add a
+ *                                        "Delete Label" option where not
+ *                                        appropriate
+ * Jul 13, 2015  8198        S. Russell   Altered fillContextMenu(),  added an
+ *                                        argument to getActionList(). Moved
+ *                                        several methods for 8199 into a the
+ *                                        new class PgenActionXtra
+ * Dec 16, 2105  12597       B. Yin       Added context menu item to add line to
+ *                                        contours
+ * Jan 27, 2016  13166       J. Wu        Add context menu item to add Text to
+ *                                        contours as label-only min/max.
+ * May 11, 2016  13560       S. Russell   Updated PaintInternal() to no longer
+ *                                        take screenshots.  That functionality
+ *                                        was moved to PgenPaletteWindow where
+ *                                        it is used to make an exit dialog with
+ *                                        a picture of CAVE.  Removed member
+ *                                        variable paneImage ( the screen shot )
+ * Jun 15, 2016  13559       bkowal       File cleanup. Removed commented code.
+ * Jul 11, 2016  17943       J. Wu        Display all objects in a non-active
+ *                                        activity if its display flag is on.
+ * Jul 21, 2016  16077       J. Wu        Add context menu for contour lines to
+ *                                        remove labels.
+ * Jan 07, 2020  71971       smanoj       Modified code to use PgenConstants
+ * Jan 09, 2020  71072       smanoj       Fix some NullPointerException issues
+ * Apr 06, 2020  77420       tjensen      Allow delete of specific contour
+ *                                        labels
+ * Oct 07, 2020  81798       smanoj       Add New Label option should stop
+ *                                        showing up if 10 labels already exist
+ *                                        on the Contour.
+ * Dec 09, 2020  85217       smanoj       Moving ADD_NEW_LABEL to PgenConstant.
+ * 02/01/2021    87515       wkwock       Move CWA out of PGEN
+ * Dec 01, 2021  95362       tjensen      Refactor PGEN Resource management to
+ *                                        support multi-panel displays
  *
  * </pre>
  *
@@ -257,7 +284,7 @@ public class PgenResource
         setCatFilter(new CategoryFilter());
 
         // Register this new resource with the Session
-        PgenSession.getInstance().setResource(this);
+        PgenSession.getInstance().addResource(this);
 
     }
 
@@ -270,9 +297,7 @@ public class PgenResource
     public void disposeInternal() {
 
         // remove this PGEN Resource from the PGEN Session
-        if (PgenSession.getInstance().getCurrentResource() == this) {
-            PgenSession.getInstance().removeResource();
-        }
+        PgenSession.getInstance().removeResource();
 
         /*
          * release IDisplayable resources
@@ -450,9 +475,7 @@ public class PgenResource
      * Removes the ghost line from the PGEN drawing layer.
      */
     public void removeGhostLine() {
-
         this.ghost = null;
-
     }
 
     /**
@@ -573,7 +596,7 @@ public class PgenResource
 
     }
 
-    private void drawSelected(IGraphicsTarget target,
+    protected void drawSelected(IGraphicsTarget target,
             PaintProperties paintProps) {
 
         if (!elSelected.isEmpty()
@@ -1148,18 +1171,14 @@ public class PgenResource
      * Start product management or layering if necessary.
      */
     public void startProductManage() {
-
         resourceData.startProductManage();
-
     }
 
     /**
      * Activate product management.
      */
     public void activateProductManage() {
-
         resourceData.activateProductManage();
-
     }
 
     /**
@@ -1690,7 +1709,7 @@ public class PgenResource
      * @param paintProps
      *            Paint properties from the paint() method.
      */
-    private void drawProduct(IGraphicsTarget target,
+    public void drawProduct(IGraphicsTarget target,
             PaintProperties paintProps) {
         drawFilledElements(target, paintProps);
 
@@ -2282,7 +2301,8 @@ public class PgenResource
         if (nlabels >= 10) {
             int menuItemIndex = 0;
             List<String> actList = getActionList(
-                    this.getSelectedDE().getPgenType(), PgenConstant.ADD_NEW_LABEL);
+                    this.getSelectedDE().getPgenType(),
+                    PgenConstant.ADD_NEW_LABEL);
 
             if (actList != null) {
                 for (String act : actList) {

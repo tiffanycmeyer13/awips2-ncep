@@ -23,14 +23,17 @@ import gov.noaa.nws.ncep.common.dataplugin.ntrans.NtransRecord;
  * ASCAT,Quikscat
  *
  * <pre>
- * HISTORY
  *
- * Date         Ticket#    Engineer    Description
- * ------------ ---------- ----------- --------------------------
- * 11/2009                 Uma Josyula Initial creation
- * Dec 14, 2016 5934       njensen     Moved to edex ntrans plugin
- * Sep 23, 2021 8608       mapeters    Pass metadata ids to datastore
- * Jun 22, 2022 8865       mapeters    Update populateDataStore to return boolean
+ * SOFTWARE HISTORY
+ *
+ * Date          Ticket#  Engineer     Description
+ * ------------- -------- ------------ -----------------------------------------
+ * Nov ??, 2009           Uma Josyula  Initial creation
+ * Dec 14, 2016  5934     njensen      Moved to edex ntrans plugin
+ * Mar 29, 2021  8374     randerso     Renamed IDataRecord.get/setProperties to
+ *                                     get/setProps
+ * Sep 23, 2021  8608     mapeters     Pass metadata ids to datastore
+ * Jun 22, 2022  8865     mapeters     Update populateDataStore to return boolean
  *
  * </pre>
  *
@@ -52,7 +55,7 @@ public class NtransDao extends PluginDao {
 
         StorageProperties props = new StorageProperties();
 
-        imageDataRecord.setProperties(props);
+        imageDataRecord.setProps(props);
         imageDataRecord.setCorrelationObject(ntransRecord);
         dataStore.addDataRecord(imageDataRecord,
                 new DataUriMetadataIdentifier(ntransRecord));

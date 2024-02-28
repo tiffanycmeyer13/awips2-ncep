@@ -44,9 +44,11 @@ import gov.noaa.nws.ncep.common.dataplugin.modis.ModisSpatialCoverage;
  *
  * SOFTWARE HISTORY
  *
- * Date         Ticket#    Engineer     Description
- * ------------ ---------- -----------  --------------------------
- * 10/01/2014   R5116      kbugenhagen  Initial creation
+ * Date          Ticket#  Engineer     Description
+ * ------------- -------- ------------ -----------------------------------------
+ * Oct 01, 2014  5116     kbugenhagen  Initial creation
+ * Mar 29, 2021  8374     randerso     Renamed IDataRecord.get/setProperties to
+ *                                     get/setProps
  * Sep 23, 2021 8608       mapeters     Pass metadata ids to datastore
  * Feb 16, 2022 8608       mapeters     Update usage of obsolete storeInterpolated method
  * Jun 22, 2022 8865       mapeters     Update populateDataStore to return boolean
@@ -69,7 +71,7 @@ public class ModisDao extends PluginDao {
         super(pluginName);
     }
 
-    /*
+    /**
      * Stores the image, latitude and longitude arrays in the HDF file. All
      * levels for the image are stored to support down-scaling.
      */
@@ -112,7 +114,7 @@ public class ModisDao extends PluginDao {
                             messageData.getUnitString());
                 }
                 idr.setDataAttributes(attributes);
-                idr.setProperties(props);
+                idr.setProps(props);
                 idr.setCorrelationObject(record);
                 return idr;
             }
@@ -124,7 +126,6 @@ public class ModisDao extends PluginDao {
 
             @Override
             public boolean isSigned() {
-                // TODO Auto-generated method stub
                 return false;
             }
         };
@@ -198,7 +199,7 @@ public class ModisDao extends PluginDao {
 
     /**
      * Deletes all Modis_spatial metadata which doesn't have spatial data and
-     * older than 4 hours if all == false
+     * older than 4 hours if all is false
      */
     private void purgeSpatialData(boolean all) {
         List<Object> args = new ArrayList<>(3);

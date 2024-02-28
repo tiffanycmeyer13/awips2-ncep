@@ -23,6 +23,8 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import gov.noaa.nws.ncep.common.staticdata.SPCCounty;
 import gov.noaa.nws.ncep.edex.common.stationTables.IStationField.StationField;
 import gov.noaa.nws.ncep.edex.common.stationTables.Station;
@@ -84,67 +86,89 @@ import gov.noaa.nws.ncep.ui.pgen.sigmet.Volcano;
 import gov.noaa.nws.ncep.ui.pgen.tca.TCAElement;
 import gov.noaa.nws.ncep.ui.pgen.tools.PgenSnapJet;
 
-import org.locationtech.jts.geom.Coordinate;
 /**
  * Define a ProductConverter Class - some methods to convert the products
  * between XML format and the actual in-memory PGEN products.
  *
  * <pre>
  * SOFTWARE HISTORY
- * Date         Ticket#     Engineer    Description
- * -------------------------------------------------------------------
- * 02/17/09     #63         J. Wu       Initial Creation.
- * 04/20/09     #88         J. Wu       Added Text.
- * 04/30/09     #89         J. Wu       Added Arc.
- * 05/09        #42         S. Gilbert  Added pgenType and pgenCategory to constructors
- * 05/09        #111        J. Wu       Added Vector
- * 06/09        #116        B. Yin      Added DECollection
- * 07/09        #131        J. Wu       Added more attributes for Layer
- * 07/09        #104        S. Gilbert  Added AvnText
- * 08/09        #135        B. Yin      Added Jet
- * 08/09        #135        B. Yin      Handle relative location for jet text
- * 08/09        #149        B. Yin      Added PgenType and PgenCategory for DECollections
- * 09/09        #151        J. Wu       Added  more attributes for Product
- * 11/09        #167        J. Wu       Added Contours
- * 10/09        #163        S. Gilbert  Added TCA
- * 11/09        #160        G. Zhang    Added Sigmet
- * 01/10        #104        S. Gilbert  Added MidCloudText
- * 03/10        #159        B. Yin      Added Watch and issued Watch information
- * 03/10        #159        B. Yin      Added Watch status information
- * 05/10        #267        B. Yin      Added Outlook
- * 03/10        #223        M.Laryukhin Added Gfa
- * 08/10        #137        Q. Zhou     Add a condition for standalone watchbox -- county
- * 08/10        #215        J. Wu       Added Contours' attributes to Outlook
- * 09/10                    Q. Zhou     Fix a typo on xmlStatusExpCal
- * 09/10        #305/306    B. Yin      Added LabeledLine(Cloud and Turbulence)
- * 11/10        #?          B. Yin      Changed Cloud label from AvnText to MidLevelCloudText
- * 11/10                    Q.Zhou      Handle null situation for contour time
- * 11/10                    J. Wu       Added ContourCircle into Contours
- * 11/10                    Q.Zhou      Added code to get Avntext in convertXML2LabeledLine()
- * 01/11                    J. Wu       Reworked on Product's attributes.
- * 04/11        #?          B. Yin      Re-factor IAttribute
- * 12/11        #?          B. Yin      Changed 'TO' to '-' in LLWS vorText
- * 02/12        #597        S. Gurung   Moved snap functionalities to SnapUtil from SigmetInfo.
- * 03/12        #676        Q. Zhou     Added Issue Office field.
- * 03/12        #610        J. Wu       Restore issue/until times for GFA smears.
- * 05/12        #808        J. Wu       Remove SnapUtil from converting GFA.
- * 06/12        #734        J. Zeng     Add converter for spenes
- * 12/12        #937        J. Wu       Update G_Airmet layers/hazard - "C&V"
- * 11/13        #1049       B. Yin      Handle outlook type defined in layer.
- * 12/13        TTR904      B. Yin      Added back the water zone string for Watch county list
- * 11/13        #1065       J. Wu       Added Kink lines.
- * 05/14        TTR995      J. Wu       Set Text's 'auto" flag to false.
- * 09/14        TTR716      J. Wu       Use "-" for GFA Outlook's Vor text.
- * 02/15        R6158       J. Wu       Preserve ithw/iwidth for Text/AvnText/MidCloudText.
- * 03/15        R6872       J. Wu       Add status/forecaster/center in vgf2xml conversion.
- * 08/05        R8879       B. Yin      Check Outlook/Contour by type
- * 08/15        R8188       J. Lopez    Changed rotation of Hash Mark to match legacy
- * 07/28/2016   R16077      J. Wu       Allow number of labels to be 0 for contour lines.
- * 04/28/20     77994       ksunil      new fields in Sigmet for Tropical Cyclone.
- * May 22, 2020 78000       ksunil      New Tropical Cyclone UI components for Fcst
- * Feb 08, 2021 87538       smanoj      Added FCST Lat/Lon for Tropical Cyclone.
- * Apr 08, 2021 90325       smanoj      CARSAM Backup WMO headers update.
- * Jun 18, 2021 90732       mroos       Added variables for VolAsh altitude level info
+ *
+ * Date          Ticket#   Engineer     Description
+ * ------------- --------- ------------ ----------------------------------------
+ * Feb 17, 2009  63        J. Wu        Initial Creation.
+ * Apr 20, 2009  88        J. Wu        Added Text.
+ * Apr 30, 2009  89        J. Wu        Added Arc.
+ * 05/09         42        S. Gilbert   Added pgenType and pgenCategory to
+ *                                      constructors
+ * 05/09         111       J. Wu        Added Vector
+ * 06/09         116       B. Yin       Added DECollection
+ * 07/09         131       J. Wu        Added more attributes for Layer
+ * 07/09         104       S. Gilbert   Added AvnText
+ * 08/09         135       B. Yin       Added Jet
+ * 08/09         135       B. Yin       Handle relative location for jet text
+ * 08/09         149       B. Yin       Added PgenType and PgenCategory for
+ *                                      DECollections
+ * 09/09         151       J. Wu        Added  more attributes for Product
+ * 11/09         167       J. Wu        Added Contours
+ * 10/09         163       S. Gilbert   Added TCA
+ * 11/09         160       G. Zhang     Added Sigmet
+ * 01/10         104       S. Gilbert   Added MidCloudText
+ * 03/10         159       B. Yin       Added Watch and issued Watch information
+ * 03/10         159       B. Yin       Added Watch status information
+ * 05/10         267       B. Yin       Added Outlook
+ * 03/10         223       M.Laryukhin  Added Gfa
+ * 08/10         137       Q. Zhou      Add a condition for standalone watchbox
+ *                                      -- county
+ * 08/10         215       J. Wu        Added Contours' attributes to Outlook
+ * 09/10                   Q. Zhou      Fix a typo on xmlStatusExpCal
+ * 09/10         #305/306  B. Yin       Added LabeledLine(Cloud and Turbulence)
+ * 11/10         #?        B. Yin       Changed Cloud label from AvnText to
+ *                                      MidLevelCloudText
+ * 11/10                   Q.Zhou       Handle null situation for contour time
+ * 11/10                   J. Wu        Added ContourCircle into Contours
+ * 11/10                   Q.Zhou       Added code to get Avntext in
+ *                                      convertXML2LabeledLine()
+ * 01/11                   J. Wu        Reworked on Product's attributes.
+ * 04/11         #?        B. Yin       Re-factor IAttribute
+ * 12/11         #?        B. Yin       Changed 'TO' to '-' in LLWS vorText
+ * 02/12         597       S. Gurung    Moved snap functionalities to SnapUtil
+ *                                      from SigmetInfo.
+ * 03/12         676       Q. Zhou      Added Issue Office field.
+ * 03/12         610       J. Wu        Restore issue/until times for GFA
+ *                                      smears.
+ * 05/12         808       J. Wu        Remove SnapUtil from converting GFA.
+ * 06/12         734       J. Zeng      Add converter for spenes
+ * 12/12         937       J. Wu        Update G_Airmet layers/hazard - "C&V"
+ * 11/13         1049      B. Yin       Handle outlook type defined in layer.
+ * 12/13         TTR904    B. Yin       Added back the water zone string for
+ *                                      Watch county list
+ * 11/13         1065      J. Wu        Added Kink lines.
+ * 05/14         TTR995    J. Wu        Set Text's 'auto" flag to false.
+ * 09/14         TTR716    J. Wu        Use "-" for GFA Outlook's Vor text.
+ * 02/15         6158      J. Wu        Preserve ithw/iwidth for
+ *                                      Text/AvnText/MidCloudText.
+ * 03/15         6872      J. Wu        Add status/forecaster/center in vgf2xml
+ *                                      conversion.
+ * 08/05         8879      B. Yin       Check Outlook/Contour by type
+ * 08/15         8188      J. Lopez     Changed rotation of Hash Mark to match
+ *                                      legacy
+ * Jul 28, 2016  16077     J. Wu        Allow number of labels to be 0 for
+ *                                      contour lines.
+ * Apr 28, 2020  77994     ksunil       new fields in Sigmet for Tropical
+ *                                      Cyclone.
+ * May 22, 2020  78000     ksunil       New Tropical Cyclone UI components for
+ *                                      Fcst
+ * Feb 08, 2021  87538     smanoj       Added FCST Lat/Lon for Tropical Cyclone.
+ * Apr 08, 2021  90325     smanoj       CARSAM Backup WMO headers update.
+ * Jun 18, 2021  90732     mroos        Added variables for VolAsh altitude
+ *                                      level info
+ * Dec 01, 2021  95362     tjensen      Refactor PGEN Resource management to
+ *                                      support multi-panel displays
+ * Jan 10, 2022  99344     smanoj       Added VolcAsh Description coordinate RoundTo Value.
+ * Jan 24, 2022  99344     smanoj       Updates for additional requirements from
+ *                                      NWS for Int'l Sigmet for Volcanic Ash.
+ * Feb 02, 2022 99344       smanoj      Volcanic Ash LatLon values are converted to VOR
+ *                                      coordinates in Fcst Radial/Area/Line description.
  * </pre>
  *
  * @author J. Wu
@@ -1200,6 +1224,10 @@ public class ProductConverter {
                                 ((Sigmet) de).getEditableAttrFcstAvail());
                         sigmet.setEditableAttrFcstVADesc(
                                 ((Sigmet) de).getEditableAttrFcstVADesc());
+                        sigmet.setEditableAttrFcstVADescVor(
+                                ((Sigmet) de).getEditableAttrFcstVADescVor());
+                        sigmet.setEditableAttrFcstVADescRoundToVal(
+                                ((Sigmet) de).getEditableAttrFcstVADescRoundToVal());
                         sigmet.setEditableAttrTrend(
                                 ((Sigmet) de).getEditableAttrTrend());
                         sigmet.setEditableAttrMovement(
@@ -1218,8 +1246,6 @@ public class ProductConverter {
                                 ((Sigmet) de).getEditableAttrLevelText1());
                         sigmet.setEditableAttrLevelText2(
                                 ((Sigmet) de).getEditableAttrLevelText2());
-                        sigmet.setEditableAttrAltLevel(
-                                ((Sigmet) de).getEditableAttrAltLevel());
                         sigmet.setEditableAttrAltLevelInfo1(
                                 ((Sigmet) de).getEditableAttrAltLevelInfo1());
                         sigmet.setEditableAttrAltLevelInfo2(
@@ -1639,8 +1665,8 @@ public class ProductConverter {
 
         // Snap jet
         if (PgenSession.getInstance() != null) {
-            PgenSnapJet st = new PgenSnapJet(
-                    PgenSession.getInstance().getPgenResource().getDescriptor(),
+            PgenSnapJet st = new PgenSnapJet(PgenSession.getInstance()
+                    .getCurrentResource().getDescriptor(),
                     PgenUtil.getActiveEditor(), null);
             jet.setSnapTool(st);
             st.snapJet(jet);

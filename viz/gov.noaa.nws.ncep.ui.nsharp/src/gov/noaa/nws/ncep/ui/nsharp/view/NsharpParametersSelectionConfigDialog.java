@@ -1,24 +1,23 @@
-package gov.noaa.nws.ncep.ui.nsharp.view;
-
 /**
- * 
- * gov.noaa.nws.ncep.ui.nsharp.palette.NsharpParametersSelectionConfigDialog
- * 
- * 
- * This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
- * 
- * <pre>
- * SOFTWARE HISTORY
- * 
- * Date         Ticket#    	Engineer    Description
- * -------		------- 	-------- 	-----------
- * 03/23/2010	229			Chin Chen	Initial coding
+ * This software was developed and / or modified by Raytheon Company,
+ * pursuant to Contract DG133W-05-CQ-1067 with the US Government.
  *
- * </pre>
- * 
- * @author Chin Chen
- * @version 1.0
- */
+ * U.S. EXPORT CONTROLLED TECHNICAL DATA
+ * This software product contains export-restricted data whose
+ * export/transfer/disclosure is restricted by U.S. law. Dissemination
+ * to non-U.S. persons whether in the United States or abroad requires
+ * an export license or other authorization.
+ *
+ * Contractor Name:        Raytheon Company
+ * Contractor Address:     6825 Pine Street, Suite 340
+ *                         Mail Stop B8
+ *                         Omaha, NE 68106
+ *                         402.291.0100
+ *
+ * See the AWIPS II Master Rights File ("Master Rights File.pdf") for
+ * further licensing information.
+ **/
+package gov.noaa.nws.ncep.ui.nsharp.view;
 
 import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigManager;
 import gov.noaa.nws.ncep.ui.nsharp.NsharpConfigStore;
@@ -41,9 +40,36 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import com.raytheon.uf.common.status.IUFStatusHandler;
+import com.raytheon.uf.common.status.UFStatus;
+import com.raytheon.uf.common.status.UFStatus.Priority;
 import com.raytheon.uf.viz.core.exception.VizException;
 
+/**
+ * 
+ * gov.noaa.nws.ncep.ui.nsharp.palette.NsharpParametersSelectionConfigDialog
+ * 
+ * 
+ * This code has been developed by the NCEP-SIB for use in the AWIPS2 system.
+ * 
+ * <pre>
+ * SOFTWARE HISTORY
+ * 
+ * Date         Ticket#     Engineer    Description
+ * -------      -------     --------    -----------
+ * 03/23/2010   229         Chin Chen   Initial coding
+ * 04/22/2020   76580       smanoj      Allow user to interact with NsharpEditor
+ *                                      while the dialog is open.
+ * 03/21/2022   89212       smanoj      Configuration Dialog display issues.
+ * 
+ * </pre>
+ * 
+ * @author Chin Chen
+ */
 public class NsharpParametersSelectionConfigDialog extends Dialog {
+    private static final IUFStatusHandler statusHandler = UFStatus
+            .getHandler(NsharpParametersSelectionConfigDialog.class);
+
     private static NsharpParametersSelectionConfigDialog thisDialog = null;
 
     private NsharpConfigStore configStore = null;
@@ -62,18 +88,17 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
 
     private int btnGapY = 5;
 
-    private Button tempBtn, dewpBtn, parcelTvBtn, parcelBtn, dcapeBtn,
-            vTempBtn, wetBulbBtn, mixingRatioBtn, dryAdiabatBtn,
-            moisAdiabatBtn, omegaBtn, meanWindVectorBtn, stormMVector3075Btn,
-            stormMVector1585Btn, stormMVectorBunkersRightBtn,
-            stormMVectorBunkersLeftBtn, corfidiVectorBtn, hodoBtn, efflayerBtn,
-            cloudBtn, windBarbBtn;
+    private Button tempBtn, dewpBtn, parcelTvBtn, parcelBtn, dcapeBtn, vTempBtn,
+            wetBulbBtn, mixingRatioBtn, dryAdiabatBtn, moisAdiabatBtn, omegaBtn,
+            meanWindVectorBtn, stormMVector3075Btn, stormMVector1585Btn,
+            stormMVectorBunkersRightBtn, stormMVectorBunkersLeftBtn,
+            corfidiVectorBtn, hodoBtn, efflayerBtn, cloudBtn, windBarbBtn;
 
     private Text tempOffsetText;
 
-    private Text sndCompRadiusText;// FixMark:nearByStnCompSnd
+    private Text sndCompRadiusText;
 
-    private int sndCompRadius = 0;// FixMark:nearByStnCompSnd
+    private int sndCompRadius = 0;
 
     // default value for button initial setup
     private boolean temp = true, dewp = true, parcel = true, parcelTv = true,
@@ -83,8 +108,6 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
             smvBunkersR = true, smvBunkersL = true, corfidiV = false,
             effLayer = true, cloud = false, windBarb = true;
 
-    // private int
-    // windBarbDistance=NsharpNativeConstants.WINDBARB_DISTANCE_DEFAULT;
     private int tempOffset = 0;
 
     private void updateGraphProperty() {
@@ -110,9 +133,8 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
             graphProperty.setCorfidiV(corfidiV);
             graphProperty.setEffLayer(effLayer);
             graphProperty.setWindBarb(windBarb);
-            // graphProperty.setWindBarbDistance(windBarbDistance);
             graphProperty.setTempOffset(tempOffset);
-            graphProperty.setSndCompRadius(sndCompRadius);// FixMark:nearByStnCompSnd
+            graphProperty.setSndCompRadius(sndCompRadius);
         }
     }
 
@@ -200,21 +222,18 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         return windBarb;
     }
 
-    // public int getWindBarbDistance() {
-    // return windBarbDistance;
-    // }
-
     public static NsharpParametersSelectionConfigDialog getInstance(
             Shell parShell) {
 
         if (thisDialog == null) {
             try {
-                thisDialog = new NsharpParametersSelectionConfigDialog(parShell);
-
+                thisDialog = new NsharpParametersSelectionConfigDialog(
+                        parShell);
             } catch (VizException e) {
-                e.printStackTrace();
+                statusHandler.handle(Priority.ERROR,
+                        "Error creating Parameters Selection Config Dialog:",
+                        e.getMessage());
             }
-
         }
 
         return thisDialog;
@@ -228,14 +247,10 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
     public NsharpParametersSelectionConfigDialog(Shell parentShell)
             throws VizException {
         super(parentShell);
+        this.setShellStyle(SWT.MODELESS);
         thisDialog = this;
         mgr = NsharpConfigManager.getInstance();
         configStore = mgr.retrieveNsharpConfigStoreFromFs();
-        // if(configStore== null){
-        // configStore = new NsharpConfigStore();
-        // configStore = setDefaultGraphConfig(configStore);
-        // configStore=NsharpDataDisplayConfigDialog.setDefaultLineConfig(configStore);
-        // }
         graphProperty = configStore.getGraphProperty();
         if (graphProperty != null) {
             temp = graphProperty.isTemp();
@@ -259,23 +274,22 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
             effLayer = graphProperty.isEffLayer();
             cloud = graphProperty.isCloud();
             windBarb = graphProperty.isWindBarb();
-            // windBarbDistance = graphProperty.getWindBarbDistance();
             tempOffset = graphProperty.getTempOffset();
-            sndCompRadius = graphProperty.getSndCompRadius();// FixMark:nearByStnCompSnd
+            sndCompRadius = graphProperty.getSndCompRadius();
         }
 
     }
 
     private void createDialogContents(Composite parent) {
 
-        Group btnGp = new Group(parent, SWT.SHADOW_ETCHED_IN
-                | SWT.NO_RADIO_GROUP);
+        Group btnGp = new Group(parent,
+                SWT.SHADOW_ETCHED_IN | SWT.NO_RADIO_GROUP);
 
         tempBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         tempBtn.setText(NsharpNativeConstants.TEMP_TRACE);
         tempBtn.setEnabled(true);
-        tempBtn.setBounds(btnGp.getBounds().x + btnGapX, btnGp.getBounds().y
-                + labelGap, btnWidth, btnHeight);
+        tempBtn.setBounds(btnGp.getBounds().x + btnGapX,
+                btnGp.getBounds().y + labelGap, btnWidth, btnHeight);
         if (temp == true)
             tempBtn.setSelection(true);
         else
@@ -292,8 +306,9 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         dewpBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         dewpBtn.setText(NsharpNativeConstants.DEWP_TRACE);
         dewpBtn.setEnabled(true);
-        dewpBtn.setBounds(btnGp.getBounds().x + btnGapX, tempBtn.getBounds().y
-                + tempBtn.getBounds().height + btnGapY, btnWidth, btnHeight);
+        dewpBtn.setBounds(btnGp.getBounds().x + btnGapX,
+                tempBtn.getBounds().y + tempBtn.getBounds().height + btnGapY,
+                btnWidth, btnHeight);
         if (dewp == true)
             dewpBtn.setSelection(true);
         else
@@ -329,9 +344,10 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         parcelBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         parcelBtn.setText(NsharpNativeConstants.PARCEL_T_TRACE);
         parcelBtn.setEnabled(true);
-        parcelBtn.setBounds(btnGp.getBounds().x + btnGapX,
-                parcelTvBtn.getBounds().y + parcelTvBtn.getBounds().height
-                        + btnGapY, btnWidth, btnHeight);
+        parcelBtn.setBounds(
+                btnGp.getBounds().x + btnGapX, parcelTvBtn.getBounds().y
+                        + parcelTvBtn.getBounds().height + btnGapY,
+                btnWidth, btnHeight);
         if (parcel == true)
             parcelBtn.setSelection(true);
         else
@@ -348,9 +364,10 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         dcapeBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         dcapeBtn.setText(NsharpNativeConstants.DCAPE_TRACE);
         dcapeBtn.setEnabled(true);
-        dcapeBtn.setBounds(btnGp.getBounds().x + btnGapX,
-                parcelBtn.getBounds().y + parcelBtn.getBounds().height
-                        + btnGapY, btnWidth, btnHeight);
+        dcapeBtn.setBounds(
+                btnGp.getBounds().x + btnGapX, parcelBtn.getBounds().y
+                        + parcelBtn.getBounds().height + btnGapY,
+                btnWidth, btnHeight);
         if (dcape == true)
             dcapeBtn.setSelection(true);
         else
@@ -408,9 +425,10 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         mixingRatioBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         mixingRatioBtn.setText(NsharpNativeConstants.MIXING_RATIO);
         mixingRatioBtn.setEnabled(true);
-        mixingRatioBtn.setBounds(btnGp.getBounds().x + btnGapX,
-                wetBulbBtn.getBounds().y + wetBulbBtn.getBounds().height
-                        + btnGapY, btnWidth, btnHeight);
+        mixingRatioBtn.setBounds(
+                btnGp.getBounds().x + btnGapX, wetBulbBtn.getBounds().y
+                        + wetBulbBtn.getBounds().height + btnGapY,
+                btnWidth, btnHeight);
         if (mixratio == true)
             mixingRatioBtn.setSelection(true);
         else
@@ -427,8 +445,8 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         dryAdiabatBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         dryAdiabatBtn.setText(NsharpNativeConstants.DRY_ADIABAT);
         dryAdiabatBtn.setEnabled(true);
-        dryAdiabatBtn.setBounds(btnGp.getBounds().x + btnGapX,
-                mixingRatioBtn.getBounds().y
+        dryAdiabatBtn.setBounds(
+                btnGp.getBounds().x + btnGapX, mixingRatioBtn.getBounds().y
                         + mixingRatioBtn.getBounds().height + btnGapY,
                 btnWidth, btnHeight);
         if (dryAdiabat == true)
@@ -448,9 +466,10 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         moisAdiabatBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         moisAdiabatBtn.setText(NsharpNativeConstants.MOIST_ADIABAT);
         moisAdiabatBtn.setEnabled(true);
-        moisAdiabatBtn.setBounds(btnGp.getBounds().x + btnGapX,
-                dryAdiabatBtn.getBounds().y + dryAdiabatBtn.getBounds().height
-                        + btnGapY, btnWidth, btnHeight);
+        moisAdiabatBtn.setBounds(
+                btnGp.getBounds().x + btnGapX, dryAdiabatBtn.getBounds().y
+                        + dryAdiabatBtn.getBounds().height + btnGapY,
+                btnWidth, btnHeight);
         if (moistAdiabat == true)
             moisAdiabatBtn.setSelection(true);
         else
@@ -467,8 +486,8 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         efflayerBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         efflayerBtn.setText(NsharpNativeConstants.EFFECTIVE_LAYER);
         efflayerBtn.setEnabled(true);
-        efflayerBtn.setBounds(btnGp.getBounds().x + btnGapX,
-                moisAdiabatBtn.getBounds().y
+        efflayerBtn.setBounds(
+                btnGp.getBounds().x + btnGapX, moisAdiabatBtn.getBounds().y
                         + moisAdiabatBtn.getBounds().height + btnGapY,
                 btnWidth, btnHeight);
         if (effLayer == true)
@@ -487,9 +506,10 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         cloudBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         cloudBtn.setText(NsharpNativeConstants.CLOUD);
         cloudBtn.setEnabled(true);
-        cloudBtn.setBounds(btnGp.getBounds().x + btnGapX,
-                efflayerBtn.getBounds().y + efflayerBtn.getBounds().height
-                        + btnGapY, btnWidth, btnHeight);
+        cloudBtn.setBounds(
+                btnGp.getBounds().x + btnGapX, efflayerBtn.getBounds().y
+                        + efflayerBtn.getBounds().height + btnGapY,
+                btnWidth, btnHeight);
         if (cloud == true)
             cloudBtn.setSelection(true);
         else
@@ -506,8 +526,9 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         hodoBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
         hodoBtn.setText(NsharpNativeConstants.HODOGRAPH);
         hodoBtn.setEnabled(true);
-        hodoBtn.setBounds(btnGp.getBounds().x + btnGapX, cloudBtn.getBounds().y
-                + cloudBtn.getBounds().height + btnGapY, btnWidth, btnHeight);
+        hodoBtn.setBounds(btnGp.getBounds().x + btnGapX,
+                cloudBtn.getBounds().y + cloudBtn.getBounds().height + btnGapY,
+                btnWidth, btnHeight);
         if (hodo == true)
             hodoBtn.setSelection(true);
         else
@@ -565,8 +586,7 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         stormMVector1585Btn
                 .setText(NsharpNativeConstants.STORM_MOTION_VECTOR_1585);
         stormMVector1585Btn.setEnabled(true);
-        stormMVector1585Btn.setBounds(
-                btnGp.getBounds().x + btnGapX,
+        stormMVector1585Btn.setBounds(btnGp.getBounds().x + btnGapX,
                 stormMVector3075Btn.getBounds().y
                         + stormMVector3075Btn.getBounds().height + btnGapY,
                 btnWidth, btnHeight);
@@ -587,8 +607,7 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         stormMVectorBunkersRightBtn
                 .setText(NsharpNativeConstants.STORM_MOTION_VECTOR_BUNKERS_R);
         stormMVectorBunkersRightBtn.setEnabled(true);
-        stormMVectorBunkersRightBtn.setBounds(
-                btnGp.getBounds().x + btnGapX,
+        stormMVectorBunkersRightBtn.setBounds(btnGp.getBounds().x + btnGapX,
                 stormMVector1585Btn.getBounds().y
                         + stormMVector1585Btn.getBounds().height + btnGapY,
                 btnWidth, btnHeight);
@@ -612,7 +631,8 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         stormMVectorBunkersLeftBtn.setBounds(btnGp.getBounds().x + btnGapX,
                 stormMVectorBunkersRightBtn.getBounds().y
                         + stormMVectorBunkersRightBtn.getBounds().height
-                        + btnGapY, btnWidth, btnHeight);
+                        + btnGapY,
+                btnWidth, btnHeight);
         if (smvBunkersL == true)
             stormMVectorBunkersLeftBtn.setSelection(true);
         else
@@ -633,7 +653,8 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         corfidiVectorBtn.setBounds(btnGp.getBounds().x + btnGapX,
                 stormMVectorBunkersLeftBtn.getBounds().y
                         + stormMVectorBunkersLeftBtn.getBounds().height
-                        + btnGapY, btnWidth, btnHeight);
+                        + btnGapY,
+                btnWidth, btnHeight);
         if (corfidiV == true)
             corfidiVectorBtn.setSelection(true);
         else
@@ -667,29 +688,13 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
                 applyChange();
             }
         });
-        /*
-         * windBarbText = new Text(btnGp, SWT.BORDER | SWT.SINGLE);
-         * windBarbText.setText(Integer.toString(windBarbDistance));
-         * windBarbText
-         * .setBounds(windBarbBtn.getBounds().x+windBarbBtn.getBounds().width,
-         * windBarbBtn.getBounds().y,btnWidth/4,btnHeight);
-         * windBarbText.setEditable(true); windBarbText.setVisible(true); //to
-         * make sure user enter digits only windBarbText.addListener
-         * (SWT.Verify, new Listener () { public void handleEvent (Event e) {
-         * String string = e.text; char [] chars = new char [string.length ()];
-         * string.getChars (0, chars.length, chars, 0);
-         * //System.out.println("entered "+ string);
-         * 
-         * for (int i=0; i<chars.length; i++) { if (!('0' <= chars [i] && chars
-         * [i] <= '9')) { e.doit = false; return; } }
-         * 
-         * } });
-         */
+
         Label tempOffsetLbl = new Label(btnGp, SWT.BORDER);
         tempOffsetLbl.setText("Temperature Range Offset ");
-        tempOffsetLbl.setBounds(btnGp.getBounds().x + btnGapX,
-                windBarbBtn.getBounds().y + windBarbBtn.getBounds().height
-                        + btnGapY, btnWidth, btnHeight);
+        tempOffsetLbl.setBounds(
+                btnGp.getBounds().x + btnGapX, windBarbBtn.getBounds().y
+                        + windBarbBtn.getBounds().height + btnGapY,
+                btnWidth, btnHeight);
         tempOffsetText = new Text(btnGp, SWT.BORDER | SWT.SINGLE);
         tempOffsetText.setText(Integer.toString(tempOffset));
         tempOffsetText.setBounds(
@@ -703,7 +708,6 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
                 String string = e.text;
                 char[] chars = new char[string.length()];
                 string.getChars(0, chars.length, chars, 0);
-                // System.out.println("entered s="+ string);
                 // Chin note: when "Delete", "Backspace" entered, this handler
                 // will be called, but
                 // its chars.length = 0
@@ -727,13 +731,15 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         // start FixMark:nearByStnCompSnd
         Label sndCompRadiusLbl = new Label(btnGp, SWT.BORDER);
         sndCompRadiusLbl.setText("Sounding Comp Radius (mile)");
-        sndCompRadiusLbl.setBounds(btnGp.getBounds().x + btnGapX,
-                tempOffsetLbl.getBounds().y + tempOffsetLbl.getBounds().height
-                        + btnGapY, btnWidth, btnHeight);
+        sndCompRadiusLbl.setBounds(
+                btnGp.getBounds().x + btnGapX, tempOffsetLbl.getBounds().y
+                        + tempOffsetLbl.getBounds().height + btnGapY,
+                btnWidth, btnHeight);
         sndCompRadiusText = new Text(btnGp, SWT.BORDER | SWT.SINGLE);
         sndCompRadiusText.setText(Integer.toString(sndCompRadius));
-        sndCompRadiusText.setBounds(sndCompRadiusLbl.getBounds().x
-                + sndCompRadiusLbl.getBounds().width,
+        sndCompRadiusText.setBounds(
+                sndCompRadiusLbl.getBounds().x
+                        + sndCompRadiusLbl.getBounds().width,
                 sndCompRadiusLbl.getBounds().y, btnWidth / 4, btnHeight);
         sndCompRadiusText.setEditable(true);
         sndCompRadiusText.setVisible(true);
@@ -743,7 +749,6 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
                 String string = e.text;
                 char[] chars = new char[string.length()];
                 string.getChars(0, chars.length, chars, 0);
-                // System.out.println("entered s=" + string);
                 // Chin note: when "Delete", "Backspace" entered, this handler
                 // will be called, but
                 // its chars.length = 0
@@ -757,14 +762,15 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
             }
         });
         // end FixMark:nearByStnCompSnd
-        if (NsharpLoadDialog.getAccess() != null
-                && (NsharpLoadDialog.getAccess().getActiveLoadSoundingType() == NsharpLoadDialog.MODEL_SND || NsharpLoadDialog
-                        .getAccess().getActiveLoadSoundingType() == NsharpLoadDialog.PFC_SND)) {
+        if (NsharpLoadDialog.getAccess() != null && (NsharpLoadDialog
+                .getAccess()
+                .getActiveLoadSoundingType() == NsharpLoadDialog.MODEL_SND
+                || NsharpLoadDialog.getAccess()
+                        .getActiveLoadSoundingType() == NsharpLoadDialog.PFC_SND)) {
             omegaBtn = new Button(btnGp, SWT.RADIO | SWT.BORDER);
             omegaBtn.setText(NsharpNativeConstants.OMEGA);
             omegaBtn.setEnabled(true);
-            omegaBtn.setBounds(
-                    btnGp.getBounds().x + btnGapX,
+            omegaBtn.setBounds(btnGp.getBounds().x + btnGapX,
                     sndCompRadiusLbl.getBounds().y
                             + sndCompRadiusLbl.getBounds().height + btnGapY,
                     btnWidth, btnHeight);
@@ -793,28 +799,18 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         // okPressed().
         createButton(parent, IDialogConstants.OK_ID, "Apply", true);
 
-        /*
-         * appBtn.addListener( SWT.MouseUp, new Listener() { public void
-         * handleEvent(Event event) {
-         * //System.out.println("App listener is called"); //String textStr =
-         * windBarbText.getText(); //if((textStr != null) &&
-         * !(textStr.isEmpty())){ // windBarbDistance = Integer.decode(textStr);
-         * //} //applyChange();
-         * 
-         * } } );
-         */
         Button saveBtn = createButton(parent, IDialogConstants.INTERNAL_ID,
                 "Save", false);
         saveBtn.addListener(SWT.MouseUp, new Listener() {
             public void handleEvent(Event event) {
-                // System.out.println("save listener is called, also apply changes");
                 okPressed();
                 try {
                     // save to xml
                     mgr.saveConfigStoreToFs(configStore);
                 } catch (VizException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    statusHandler.handle(Priority.ERROR,
+                            "Error saving config store to file :",
+                            e.getMessage());
                 }
 
             }
@@ -824,7 +820,6 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
                 IDialogConstants.CLOSE_LABEL, false);
         canBtn.addListener(SWT.MouseUp, new Listener() {
             public void handleEvent(Event event) {
-                // System.out.println("close listener is called");
                 close();
             }
         });
@@ -834,11 +829,6 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
     public void okPressed() {
         // "Enter" key is pressed, or "Apply" button is pressed.
         // Chin: handle user entered data and apply its changes.
-        // System.out.println("CR is pressed");
-        // String textStr = windBarbText.getText();
-        // if((textStr != null) && !(textStr.isEmpty())){
-        // windBarbDistance = Integer.decode(textStr);
-        // }
         String textStr = tempOffsetText.getText();
         if ((textStr != null) && !(textStr.isEmpty())) {
             if (!textStr.contains("-") || textStr.length() > 1) {
@@ -855,13 +845,6 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
         setReturnCode(OK);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets
-     * .Shell)
-     */
     @Override
     protected void configureShell(Shell shell) {
         super.configureShell(shell);
@@ -888,25 +871,35 @@ public class NsharpParametersSelectionConfigDialog extends Dialog {
 
     @Override
     public int open() {
+
         if (this.getShell() == null) {
             this.create();
+        } else {
+            try {
+                this.getShell().setLocation(
+                        this.getShell().getParent().getLocation().x + 1100,
+                        this.getShell().getParent().getLocation().y + 200);
+            } catch (Exception e) {
+                // if widget disposed
+                this.create();
+            }
         }
-        this.getShell().setLocation(
-                this.getShell().getParent().getLocation().x + 1100,
-                this.getShell().getParent().getLocation().y + 200);
         return super.open();
 
     }
 
     @Override
     public boolean close() {
-        tempBtn = dewpBtn = parcelTvBtn = parcelBtn = dcapeBtn = vTempBtn = wetBulbBtn = mixingRatioBtn = dryAdiabatBtn = moisAdiabatBtn = efflayerBtn = omegaBtn = meanWindVectorBtn = stormMVector3075Btn = stormMVector1585Btn = stormMVectorBunkersRightBtn = stormMVectorBunkersLeftBtn = corfidiVectorBtn = hodoBtn = windBarbBtn = null;
-        // thisDialog= null;
+        tempBtn = dewpBtn = parcelTvBtn = parcelBtn = dcapeBtn = vTempBtn 
+        = wetBulbBtn = mixingRatioBtn = dryAdiabatBtn = moisAdiabatBtn 
+        = efflayerBtn = omegaBtn = meanWindVectorBtn = stormMVector3075Btn
+        = stormMVector1585Btn = stormMVectorBunkersRightBtn = stormMVectorBunkersLeftBtn
+        = corfidiVectorBtn = hodoBtn = windBarbBtn = null;
+
         return (super.close());
     }
 
     public void reset() {
-        // windBarbDistance=NsharpNativeConstants.WINDBARB_DISTANCE_DEFAULT;
         tempOffset = 0;
         sndCompRadius = 0;
     }

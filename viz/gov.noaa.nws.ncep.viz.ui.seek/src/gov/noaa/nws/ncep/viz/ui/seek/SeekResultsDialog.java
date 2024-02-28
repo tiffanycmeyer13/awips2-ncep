@@ -47,9 +47,9 @@ import org.geotools.referencing.datum.DefaultEllipsoid;
 
 import com.raytheon.uf.common.status.IUFStatusHandler;
 import com.raytheon.uf.common.status.UFStatus;
+import com.raytheon.uf.common.util.CollectionUtil;
 import com.raytheon.uf.viz.core.IDisplayPane;
 import com.raytheon.uf.viz.core.drawables.IRenderableDisplay;
-import com.raytheon.uf.common.util.CollectionUtil;
 import com.raytheon.uf.viz.core.drawables.ResourcePair;
 import com.raytheon.uf.viz.core.rsc.ResourceList;
 import com.raytheon.viz.ui.EditorUtil;
@@ -97,10 +97,14 @@ import gov.noaa.nws.ncep.viz.tools.cursor.NCCursors.CursorRef;
  *                                      perspective
  * May 08, 2019  63530     tjensen      Fix Take Control button to resolve editable
  *                                      conflicts
- * Aug 14, 2019  65755    tjensen   Update open to not block as this doesn't
- *                                  listen for events
- * Sep 30, 2019  69187    ksunil    removed dependence on the active display.
- *                                  Make SeekTool work for Multi-Panel
+ * Aug 14, 2019  65755     tjensen      Updated open to not block as this doesn't
+ *                                      listen for events
+ * Sep 30, 2019  69187     ksunil       removed dependence on the active display.
+ *                                      Make SeekTool work for Multi-Panel
+ *
+ * Dec 03, 2021  98788     srussell     Updated open() and close() to not
+ *                                      dispose of the font before it is used.
+ *
  *
  * </pre>
  *
@@ -269,8 +273,6 @@ public class SeekResultsDialog extends Dialog implements ICloseCallbackDialog {
         shell.pack();
 
         shell.open();
-
-        font.dispose();
 
         NCCursors.getInstance().setCursor(parent, prevCursorRef);
 
@@ -968,6 +970,7 @@ public class SeekResultsDialog extends Dialog implements ICloseCallbackDialog {
 
     public void close() {
         if (this.shell != null && !this.shell.isDisposed()) {
+            font.dispose();
             this.shell.dispose();
         }
     }
