@@ -101,6 +101,8 @@ import gov.noaa.nws.ncep.viz.common.ui.NmapCommon;
  * 06/22/2020   79556       smanoj      Fixing some errors and enhancements.
  * 03/21/2022   89212       smanoj      Configuration Dialog display issues.
  * 04/01/2022   89212       smanoj      Fix some Nsharp display issues.
+ * 04/11/2024             srcarter@ucar Made newFont and textModeGp protected to
+ *                                      use in com.raytheon.uf.viz.d2d.nsharp 
  *
  * </pre>
  *
@@ -123,6 +125,8 @@ public class NsharpPaletteWindow extends ViewPart
     private Group spcGp;
 
     private Group awcGp, d2dliteAwcGp;
+    
+    protected Group textModeGp;
 
     private Group insetGp;
 
@@ -159,7 +163,7 @@ public class NsharpPaletteWindow extends ViewPart
 
     private IWorkbenchPage page;
 
-    private Font newFont;
+    protected Font newFont;
 
     private boolean isEditorVisible = true;
 
@@ -617,7 +621,7 @@ public class NsharpPaletteWindow extends ViewPart
 
     public void createDataControlGp(Composite parent) {
         this.parent = parent;
-        Group textModeGp = new Group(parent, SWT.SHADOW_OUT);
+        textModeGp = new Group(parent, SWT.SHADOW_OUT);
         textModeGp.setLayout(new RowLayout(SWT.HORIZONTAL));
         textModeGp.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         Font font = textModeGp.getFont();
